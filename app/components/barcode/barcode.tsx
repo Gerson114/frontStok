@@ -22,7 +22,9 @@ export default function Barcode({ valor, className }: BarcodeProps) {
             height: 60,
             margin: 8,
             background: "#FFFFFF",
-            lineColor: "#1C1B19",
+            // Preto puro, não a cor de texto da interface: o contraste máximo
+            // é o que garante a leitura pelo scanner na etiqueta impressa.
+            lineColor: "#000000",
         })
     }, [valor])
 

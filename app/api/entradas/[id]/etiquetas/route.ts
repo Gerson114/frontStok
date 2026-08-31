@@ -1,0 +1,54 @@
+import { cookies } from "next/headers"
+import { extrairMensagemErro } from "@/middleware/client"
+
+const API_BASE = process.env.API_URL ?? "http://localhost:8080"
+
+// // GET /api/entradas/:id/etiquetas — as peças de uma remessa, para imprimir
+// as etiquetas do lote inteiro de uma vez.
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+    try {
+        const cookieStore = await cookies()
+        const token = cookieStore.get("token")?.value
+
+        if (!token) {
+            return Response.json({ erro: "Não autenticado" }, { status: 401 })
+        }
+
+        const { id } = await params
+
+        if (!/^\\d+$/.test(id)) {
+            return Response.json({ erro: "entrada inválida" }, { status: 400 })
+        }
+
+        const response = await fetch(`${API_BASE}/private/entradas/${id}/etiquetas`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            cache: "no-store",
+        })
+
+        const texto = await response.text()
+
+        if (!response.ok) {
+            return Response.json({ erro: extrairMensagemErro(safeParse(texto)) }, { status: response.status })
+        }
+
+        return Response.json(safeParse(texto) ?? {}, {
+            status: 200,
+            headers: { "Cache-Control": "no-store" },
+        })
+
+    } catch {
+        return Response.json({ erro: "Erro interno do servidor" }, { status: 500 })
+    }
+}
+
+function safeParse(texto: string): unknown {
+    try {
+        return JSON.parse(texto)
+    } catch {
+        return null
+    }
+}

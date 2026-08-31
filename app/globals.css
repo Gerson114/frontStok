@@ -1,55 +1,297 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap');
 @import "tailwindcss";
 
-
+/* ==========================================================================
+   SISTEMA VISUAL — referência: magazineluiza.com.br
+   Paleta, raios e anatomia de card extraídos do CSS do próprio Magalu.
+   O app é light-only por decisão de projeto (o Magalu também é), então
+   todas as cores são pintadas explicitamente, sem depender do tema do SO.
+   ========================================================================== */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-nunito);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Escala de raio do Magalu: 8px é o cavalo de batalha (103 usos no site
+     deles), 4px para elementos pequenos, 12/16px para contêineres grandes.
+     Nada de cantos "bolha" de SaaS genérico. */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
 }
 
+:root {
+  /* Neutros com viés frio, puxando para o azul da marca — cinza puro
+     ficaria descolado do acento. Valores retirados do site do Magalu. */
+  --background: #F0F3F4;
+  --foreground: #1E2428;
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  --azul: #0086FF;
+  --azul-escuro: #0075E2;
+  --azul-suave: #E6F3FF;
+
+  --ink: #1E2428;
+  --ink-2: #5A6469;
+  --ink-3: #8C969B;
+
+  --linha: #D3DADD;
+  --linha-suave: #E4E9EB;
+  --superficie: #FFFFFF;
+  --fundo: #F0F3F4;
+
+  --verde: #08A022;
+  --verde-fundo: #E0FFEE;
+  --vermelho: #D4351C;
+  --vermelho-fundo: #FDECEA;
+  --amarelo: #FFB800;
+  --amarelo-fundo: #FFF6E0;
 }
 
-/* Identidade visual compartilhada com a página de cadastro de produto. */
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Acessibilidade: foco sempre visível para quem navega pelo teclado. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--azul);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* As classes abaixo vivem na camada `components` de propósito: assim uma
+   utility do Tailwind aplicada no mesmo elemento (`btn w-full`, `tag
+   bg-white`, `card p-8`) ainda vence, que é o que quem escreve a página
+   espera. Fora de camada elas ganhariam da utility e a sobrescrita
+   silenciosamente não valeria. */
+@layer components {
+
+/* Títulos. O Magalu não usa serifa — o peso e o tracking apertado é que
+   fazem a hierarquia. Mantém o nome `.font-display` para não precisar
+   reescrever as centenas de chamadas espalhadas pelas páginas. */
 .font-display {
-  font-family: 'Fraunces', serif;
-  font-feature-settings: 'ss02' 1;
+  font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
-.stitch {
-  background-image: repeating-linear-gradient(to right, #C9A227 0 6px, transparent 6px 12px);
-  background-size: 12px 1.5px;
-  background-repeat: repeat-x;
+/* ==========================================================================
+   PREÇO
+   Detalhe-assinatura do e-commerce brasileiro: o valor cheio em peso alto
+   e os centavos menores, alinhados ao topo. Use com <Preco/>.
+   ========================================================================== */
+.preco {
+  font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
+.preco-centavos {
+  font-size: 0.62em;
+  font-weight: 700;
+  vertical-align: baseline;
+}
+
+.preco-antigo {
+  color: var(--ink-3);
+  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Números em coluna (estatísticas, tabelas) precisam de dígito de largura fixa. */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   FORMULÁRIO
+   Padrão do Magalu: campo branco, borda cinza fria, foco em azul.
+   ========================================================================== */
 .field {
   width: 100%;
-  background: #EFEDE6;
-  color: #1C1B19;
+  background: var(--superficie);
+  color: var(--ink);
   padding: 0.7rem 0.9rem;
-  font-size: 0.875rem;
-  border-radius: 0.6rem;
-  border: 1px solid transparent;
-  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  font-size: 0.9rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--linha);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .field::placeholder {
-  color: #A19E93;
+  color: var(--ink-3);
 }
 
 .field:focus {
   outline: none;
-  background: #FFFFFF;
-  border-color: #2F5D4E;
-  box-shadow: 0 0 0 3px rgba(47, 93, 78, 0.15);
+  border-color: var(--azul);
+  box-shadow: 0 0 0 3px rgba(0, 134, 255, 0.18);
 }
+
+/* Campo recusado na validação: a borda vermelha diz qual linha do formulário
+   o aviso do topo está reclamando. */
+.field[aria-invalid="true"] {
+  border-color: var(--vermelho);
+}
+
+.field[aria-invalid="true"]:focus {
+  border-color: var(--vermelho);
+  box-shadow: 0 0 0 3px rgba(212, 53, 28, 0.18);
+}
+
+/* Enquanto o formulário está enviando, os campos ficam bloqueados e precisam
+   parecer bloqueados. */
+.field:disabled {
+  background: var(--fundo);
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
+
+.rotulo {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+/* ==========================================================================
+   BOTÕES
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-lg);
+  padding: 0.7rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primario {
+  background: var(--azul);
+  color: #FFFFFF;
+}
+
+.btn-primario:hover:not(:disabled) {
+  background: var(--azul-escuro);
+}
+
+.btn-secundario {
+  background: var(--superficie);
+  color: var(--azul);
+  border: 1px solid var(--azul);
+}
+
+.btn-secundario:hover:not(:disabled) {
+  background: var(--azul-suave);
+}
+
+.btn-neutro {
+  background: var(--superficie);
+  color: var(--ink);
+  border: 1px solid var(--linha);
+}
+
+.btn-neutro:hover:not(:disabled) {
+  background: var(--fundo);
+}
+
+.btn-perigo {
+  background: var(--vermelho);
+  color: #FFFFFF;
+}
+
+.btn-perigo:hover:not(:disabled) {
+  background: #B02D18;
+}
+
+/* ==========================================================================
+   CARD
+   Card branco, borda fina fria, raio 8px — a unidade básica do layout.
+   ========================================================================== */
+.card {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--radius-lg);
+}
+
+.card-hover {
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.card-hover:hover {
+  border-color: var(--azul);
+  box-shadow: 0 2px 12px rgba(30, 36, 40, 0.08);
+}
+
+/* ==========================================================================
+   ETIQUETAS DE ESTADO
+   Retangulares e compactas, como os selos de desconto/cupom do Magalu.
+   ========================================================================== */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  border-radius: var(--radius-md);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tag-success {
+  background: var(--verde-fundo);
+  color: var(--verde);
+}
+
+.tag-danger {
+  background: var(--vermelho-fundo);
+  color: var(--vermelho);
+}
+
+.tag-warning {
+  background: var(--amarelo-fundo);
+  color: #8A6C1B;
+}
+
+.tag-info {
+  background: var(--azul-suave);
+  color: var(--azul-escuro);
+}
+
+.tag-neutral {
+  background: var(--fundo);
+  color: var(--ink-2);
+}
+
+}
+/* fim de @layer components */
 
 @media print {
   @page {

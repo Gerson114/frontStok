@@ -1,5 +1,7 @@
 import { cookies } from "next/headers"
 
+const API_BASE = process.env.API_URL ?? "http://localhost:8080"
+
 export async function GET() {
     try {
         const cookieStore = await cookies()
@@ -13,7 +15,7 @@ export async function GET() {
         }
 
         const response = await fetch(
-            "http://localhost:8080/private/consulta",
+            `${API_BASE}/private/consulta`,
             {
                 method: "GET",
                 headers: {

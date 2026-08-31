@@ -1,13 +1,24 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { cadastrarProduto } from "@/middleware/produtos"
-import { sanitizeText, sanitizeUrl } from "@/security/sanitize"
-import { validarProduto, type NovoProduto } from "@/security/validate"
+import { cadastrarProdutoVariantes } from "@/middleware/produtos"
+import { listarEnderecos, type EnderecoEstoque } from "@/middleware/estoque"
+import { sanitizeText, sanitizeUrl, sanitizeDescricao } from "@/security/sanitize"
+import { validarProdutoVariantes, type NovoProdutoVariantes } from "@/security/validate"
 import { ApiError } from "@/middleware/client"
+import Preco from "@/app/components/preco/preco"
+import {
+  CamposDeFicha,
+  CamposDeVariacao,
+  fichaParaAtributos,
+  type LinhaFicha,
+  type LinhaVariacao,
+} from "@/app/components/produto/campos"
+import { FiAlertCircle, FiCheckCircle } from "react-icons/fi"
 
-// Mapa simples de nomes de cores em PT-BR para hex, usado no preview da etiqueta.
+// Mapa simples de nomes de cores em PT-BR para hex, usado no preview da
+// etiqueta quando a ficha técnica traz uma cor.
 const COLOR_MAP: Record<string, string> = {
   preto: "#161616",
   branco: "#F7F7F5",
@@ -43,29 +54,31 @@ function resolveColor(name: string): string | null {
 
 interface FormState {
   nome: string
+  descricao: string
   preco: string
-  estoque: string
   categoria: string
-  tamanho: string
-  tecido: string
-  cor: string
   imagem_url: string
-  rua: string
-  bloco: string
+
+  /**
+   * Código da prateleira onde guardar as peças. Em branco é o caso normal: o
+   * servidor escolhe, pondo o produto junto do que já existe dele ou no
+   * trecho mais vazio.
+   */
+  endereco: string
 }
 
 const FORM_INICIAL: FormState = {
   nome: "",
+  descricao: "",
   preco: "",
-  estoque: "",
   categoria: "",
-  tamanho: "",
-  tecido: "",
-  cor: "",
   imagem_url: "",
-  rua: "",
-  bloco: "",
+  endereco: "",
 }
+
+// Uma linha de variação já aberta: o produto mais simples tem uma só, e o
+// lojista só precisa digitar o estoque dela.
+const VARIACOES_INICIAIS: LinhaVariacao[] = [{ variacao: "", estoque: "" }]
 
 // Sistema de loja única: não existe seletor de loja na interface, o
 // cadastro sempre é feito para a loja #1.
@@ -75,12 +88,40 @@ export default function Produto() {
   const router = useRouter()
 
   const [formData, setFormData] = useState<FormState>(FORM_INICIAL)
+  const [variacaoRotulo, setVariacaoRotulo] = useState("")
+  const [variacoes, setVariacoes] = useState<LinhaVariacao[]>(VARIACOES_INICIAIS)
+  const [ficha, setFicha] = useState<LinhaFicha[]>([])
   const [erros, setErros] = useState<string[]>([])
   const [enviando, setEnviando] = useState(false)
   const [sucesso, setSucesso] = useState(false)
 
+  // Os endereços cadastrados, para o lojista poder dizer onde guardar quando
+  // quiser. Só os liberados: mandar peça para prateleira bloqueada é recusado
+  // pelo servidor, e oferecê-la seria prometer o que não vai acontecer.
+  const [enderecos, setEnderecos] = useState<EnderecoEstoque[]>([])
+
+  useEffect(() => {
+    let cancelado = false
+
+    async function carregar() {
+      try {
+        const lista = await listarEnderecos()
+        if (!cancelado) setEnderecos(lista.filter((endereco) => !endereco.bloqueado))
+      } catch {
+        // Sem a lista, o cadastro continua funcionando: endereço em branco é
+        // o caso normal, e aí quem escolhe onde guardar é o servidor.
+      }
+    }
+
+    carregar()
+
+    return () => {
+      cancelado = true
+    }
+  }, [])
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -91,21 +132,27 @@ export default function Produto() {
 
     setSucesso(false)
 
-    const produto: NovoProduto = {
+    const produto: NovoProdutoVariantes = {
       nome: sanitizeText(formData.nome),
+      descricao: sanitizeDescricao(formData.descricao),
       categoria: sanitizeText(formData.categoria),
-      tamanho: sanitizeText(formData.tamanho),
-      tecido: sanitizeText(formData.tecido),
-      cor: sanitizeText(formData.cor),
+      variacao_rotulo: sanitizeText(variacaoRotulo),
+      atributos: fichaParaAtributos(ficha),
       imagem_url: sanitizeUrl(formData.imagem_url),
       preco: parseFloat(formData.preco.replace(",", ".")),
-      estoque: parseInt(formData.estoque, 10),
       loja_id: LOJA_ID,
-      rua: parseInt(formData.rua, 10),
-      bloco: formData.bloco,
+      endereco: formData.endereco,
+      // Linha em branco é linha que o lojista não usou: some antes de virar
+      // erro de validação.
+      variacoes: variacoes
+        .filter((linha) => linha.variacao.trim() || linha.estoque.trim())
+        .map((linha) => ({
+          variacao: sanitizeText(linha.variacao),
+          estoque: parseInt(linha.estoque, 10),
+        })),
     }
 
-    const errosValidacao = validarProduto(produto)
+    const errosValidacao = validarProdutoVariantes(produto)
 
     if (errosValidacao.length > 0) {
       setErros(errosValidacao)
@@ -116,12 +163,15 @@ export default function Produto() {
 
     try {
       setEnviando(true)
-      await cadastrarProduto(produto)
+      await cadastrarProdutoVariantes(produto)
 
       setSucesso(true)
       setFormData(FORM_INICIAL)
+      setVariacaoRotulo("")
+      setVariacoes(VARIACOES_INICIAIS)
+      setFicha([])
 
-      setTimeout(() => router.push("/page/home"), 1200)
+      setTimeout(() => router.push("/page/produtos"), 1200)
 
     } catch (error) {
       console.error("Erro ao cadastrar produto:", error)
@@ -138,79 +188,60 @@ export default function Produto() {
 
   const handleCancelar = () => {
     setFormData(FORM_INICIAL)
+    setVariacaoRotulo("")
+    setVariacoes(VARIACOES_INICIAIS)
+    setFicha([])
     setErros([])
-    router.push("/page/home")
+    router.push("/page/produtos")
   }
 
-  const swatch = useMemo(() => resolveColor(formData.cor), [formData.cor])
-  const precoFormatado = useMemo(() => {
+  // A cor deixou de ser campo fixo: se o lojista puser "Cor" na ficha
+  // técnica, o preview continua mostrando a bolinha.
+  const corDaFicha = ficha.find((linha) => linha.nome.trim().toLowerCase() === "cor")?.valor ?? ""
+  const swatch = useMemo(() => resolveColor(corDaFicha), [corDaFicha])
+  const precoNumero = useMemo(() => {
     const n = parseFloat(formData.preco.replace(",", "."))
-    if (Number.isNaN(n)) return null
-    return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    return Number.isNaN(n) ? null : n
   }, [formData.preco])
 
-  return (
-    <div className="min-h-screen bg-[#F6F5F1] text-[#1C1B19] antialiased md:ml-64">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        .font-display { font-family: 'Fraunces', serif; font-feature-settings: 'ss02' 1; }
-        .font-body { font-family: 'Inter', system-ui, sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .stitch {
-          background-image: repeating-linear-gradient(to right, #C9A227 0 6px, transparent 6px 12px);
-          background-size: 12px 1.5px;
-          background-repeat: repeat-x;
-        }
-        .field {
-          width: 100%;
-          background: #EFEDE6;
-          color: #1C1B19;
-          padding: 0.7rem 0.9rem;
-          font-size: 0.875rem;
-          border-radius: 0.6rem;
-          border: 1px solid transparent;
-          transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
-        }
-        .field::placeholder { color: #A19E93; }
-        .field:focus {
-          outline: none;
-          background: #FFFFFF;
-          border-color: #2F5D4E;
-          box-shadow: 0 0 0 3px rgba(47, 93, 78, 0.15);
-        }
-        .field:focus-visible { outline: none; }
-      `}</style>
+  const variacoesPreenchidas = variacoes.filter((linha) => linha.variacao.trim())
+  const estoqueTotal = variacoes.reduce(
+    (total, linha) => total + (parseInt(linha.estoque, 10) || 0),
+    0
+  )
 
+  return (
+    <div className="min-h-screen bg-[#F0F3F4] text-[#1E2428] antialiased md:ml-64">
       <main className="px-4 py-8 sm:px-6 md:px-10 md:py-12 lg:px-14 pb-16">
         <div className="max-w-6xl mx-auto">
           {/* Cabeçalho */}
           <div className="space-y-2 mb-8 md:mb-10">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#8E8B80] font-body">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#5A6469]">
               <span>Produtos</span>
               <span>/</span>
-              <span className="text-[#1C1B19]">Novo cadastro</span>
+              <span className="text-[#1E2428]">Novo cadastro</span>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-medium tracking-tight text-[#1C1B19]">
+            <h1 className="font-display text-3xl sm:text-4xl tracking-tight text-[#1E2428]">
               Novo produto
             </h1>
-            <p className="text-sm text-[#6F6C61] font-body max-w-md">
-              Preencha a ficha técnica da peça. A etiqueta ao lado é atualizada em tempo real.
+            <p className="text-sm text-[#5A6469] max-w-md">
+              Preencha a ficha do produto. A etiqueta ao lado é atualizada em tempo real.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
             {/* Formulário */}
-            <form onSubmit={handleSubmit} className="space-y-6 font-body min-w-0">
+            <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
               {/* Bloco 1 */}
-              <section className="bg-white p-5 sm:p-7 rounded-2xl border border-[#EAE7DE] space-y-5">
+              <section className="card p-5 sm:p-7 space-y-5">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-[#2F5D4E] bg-[#2F5D4E]/10 px-2 py-1 rounded">01</span>
-                  <h2 className="text-sm font-semibold text-[#1C1B19]">Informações básicas</h2>
+                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">01</span>
+                  <h2 className="font-display text-sm text-[#1E2428]">Informações básicas</h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2 space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Nome do produto</label>
+                    <label className="rotulo">Nome do produto</label>
                     <input
                       type="text"
                       name="nome"
@@ -222,7 +253,7 @@ export default function Produto() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Categoria</label>
+                    <label className="rotulo">Categoria</label>
                     <select
                       name="categoria"
                       value={formData.categoria}
@@ -237,69 +268,55 @@ export default function Produto() {
                     </select>
                   </div>
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="rotulo">Descrição</label>
+                  <textarea
+                    name="descricao"
+                    value={formData.descricao}
+                    onChange={handleChange}
+                    placeholder="Detalhes do produto para o cliente: o que é, para que serve, como usar..."
+                    rows={4}
+                    className="field resize-y"
+                  />
+                </div>
               </section>
 
               {/* Bloco 2 */}
-              <section className="bg-white p-5 sm:p-7 rounded-2xl border border-[#EAE7DE] space-y-5">
+              <section className="card p-5 sm:p-7 space-y-5">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-[#2F5D4E] bg-[#2F5D4E]/10 px-2 py-1 rounded">02</span>
-                  <h2 className="text-sm font-semibold text-[#1C1B19]">Especificações da peça</h2>
+                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">02</span>
+                  <h2 className="font-display text-sm text-[#1E2428]">Variações e ficha técnica</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Tamanho</label>
-                    <select
-                      name="tamanho"
-                      value={formData.tamanho}
-                      onChange={handleChange}
-                      className="field cursor-pointer"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="PP">PP</option>
-                      <option value="P">P</option>
-                      <option value="M">M</option>
-                      <option value="G">G</option>
-                      <option value="GG">GG</option>
-                    </select>
-                  </div>
+                <CamposDeVariacao
+                  rotulo={variacaoRotulo}
+                  aoMudarRotulo={setVariacaoRotulo}
+                  linhas={variacoes}
+                  aoMudarLinhas={setVariacoes}
+                />
 
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Tecido</label>
-                    <input
-                      type="text"
-                      name="tecido"
-                      value={formData.tecido}
-                      onChange={handleChange}
-                      placeholder="Ex: 100% Algodão"
-                      className="field"
-                    />
-                  </div>
+                <div className="space-y-1.5 border-t border-[#E4E9EB] pt-5">
+                  <label className="rotulo">Ficha técnica</label>
+                  <p className="pb-1 text-xs text-[#5A6469]">
+                    O que descreve este produto no seu ramo: material, marca, garantia,
+                    validade, dimensões. Vale para todas as variações.
+                  </p>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Cor</label>
-                    <input
-                      type="text"
-                      name="cor"
-                      value={formData.cor}
-                      onChange={handleChange}
-                      placeholder="Ex: Preto"
-                      className="field"
-                    />
-                  </div>
+                  <CamposDeFicha linhas={ficha} aoMudar={setFicha} />
                 </div>
               </section>
 
               {/* Bloco 3 */}
-              <section className="bg-white p-5 sm:p-7 rounded-2xl border border-[#EAE7DE] space-y-5">
+              <section className="card p-5 sm:p-7 space-y-5">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-[#2F5D4E] bg-[#2F5D4E]/10 px-2 py-1 rounded">03</span>
-                  <h2 className="text-sm font-semibold text-[#1C1B19]">Valores e mídia</h2>
+                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">03</span>
+                  <h2 className="font-display text-sm text-[#1E2428]">Valores e mídia</h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Preço (R$)</label>
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <label className="rotulo">Preço (R$)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -308,25 +325,12 @@ export default function Produto() {
                       value={formData.preco}
                       onChange={handleChange}
                       placeholder="89.90"
-                      className="field font-mono"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Estoque</label>
-                    <input
-                      type="number"
-                      min="0"
-                      name="estoque"
-                      value={formData.estoque}
-                      onChange={handleChange}
-                      placeholder="50"
-                      className="field font-mono"
+                      className="field num"
                     />
                   </div>
 
                   <div className="sm:col-span-2 space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">URL da imagem</label>
+                    <label className="rotulo">URL da imagem</label>
                     <input
                       type="url"
                       name="imagem_url"
@@ -340,55 +344,59 @@ export default function Produto() {
               </section>
 
               {/* Bloco 4 */}
-              <section className="bg-white p-5 sm:p-7 rounded-2xl border border-[#EAE7DE] space-y-5">
+              <section className="card p-5 sm:p-7 space-y-5">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-[#2F5D4E] bg-[#2F5D4E]/10 px-2 py-1 rounded">04</span>
-                  <h2 className="text-sm font-semibold text-[#1C1B19]">Local no estoque</h2>
+                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">04</span>
+                  <h2 className="font-display text-sm text-[#1E2428]">Local no estoque</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Rua</label>
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      name="rua"
-                      value={formData.rua}
-                      onChange={handleChange}
-                      placeholder="Ex: 3"
-                      className="field font-mono"
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="rotulo">Endereço</label>
+                  <select
+                    name="endereco"
+                    value={formData.endereco}
+                    onChange={handleChange}
+                    className="field cursor-pointer"
+                  >
+                    <option value="">Deixar o sistema escolher</option>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-medium text-[#6F6C61]">Bloco</label>
-                    <select
-                      name="bloco"
-                      value={formData.bloco}
-                      onChange={handleChange}
-                      className="field cursor-pointer"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="A">Bloco A</option>
-                      <option value="B">Bloco B</option>
-                    </select>
-                  </div>
+                    {enderecos.map((endereco) => (
+                      <option key={endereco.id} value={endereco.codigo}>
+                        {endereco.codigo} · {endereco.nome} ({endereco.tipo_nome})
+                      </option>
+                    ))}
+                  </select>
+
+                  <p className="text-xs text-[#5A6469]">
+                    Em branco, o servidor guarda as peças junto do que já existe deste produto
+                    ou no trecho mais vazio. Guardar mercadoria não deveria exigir que alguém
+                    decida, caixa por caixa, em que prateleira ela cabe.
+                  </p>
                 </div>
               </section>
 
               {/* Feedback */}
               {erros.length > 0 && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 space-y-1">
-                  {erros.map((mensagem) => (
-                    <p key={mensagem}>{mensagem}</p>
-                  ))}
+                <div
+                  role="alert"
+                  className="flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                >
+                  <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                  <div className="space-y-1">
+                    {erros.map((mensagem) => (
+                      <p key={mensagem}>{mensagem}</p>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {sucesso && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Produto cadastrado com sucesso! Redirecionando...
+                <div
+                  role="status"
+                  className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]"
+                >
+                  <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                  <span>Produto cadastrado com sucesso! Redirecionando...</span>
                 </div>
               )}
 
@@ -398,14 +406,14 @@ export default function Produto() {
                   type="button"
                   onClick={handleCancelar}
                   disabled={enviando}
-                  className="px-5 py-2.5 rounded-lg text-sm font-medium text-[#6F6C61] hover:bg-[#EAE7DE] transition-colors disabled:opacity-50"
+                  className="btn btn-neutro"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={enviando}
-                  className="px-5 py-2.5 rounded-lg text-sm font-medium bg-[#2F5D4E] hover:bg-[#264C40] text-white transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="btn btn-primario"
                 >
                   {enviando ? "Cadastrando..." : "Cadastrar produto"}
                 </button>
@@ -414,70 +422,64 @@ export default function Produto() {
 
             {/* Etiqueta / preview ao vivo */}
             <div className="lg:sticky lg:top-10">
-              <div className="bg-white rounded-2xl border border-[#EAE7DE] p-5 relative overflow-hidden">
-                <p className="text-[0.65rem] uppercase tracking-[0.18em] text-[#8E8B80] font-body font-semibold mb-4">
+              <div className="card relative overflow-hidden p-5">
+                <p className="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
                   Pré-visualização da etiqueta
                 </p>
 
                 {/* Ticket / hang tag */}
-                <div className="relative bg-[#F6F5F1] rounded-xl p-5 pt-6">
-                  {/* furo da etiqueta */}
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-[#F6F5F1] border-2 border-[#D9D5C8]" />
-                  <div className="h-2 stitch mb-4 opacity-70" />
+                <div className="rounded-lg bg-[#F0F3F4] p-5">
 
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl leading-snug text-[#1C1B19] break-words">
-                      {formData.nome || "Nome da peça"}
+                    <h3 className="font-display text-xl leading-snug text-[#1E2428] break-words">
+                      {formData.nome || "Nome do produto"}
                     </h3>
                     {swatch ? (
                       <span
                         className="w-6 h-6 rounded-full border border-black/10 shrink-0 mt-1"
                         style={{ backgroundColor: swatch }}
-                        title={formData.cor}
+                        title={corDaFicha}
                       />
-                    ) : formData.cor ? (
-                      <span className="text-[0.65rem] font-mono text-[#6F6C61] border border-[#D9D5C8] rounded px-1.5 py-0.5 shrink-0 mt-1">
-                        {formData.cor}
+                    ) : corDaFicha ? (
+                      <span className="tag tag-neutral shrink-0 mt-1">
+                        {corDaFicha}
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="text-xs text-[#8E8B80] font-body mt-1">
+                  <p className="text-xs text-[#5A6469] mt-1">
                     {formData.categoria || "Categoria"}
                   </p>
 
-                  <div className="flex items-center gap-2 mt-4">
-                    <span className="font-mono text-2xl font-medium text-[#2F5D4E]">
-                      {precoFormatado || "R$ —"}
-                    </span>
+                  <div className="mt-4">
+                    {precoNumero != null ? (
+                      <Preco valor={precoNumero} className="text-2xl" />
+                    ) : (
+                      <span className="preco text-2xl text-[#8C969B]">R$ —</span>
+                    )}
                   </div>
 
-                  <div className="h-2 stitch my-4 opacity-70" />
 
-                  <dl className="grid grid-cols-2 gap-y-2.5 text-xs font-body">
-                    <dt className="text-[#8E8B80]">Tamanho</dt>
-                    <dd className="text-right font-medium text-[#1C1B19]">
-                      {formData.tamanho || "—"}
-                    </dd>
-                    <dt className="text-[#8E8B80]">Tecido</dt>
-                    <dd className="text-right font-medium text-[#1C1B19] break-words">
-                      {formData.tecido || "—"}
-                    </dd>
-                    <dt className="text-[#8E8B80]">Estoque</dt>
-                    <dd className="text-right font-medium text-[#1C1B19] font-mono">
-                      {formData.estoque || "—"}
-                    </dd>
-                    <dt className="text-[#8E8B80]">Local</dt>
-                    <dd className="text-right font-medium text-[#1C1B19] font-mono">
-                      {formData.rua && formData.bloco
-                        ? `Rua ${formData.rua} · Bloco ${formData.bloco}`
+                  <dl className="grid grid-cols-2 gap-y-2.5 text-xs">
+                    <dt className="text-[#5A6469]">{variacaoRotulo.trim() || "Variações"}</dt>
+                    <dd className="text-right font-semibold text-[#1E2428] break-words">
+                      {variacoesPreenchidas.length > 0
+                        ? variacoesPreenchidas.map((linha) => linha.variacao.trim()).join(", ")
                         : "—"}
+                    </dd>
+                    <dt className="text-[#5A6469]">Estoque total</dt>
+                    <dd className="num text-right font-semibold text-[#1E2428]">
+                      {variacoesPreenchidas.length > 0 ? estoqueTotal : "—"}
+                    </dd>
+                    <dt className="text-[#5A6469]">Local</dt>
+                    <dd className="num text-right font-semibold text-[#1E2428]">
+                      {formData.endereco || "o sistema escolhe"}
                     </dd>
                   </dl>
                 </div>
 
                 {formData.imagem_url && (
-                  <div className="mt-4 rounded-xl overflow-hidden border border-[#EAE7DE] aspect-[4/3] bg-[#F6F5F1]">
+                  <div className="mt-4 rounded-xl overflow-hidden border border-[#D3DADD] aspect-[4/3] bg-[#F0F3F4]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={formData.imagem_url}

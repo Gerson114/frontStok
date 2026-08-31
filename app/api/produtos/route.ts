@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { sanitizeText, sanitizeUrl } from "@/security/sanitize"
+import { sanitizeText, sanitizeUrl, sanitizeDescricao, sanitizeAtributos } from "@/security/sanitize"
 import { validarProduto, type NovoProduto } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
 
@@ -24,16 +24,18 @@ export async function POST(request: Request) {
 
         const produto: NovoProduto = {
             nome: sanitizeText(String(entrada.nome ?? "")),
+            descricao: sanitizeDescricao(String(entrada.descricao ?? "")),
             categoria: sanitizeText(String(entrada.categoria ?? "")),
-            tamanho: sanitizeText(String(entrada.tamanho ?? "")),
-            tecido: sanitizeText(String(entrada.tecido ?? "")),
-            cor: sanitizeText(String(entrada.cor ?? "")),
+            variacao: sanitizeText(String(entrada.variacao ?? "")),
+            variacao_rotulo: sanitizeText(String(entrada.variacao_rotulo ?? "")),
+            atributos: sanitizeAtributos(entrada.atributos),
             imagem_url: sanitizeUrl(String(entrada.imagem_url ?? "")),
             preco: Number(entrada.preco),
+            custo: Number(entrada.custo) || 0,
             estoque: Number(entrada.estoque),
             loja_id: Number(entrada.loja_id),
-            rua: Number(entrada.rua),
-            bloco: sanitizeText(String(entrada.bloco ?? "")).toUpperCase(),
+            // Em branco é o caso normal: o servidor escolhe onde guardar.
+            endereco: sanitizeText(String(entrada.endereco ?? "")),
         }
 
         const erros = validarProduto(produto)

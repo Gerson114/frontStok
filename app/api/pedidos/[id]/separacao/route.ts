@@ -1,0 +1,55 @@
+import { cookies } from "next/headers"
+import { extrairMensagemErro } from "@/middleware/client"
+
+const API_BASE = process.env.API_URL ?? "http://localhost:8080"
+
+// // GET /api/pedidos/:id/separacao — a lista de separação do pedido, já na
+// ordem em que se anda pelo estoque. Exige o plano com site: se a loja não
+// tem, o backend responde 402 e o cliente HTTP leva para a assinatura.
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+    try {
+        const cookieStore = await cookies()
+        const token = cookieStore.get("token")?.value
+
+        if (!token) {
+            return Response.json({ erro: "Não autenticado" }, { status: 401 })
+        }
+
+        const { id } = await params
+
+        if (!/^[0-9]+$/.test(id)) {
+            return Response.json({ erro: "pedido inválido" }, { status: 400 })
+        }
+
+        const response = await fetch(`${API_BASE}/private/pedidos/${id}/separacao`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            cache: "no-store",
+        })
+
+        const texto = await response.text()
+
+        if (!response.ok) {
+            return Response.json({ erro: extrairMensagemErro(safeParse(texto)) }, { status: response.status })
+        }
+
+        return Response.json(safeParse(texto) ?? {}, {
+            status: 200,
+            headers: { "Cache-Control": "no-store" },
+        })
+
+    } catch {
+        return Response.json({ erro: "Erro interno do servidor" }, { status: 500 })
+    }
+}
+
+function safeParse(texto: string): unknown {
+    try {
+        return JSON.parse(texto)
+    } catch {
+        return null
+    }
+}

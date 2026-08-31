@@ -1,9 +1,52 @@
 import { cookies } from "next/headers"
-import { sanitizeText, sanitizeUrl } from "@/security/sanitize"
+import { sanitizeText, sanitizeUrl, sanitizeDescricao, sanitizeAtributos } from "@/security/sanitize"
 import { validarProdutoEditavel, type ProdutoEditavel } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
 
 const API_BASE = process.env.API_URL ?? "http://localhost:8080"
+
+export async function DELETE(
+    _request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const cookieStore = await cookies()
+        const token = cookieStore.get("token")?.value
+
+        if (!token) {
+            return Response.json({ erro: "Não autenticado" }, { status: 401 })
+        }
+
+        const { id } = await params
+
+        if (!/^\d+$/.test(id)) {
+            return Response.json({ erro: "produto inválido" }, { status: 400 })
+        }
+
+        const response = await fetch(`${API_BASE}/private/produto/${id}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+            cache: "no-store",
+        })
+
+        const texto = await response.text()
+
+        if (!response.ok) {
+            return Response.json({ erro: extrairMensagemErro(safeParse(texto)) }, { status: response.status })
+        }
+
+        return Response.json(safeParse(texto) ?? { mensagem: "produto excluído com sucesso" }, {
+            status: 200,
+            headers: { "Cache-Control": "no-store" },
+        })
+
+    } catch {
+        return Response.json({ erro: "Erro interno do servidor" }, { status: 500 })
+    }
+}
 
 export async function PUT(
     request: Request,
@@ -33,10 +76,11 @@ export async function PUT(
 
         const produto: ProdutoEditavel = {
             nome: sanitizeText(String(entrada.nome ?? "")),
+            descricao: sanitizeDescricao(String(entrada.descricao ?? "")),
             categoria: sanitizeText(String(entrada.categoria ?? "")),
-            tamanho: sanitizeText(String(entrada.tamanho ?? "")),
-            tecido: sanitizeText(String(entrada.tecido ?? "")),
-            cor: sanitizeText(String(entrada.cor ?? "")),
+            variacao: sanitizeText(String(entrada.variacao ?? "")),
+            variacao_rotulo: sanitizeText(String(entrada.variacao_rotulo ?? "")),
+            atributos: sanitizeAtributos(entrada.atributos),
             imagem_url: sanitizeUrl(String(entrada.imagem_url ?? "")),
             preco: Number(entrada.preco),
             estoque: Number(entrada.estoque),

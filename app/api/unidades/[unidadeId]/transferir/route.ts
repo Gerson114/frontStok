@@ -18,7 +18,7 @@ export async function POST(
 
         const { unidadeId } = await params
 
-        if (!/^\d+$/.test(unidadeId)) {
+        if (!/^[0-9]+$/.test(unidadeId)) {
             return Response.json({ erro: "unidade inválida" }, { status: 400 })
         }
 
@@ -31,8 +31,10 @@ export async function POST(
         const entrada = body as Record<string, unknown>
 
         const transferencia: NovaTransferencia = {
-            rua_destino: Number(entrada.rua_destino),
-            bloco_destino: String(entrada.bloco_destino ?? "").toUpperCase(),
+            // O código da prateleira de destino. Se ela existe, aceita
+            // mercadoria, não está bloqueada e ainda cabe, quem responde é o
+            // backend — que tem o cadastro de endereços na frente.
+            destino: String(entrada.destino ?? "").trim(),
         }
 
         const erros = validarTransferencia(transferencia)

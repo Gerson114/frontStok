@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import type { Produto, Unidade } from "@/app/type/type"
-import { listarProdutos, listarTodasUnidades, restaurarUnidade } from "@/middleware/produtos"
+import { listarProdutos, listarTodasUnidades, restaurarUnidade, identificarPeca } from "@/middleware/produtos"
 import { ApiError } from "@/middleware/client"
+import { FiMapPin, FiAlertTriangle, FiCheck } from "react-icons/fi"
 
 export default function Avarias() {
 
@@ -114,13 +115,13 @@ export default function Avarias() {
 
         return (
 
-            <main className="min-h-screen bg-[#F6F5F1] p-6 md:ml-64 md:p-10">
+            <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
 
                 <div className="mx-auto max-w-5xl">
 
-                    <div className="h-9 w-64 animate-pulse rounded-lg bg-[#EAE7DE]" />
+                    <div className="h-9 w-64 animate-pulse rounded-lg bg-[#D3DADD]" />
 
-                    <div className="mt-3 h-4 w-80 animate-pulse rounded bg-[#EAE7DE]" />
+                    <div className="mt-3 h-4 w-80 animate-pulse rounded bg-[#D3DADD]" />
 
                     <div className="mt-10 space-y-3">
 
@@ -128,7 +129,7 @@ export default function Avarias() {
 
                             <div
                                 key={item}
-                                className="h-16 animate-pulse rounded-2xl border border-[#EAE7DE] bg-white"
+                                className="card h-16 animate-pulse"
                             />
 
                         ))}
@@ -151,25 +152,25 @@ export default function Avarias() {
 
         return (
 
-            <main className="min-h-screen bg-[#F6F5F1] p-8 md:ml-64">
+            <main className="min-h-screen bg-[#F0F3F4] p-8 md:ml-64">
 
-                <div className="mx-auto max-w-xl rounded-2xl border border-[#EAE7DE] bg-white p-10 text-center">
+                <div className="card mx-auto max-w-xl p-10 text-center">
 
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-2xl text-red-600">
-                        !
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FDECEA] text-[#D4351C]">
+                        <FiAlertTriangle className="w-7" aria-hidden />
                     </div>
 
-                    <h1 className="font-display mt-5 text-2xl font-medium text-[#1C1B19]">
+                    <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
                         Erro ao carregar avarias
                     </h1>
 
-                    <p className="mt-2 text-[#6F6C61]">
+                    <p className="mt-2 text-[#5A6469]">
                         {erro}
                     </p>
 
                     <button
                         onClick={() => window.location.reload()}
-                        className="mt-6 rounded-lg bg-[#2F5D4E] px-6 py-3 font-medium text-white transition hover:bg-[#264C40]"
+                        className="btn btn-primario mt-6"
                     >
                         Tentar novamente
                     </button>
@@ -188,23 +189,23 @@ export default function Avarias() {
 
     return (
 
-        <main className="min-h-screen bg-[#F6F5F1] text-[#1C1B19] md:ml-64">
+        <main className="min-h-screen bg-[#F0F3F4] text-[#1E2428] md:ml-64">
 
             {/* ==========================
                 HEADER
             ========================== */}
 
-            <header className="sticky top-16 z-30 border-b border-[#EAE7DE] bg-[#F6F5F1]/95 backdrop-blur md:top-0">
+            <header className="sticky top-16 z-30 border-b border-[#D3DADD] bg-[#F0F3F4]/95 backdrop-blur md:top-0">
 
                 <div className="flex min-h-20 items-center justify-between gap-6 px-6 md:px-10">
 
                     <div>
 
-                        <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[#8E8B80]">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
                             Painel administrativo
                         </p>
 
-                        <h1 className="font-display text-2xl font-medium text-[#1C1B19]">
+                        <h1 className="font-display text-2xl text-[#1E2428]">
                             Avarias
                         </h1>
 
@@ -229,23 +230,21 @@ export default function Avarias() {
 
                         <div>
 
-                            <h2 className="font-display text-3xl font-medium tracking-tight text-[#1C1B19] sm:text-4xl">
+                            <h2 className="font-display text-3xl text-[#1E2428] sm:text-4xl">
                                 Peças avariadas
                             </h2>
 
-                            <p className="mt-2 max-w-md text-[#6F6C61]">
+                            <p className="mt-2 max-w-md text-[#5A6469]">
                                 Unidades marcadas como avariadas saem do estoque vendável, mas continuam registradas aqui.
                             </p>
-
-                            <div className="mt-6 h-2 stitch max-w-xs opacity-70" />
 
                         </div>
 
                         <Link
                             href="/page/estoque"
-                            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[#EAE7DE] bg-white px-4 py-2.5 text-sm font-medium text-[#1C1B19] transition hover:bg-[#EFEDE6]"
+                            className="btn btn-neutro shrink-0"
                         >
-                            <span>📍</span>
+                            <FiMapPin className="w-4" aria-hidden />
                             <span>Ver estoque</span>
                         </Link>
 
@@ -254,21 +253,21 @@ export default function Avarias() {
 
                     {/* ESTATÍSTICA */}
 
-                    <div className="mb-8 rounded-2xl border border-[#EAE7DE] bg-white p-6">
+                    <div className="card mb-8 p-6">
 
                         <div className="flex items-center justify-between">
 
                             <div>
-                                <p className="text-sm text-[#8E8B80]">
+                                <p className="text-sm text-[#5A6469]">
                                     Total de peças avariadas
                                 </p>
-                                <p className="font-mono mt-2 text-3xl font-semibold text-[#1C1B19]">
+                                <p className="num mt-2 text-3xl font-extrabold text-[#1E2428]">
                                     {avariadas.length}
                                 </p>
                             </div>
 
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-xl">
-                                !
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FDECEA] text-[#D4351C]">
+                                <FiAlertTriangle className="w-5" aria-hidden />
                             </div>
 
                         </div>
@@ -277,7 +276,7 @@ export default function Avarias() {
 
 
                     {erroRestaurar && (
-                        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
+                        <div role="alert" className="mb-6 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
                             {erroRestaurar}
                         </div>
                     )}
@@ -289,17 +288,15 @@ export default function Avarias() {
 
                     {avariadas.length === 0 ? (
 
-                        <div className="rounded-2xl border border-dashed border-[#D9D5C8] bg-white p-16 text-center">
+                        <div className="rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
 
-                            <div className="text-5xl">
-                                ✓
-                            </div>
+                            <FiCheck className="mx-auto w-10 text-[#8C969B]" aria-hidden />
 
-                            <h3 className="font-display mt-5 text-xl font-medium text-[#1C1B19]">
+                            <h3 className="font-display mt-5 text-xl text-[#1E2428]">
                                 Nenhuma avaria registrada
                             </h3>
 
-                            <p className="mt-2 text-sm text-[#8E8B80]">
+                            <p className="mt-2 text-sm text-[#5A6469]">
                                 Quando uma peça for avariada, ela aparece aqui.
                             </p>
 
@@ -307,9 +304,9 @@ export default function Avarias() {
 
                     ) : (
 
-                        <div className="overflow-hidden rounded-2xl border border-[#EAE7DE] bg-white">
+                        <div className="card overflow-hidden">
 
-                            <ul className="divide-y divide-[#EAE7DE] px-5">
+                            <ul className="divide-y divide-[#E4E9EB] px-5">
 
                                 {avariadas.map(({ unidade, produto }) => (
 
@@ -318,7 +315,7 @@ export default function Avarias() {
                                         className="flex items-center gap-3 py-3.5"
                                     >
 
-                                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F6F5F1]">
+                                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
                                             {produto?.imagem_url ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
@@ -331,14 +328,14 @@ export default function Avarias() {
 
                                         <div className="min-w-0 flex-1">
 
-                                            <p className="truncate text-sm font-medium text-[#1C1B19]">
+                                            <p className="truncate text-sm font-semibold text-[#1E2428]">
                                                 {produto?.nome ?? `Produto #${unidade.produto_id}`}
                                             </p>
 
-                                            <p className="font-mono text-xs text-[#8E8B80]">
-                                                {unidade.codigo}
+                                            <p className="text-xs text-[#5A6469]">
+                                                <span className="font-mono">{identificarPeca(produto?.codigo, unidade.sequencia)}</span>
                                                 {" · "}
-                                                {unidade.rua > 0 ? `Rua ${unidade.rua} · Bloco ${unidade.bloco}` : "sem local"}
+                                                {unidade.endereco_nome || "sem lugar definido"}
                                                 {" · "}
                                                 {formatarData(unidade.avariada_em)}
                                             </p>
@@ -349,7 +346,7 @@ export default function Avarias() {
                                             type="button"
                                             onClick={() => handleRestaurar(unidade.id)}
                                             disabled={restaurando === unidade.id}
-                                            className="shrink-0 rounded-lg border border-[#EAE7DE] px-3.5 py-2 text-xs font-medium text-[#1C1B19] transition hover:bg-[#EFEDE6] disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="shrink-0 rounded-lg border border-[#D3DADD] bg-white px-3.5 py-2 text-xs font-bold text-[#1E2428] transition-colors hover:bg-[#F0F3F4] disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {restaurando === unidade.id ? "Restaurando..." : "Restaurar ao estoque"}
                                         </button>
