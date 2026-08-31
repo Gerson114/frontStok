@@ -27,12 +27,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Instalar dependências
@@ -51,13 +51,25 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Inicializar CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
           queries: security-extended
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build
+        run: npm run build
 
       - name: Analisar
         uses: github/codeql-action/analyze@v4
@@ -67,21 +79,43 @@ jobs:
   # 3 - Build
   # ==========================================
   build:
-    name: Build Security Check
+    name: Build Next.js
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Instalar dependências
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build Next.js
         run: npm run build
+
+
+  # ==========================================
+  # 4 - Secrets
+  # ==========================================
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
