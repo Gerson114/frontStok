@@ -14,6 +14,7 @@ import {
     FiPackage,
     FiSearch,
 } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 /**
  * Produtos do site: o que a vitrine mostra.
@@ -115,7 +116,7 @@ export default function ProdutosDoSite() {
                     <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
                         {produto.imagem_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={produto.imagem_url} alt={produto.nome} className="h-full w-full object-cover" />
+                            <img src={urlDaImagem(produto.imagem_url)} alt={produto.nome} className="h-full w-full object-cover" />
                         ) : null}
                     </div>
 

@@ -15,6 +15,7 @@ import {
     FiTag,
     FiX,
 } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 /**
  * Venda no balcão: a peça saindo da loja na frente do cliente.
@@ -298,8 +299,9 @@ export default function VendaNoBalcao() {
 
                                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
                                     {alvo.imagem_url ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img
-                                            src={alvo.imagem_url}
+                                            src={urlDaImagem(alvo.imagem_url)}
                                             alt={alvo.nome}
                                             className="h-full w-full object-cover"
                                         />

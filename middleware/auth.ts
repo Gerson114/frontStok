@@ -121,9 +121,23 @@ function safeParse(texto: string): unknown {
     }
 }
 
+/**
+ * Encerra a sessão — no servidor, e não só neste navegador.
+ *
+ * Lança quando a revogação falha. Antes o resultado era ignorado, e engolir
+ * essa falha é o pior jeito de errar aqui: a tela mandaria o lojista para o
+ * login parecendo ter saído, enquanto o token dele seguia valendo em qualquer
+ * cópia que existisse. Quem clica em "sair" costuma estar fazendo isso porque
+ * desconfia que alguém pegou a sessão.
+ */
 export async function logout(): Promise<void> {
-    await fetch("/api/logout", {
+    const response = await fetch("/api/logout", {
         method: "POST",
         credentials: "include",
     })
+
+    if (!response.ok) {
+        const texto = await response.text().catch(() => "")
+        throw new Error(extrairMensagemErro(texto ? safeParse(texto) : null))
+    }
 }

@@ -143,6 +143,7 @@ export default function Sidebar() {
     const router = useRouter()
     const [aberto, setAberto] = useState(false)
     const [saindo, setSaindo] = useState(false)
+    const [erroSaida, setErroSaida] = useState("")
 
     // O menu vem do backend já resolvido para o plano desta loja: quem está
     // no plano de estoque não recebe "Pedidos" nem "Banners", e por isso eles
@@ -223,11 +224,19 @@ export default function Sidebar() {
 
     async function handleSair() {
         setSaindo(true)
+        setErroSaida("")
 
         try {
             await logout()
-        } finally {
             router.push("/login")
+
+        } catch (e) {
+            // Não navega: o cookie desta aba já foi apagado, mas o servidor
+            // não conseguiu invalidar o token, que continua valendo em
+            // qualquer cópia que exista. Mostrar a tela de login aqui seria
+            // dizer que saiu — justamente a única coisa que não aconteceu.
+            setErroSaida(e instanceof Error ? e.message : "Não foi possível encerrar a sessão.")
+            setSaindo(false)
         }
     }
 
@@ -405,6 +414,12 @@ export default function Sidebar() {
                     <FiLogOut className="w-[1.05rem] shrink-0" aria-hidden />
                     <span>{saindo ? "Saindo..." : "Sair"}</span>
                 </button>
+
+                {erroSaida && (
+                    <p role="alert" className="px-3 pb-1 text-xs font-semibold text-[#D4351C]">
+                        {erroSaida}
+                    </p>
+                )}
             </div>
         </>
     )

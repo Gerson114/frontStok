@@ -30,8 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (contêm a configuração desta máquina — nunca commitar)
 .env*
+# O modelo é a exceção: ele não tem segredo nenhum, e é justamente o arquivo
+# que quem clona o repositório precisa achar para saber o que preencher.
+!.env.example
 
 # vercel
 .vercel

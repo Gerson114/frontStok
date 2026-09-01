@@ -3,6 +3,7 @@
 import { cadastro, escolherPlano } from "@/middleware/auth"
 import { consultarPlanosPublicos, formatarPreco } from "@/middleware/assinatura"
 import { isValidEmail, isValidPassword } from "@/security/validate"
+import { irParaPaginaExterna } from "@/security/navegacao"
 import type { Plano, PlanoOferta } from "@/app/type/type"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -169,7 +170,7 @@ export default function Cadastro() {
         setPlanoEnviando(plano)
 
         try {
-            window.location.assign(await escolherPlano(plano))
+            irParaPaginaExterna(await escolherPlano(plano))
         } catch (e) {
             setError(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento")
             setPlanoEnviando("")

@@ -21,6 +21,7 @@ import {
     FiAlertTriangle,
     FiRepeat,
 } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 const ITENS_POR_PAGINA = 10
 
@@ -793,7 +794,7 @@ export default function Estoque() {
                                             {item.produto?.imagem_url ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={item.produto.imagem_url}
+                                                    src={urlDaImagem(item.produto.imagem_url)}
                                                     alt={item.produto.nome}
                                                     className="h-full w-full object-cover"
                                                 />
@@ -1008,7 +1009,7 @@ export default function Estoque() {
                                                         {item.produto?.imagem_url ? (
                                                             // eslint-disable-next-line @next/next/no-img-element
                                                             <img
-                                                                src={item.produto.imagem_url}
+                                                                src={urlDaImagem(item.produto.imagem_url)}
                                                                 alt={item.produto.nome}
                                                                 className="h-full w-full object-cover"
                                                             />

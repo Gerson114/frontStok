@@ -7,6 +7,7 @@ import { listarProdutos, listarTodasUnidades, identificarPeca } from "@/middlewa
 import Pagination from "@/app/components/pagination/pagination"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import { FiFileText, FiSearch, FiX, FiAlertTriangle, FiCheck, FiDollarSign, FiShoppingBag } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 const ITENS_POR_PAGINA = 10
 
@@ -390,7 +391,7 @@ export default function Vendidos() {
                                             {produto?.imagem_url ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={produto.imagem_url}
+                                                    src={urlDaImagem(produto.imagem_url)}
                                                     alt={produto.nome}
                                                     className="h-full w-full object-cover"
                                                 />

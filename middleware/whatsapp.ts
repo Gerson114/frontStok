@@ -198,6 +198,69 @@ export function horaDaMensagem(iso: string): string {
     return `${quando.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ${hora}`
 }
 
+/**
+ * Só a hora — "14:32".
+ *
+ * É o que vai DENTRO da bolha. Diferente de horaDaMensagem, que também traz o
+ * dia: no fio existe uma divisória de data acima de cada bloco, e repetir
+ * "29/08" em cada bolha logo abaixo de um rótulo que já diz "29 de agosto" é
+ * dizer duas vezes a mesma coisa no mesmo palmo de tela.
+ */
+export function horaExata(iso: string): string {
+
+    const quando = new Date(iso)
+
+    if (Number.isNaN(quando.getTime())) return ""
+
+    return quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+}
+
+/** Se duas mensagens caíram no mesmo dia — para saber onde entra a divisória. */
+export function mesmoDia(umISO: string, outroISO: string): boolean {
+
+    const um = new Date(umISO)
+    const outro = new Date(outroISO)
+
+    if (Number.isNaN(um.getTime()) || Number.isNaN(outro.getTime())) return true
+
+    return (
+        um.getDate() === outro.getDate() &&
+        um.getMonth() === outro.getMonth() &&
+        um.getFullYear() === outro.getFullYear()
+    )
+}
+
+/**
+ * O dia por extenso, como se fala: "Hoje", "Ontem", "12 de março".
+ *
+ * É o rótulo da divisória entre os dias do fio. Data cheia em toda divisória
+ * faria o leitor calcular que "31/08" era ontem — a tela já sabe disso.
+ */
+export function diaDaMensagem(iso: string): string {
+
+    const quando = new Date(iso)
+
+    if (Number.isNaN(quando.getTime())) return ""
+
+    const hoje = new Date()
+
+    const ontem = new Date(hoje)
+    ontem.setDate(hoje.getDate() - 1)
+
+    if (mesmoDia(iso, hoje.toISOString())) return "Hoje"
+    if (mesmoDia(iso, ontem.toISOString())) return "Ontem"
+
+    // Ano só quando não é o corrente: em conversa de loja, quase tudo é
+    // recente, e "12 de março de 2026" é ruído em cima do que já se sabe.
+    const mostrarAno = quando.getFullYear() !== hoje.getFullYear()
+
+    return quando.toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        ...(mostrarAno ? { year: "numeric" } : {}),
+    })
+}
+
 /* ==========================================================================
    Aparelho vinculado — o QR de "Aparelhos conectados"
    ========================================================================== */
@@ -249,12 +312,36 @@ export interface AvisoAoVivo {
     conversa_id: number
 }
 
-/** De onde sai o endereço do socket. O backend não é a origem do painel. */
-function enderecoDoFluxo(bilhete: string): string {
+const ESQUEMA_DE_SOCKET = /^wss?:\/\//i
 
-    const base = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080"
+/**
+ * De onde sai o endereço do socket. O backend não é a origem do painel.
+ *
+ * O bilhete viaja na própria URL — o navegador não deixa mandar cabeçalho ao
+ * abrir um WebSocket, então não há outro lugar para pô-lo. Isso torna o
+ * esquema da conexão parte da segurança e não da configuração: em ws:// o
+ * bilhete e todas as conversas dos clientes atravessam a rede em texto puro,
+ * legíveis por qualquer um no mesmo Wi-Fi da loja. Por isso, num painel
+ * servido por HTTPS a conexão sobe para wss:// mesmo que a variável tenha
+ * ficado como ws:// — que é também o que o navegador exige, já que ele
+ * recusa socket em texto puro a partir de página segura.
+ *
+ * Devolve null quando NEXT_PUBLIC_WS_URL não é um endereço de socket. É
+ * variável de ambiente: pode chegar em branco, com http:// no lugar de ws://
+ * ou com um endereço colado errado, e um desses viraria uma conexão para
+ * onde ninguém quis.
+ */
+function enderecoDoFluxo(bilhete: string): string | null {
 
-    return `${base.replace(/\/+$/, "")}/ws/whatsapp?bilhete=${encodeURIComponent(bilhete)}`
+    let base = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080").trim().replace(/\/+$/, "")
+
+    if (!ESQUEMA_DE_SOCKET.test(base)) return null
+
+    if (typeof window !== "undefined" && window.location.protocol === "https:") {
+        base = base.replace(/^ws:\/\//i, "wss://")
+    }
+
+    return `${base}/ws/whatsapp?bilhete=${encodeURIComponent(bilhete)}`
 }
 
 async function pedirBilhete(): Promise<string> {
@@ -290,7 +377,17 @@ export function escutarConversas(aoAviso: (aviso: AvisoAoVivo) => void): () => v
 
             if (fechado) return
 
-            const aberto = new WebSocket(enderecoDoFluxo(bilhete))
+            const endereco = enderecoDoFluxo(bilhete)
+
+            // Endereço mal configurado não melhora tentando de novo: em vez
+            // de bater no servidor a cada 30 segundos para sempre, para por
+            // aqui e a varredura de meio minuto da tela segura as conversas.
+            if (endereco === null) {
+                fechado = true
+                return
+            }
+
+            const aberto = new WebSocket(endereco)
             socket = aberto
 
             aberto.onopen = () => {

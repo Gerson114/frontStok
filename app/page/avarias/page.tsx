@@ -6,6 +6,7 @@ import type { Produto, Unidade } from "@/app/type/type"
 import { listarProdutos, listarTodasUnidades, restaurarUnidade, identificarPeca } from "@/middleware/produtos"
 import { ApiError } from "@/middleware/client"
 import { FiMapPin, FiAlertTriangle, FiCheck } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 export default function Avarias() {
 
@@ -319,7 +320,7 @@ export default function Avarias() {
                                             {produto?.imagem_url ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={produto.imagem_url}
+                                                    src={urlDaImagem(produto.imagem_url)}
                                                     alt={produto.nome}
                                                     className="h-full w-full object-cover"
                                                 />

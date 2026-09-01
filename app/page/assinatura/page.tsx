@@ -16,6 +16,7 @@ import {
     trocarPlano,
 } from "@/middleware/assinatura"
 import type { Assinatura, Plano, PlanoOferta, PreviaTroca } from "@/app/type/type"
+import { irParaPaginaExterna } from "@/security/navegacao"
 import {
     FiAlertCircle,
     FiAlertTriangle,
@@ -98,7 +99,7 @@ export default function AssinaturaPage() {
         setEnviando(plano)
 
         try {
-            window.location.assign(await iniciarPagamento(plano))
+            irParaPaginaExterna(await iniciarPagamento(plano))
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento")
             setEnviando("")
@@ -148,7 +149,7 @@ export default function AssinaturaPage() {
         setEnviando("portal")
 
         try {
-            window.location.assign(await abrirPortalCobranca())
+            irParaPaginaExterna(await abrirPortalCobranca())
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível abrir o portal de cobrança")
             setEnviando("")

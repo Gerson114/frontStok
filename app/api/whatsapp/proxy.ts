@@ -79,7 +79,7 @@ export function idValido(id: string): boolean {
  * descer como anexo, e reescrevê-los aqui abriria a brecha que lá foi
  * fechada.
  */
-export async function repassarArquivo(caminho: string) {
+export async function repassarArquivo(caminho: string, request?: Request) {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get("token")?.value
@@ -88,8 +88,25 @@ export async function repassarArquivo(caminho: string) {
             return new Response("Não autenticado", { status: 401 })
         }
 
+        const cabecalhosDaIda: Record<string, string> = {
+            Authorization: `Bearer ${token}`,
+        }
+
+        // Range vai adiante em vez de ser engolido aqui.
+        //
+        // É com ele que o navegador pede "do segundo 30 em diante" ao
+        // arrastar a barra de um áudio, e é ele que alguns navegadores exigem
+        // antes de começar a tocar. O backend responde a isso (ver
+        // servirArquivo), mas a resposta nunca chegava: este proxy pedia o
+        // arquivo inteiro e devolvia sempre 200, então a faixa só tocava do
+        // começo e arrastar não ia a lugar nenhum.
+        for (const nome of ["range", "if-range"]) {
+            const valor = request?.headers.get(nome)
+            if (valor) cabecalhosDaIda[nome] = valor
+        }
+
         const response = await fetch(`${API_BASE}/private${caminho}`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: cabecalhosDaIda,
             cache: "no-store",
         })
 
@@ -105,15 +122,37 @@ export async function repassarArquivo(caminho: string) {
             "Content-Disposition",
             "X-Content-Type-Options",
             "Content-Security-Policy",
+            // Os dois da resposta parcial: sem eles o navegador recebe um
+            // pedaço e acha que é o arquivo inteiro.
+            "Content-Range",
+            "Accept-Ranges",
         ]) {
             const valor = response.headers.get(nome)
             if (valor) cabecalhos.set(nome, valor)
         }
 
+        // Estes três vão sempre, sobrescrevendo o que veio: são a diferença
+        // entre um arquivo mandado por um cliente ser mostrado e ser
+        // executado, e não podem depender de o backend ter lembrado deles.
+        //
+        // Sem nosniff (e mais ainda sem Content-Type), o navegador adivinha o
+        // tipo pelo conteúdo — um "áudio" que na verdade é HTML abriria como
+        // página na origem do painel, com a sessão do lojista junto. Sem
+        // CORP, qualquer site pode embutir a foto e os áudios dos clientes da
+        // loja numa página dele.
+        cabecalhos.set("X-Content-Type-Options", "nosniff")
+        cabecalhos.set("Cross-Origin-Resource-Policy", "same-origin")
+
+        if (!cabecalhos.has("Content-Type")) {
+            cabecalhos.set("Content-Type", "application/octet-stream")
+        }
+
         // Conversa de cliente não fica em cache de intermediário nenhum.
         cabecalhos.set("Cache-Control", "private, no-store")
 
-        return new Response(response.body, { status: 200, headers: cabecalhos })
+        // O status vai como veio: 206 é a resposta certa a um Range, e
+        // reescrevê-lo como 200 diria ao navegador que o pedaço é o todo.
+        return new Response(response.body, { status: response.status, headers: cabecalhos })
 
     } catch {
         return new Response("Erro interno do servidor", { status: 500 })

@@ -16,6 +16,7 @@ import {
   type LinhaVariacao,
 } from "@/app/components/produto/campos"
 import { FiAlertCircle, FiCheckCircle } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 // Mapa simples de nomes de cores em PT-BR para hex, usado no preview da
 // etiqueta quando a ficha técnica traz uma cor.
@@ -482,7 +483,7 @@ export default function Produto() {
                   <div className="mt-4 rounded-xl overflow-hidden border border-[#D3DADD] aspect-[4/3] bg-[#F0F3F4]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={formData.imagem_url}
+                      src={urlDaImagem(formData.imagem_url)}
                       alt={formData.nome || "Pré-visualização do produto"}
                       className="w-full h-full object-cover"
                       onError={(e) => {

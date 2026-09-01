@@ -81,6 +81,56 @@ export async function corpoDaRequisicao(request: Request): Promise<Record<string
     return dados && typeof dados === "object" ? (dados as Record<string, unknown>) : {}
 }
 
+
+/** Validade da sessão, a mesma do JWT que o backend assina (jwt.ValidadeDaSessao). */
+export const VALIDADE_SESSAO_S = 60 * 60 * 24
+
+/**
+ * Reemite o cookie de sessão devolvido pelo backend, com os atributos certos
+ * para ESTA origem.
+ *
+ * Antes o Set-Cookie do backend era repassado ao navegador letra por letra, e
+ * isso escondia um furo: quem decide o `Secure` lá é o backend, olhando se a
+ * requisição CHEGOU por HTTPS. Só que quem chega ao backend não é o navegador
+ * — é este servidor do Next, por http://localhost:8080, servidor a servidor.
+ * O backend via uma conexão em texto puro, concluía "não é HTTPS" e mandava o
+ * cookie SEM Secure. Em produção, o painel roda em HTTPS e o cookie de sessão
+ * do lojista ia para o navegador sem a marca que o impede de sair por uma
+ * conexão sem criptografia.
+ *
+ * Quem sabe o esquema que o navegador está usando é este lado, não o backend.
+ * Então é aqui que os atributos são decididos — como já se fazia com o cookie
+ * do cadastro (ver app/api/cadastro/route.ts).
+ *
+ * O valor vai como veio, sem decodificar: é o mesmo texto que o navegador
+ * devolve e que `cookies().get("token")` lê de volta.
+ */
+export function cookieDeSessao(recebidos: string[]): string | null {
+
+    const bruto = recebidos.find((cookie) => cookie.startsWith("token="))
+
+    if (!bruto) return null
+
+    const valor = bruto.slice("token=".length).split(";")[0]
+
+    if (!valor) return null
+
+    return [
+        `token=${valor}`,
+        "Path=/",
+        // Fora do alcance de qualquer script da página: é o que faz um XSS
+        // não virar sessão roubada.
+        "HttpOnly",
+        // Não acompanha requisição disparada por outro site — a trava de CSRF
+        // do lado do navegador, além da que o proxy já faz por Origin.
+        "SameSite=Lax",
+        `Max-Age=${VALIDADE_SESSAO_S}`,
+        process.env.NODE_ENV === "production" ? "Secure" : "",
+    ]
+        .filter(Boolean)
+        .join("; ")
+}
+
 /** Id vindo da URL é palpite de quem pediu até ser conferido. */
 export function idValido(id: string): boolean {
     return /^[0-9]+$/.test(id)

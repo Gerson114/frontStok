@@ -11,6 +11,8 @@ import {
     responder,
     consultarAparelho,
     escutarConversas,
+    diaDaMensagem,
+    mesmoDia,
     type AparelhoWhatsApp,
     type CanalWhatsApp,
     type Conversa,
@@ -327,7 +329,12 @@ export default function Conversas() {
     })
 
     return (
-        <main className="mx-auto max-w-6xl px-4 py-10">
+        // Altura da janela inteira, e não o miolo centrado do resto do painel:
+        // conversa é tela de trabalho, e o lojista fica nela o dia todo. Cada
+        // linha a menos na lista é um cliente que ele precisa rolar para achar.
+        // A largura também vai inteira — as duas colunas crescem com a tela em
+        // vez de deixarem faixas vazias dos lados.
+        <main className="flex h-screen flex-col bg-[#F0F3F4] px-4 pb-4 pt-5 md:ml-64 md:px-6">
 
             <div className="flex flex-wrap items-end justify-between gap-3">
 
@@ -355,13 +362,13 @@ export default function Conversas() {
 
             </div>
 
-            <div className="card mt-6 grid overflow-hidden md:grid-cols-[19rem_1fr]">
+            <div className="card mt-4 grid min-h-0 flex-1 overflow-hidden md:grid-cols-[20rem_1fr] lg:grid-cols-[23rem_1fr]">
 
                 {/* ==========================
                     LISTA
                 ========================== */}
 
-                <div className="flex max-h-[34rem] flex-col border-b border-[#E4E9EB] md:max-h-[38rem] md:border-b-0 md:border-r">
+                <div className="flex min-h-0 flex-col border-b border-[#E4E9EB] md:border-b-0 md:border-r">
 
                     <div className="border-b border-[#E4E9EB] p-3">
                         <div className="relative">
@@ -414,17 +421,27 @@ export default function Conversas() {
                             </div>
                         )}
 
-                        <ul>
+                        <ul className="divide-y divide-[#F0F3F4]">
                             {filtradas.map((conversa) => (
                                 <li key={conversa.id}>
                                     <button
                                         type="button"
                                         onClick={() => abrirConversa(conversa)}
                                         aria-current={conversa.id === abertaId ? "true" : undefined}
-                                        className={`flex w-full items-start gap-3 border-b border-[#F0F3F4] px-4 py-3 text-left transition-colors ${
-                                            conversa.id === abertaId ? "bg-[#E6F3FF]" : "hover:bg-[#F0F3F4]"
+                                        className={`relative flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                                            conversa.id === abertaId
+                                                ? "bg-[#E6F3FF]"
+                                                : conversa.nao_lidas > 0
+                                                    ? "bg-[#F7FBFF] hover:bg-[#F0F3F4]"
+                                                    : "hover:bg-[#F7F9FA]"
                                         }`}
                                     >
+                                        {/* Barra na borda em vez de fundo inteiro: diz qual
+                                            está aberta sem competir com a bolinha de não lidas. */}
+                                        {conversa.id === abertaId && (
+                                            <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[#0086FF]" />
+                                        )}
+
                                         <Avatar
                                             conversaId={conversa.id}
                                             nome={conversa.nome || conversa.telefone}
@@ -432,23 +449,38 @@ export default function Conversas() {
                                         />
 
                                         <span className="min-w-0 flex-1">
-                                            <span className="block truncate text-sm font-semibold text-[#1E2428]">
+                                            <span
+                                                className={`block truncate text-sm text-[#1E2428] ${
+                                                    conversa.nao_lidas > 0 ? "font-extrabold" : "font-semibold"
+                                                }`}
+                                            >
                                                 {conversa.nome.trim() || formatarTelefone(conversa.telefone)}
                                             </span>
-                                            <span className="num block truncate text-xs text-[#8C969B]">
-                                                {formatarTelefone(conversa.telefone)}
-                                            </span>
+                                            {/* Só quando há nome: sem ele a linha de
+                                                cima JÁ é o telefone, e repeti-lo
+                                                embaixo enche a linha sem informar. */}
+                                            {conversa.nome.trim() && (
+                                                <span className="num block truncate text-xs text-[#8C969B]">
+                                                    {formatarTelefone(conversa.telefone)}
+                                                </span>
+                                            )}
                                         </span>
 
-                                        <span className="flex shrink-0 flex-col items-end gap-1">
-                                            <span className="num text-[0.68rem] text-[#8C969B]">
+                                        <span className="flex shrink-0 flex-col items-end gap-1.5">
+                                            <span
+                                                className={`num text-[0.68rem] ${
+                                                    conversa.nao_lidas > 0 ? "font-bold text-[#0086FF]" : "text-[#8C969B]"
+                                                }`}
+                                            >
                                                 {horaDaMensagem(conversa.ultima_mensagem_em)}
                                             </span>
 
-                                            {conversa.nao_lidas > 0 && (
+                                            {conversa.nao_lidas > 0 ? (
                                                 <span className="num flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0086FF] px-1.5 text-[0.68rem] font-bold text-white">
                                                     {conversa.nao_lidas}
                                                 </span>
+                                            ) : (
+                                                <span className="h-5" aria-hidden />
                                             )}
                                         </span>
                                     </button>
@@ -464,7 +496,7 @@ export default function Conversas() {
                     FIO
                 ========================== */}
 
-                <div className="flex max-h-[34rem] min-w-0 flex-col md:max-h-[38rem]">
+                <div className="flex min-h-0 min-w-0 flex-col">
 
                     {aberta === null ? (
 
@@ -477,17 +509,17 @@ export default function Conversas() {
 
                     ) : (
                         <>
-                            <div className="flex items-center gap-3 border-b border-[#E4E9EB] px-5 py-3">
+                            <div className="flex items-center gap-3 border-b border-[#E4E9EB] bg-white px-5 py-3">
 
                                 <Avatar
                                     conversaId={aberta.id}
                                     nome={aberta.nome || aberta.telefone}
                                     temFoto={aberta.tem_foto}
-                                    tamanho="h-10 w-10"
+                                    tamanho="h-11 w-11"
                                 />
 
-                                <div className="min-w-0">
-                                    <p className="truncate font-display text-[1.05rem] text-[#1E2428]">
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate font-display text-[1.05rem] leading-tight text-[#1E2428]">
                                         {aberta.nome.trim() || formatarTelefone(aberta.telefone)}
                                     </p>
                                     <p className="num truncate text-xs text-[#8C969B]">
@@ -495,13 +527,78 @@ export default function Conversas() {
                                     </p>
                                 </div>
 
+                                {/* A janela de 24h como estado permanente do topo, e
+                                    não só como aviso na hora de escrever: o lojista
+                                    decide o que dizer sabendo se ainda pode falar
+                                    livremente. */}
+                                <span
+                                    className={`hidden shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold sm:inline-flex ${
+                                        aberta.janela_aberta
+                                            ? "bg-[#E8F5E9] text-[#2E7D32]"
+                                            : "bg-[#FFF6E0] text-[#8A6C1B]"
+                                    }`}
+                                >
+                                    <span
+                                        aria-hidden
+                                        className={`h-1.5 w-1.5 rounded-full ${
+                                            aberta.janela_aberta ? "bg-[#2E7D32]" : "bg-[#8A6C1B]"
+                                        }`}
+                                    />
+                                    {aberta.janela_aberta ? "Pode responder" : "Fora das 24h"}
+                                </span>
+
                             </div>
 
-                            <div className="flex-1 space-y-2 overflow-y-auto bg-[#F7F9FA] p-4">
+                            <div className="fio-conversa flex-1 overflow-y-auto px-4 py-4">
 
-                                {mensagens.map((mensagem) => (
-                                    <Bolha key={mensagem.id} mensagem={mensagem} />
-                                ))}
+                                {mensagens.length === 0 && (
+                                    <p className="py-8 text-center text-sm text-[#8C969B]">
+                                        Nenhuma mensagem nesta conversa ainda.
+                                    </p>
+                                )}
+
+                                {mensagens.map((mensagem, i) => {
+
+                                    const anterior = mensagens[i - 1]
+                                    const seguinte = mensagens[i + 1]
+
+                                    // Divisória de dia: entra quando a mensagem
+                                    // cai num dia diferente da anterior — e antes
+                                    // da primeira, que sempre abre um dia.
+                                    const viraODia =
+                                        !anterior || !mesmoDia(anterior.criada_em, mensagem.criada_em)
+
+                                    // Um grupo é uma sequência do mesmo lado dentro
+                                    // do mesmo dia: é assim que se fala, em rajadas,
+                                    // e desenhar cada mensagem isolada faria a tela
+                                    // parecer mais conversada do que a conversa foi.
+                                    const abreGrupo =
+                                        viraODia || !anterior || anterior.direcao !== mensagem.direcao
+
+                                    const fechaGrupo =
+                                        !seguinte ||
+                                        seguinte.direcao !== mensagem.direcao ||
+                                        !mesmoDia(mensagem.criada_em, seguinte.criada_em)
+
+                                    return (
+                                        <div key={mensagem.id}>
+
+                                            {viraODia && (
+                                                <div className="my-3 flex justify-center">
+                                                    <span className="rounded-full bg-white px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.04em] text-[#5A6469] shadow-sm ring-1 ring-[#E4E9EB]">
+                                                        {diaDaMensagem(mensagem.criada_em)}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <Bolha
+                                                mensagem={mensagem}
+                                                abreGrupo={abreGrupo}
+                                                fechaGrupo={fechaGrupo}
+                                            />
+                                        </div>
+                                    )
+                                })}
 
                                 <div ref={fimDoFio} />
 
@@ -526,7 +623,7 @@ export default function Conversas() {
                                 </div>
                             )}
 
-                            <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[#E4E9EB] p-3">
+                            <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[#E4E9EB] bg-white p-3">
                                 <textarea
                                     rows={1}
                                     value={texto}
@@ -540,16 +637,21 @@ export default function Conversas() {
                                         }
                                     }}
                                     placeholder="Escreva a resposta"
-                                    className="field max-h-32 min-h-11 flex-1 resize-y"
+                                    className="field max-h-32 min-h-11 flex-1 resize-y rounded-2xl"
                                 />
 
+                                {/* Redondo e só com o ícone: a caixa de escrever é
+                                    estreita, e o rótulo "Enviar" roubava dela a
+                                    largura justamente onde o texto é digitado. O
+                                    nome continua existindo para quem usa leitor de
+                                    tela. */}
                                 <button
                                     type="submit"
                                     disabled={enviando || !texto.trim()}
-                                    className="btn btn-primario shrink-0"
+                                    aria-label={enviando ? "Enviando" : "Enviar"}
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0086FF] text-white transition-colors hover:bg-[#0071D6] disabled:opacity-40"
                                 >
-                                    <FiSend className="w-4" aria-hidden />
-                                    {enviando ? "Enviando..." : "Enviar"}
+                                    <FiSend className="w-[1.05rem]" aria-hidden />
                                 </button>
                             </form>
                         </>

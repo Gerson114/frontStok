@@ -14,6 +14,13 @@ const ROTAS_PROTEGIDAS = [
     "/page/banners",
     "/page/promocoes",
     "/page/loja",
+    // A caixa de entrada do WhatsApp da loja. Sem ela aqui, a tela abria para
+    // quem não tem sessão: as conversas em si não vinham (o backend recusa
+    // sem token), mas o painel do lojista se desenhava inteiro para um
+    // estranho — e "não vazou nada porque a outra ponta barrou" é exatamente
+    // a defesa que se perde quando a outra ponta muda.
+    "/page/conversas",
+    "/page/venda",
     // Exige sessão como as demais, mas note que NÃO exige assinatura em dia:
     // é a tela onde o lojista bloqueado paga para voltar a ter acesso.
     "/page/assinatura",
@@ -41,8 +48,68 @@ const ROTAS_ABERTAS = [
 // seria necessário um store externo (ex: Redis). Para uma única instância,
 // como este projeto, isso já barra brute-force e scraping automatizado.
 const JANELA_MS = 60_000
-const LIMITE_LOGIN = 5 // tentativas de login por minuto, por IP
+const LIMITE_CONTA = 5 // tentativas por minuto, por IP, nas rotas de conta
 const LIMITE_API = 120 // demais chamadas de API por minuto, por IP
+const LIMITE_IMAGEM = 400 // fotos por minuto, por IP (ver ROTA_IMAGEM)
+
+/**
+ * O proxy de imagens tem balde próprio, e não o de 120.
+ *
+ * Antes as fotos vinham direto do host de terceiro e não passavam por aqui;
+ * desde que a CSP fechou `img-src`, cada tela do painel manda uma dezena delas
+ * para cá. Somadas no mesmo balde das chamadas de API, uma listagem com dez
+ * produtos gastava um décimo do minuto, e o limite passava a ser atingido
+ * navegando normalmente — derrubando, junto com as fotos, as chamadas que
+ * fazem a tela funcionar. Um limite que dispara com uso legítimo não protege
+ * ninguém: ensina a ignorá-lo.
+ *
+ * Continua finito porque cada chamada faz o servidor buscar um endereço de
+ * fora, e isso é banda nossa gasta a pedido de outra pessoa. Mas é folgado: a
+ * resposta já vem com cache de cinco minutos, então só a primeira visita a
+ * cada foto chega até aqui.
+ */
+const ROTA_IMAGEM = "/api/imagem"
+
+/**
+ * Teto do corpo de uma requisição, o mesmo 1 MiB do backend Go (ver
+ * lib/midlleware/bodylimit).
+ *
+ * Sem isto, cada rota chamava `request.json()` num corpo de tamanho livre — e
+ * quem chama escolhe esse tamanho. Um POST de 40 MB era lido inteiro para a
+ * memória do servidor ANTES de qualquer validação de conteúdo: a rota até
+ * respondia "dados inválidos", mas só depois de já ter pago o preço. O
+ * cabeçalho é conferido aqui, antes de a rota existir, e um só lugar cobre
+ * todas elas.
+ *
+ * Nada legítimo do painel chega perto: os corpos são JSON de formulário, e a
+ * foto de produto é uma URL, não um upload.
+ */
+const LIMITE_CORPO_BYTES = 1 << 20
+
+/**
+ * Limite das telas, separado do das rotas de API.
+ *
+ * As páginas não tinham limite nenhum — dava para varrer o painel inteiro sem
+ * esbarrar em nada. É folgado porque navegar de verdade gasta pouco (uma
+ * pessoa abre dezenas de telas por minuto, não centenas) e porque a loja
+ * inteira sai por um IP só.
+ */
+const LIMITE_PAGINA = 300
+
+/**
+ * As rotas que ficam no balde apertado, e não no de 120 por minuto.
+ *
+ * Login é o caso óbvio (força bruta de senha). As outras duas entram pelo
+ * mesmo motivo pelo qual o login entrou: são as portas abertas a quem ainda
+ * não tem conta, e 120 por minuto por IP dá para criar cadastro em massa e
+ * para abrir sessão de pagamento no Stripe em série — o que custa dinheiro e
+ * suja a conta da loja mesmo sem ninguém pagar nada.
+ */
+const ROTAS_DE_CONTA = [
+    "/api/login",
+    "/api/cadastro",
+    "/api/assinatura/checkout-publico",
+]
 
 const contadores = new Map<string, { total: number; expiraEm: number }>()
 
@@ -54,9 +121,54 @@ setInterval(() => {
     }
 }, JANELA_MS).unref()
 
+/**
+ * Quantos proxies confiáveis existem entre o navegador e este processo.
+ *
+ * O padrão é ZERO, e não um: sem declaração, X-Forwarded-For é ignorado por
+ * completo e vale o IP da conexão. É o mesmo padrão que o backend Go adota
+ * (ver SetTrustedProxies em main.go), e pelo mesmo motivo — supor um proxy
+ * que não existe faz o limite ler um cabeçalho que quem chama escreve, e um
+ * IP novo por tentativa é um limite que não limita nada.
+ *
+ * Errar para este lado atrapalha quem esqueceu de configurar (a loja inteira
+ * atrás de um NAT conta como um IP só); errar para o outro lado desliga o
+ * limite sem ninguém perceber.
+ */
+function proxiesConfiaveis(): number {
+    const declarado = Number(process.env.TRUSTED_PROXY_COUNT)
+
+    return Number.isInteger(declarado) && declarado >= 0 ? declarado : 0
+}
+
+const PROXIES_CONFIAVEIS = proxiesConfiaveis()
+
+/**
+ * O IP de quem chamou, para contar no limite por minuto.
+ *
+ * X-Forwarded-For é uma LISTA que cada salto acrescenta no fim, e a primeira
+ * posição é a única que quem chama escreve à vontade — mandar
+ * "X-Forwarded-For: 1.2.3.4" num cabeçalho inventado dava a cada tentativa de
+ * login um IP novo, e o limite de cinco por minuto virava enfeite. Por isso
+ * conta-se de trás para frente: o último item foi escrito pelo nosso próprio
+ * proxy e é o que ele viu de verdade.
+ */
 function obterIp(request: NextRequest): string {
-    const encaminhado = request.headers.get("x-forwarded-for")
-    if (encaminhado) return encaminhado.split(",")[0].trim()
+    // Zero proxies: nada de X-Forwarded-For. Sem ninguém confiável na frente
+    // para reescrevê-lo, o cabeçalho é só texto que quem chama inventou.
+    const encaminhado = PROXIES_CONFIAVEIS > 0 ? request.headers.get("x-forwarded-for") : null
+
+    if (encaminhado) {
+        const saltos = encaminhado.split(",").map((parte) => parte.trim()).filter(Boolean)
+
+        // Curto demais para o número de saltos declarados: alguém mandou a
+        // lista pela metade, ou TRUSTED_PROXY_COUNT está maior do que a
+        // realidade. Nos dois casos, a posição que sobraria seria a primeira —
+        // justamente a que quem chama escreve à vontade. Cair fora daqui é o
+        // que impede o cabeçalho curto de virar um IP novo a cada tentativa.
+        if (saltos.length >= PROXIES_CONFIAVEIS) {
+            return saltos[saltos.length - PROXIES_CONFIAVEIS]
+        }
+    }
 
     return request.headers.get("x-real-ip") ?? "desconhecido"
 }
@@ -78,6 +190,52 @@ function podeConsumir(chave: string, limite: number): boolean {
     registro.total += 1
     return true
 }
+
+// ==============================
+// CSP: PARA ONDE A ABA PODE FALAR
+// ==============================
+/**
+ * As origens de WebSocket que a página pode abrir.
+ *
+ * As conversas ao vivo saem de NEXT_PUBLIC_WS_URL, que é OUTRO servidor — o
+ * backend Go, não a origem do painel. Com `connect-src 'self'` sozinho o
+ * navegador cortava esse fio calado, e a tela só se atualizava na varredura
+ * de meio em meio minuto; abrir a mão com `connect-src *` consertaria isso
+ * devolvendo a um script injetado o direito de mandar as conversas para
+ * qualquer lugar. Então declara-se o endereço, e só ele.
+ *
+ * Vai também a versão wss:// do que estiver configurado como ws://, porque é
+ * para ela que o cliente sobe sozinho quando o painel é servido por HTTPS
+ * (ver `enderecoDoFluxo` em middleware/whatsapp.ts).
+ */
+function origensDoSocket(): string[] {
+    const bruto = process.env.NEXT_PUBLIC_WS_URL
+
+    if (!bruto) return []
+
+    try {
+        const url = new URL(bruto.trim())
+
+        if (url.protocol !== "ws:" && url.protocol !== "wss:") return []
+
+        // Em produção só a forma segura entra na política, mesmo que a
+        // variável ainda diga ws://. Declarar a origem em texto puro seria a
+        // CSP autorizando o navegador a abrir justamente a conexão que o
+        // cliente evita (ver enderecoDoFluxo em middleware/whatsapp.ts) — e
+        // uma permissão que ninguém pretende usar é uma permissão que só
+        // serve a quem não deveria.
+        if (url.protocol === "wss:") return [url.origin]
+
+        return process.env.NODE_ENV === "production"
+            ? [`wss://${url.host}`]
+            : [url.origin, `wss://${url.host}`]
+
+    } catch {
+        return []
+    }
+}
+
+const ORIGENS_SOCKET = origensDoSocket().join(" ")
 
 // ==============================
 // CSRF
@@ -110,10 +268,28 @@ function origemConfiavel(request: NextRequest): boolean {
         }
     }
 
-    // Sem Origin nem Referer: não é uma requisição de navegador (ex:
-    // servidor a servidor), então não carrega o cookie de sessão do usuário
-    // de qualquer forma — não é um vetor de CSRF.
-    return true
+    // Sem Origin nem Referer, recusa.
+    //
+    // Antes aqui se devolvia true, com o argumento de que sem esses
+    // cabeçalhos não é um navegador e portanto não há cookie ambiente para
+    // abusar. O argumento é bom e ainda assim a porta fica aberta: todo
+    // navegador manda Origin em POST/PUT/DELETE/PATCH, então nenhuma
+    // chamada legítima do painel cai neste caso, e o que sobra é só o que
+    // conseguiu chegar aqui com o cookie do lojista sem se identificar.
+    // Defesa que depende de o atacante não conseguir omitir um cabeçalho é
+    // defesa que ele desliga.
+    //
+    // Se um dia algo servidor-a-servidor precisar destas rotas, o caminho é
+    // uma credencial própria, não uma exceção baseada em cabeçalho ausente.
+    return false
+}
+
+/** Se o corpo declarado passa do teto — ver LIMITE_CORPO_BYTES. */
+function corpoGrandeDemais(request: NextRequest): boolean {
+
+    const declarado = Number(request.headers.get("content-length"))
+
+    return Number.isFinite(declarado) && declarado > LIMITE_CORPO_BYTES
 }
 
 export function proxy(request: NextRequest) {
@@ -124,10 +300,23 @@ export function proxy(request: NextRequest) {
             return Response.json({ erro: "Origem não permitida" }, { status: 403 })
         }
 
+        if (corpoGrandeDemais(request)) {
+            return Response.json(
+                { erro: "Requisição grande demais" },
+                { status: 413, headers: { "Cache-Control": "no-store" } }
+            )
+        }
+
         const ip = obterIp(request)
-        const ehLogin = pathname === "/api/login"
-        const chave = `${ip}:${ehLogin ? "login" : "api"}`
-        const limite = ehLogin ? LIMITE_LOGIN : LIMITE_API
+
+        const balde = ROTAS_DE_CONTA.includes(pathname)
+            ? { nome: "conta", limite: LIMITE_CONTA }
+            : pathname === ROTA_IMAGEM
+                ? { nome: "imagem", limite: LIMITE_IMAGEM }
+                : { nome: "api", limite: LIMITE_API }
+
+        const chave = `${ip}:${balde.nome}`
+        const limite = balde.limite
 
         if (!podeConsumir(chave, limite)) {
             return Response.json(
@@ -139,16 +328,33 @@ export function proxy(request: NextRequest) {
         return NextResponse.next()
     }
 
+    // Daqui para baixo são as telas. Elas também contam — sem isso, o painel
+    // inteiro podia ser varrido tela a tela sem esbarrar em nada, e a
+    // proteção de rota (o redirecionamento para /login) só diz que a página
+    // não abre, não que ela não pode ser pedida mil vezes.
+    if (!podeConsumir(`${obterIp(request)}:pagina`, LIMITE_PAGINA)) {
+        return new Response("Muitas requisições. Tente novamente em instantes.", {
+            status: 429,
+            headers: { "Retry-After": "60", "Content-Type": "text/plain; charset=utf-8" },
+        })
+    }
+
     const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
     const isDev = process.env.NODE_ENV === "development"
 
+    // img-src fechado em 'self': nenhuma figura vem direto de servidor de
+    // terceiro. Antes era `https:`, que liberava qualquer host do mundo — e
+    // uma URL de imagem é um canal de saída, o jeito mais simples de um script
+    // injetado mandar o que roubou para fora sem esbarrar em nada. As fotos de
+    // fora entram pelo proxy (app/api/imagem), que busca no servidor e serve
+    // daqui; `data:` fica porque o QR do WhatsApp chega assim.
     const cspHeader = `
         default-src 'self';
         script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""};
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        img-src 'self' https: data:;
+        img-src 'self' data:;
         font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self';
+        connect-src 'self'${ORIGENS_SOCKET ? ` ${ORIGENS_SOCKET}` : ""};
         object-src 'none';
         base-uri 'self';
         form-action 'self';
@@ -178,6 +384,13 @@ export function proxy(request: NextRequest) {
     response.headers.set("X-Content-Type-Options", "nosniff")
     response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+
+    // X-Frame-Options e frame-ancestors barram o painel DENTRO de outra
+    // página; estes dois cuidam do caminho inverso, o de outra página abrir o
+    // painel com window.open e ficar com uma referência viva para ele. Com o
+    // isolamento, a janela de quem abriu e a do painel deixam de se enxergar.
+    response.headers.set("Cross-Origin-Opener-Policy", "same-origin")
+    response.headers.set("Cross-Origin-Resource-Policy", "same-origin")
 
     if (!isDev) {
         response.headers.set(

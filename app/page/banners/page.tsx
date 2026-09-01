@@ -9,6 +9,7 @@ import { validarBanner, type NovoBanner } from "@/security/validate"
 import { ApiError } from "@/middleware/client"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import { FiImage } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 interface FormState {
     titulo: string
@@ -319,7 +320,7 @@ export default function Banners() {
                                                         {produto.imagem_url && (
                                                             // eslint-disable-next-line @next/next/no-img-element
                                                             <img
-                                                                src={produto.imagem_url}
+                                                                src={urlDaImagem(produto.imagem_url)}
                                                                 alt=""
                                                                 className="h-full w-full object-cover"
                                                             />
@@ -435,7 +436,7 @@ export default function Banners() {
                                         {banner.imagem_url ? (
                                             // eslint-disable-next-line @next/next/no-img-element
                                             <img
-                                                src={banner.imagem_url}
+                                                src={urlDaImagem(banner.imagem_url)}
                                                 alt={banner.titulo}
                                                 className="h-full w-full object-cover"
                                             />

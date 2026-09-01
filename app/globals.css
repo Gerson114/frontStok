@@ -290,6 +290,73 @@
   color: var(--ink-2);
 }
 
+/* ==========================================================================
+   O fio da conversa
+   ========================================================================== */
+
+/*
+ * O fundo do fio de mensagens.
+ *
+ * A textura existe para separar o fio do resto do painel sem usar uma cor
+ * chapada: ela dá ao trecho de conversa a sensação de superfície própria, que
+ * é o que todo aplicativo de mensagem faz — e é o que torna a bolha branca
+ * legível como bolha, e não como mais um bloco do formulário.
+ *
+ * Desenhada em CSS, e não com uma imagem de fundo, porque a CSP do painel
+ * fecha img-src em 'self' (ver proxy.ts): um .png de textura viria de fora ou
+ * exigiria mais uma requisição nossa, e um gradiente não custa nem uma.
+ *
+ * Bem apagada de propósito — o que precisa ser visto aqui é o texto do
+ * cliente, não o papel de parede.
+ */
+.fio-conversa {
+  background-color: #f7f9fa;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(30, 36, 40, 0.045) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/*
+ * O cursor da barra do áudio.
+ *
+ * O <input type=range> desenha um controle diferente em cada navegador, e o
+ * padrão é grande demais para caber numa bolha de conversa. Aqui ele vira um
+ * ponto pequeno, na cor que contrasta com a bolha em que está.
+ */
+.audio-linha-clara::-webkit-slider-thumb,
+.audio-linha-escura::-webkit-slider-thumb {
+  appearance: none;
+  height: 0.7rem;
+  width: 0.7rem;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.audio-linha-clara::-webkit-slider-thumb {
+  background: #ffffff;
+}
+
+.audio-linha-escura::-webkit-slider-thumb {
+  background: #0086ff;
+}
+
+.audio-linha-clara::-moz-range-thumb,
+.audio-linha-escura::-moz-range-thumb {
+  height: 0.7rem;
+  width: 0.7rem;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.audio-linha-clara::-moz-range-thumb {
+  background: #ffffff;
+}
+
+.audio-linha-escura::-moz-range-thumb {
+  background: #0086ff;
+}
+
 }
 /* fim de @layer components */
 

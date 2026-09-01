@@ -25,6 +25,7 @@ import {
     FiEye,
     FiEyeOff,
 } from "react-icons/fi"
+import { urlDaImagem } from "@/security/imagem"
 
 interface CartaoProduto {
     produto: Produto
@@ -802,8 +803,9 @@ export default function Home() {
 
                                             {produto.imagem_url ? (
 
+                                                // eslint-disable-next-line @next/next/no-img-element
                                                 <img
-                                                    src={produto.imagem_url}
+                                                    src={urlDaImagem(produto.imagem_url)}
                                                     alt={produto.nome}
                                                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                                                 />
@@ -1015,8 +1017,9 @@ export default function Home() {
 
                             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
                                 {produtoSelecionado.imagem_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
-                                        src={produtoSelecionado.imagem_url}
+                                        src={urlDaImagem(produtoSelecionado.imagem_url)}
                                         alt={produtoSelecionado.nome}
                                         className="h-full w-full object-cover"
                                     />

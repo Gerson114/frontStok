@@ -1,4 +1,5 @@
 import { extrairMensagemErro } from "@/middleware/client"
+import { cookieDeSessao } from "@/app/api/backend"
 
 const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
@@ -51,9 +52,18 @@ export async function POST(request: Request) {
             { status: 200, headers: { "Cache-Control": "no-store" } }
         )
 
-        for (const cookie of response.headers.getSetCookie()) {
-            saida.headers.append("Set-Cookie", cookie)
+        // Mesma reemissão do login: quem sabe se o navegador está em HTTPS é
+        // este lado, não o backend. Ver cookieDeSessao.
+        const cookie = cookieDeSessao(response.headers.getSetCookie())
+
+        if (!cookie) {
+            return Response.json(
+                { erro: "O servidor não abriu a sessão. Entre pelo login." },
+                { status: 502 }
+            )
         }
+
+        saida.headers.append("Set-Cookie", cookie)
 
         // O cadastro terminou: o cookie que o representava não serve mais
         // para nada e some junto.

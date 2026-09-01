@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.23"],
   poweredByHeader: false,
 
+  // Empacota em .next/standalone só o que o servidor precisa em produção,
+  // com um server.js próprio. É o que permite a imagem final não levar o
+  // node_modules inteiro nem o código-fonte — menos coisa para baixar a cada
+  // deploy e menos coisa que possa ser explorada lá dentro, do mesmo jeito
+  // que o Dockerfile do backend já fazia com o binário Go.
+  output: "standalone",
+
   async redirects() {
     return [
       // A lista de produtos morava em /page/home, nome que não dizia o que a

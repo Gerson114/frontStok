@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { isValidUrl } from "@/security/validate"
 
 // Server-only (ao contrário de NEXT_PUBLIC_*): o navegador nunca fala direto
 // com o backend Go.
@@ -48,10 +49,21 @@ export async function PUT(request: Request) {
         cores[nome] = valor.trim()
     }
 
-    return encaminhar("PUT", {
-        ...cores,
-        logo_url: typeof logo_url === "string" ? logo_url.trim().slice(0, 500) : "",
-    })
+    // O logo é publicado pela vitrine dentro de uma tag de imagem. Aceitar
+    // qualquer texto aqui deixava passar "javascript:..." e "data:text/html",
+    // que não são endereços de figura — são script esperando um lugar onde
+    // alguém os trate como link. Só http/https, e o campo vazio, que é como o
+    // lojista tira o logo.
+    const logo = typeof logo_url === "string" ? logo_url.trim().slice(0, 500) : ""
+
+    if (logo && !isValidUrl(logo)) {
+        return Response.json(
+            { erro: "O endereço do logo precisa ser uma URL http ou https" },
+            { status: 400 }
+        )
+    }
+
+    return encaminhar("PUT", { ...cores, logo_url: logo })
 }
 
 async function encaminhar(metodo: "GET" | "PUT", corpo?: unknown) {

@@ -1,5 +1,6 @@
 import { sanitizeEmail } from "@/security/sanitize"
 import { extrairMensagemErro } from "@/middleware/client"
+import { cookieDeSessao } from "@/app/api/backend"
 
 // Server-only: nunca exposta ao navegador (ao contrário de NEXT_PUBLIC_*).
 // Login passa por aqui em vez de ir direto ao backend para que o cookie de
@@ -46,9 +47,19 @@ export async function POST(request: Request) {
             headers: { "Cache-Control": "no-store" },
         })
 
-        for (const cookie of response.headers.getSetCookie()) {
-            saida.headers.append("Set-Cookie", cookie)
+        // Reemitido para esta origem em vez de repassado como veio: os
+        // atributos do cookie (Secure, sobretudo) têm de descrever a conexão
+        // do NAVEGADOR, e o backend só enxerga a nossa. Ver cookieDeSessao.
+        const cookie = cookieDeSessao(response.headers.getSetCookie())
+
+        if (!cookie) {
+            return Response.json(
+                { erro: "O servidor não abriu a sessão. Tente de novo." },
+                { status: 502 }
+            )
         }
+
+        saida.headers.append("Set-Cookie", cookie)
 
         return saida
 
