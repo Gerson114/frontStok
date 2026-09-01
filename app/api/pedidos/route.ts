@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url, API_BASE } from "@/app/api/backend"
+import { pedidos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function GET() {
     try {
@@ -12,7 +13,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/pedidos`, {
+        const response = await fetch(url(pedidos.lista()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -42,7 +43,7 @@ export async function GET() {
 // não cabe é o backend; aqui só se repassa.
 export async function POST(request: Request) {
     const corpo = await request.json().catch(() => null)
-    return repassarPedido("/pedidos", corpo ?? {})
+    return repassarPedido(pedidos.criar(), corpo ?? {})
 }
 
 export async function repassarPedido(caminho: string, corpo: unknown) {

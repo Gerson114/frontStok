@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
+import { url } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function GET() {
     try {
@@ -15,7 +16,7 @@ export async function GET() {
         }
 
         const response = await fetch(
-            `${API_BASE}/private/consulta`,
+            url(produtos.consultar()),
             {
                 method: "GET",
                 headers: {

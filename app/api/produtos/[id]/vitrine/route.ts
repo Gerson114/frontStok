@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // PUT /api/produtos/:id/vitrine — põe ou tira o produto do site.
 //
@@ -24,7 +25,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
         const corpo = await request.json().catch(() => null) as { publicado?: unknown } | null
 
-        const response = await fetch(`${API_BASE}/private/produto/${id}/vitrine`, {
+        const response = await fetch(url(produtos.vitrine(id)), {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,

@@ -2,8 +2,9 @@ import { cookies } from "next/headers"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao, sanitizeAtributos } from "@/security/sanitize"
 import { validarProdutoVariantes, type NovoProdutoVariantes } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function POST(request: Request) {
     try {
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
             return Response.json({ erro: erros[0], erros }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/cadastrarProdutoVariantes`, {
+        const response = await fetch(url(produtos.cadastrarVariantes()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

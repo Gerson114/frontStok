@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/fornecedores — de quem a loja compra.
 export async function GET() {
@@ -36,7 +37,7 @@ async function repassar(metodo: "GET" | "POST", corpo: unknown) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/fornecedores`, {
+        const response = await fetch(url(estoque.fornecedores()), {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,

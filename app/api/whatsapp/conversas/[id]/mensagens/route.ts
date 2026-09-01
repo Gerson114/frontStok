@@ -1,4 +1,5 @@
 import { idValido, repassar, safeParse } from "../../../proxy"
+import { whatsapp } from "@/app/api/rotas"
 
 // GET /api/whatsapp/conversas/:id/mensagens — o fio da conversa.
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,7 +10,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
         return Response.json({ erro: "Conversa inválida" }, { status: 400 })
     }
 
-    return repassar("GET", `/whatsapp/conversas/${id}/mensagens`)
+    return repassar("GET", whatsapp.mensagens(id))
 }
 
 // POST /api/whatsapp/conversas/:id/mensagens — responde ao cliente.
@@ -28,5 +29,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return Response.json({ erro: "Escreva alguma coisa antes de enviar" }, { status: 400 })
     }
 
-    return repassar("POST", `/whatsapp/conversas/${id}/mensagens`, { texto: texto.slice(0, 4096) })
+    return repassar("POST", whatsapp.mensagens(id), { texto: texto.slice(0, 4096) })
 }

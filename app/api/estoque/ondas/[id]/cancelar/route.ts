@@ -1,4 +1,5 @@
 import { idValido, repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // POST /api/estoque/ondas/:id/cancelar — desmancha a separação.
 //
@@ -12,5 +13,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
         return Response.json({ erro: "Onda inválida" }, { status: 400 })
     }
 
-    return repassarAoBackend("POST", `/private/estoque/ondas/${id}/cancelar`, {})
+    return repassarAoBackend("POST", estoque.cancelarOnda(id), {})
 }

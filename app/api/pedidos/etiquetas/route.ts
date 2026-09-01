@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { pedidos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/pedidos/etiquetas — a fila de impressão da loja.
 //
@@ -18,7 +19,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/pedidos/etiquetas`, {
+        const response = await fetch(url(pedidos.etiquetas()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

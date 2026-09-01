@@ -1,4 +1,5 @@
 import { repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // GET  /api/estoque/reposicao — o que está abaixo do mínimo na prateleira.
 // POST /api/estoque/reposicao — põe essas reposições na fila.
@@ -7,9 +8,9 @@ import { repassarAoBackend } from "@/app/api/backend"
 // acontece a cada abertura de tela; criar trabalho para alguém é decisão, e
 // decisão não se toma sozinha ao carregar uma página.
 export async function GET() {
-    return repassarAoBackend("GET", "/private/estoque/reposicao")
+    return repassarAoBackend("GET", estoque.reposicao())
 }
 
 export async function POST() {
-    return repassarAoBackend("POST", "/private/estoque/reposicao", {})
+    return repassarAoBackend("POST", estoque.reposicao(), {})
 }

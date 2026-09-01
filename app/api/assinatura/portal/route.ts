@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // POST /api/assinatura/portal — devolve a URL do portal de cobrança do
 // Stripe, onde o lojista troca o cartão, baixa as faturas e cancela a
@@ -18,7 +19,7 @@ export async function POST() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/assinatura/portal`, {
+        const response = await fetch(url(conta.portal()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

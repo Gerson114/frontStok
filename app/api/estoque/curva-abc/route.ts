@@ -1,4 +1,5 @@
 import { corpoDaRequisicao, repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // POST /api/estoque/curva-abc — reapura o giro de cada produto.
 //
@@ -14,5 +15,5 @@ export async function POST(request: Request) {
         return Response.json({ erro: "Janela inválida" }, { status: 400 })
     }
 
-    return repassarAoBackend("POST", "/private/estoque/curva-abc", { dias })
+    return repassarAoBackend("POST", estoque.curvaABC(), { dias })
 }

@@ -1,4 +1,5 @@
 import { idValido, repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // GET /api/estoque/ondas/:id — a onda com as paradas e os pedidos dela.
 //
@@ -12,5 +13,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         return Response.json({ erro: "Onda inválida" }, { status: 400 })
     }
 
-    return repassarAoBackend("GET", `/private/estoque/ondas/${id}`)
+    return repassarAoBackend("GET", estoque.onda(id))
 }

@@ -1,9 +1,8 @@
 import { sanitizeEmail } from "@/security/sanitize"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { publico } from "@/app/api/rotas"
 
-// Mesma lógica de /api/login: nunca fala direto com o backend a partir do
-// navegador, só o servidor Next repassa a requisição.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // Nome do cookie que guarda o token do cadastro em andamento — aquele que
 // liga o formulário já preenchido ao pagamento que vem depois.
@@ -32,7 +31,7 @@ export async function POST(request: Request) {
             return Response.json({ erro: "Email ou senha inválidos" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/public/cadastro`, {
+        const response = await fetch(url(publico.cadastro()), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { repassar } from "../proxy"
+import { whatsapp } from "@/app/api/rotas"
 
 // POST /api/whatsapp/bilhete — a senha de um minuto que a tela apresenta ao
 // abrir o WebSocket.
@@ -8,5 +9,5 @@ import { repassar } from "../proxy"
 // do backend. Então a prova de identidade acontece aqui, por HTTP normal, e
 // o socket só recebe o bilhete.
 export async function POST() {
-    return repassar("POST", "/whatsapp/bilhete")
+    return repassar("POST", whatsapp.bilhete())
 }

@@ -2,8 +2,9 @@ import { cookies } from "next/headers"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao } from "@/security/sanitize"
 import { validarBanner, type NovoBanner } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function GET() {
     try {
@@ -14,7 +15,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/banners`, {
+        const response = await fetch(url(produtos.banners()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
             return Response.json({ erro: erros[0], erros }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/banners`, {
+        const response = await fetch(url(produtos.banners()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

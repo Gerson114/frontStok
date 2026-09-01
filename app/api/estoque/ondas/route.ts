@@ -1,4 +1,5 @@
 import { corpoDaRequisicao, repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // GET  /api/estoque/ondas — as ondas da loja, da mais recente para a mais antiga.
 // POST /api/estoque/ondas — abre uma onda com os pedidos informados.
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
 
     const consulta = situacao ? `?situacao=${encodeURIComponent(situacao)}` : ""
 
-    return repassarAoBackend("GET", `/private/estoque/ondas${consulta}`)
+    return repassarAoBackend("GET", estoque.ondas(consulta))
 }
 
 export async function POST(request: Request) {
@@ -38,5 +39,5 @@ export async function POST(request: Request) {
         return Response.json({ erro: "Pedido inválido na lista" }, { status: 400 })
     }
 
-    return repassarAoBackend("POST", "/private/estoque/ondas", { pedidos: ids })
+    return repassarAoBackend("POST", estoque.ondas(), { pedidos: ids })
 }

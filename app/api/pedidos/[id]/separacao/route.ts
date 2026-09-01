@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { pedidos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // // GET /api/pedidos/:id/separacao — a lista de separação do pedido, já na
 // ordem em que se anda pelo estoque. Exige o plano com site: se a loja não
@@ -21,7 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
             return Response.json({ erro: "pedido inválido" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/pedidos/${id}/separacao`, {
+        const response = await fetch(url(pedidos.separacao(id)), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

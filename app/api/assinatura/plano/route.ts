@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // Os planos oferecidos. Repetidos aqui de propósito: esta rota roda no
 // servidor e não deve encaminhar ao backend qualquer texto que o navegador
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const response = await fetch(`${API_BASE}/private/assinatura/plano`, {
+        const response = await fetch(url(conta.trocarPlano()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

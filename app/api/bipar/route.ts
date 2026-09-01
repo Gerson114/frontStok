@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // // GET /api/bipar?codigo=... — resolve o código lido pelo leitor de código de
 // barras: tanto a etiqueta da peça quanto a do produto. Quem decide qual é
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
             return Response.json({ erro: "Informe o código lido" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/bipar?codigo=${encodeURIComponent(codigo)}`, {
+        const response = await fetch(url(estoque.bipar(codigo)), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

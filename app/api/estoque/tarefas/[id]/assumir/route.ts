@@ -1,4 +1,5 @@
 import { corpoDaRequisicao, idValido, repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // POST /api/estoque/tarefas/:id/assumir
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,5 +10,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return Response.json({ erro: "Tarefa inválida" }, { status: 400 })
     }
 
-    return repassarAoBackend("POST", `/private/estoque/tarefas/${id}/assumir`, await corpoDaRequisicao(request))
+    return repassarAoBackend("POST", estoque.assumirTarefa(id), await corpoDaRequisicao(request))
 }

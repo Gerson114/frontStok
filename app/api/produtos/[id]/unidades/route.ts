@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function GET(
     _request: Request,
@@ -21,7 +22,7 @@ export async function GET(
             return Response.json({ erro: "produto inválido" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/produto/${id}/unidades`, {
+        const response = await fetch(url(produtos.unidades(id)), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

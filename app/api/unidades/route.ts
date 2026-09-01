@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function GET() {
     try {
@@ -12,7 +13,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/unidades`, {
+        const response = await fetch(url(estoque.unidades()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

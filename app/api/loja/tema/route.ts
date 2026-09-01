@@ -1,10 +1,9 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
 import { isValidUrl } from "@/security/validate"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-// Server-only (ao contrário de NEXT_PUBLIC_*): o navegador nunca fala direto
-// com o backend Go.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 /** Uma cor do tema como o backend a aceita: hexadecimal longo, ou vazio. */
 const COR_RE = /^#[0-9a-fA-F]{6}$/
@@ -75,7 +74,7 @@ async function encaminhar(metodo: "GET" | "PUT", corpo?: unknown) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/loja/tema`, {
+        const response = await fetch(url(conta.tema()), {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,

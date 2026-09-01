@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // // GET /api/entradas/:id/etiquetas — as peças de uma remessa, para imprimir
 // as etiquetas do lote inteiro de uma vez.
@@ -20,7 +21,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
             return Response.json({ erro: "entrada inválida" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/entradas/${id}/etiquetas`, {
+        const response = await fetch(url(estoque.etiquetasDaEntrada(id)), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

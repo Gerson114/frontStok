@@ -1,12 +1,8 @@
 import { sanitizeEmail } from "@/security/sanitize"
 import { extrairMensagemErro } from "@/middleware/client"
-import { cookieDeSessao } from "@/app/api/backend"
+import { url, cookieDeSessao } from "@/app/api/backend"
+import { publico } from "@/app/api/rotas"
 
-// Server-only: nunca exposta ao navegador (ao contrário de NEXT_PUBLIC_*).
-// Login passa por aqui em vez de ir direto ao backend para que o cookie de
-// sessão seja sempre definido na origem do próprio Next, evitando depender
-// de CORS/cookie de terceiros entre front e backend em produção.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function POST(request: Request) {
     try {
@@ -26,7 +22,7 @@ export async function POST(request: Request) {
             return Response.json({ erro: "Email ou senha inválidos" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/public/login`, {
+        const response = await fetch(url(publico.login()), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

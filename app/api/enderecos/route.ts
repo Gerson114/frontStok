@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { API_BASE } from "@/app/api/backend"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/enderecos — os lugares do estoque, com ocupação de cada um.
 // POST /api/enderecos — cadastra uma prateleira nova.

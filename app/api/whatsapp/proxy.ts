@@ -1,9 +1,7 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { API_BASE } from "@/app/api/backend"
 
-// Server-only (ao contrário de NEXT_PUBLIC_*): o navegador nunca fala direto
-// com o backend Go.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 /**
  * Repassa uma chamada de WhatsApp ao backend, com o token do cookie.

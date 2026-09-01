@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function DELETE(
     _request: Request,
@@ -21,7 +22,7 @@ export async function DELETE(
             return Response.json({ erro: "unidade inválida" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/unidades/${unidadeId}`, {
+        const response = await fetch(url(estoque.unidade(unidadeId)), {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${token}`,

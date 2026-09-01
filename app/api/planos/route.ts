@@ -1,6 +1,7 @@
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { publico } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/planos — o que está à venda, para a tela de cadastro.
 //
@@ -13,7 +14,7 @@ const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 // fatura cobra.
 export async function GET() {
     try {
-        const response = await fetch(`${API_BASE}/public/planos`, {
+        const response = await fetch(url(publico.planos()), {
             method: "GET",
             headers: { Accept: "application/json" },
             cache: "no-store",

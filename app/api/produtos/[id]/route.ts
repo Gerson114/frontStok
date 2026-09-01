@@ -2,8 +2,9 @@ import { cookies } from "next/headers"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao, sanitizeAtributos } from "@/security/sanitize"
 import { validarProdutoEditavel, type ProdutoEditavel } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function DELETE(
     _request: Request,
@@ -23,7 +24,7 @@ export async function DELETE(
             return Response.json({ erro: "produto inválido" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/produto/${id}`, {
+        const response = await fetch(url(produtos.porId(id)), {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -93,7 +94,7 @@ export async function PUT(
             return Response.json({ erro: erros[0], erros }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/produto/${id}`, {
+        const response = await fetch(url(produtos.porId(id)), {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,

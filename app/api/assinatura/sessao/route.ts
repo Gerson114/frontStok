@@ -1,7 +1,7 @@
 import { extrairMensagemErro } from "@/middleware/client"
-import { cookieDeSessao } from "@/app/api/backend"
+import { url, cookieDeSessao } from "@/app/api/backend"
+import { publico } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 const COOKIE_CADASTRO = "cadastro"
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
             return Response.json({ erro: "Sessão de pagamento inválida" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/public/assinatura/sessao`, {
+        const response = await fetch(url(publico.assinaturaSessao()), {
             method: "POST",
             headers: {
                 Accept: "application/json",

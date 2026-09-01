@@ -1,9 +1,10 @@
 import { repassar, safeParse } from "../proxy"
+import { whatsapp } from "@/app/api/rotas"
 
 // GET /api/whatsapp/canal — como está a conexão desta loja. O token nunca
 // volta do backend, nem mascarado.
 export async function GET() {
-    return repassar("GET", "/whatsapp/canal")
+    return repassar("GET", whatsapp.canal())
 }
 
 // PUT /api/whatsapp/canal — conecta ou reconecta o WhatsApp da loja.
@@ -20,7 +21,7 @@ export async function PUT(request: Request) {
     const texto = (valor: unknown, limite: number) =>
         typeof valor === "string" ? valor.trim().slice(0, limite) : ""
 
-    return repassar("PUT", "/whatsapp/canal", {
+    return repassar("PUT", whatsapp.canal(), {
         phone_number_id: texto(phone_number_id, 64),
         waba_id: texto(waba_id, 64),
         numero_exibicao: texto(numero_exibicao, 32),
@@ -33,5 +34,5 @@ export async function PUT(request: Request) {
 
 // DELETE /api/whatsapp/canal — desconecta. As conversas ficam.
 export async function DELETE() {
-    return repassar("DELETE", "/whatsapp/canal")
+    return repassar("DELETE", whatsapp.canal())
 }

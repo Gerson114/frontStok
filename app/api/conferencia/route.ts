@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // POST /api/conferencia — fecha uma contagem de estoque.
 //
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
             return Response.json({ erro: "Bipe ao menos uma peça antes de fechar" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/conferencia`, {
+        const response = await fetch(url(estoque.conferencia()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

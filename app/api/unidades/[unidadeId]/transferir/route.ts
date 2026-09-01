@@ -1,8 +1,9 @@
 import { cookies } from "next/headers"
 import { validarTransferencia, type NovaTransferencia } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function POST(
     request: Request,
@@ -43,7 +44,7 @@ export async function POST(
             return Response.json({ erro: erros[0], erros }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/unidades/${unidadeId}/transferir`, {
+        const response = await fetch(url(estoque.transferir(unidadeId)), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

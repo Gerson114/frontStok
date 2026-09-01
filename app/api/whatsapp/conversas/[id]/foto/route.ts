@@ -1,4 +1,5 @@
 import { idValido, repassarArquivo } from "../../../proxy"
+import { whatsapp } from "@/app/api/rotas"
 
 // GET /api/whatsapp/conversas/:id/foto — a foto de perfil do cliente.
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,5 +10,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         return new Response("Conversa inválida", { status: 400 })
     }
 
-    return repassarArquivo(`/whatsapp/conversas/${id}/foto`, request)
+    return repassarArquivo(whatsapp.foto(id), request)
 }

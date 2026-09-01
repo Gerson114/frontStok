@@ -1,9 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-// Server-only (ao contrário de NEXT_PUBLIC_*): o navegador nunca fala direto
-// com o backend Go.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/loja — identidade da loja logada: nome, endereço público da
 // vitrine e se ela está mesmo no ar.
@@ -42,7 +41,7 @@ async function encaminhar(metodo: "GET" | "PUT", corpo?: unknown) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/loja`, {
+        const response = await fetch(url(conta.loja()), {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,

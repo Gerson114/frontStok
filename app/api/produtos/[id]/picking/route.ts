@@ -1,4 +1,5 @@
 import { corpoDaRequisicao, idValido, repassarAoBackend } from "@/app/api/backend"
+import { produtos } from "@/app/api/rotas"
 
 // PUT /api/produtos/:id/picking — onde o produto mora na prateleira de venda
 // e quanto ele tem de ter ali.
@@ -35,5 +36,5 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         return Response.json({ erro: "Máximo inválido" }, { status: 400 })
     }
 
-    return repassarAoBackend("PUT", `/private/produto/${id}/picking`, { endereco, minimo, maximo })
+    return repassarAoBackend("PUT", produtos.picking(id), { endereco, minimo, maximo })
 }

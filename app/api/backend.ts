@@ -12,7 +12,34 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
+/**
+ * O endereço do backend Go, lido do ambiente — o dono único deste valor.
+ *
+ * Ele já vinha do .env, mas a linha que o lia estava copiada em 44 arquivos
+ * de rota. Repetição desse tamanho não é só feiúra: é 44 lugares onde um
+ * padrão diferente pode ser escrito sem ninguém notar, e 44 arquivos para
+ * abrir no dia em que a leitura precisar de uma validação a mais.
+ *
+ * Server-only de propósito (não é NEXT_PUBLIC): este endereço é interno, e o
+ * navegador nunca fala com o backend por conta própria — tudo passa por
+ * app/api/*, que encaminha daqui.
+ *
+ * A barra final é cortada para "http://api/" e "http://api" darem no mesmo:
+ * os caminhos abaixo já começam com barra, e duas seguidas viram uma rota
+ * que o backend não conhece.
+ */
+export const API_BASE = (process.env.API_URL ?? "http://localhost:8080").trim().replace(/\/+$/, "")
+
+/**
+ * O endereço completo de um caminho do catálogo (ver app/api/rotas.ts).
+ *
+ * É o único ponto em que o endereço do servidor encontra o caminho. Quem
+ * chama fala só em caminho, que é o que não muda entre desenvolvimento e
+ * produção.
+ */
+export function url(caminho: string): string {
+    return `${API_BASE}${caminho}`
+}
 
 export type MetodoHttp = "GET" | "POST" | "PUT" | "DELETE"
 

@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // POST /api/assinatura/checkout — abre a sessão de pagamento do plano
 // escolhido e devolve a URL hospedada pelo Stripe para onde o lojista deve
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const response = await fetch(`${API_BASE}/private/assinatura/checkout`, {
+        const response = await fetch(url(conta.checkout()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,

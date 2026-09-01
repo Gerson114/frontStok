@@ -1,4 +1,5 @@
 import { repassarAoBackend } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
 // GET /api/estoque/tarefas — a fila de trabalho do estoque.
 //
@@ -31,5 +32,5 @@ export async function GET(request: Request) {
 
     const consulta = filtros.toString()
 
-    return repassarAoBackend("GET", `/private/estoque/tarefas${consulta ? `?${consulta}` : ""}`)
+    return repassarAoBackend("GET", estoque.tarefas(consulta ? `?${consulta}` : ""))
 }

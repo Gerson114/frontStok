@@ -1,21 +1,14 @@
 import { sanitizeText } from "@/security/sanitize"
+import { url } from "@/app/api/backend"
+import { publico } from "@/app/api/rotas"
 
-// Pública: sem cookie, sem Authorization — só repassa a busca do catálogo
-// para o backend (rota pública /public/produtos), no mesmo padrão de proxy
-// usado no resto do app, para o navegador nunca falar direto com o backend.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url)
         const nome = sanitizeText(searchParams.get("nome") ?? "").slice(0, 100)
 
-        const url = new URL("/public/produtos", API_BASE)
-        if (nome) {
-            url.searchParams.set("nome", nome)
-        }
-
-        const response = await fetch(url, {
+        const response = await fetch(url(publico.produtos(nome)), {
             method: "GET",
             headers: { Accept: "application/json" },
             cache: "no-store",

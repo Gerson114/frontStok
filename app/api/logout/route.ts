@@ -1,8 +1,7 @@
 import { cookies } from "next/headers"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-// Server-only (ao contrário de NEXT_PUBLIC_*): o navegador nunca fala direto
-// com o backend Go.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // POST /api/logout — encerra a sessão do lojista.
 //
@@ -24,7 +23,7 @@ export async function POST() {
 
     if (token) {
         try {
-            const response = await fetch(`${API_BASE}/private/logout`, {
+            const response = await fetch(url(conta.logout()), {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,

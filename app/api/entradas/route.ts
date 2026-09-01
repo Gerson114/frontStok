@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { estoque } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/entradas — histórico de remessas recebidas.
 export async function GET() {
@@ -33,7 +34,7 @@ async function repassar(metodo: "GET" | "POST", corpo: unknown) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/entradas`, {
+        const response = await fetch(url(estoque.entradas()), {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,

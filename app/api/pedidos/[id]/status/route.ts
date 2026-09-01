@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { pedidos } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 const STATUS_VALIDOS = ["pendente", "confirmado", "enviado", "entregue", "cancelado"]
 
@@ -35,7 +36,7 @@ export async function PUT(
             return Response.json({ erro: "status inválido" }, { status: 400 })
         }
 
-        const response = await fetch(`${API_BASE}/private/pedidos/${id}/status`, {
+        const response = await fetch(url(pedidos.status(id)), {
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { API_BASE } from "@/app/api/backend"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/devolucoes — a fila de quarentena da loja.
 // POST /api/devolucoes — registra peças que voltaram.

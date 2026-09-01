@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { publico } from "@/app/api/rotas"
 
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // POST /api/assinatura/checkout-publico — abre o pagamento de quem ainda NÃO
 // tem conta.
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const response = await fetch(`${API_BASE}/public/assinatura/checkout`, {
+        const response = await fetch(url(publico.assinaturaCheckout()), {
             method: "POST",
             headers: {
                 Accept: "application/json",

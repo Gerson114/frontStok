@@ -1,9 +1,8 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
+import { url } from "@/app/api/backend"
+import { conta } from "@/app/api/rotas"
 
-// Server-only (ao contrário de NEXT_PUBLIC_*): o navegador nunca fala direto
-// com o backend Go.
-const API_BASE = process.env.API_URL ?? "http://localhost:8080"
 
 // GET /api/assinatura — estado da assinatura da loja logada.
 //
@@ -20,7 +19,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(`${API_BASE}/private/assinatura`, {
+        const response = await fetch(url(conta.assinatura()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
