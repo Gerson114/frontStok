@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import type { Produto } from "@/app/type/type"
-import { cadastrarProduto, listarProdutos } from "@/middleware/produtos"
+import { listarProdutos } from "@/middleware/produtos"
 import {
     registrarEntrada,
     type EnderecoDaEntrada,
@@ -11,7 +11,6 @@ import {
 } from "@/middleware/estoque"
 import { ApiError } from "@/middleware/client"
 import { descreverVariacao } from "@/app/components/produto/campos"
-import { LOJA_ID } from "@/app/type/type"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import {
     FiAlertCircle,
@@ -32,9 +31,12 @@ import {
  * peças de cada um, por quanto e em que endereço foram guardadas. O sistema
  * cria as peças, soma o estoque e deixa as etiquetas prontas para imprimir.
  *
- * Produto novo continua nascendo em Cadastrar produto. Aqui só entra o que a
- * loja já vende — é a diferença entre "comprei mais do mesmo" e "passei a
- * vender uma coisa nova".
+ * Produto novo nasce em Cadastrar produto, e só lá. Esta tela já teve um
+ * cadastro rápido embutido, e ele era uma segunda porta para a mesma coisa:
+ * dois formulários de produto, com campos diferentes, e o lojista tendo de
+ * adivinhar em qual dos dois cadastrar. Aqui entra o que a loja já vende —
+ * é a diferença entre "comprei mais do mesmo" e "passei a vender uma coisa
+ * nova".
  */
 
 /** Uma linha da remessa em edição, com os campos ainda como texto. */
@@ -53,19 +55,6 @@ export default function InserirEstoque() {
     // O custo costuma ser o mesmo no lote inteiro: preenche-se uma vez e
     // aplica-se a todas as linhas, em vez de digitar item a item.
     const [custoPadrao, setCustoPadrao] = useState("")
-
-    // Cadastro rápido: o produto que a loja ainda não tem, entrando com o
-    // mínimo para já existir e já ter estoque. O cadastro completo (imagem,
-    // descrição, variações, ficha técnica) fica em Cadastrar produto.
-    const [novoAberto, setNovoAberto] = useState(false)
-    const [novoNome, setNovoNome] = useState("")
-    const [novoCategoria, setNovoCategoria] = useState("")
-    const [novoVariacao, setNovoVariacao] = useState("")
-    const [novoVariacaoRotulo, setNovoVariacaoRotulo] = useState("")
-    const [novoPreco, setNovoPreco] = useState("")
-    const [novoCusto, setNovoCusto] = useState("")
-    const [novoQuantidade, setNovoQuantidade] = useState("")
-    const [cadastrando, setCadastrando] = useState(false)
 
     const [seletorAberto, setSeletorAberto] = useState(false)
     const [busca, setBusca] = useState("")
@@ -169,68 +158,6 @@ export default function InserirEstoque() {
         const custo = parseFloat(linha.custo.replace(",", ".")) || 0
         return soma + quantidade * custo
     }, 0)
-
-    async function cadastrarNovo(evento: React.FormEvent<HTMLFormElement>) {
-        evento.preventDefault()
-
-        setErro("")
-        setResultado(null)
-
-        const preco = parseFloat(novoPreco.replace(",", "."))
-        const quantidade = parseInt(novoQuantidade, 10) || 0
-
-        if (!novoNome.trim()) {
-            setErro("Informe o nome do produto novo.")
-            return
-        }
-
-        if (!novoCategoria.trim()) {
-            setErro("Informe a categoria do produto novo.")
-            return
-        }
-
-        if (!Number.isFinite(preco) || preco <= 0) {
-            setErro("Informe o preço de venda do produto novo.")
-            return
-        }
-
-        try {
-            setCadastrando(true)
-
-            await cadastrarProduto({
-                nome: novoNome.trim(),
-                descricao: "",
-                categoria: novoCategoria.trim(),
-                variacao: novoVariacao.trim(),
-                variacao_rotulo: novoVariacaoRotulo.trim(),
-                atributos: {},
-                imagem_url: "",
-                preco,
-                custo: parseFloat(novoCusto.replace(",", ".")) || 0,
-                estoque: quantidade,
-                loja_id: LOJA_ID,
-                // Sem endereço: o servidor guarda no trecho mais vazio.
-                endereco: "",
-            })
-
-            setNovoNome("")
-            setNovoCategoria("")
-            setNovoVariacao("")
-            setNovoVariacaoRotulo("")
-            setNovoPreco("")
-            setNovoCusto("")
-            setNovoQuantidade("")
-            setNovoAberto(false)
-
-            setProdutos(await listarProdutos())
-            setResultado({ pecas: quantidade, produtos: 1, enderecos: [] })
-
-        } catch (e) {
-            setErro(e instanceof ApiError ? e.message : "Não foi possível cadastrar o produto")
-        } finally {
-            setCadastrando(false)
-        }
-    }
 
     async function darEntrada() {
         setErro("")
@@ -378,158 +305,6 @@ export default function InserirEstoque() {
 
                     </section>
                 )}
-
-                {/* PRODUTO NOVO — cadastro rápido, direto no estoque */}
-                <section className="card p-5 sm:p-7">
-
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-
-                        <div className="flex items-center gap-3">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0075E2]">
-                                <FiPlus className="w-4" aria-hidden />
-                            </span>
-                            <div>
-                                <h2 className="font-display text-base text-[#1E2428]">
-                                    Produto novo
-                                </h2>
-                                <p className="text-xs text-[#5A6469]">
-                                    O que a loja ainda não tem: entra no sistema já com estoque.
-                                </p>
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setNovoAberto((v) => !v)}
-                            className="btn btn-neutro text-sm"
-                        >
-                            {novoAberto ? "Fechar" : "Cadastrar produto novo"}
-                        </button>
-
-                    </div>
-
-                    {novoAberto && (
-                        <form onSubmit={cadastrarNovo} className="mt-5 space-y-4 border-t border-[#E4E9EB] pt-5">
-
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-nome">Nome</label>
-                                    <input
-                                        id="novo-nome"
-                                        type="text"
-                                        value={novoNome}
-                                        onChange={(e) => setNovoNome(e.target.value)}
-                                        placeholder="Ex: Ventilador de mesa"
-                                        className="field"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-categoria">Categoria</label>
-                                    <input
-                                        id="novo-categoria"
-                                        type="text"
-                                        value={novoCategoria}
-                                        onChange={(e) => setNovoCategoria(e.target.value)}
-                                        placeholder="Ex: Eletroportáteis"
-                                        className="field"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-rotulo">
-                                        O que divide o produto (opcional)
-                                    </label>
-                                    <input
-                                        id="novo-rotulo"
-                                        type="text"
-                                        value={novoVariacaoRotulo}
-                                        onChange={(e) => setNovoVariacaoRotulo(e.target.value)}
-                                        placeholder="Ex: Voltagem"
-                                        className="field"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-variacao">
-                                        {novoVariacaoRotulo.trim() || "Variação"} (opcional)
-                                    </label>
-                                    <input
-                                        id="novo-variacao"
-                                        type="text"
-                                        value={novoVariacao}
-                                        onChange={(e) => setNovoVariacao(e.target.value)}
-                                        placeholder="Ex: 220V"
-                                        className="field"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-preco">Preço de venda</label>
-                                    <input
-                                        id="novo-preco"
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={novoPreco}
-                                        onChange={(e) => setNovoPreco(e.target.value)}
-                                        placeholder="0,00"
-                                        className="field num"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-custo">Custo unitário</label>
-                                    <input
-                                        id="novo-custo"
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={novoCusto}
-                                        onChange={(e) => setNovoCusto(e.target.value)}
-                                        placeholder="0,00"
-                                        className="field num"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="novo-quantidade">Peças</label>
-                                    <input
-                                        id="novo-quantidade"
-                                        type="number"
-                                        min="0"
-                                        value={novoQuantidade}
-                                        onChange={(e) => setNovoQuantidade(e.target.value)}
-                                        className="field num"
-                                    />
-                                </div>
-
-                            </div>
-
-                            <p className="flex items-start gap-2 text-xs text-[#5A6469]">
-                                <FiMapPin className="mt-0.5 w-3.5 shrink-0 text-[#0086FF]" aria-hidden />
-                                <span>
-                                    Imagem, descrição, ficha técnica e várias variações de uma vez ficam
-                                    em <strong>Cadastrar produto</strong>. Aqui o produto entra com o
-                                    essencial, e o endereço é escolhido pelo sistema.
-                                </span>
-                            </p>
-
-                            <button type="submit" disabled={cadastrando} className="btn btn-primario">
-                                {cadastrando ? "Cadastrando..." : "Cadastrar e pôr no estoque"}
-                            </button>
-
-                        </form>
-                    )}
-
-                </section>
 
                 {/* O QUE CHEGOU */}
                 <section className="card space-y-5 p-5 sm:p-7">

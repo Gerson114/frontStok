@@ -22,7 +22,7 @@
 export const publico = {
     login: () => "/public/login",
     cadastro: () => "/public/cadastro",
-    planos: () => "/public/planos",
+    oferta: () => "/public/oferta",
 
     /** Catálogo da vitrine, com busca opcional por nome. */
     produtos: (nome?: string) =>
@@ -40,9 +40,8 @@ export const conta = {
     logout: () => "/private/logout",
 
     assinatura: () => "/private/assinatura",
-    planos: () => "/private/assinatura/planos",
+    oferta: () => "/private/assinatura/oferta",
     checkout: () => "/private/assinatura/checkout",
-    trocarPlano: () => "/private/assinatura/plano",
     portal: () => "/private/assinatura/portal",
 
     loja: () => "/private/loja",

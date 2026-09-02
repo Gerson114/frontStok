@@ -3,18 +3,18 @@ import { url } from "@/app/api/backend"
 import { publico } from "@/app/api/rotas"
 
 
-// GET /api/planos — o que está à venda, para a tela de cadastro.
+// GET /api/oferta — o que está à venda, para a tela de cadastro.
 //
 // Aberta a qualquer visitante, como a tabela de preços de qualquer site. Não
 // exige sessão porque quem a lê ainda não tem conta — é justamente a tela
 // que decide se ele vai ter uma.
 //
-// Os preços vêm do backend, que por sua vez os lê do Stripe. Nenhum valor é
-// escrito aqui: preço repetido no front é preço que um dia diverge do que a
-// fatura cobra.
+// O preço vem do backend, que por sua vez o lê do provedor de cobrança.
+// Nenhum valor é escrito aqui: preço repetido no front é preço que um dia
+// diverge do que a fatura cobra.
 export async function GET() {
     try {
-        const response = await fetch(url(publico.planos()), {
+        const response = await fetch(url(publico.oferta()), {
             method: "GET",
             headers: { Accept: "application/json" },
             cache: "no-store",

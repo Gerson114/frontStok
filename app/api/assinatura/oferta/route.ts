@@ -4,11 +4,12 @@ import { url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 
-// GET /api/assinatura/planos — o catálogo visto por quem já está logado.
+// GET /api/assinatura/oferta — o que está à venda, visto por quem já está
+// logado.
 //
-// É a mesma lista de /api/planos, com uma diferença: aqui o backend marca
-// qual plano é o da loja e se ela ainda tem direito ao teste grátis, o que
-// permite à tela mostrar "seu plano atual" e "trocar para".
+// É a mesma descrição de /api/oferta, com uma diferença: aqui o backend diz
+// se esta loja já tem assinatura em dia, o que permite à tela mostrar
+// "contratar" ou "sua assinatura".
 //
 // Os preços vêm do Stripe, pelo backend. Nenhum valor é escrito no front.
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(url(conta.planos()), {
+        const response = await fetch(url(conta.oferta()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

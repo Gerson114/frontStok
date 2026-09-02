@@ -8,6 +8,7 @@ import { listarEnderecos, type EnderecoEstoque } from "@/middleware/estoque"
 import { validarTransferencia } from "@/security/validate"
 import { ApiError } from "@/middleware/client"
 import Pagination from "@/app/components/pagination/pagination"
+import Cabecalho from "@/app/components/grade/cabecalho"
 import {
     FiSearch,
     FiX,
@@ -23,7 +24,23 @@ import {
 } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 
-const ITENS_POR_PAGINA = 10
+/**
+ * O estoque como grade de operação, no padrão de um WMS (a referência é o
+ * Senior WMS): uma linha por peça, na ordem em que se anda pelo corredor.
+ *
+ * Esta tela já foi uma grade de cartões — um cartão por endereço, cada um com
+ * a sua lista de peças e a sua paginação própria. Duas colunas de cartões
+ * aninhados respondiam mal justamente a pergunta que se faz aqui: "onde está
+ * esta peça?" exigia varrer cartão por cartão, e "quantas peças há na rua 3?"
+ * não tinha resposta nenhuma. Paginação por cartão era o pior: a mesma lista
+ * quebrada em dez paginações que não conversam entre si.
+ *
+ * Agora é uma grade só. O endereço vira coluna em vez de moldura, o que
+ * permite ordenar por ele (a ordem do corredor), filtrar por situação e
+ * contar tudo num rodapé só.
+ */
+
+const ITENS_POR_PAGINA = 25
 
 /** Como o servidor descreve a peça que ainda não foi guardada. */
 const SEM_LUGAR = "sem lugar definido"
@@ -33,21 +50,19 @@ interface CartaoUnidade {
     produto: Produto | undefined
 }
 
-/**
- * Um lugar do estoque com o que está guardado nele.
- *
- * O cadastro (`endereco`) vem da tela de Endereços e traz tipo, capacidade e
- * a ordem em que se anda pelo estoque. Ele pode faltar quando a peça aponta
- * para um endereço que não existe mais — e aí o que sobra é o código escrito
- * na própria peça, que ainda diz onde ela está.
- */
-interface Local {
-    chave: string
+/** Uma linha da grade: a peça, o produto dela e o lugar onde está. */
+interface LinhaEstoque extends CartaoUnidade {
+    /** Vazio na peça que ainda não foi guardada. */
     codigo: string
     nome: string
     endereco: EnderecoEstoque | undefined
-    unidades: CartaoUnidade[]
 }
+
+/** As colunas por que a grade pode ser ordenada. */
+type Coluna = "endereco" | "produto" | "peca" | "tipo"
+
+/** Os recortes da barra de filtro. */
+type Recorte = "todas" | "sem_local" | "reservadas" | "bloqueadas"
 
 interface TransferenciaAlvo {
     unidadeId: number
@@ -69,14 +84,18 @@ interface ExclusaoAlvo {
     codigo: string
 }
 
-/** A cor de cada tipo de lugar, para o card dizer o que ele é de longe. */
+/**
+ * A cor de cada tipo de lugar. Discreta de propósito: numa grade de 25 linhas
+ * o tipo é o dado menos urgente da linha, e chip colorido em toda linha
+ * apagaria o que importa — o endereço e a situação da peça.
+ */
 const CORES_TIPO: Record<string, string> = {
-    picking: "bg-[#0086FF] text-white",
-    pulmao: "bg-[#1E2428] text-white",
-    recebimento: "bg-[#5A6469] text-white",
-    expedicao: "bg-[#5A6469] text-white",
-    quarentena: "bg-[#FFB800] text-[#1E2428]",
-    avaria: "bg-[#D4351C] text-white",
+    picking: "bg-[#E6F3FF] text-[#0075E2]",
+    pulmao: "bg-[#F0F3F4] text-[#1E2428]",
+    recebimento: "bg-[#F0F3F4] text-[#5A6469]",
+    expedicao: "bg-[#F0F3F4] text-[#5A6469]",
+    quarentena: "bg-[#FFF6E0] text-[#8A6C1B]",
+    avaria: "bg-[#FDECEA] text-[#D4351C]",
 }
 
 export default function Estoque() {
@@ -88,8 +107,17 @@ export default function Estoque() {
     const [erro, setErro] = useState("")
 
     const [busca, setBusca] = useState("")
-    const [paginaSemLocal, setPaginaSemLocal] = useState(1)
-    const [paginaPorLocal, setPaginaPorLocal] = useState<Record<string, number>>({})
+
+    // Uma paginação para a grade inteira. Antes havia uma por endereço, e
+    // dez paginações que não conversam entre si são dez chances de a pessoa
+    // achar que viu tudo sem ter visto.
+    const [paginaAtual, setPaginaAtual] = useState(1)
+
+    const [recorte, setRecorte] = useState<Recorte>("todas")
+    const [ordem, setOrdem] = useState<{ coluna: Coluna; desc: boolean }>({
+        coluna: "endereco",
+        desc: false,
+    })
 
     const [alvo, setAlvo] = useState<TransferenciaAlvo | null>(null)
     const [destinoInput, setDestinoInput] = useState("")
@@ -149,7 +177,7 @@ export default function Estoque() {
 
 
     // ==============================
-    // AGRUPAMENTO POR LOCAL — uma entrada por unidade, não por quantidade
+    // AS LINHAS — uma por peça, com o lugar em que ela está
     // ==============================
 
     const enderecosPorId = useMemo(() => {
@@ -158,122 +186,149 @@ export default function Estoque() {
         return mapa
     }, [enderecos])
 
-    const { semLocal, locais } = useMemo(() => {
+    const linhas = useMemo(() => {
 
-        const disponiveis: CartaoUnidade[] = unidades
+        return unidades
             .filter((unidade) => !unidade.vendida && !unidade.avariada)
-            .map((unidade) => ({ unidade, produto: produtosPorId.get(unidade.produto_id) }))
+            .map<LinhaEstoque>((unidade) => {
 
-        const semLocal: CartaoUnidade[] = []
-        const mapaLocais = new Map<string, Local>()
-
-        for (const item of disponiveis) {
-
-            const codigo = item.unidade.endereco
-
-            // Peça que chegou e ainda não foi guardada: o servidor manda o
-            // endereço vazio, e ela sobe para o alerta do topo em vez de
-            // virar um card de lugar nenhum.
-            if (!codigo) {
-                semLocal.push(item)
-                continue
-            }
-
-            if (!mapaLocais.has(codigo)) {
-
-                const endereco = item.unidade.endereco_id
-                    ? enderecosPorId.get(item.unidade.endereco_id)
+                // O cadastro do lugar pode faltar quando a peça aponta para
+                // um endereço que não existe mais. O que sobra é o código
+                // escrito na própria peça, que ainda diz onde ela está.
+                const endereco = unidade.endereco_id
+                    ? enderecosPorId.get(unidade.endereco_id)
                     : undefined
 
-                mapaLocais.set(codigo, {
-                    chave: codigo,
-                    codigo,
-                    nome: endereco?.nome ?? item.unidade.endereco_nome,
+                return {
+                    unidade,
+                    produto: produtosPorId.get(unidade.produto_id),
+                    codigo: unidade.endereco,
+                    nome: endereco?.nome ?? unidade.endereco_nome,
                     endereco,
-                    unidades: [],
-                })
-            }
-
-            mapaLocais.get(codigo)!.unidades.push(item)
-        }
-
-        for (const local of mapaLocais.values()) {
-            local.unidades.sort((a, b) => {
-                const nomeA = a.produto?.nome ?? ""
-                const nomeB = b.produto?.nome ?? ""
-                return nomeA !== nomeB
-                    ? nomeA.localeCompare(nomeB)
-                    : a.unidade.sequencia - b.unidade.sequencia
+                }
             })
-        }
-
-        // Na ordem em que se anda pelo estoque, que é o que o cadastro
-        // guarda; sem ela, pelo código — que ordena como texto igual ao que
-        // ordena pelos números, de propósito.
-        const locais = Array.from(mapaLocais.values()).sort((a, b) => {
-
-            const ordemA = a.endereco?.ordem ?? 0
-            const ordemB = b.endereco?.ordem ?? 0
-
-            return ordemA !== ordemB ? ordemA - ordemB : a.codigo.localeCompare(b.codigo)
-        })
-
-        return { semLocal, locais }
 
     }, [unidades, produtosPorId, enderecosPorId])
 
 
     // ==============================
-    // FILTRO DE BUSCA
+    // BUSCA, FILTRO E ORDEM
     // ==============================
 
     const termoBusca = busca.trim().toLowerCase()
 
-    function correspondeABusca(item: CartaoUnidade): boolean {
-        if (!termoBusca) return true
-
-        const nome = item.produto?.nome.toLowerCase() ?? ""
-        const codigo = (item.produto?.codigo ?? "").toLowerCase()
-
-        return nome.includes(termoBusca) || codigo.includes(termoBusca)
+    function codigoDaPeca(linha: LinhaEstoque): string {
+        return identificarPeca(linha.produto?.codigo, linha.unidade.sequencia)
     }
 
-    const semLocalFiltrado = semLocal.filter(correspondeABusca)
+    function cabeNoRecorte(linha: LinhaEstoque): boolean {
 
-    const locaisFiltrados = locais
-        .map((local) => ({
-            ...local,
-            unidades: local.unidades.filter(correspondeABusca),
-        }))
-        // Buscando, o lugar que não tem nada do que se procura sai da tela:
-        // uma grade de cards vazios não responde "onde está isto?".
-        .filter((local) => !termoBusca || local.unidades.length > 0)
+        switch (recorte) {
+
+            case "sem_local":
+                return !linha.codigo
+
+            case "reservadas":
+                return linha.unidade.reservada === true
+
+            case "bloqueadas":
+                return linha.endereco?.bloqueado === true
+
+            default:
+                return true
+        }
+    }
+
+    const linhasFiltradas = useMemo(() => {
+
+        const filtradas = linhas.filter((linha) => {
+
+            if (!cabeNoRecorte(linha)) return false
+
+            if (!termoBusca) return true
+
+            return (
+                (linha.produto?.nome.toLowerCase() ?? "").includes(termoBusca) ||
+                (linha.produto?.codigo ?? "").toLowerCase().includes(termoBusca) ||
+                linha.codigo.toLowerCase().includes(termoBusca) ||
+                linha.nome.toLowerCase().includes(termoBusca)
+            )
+        })
+
+        // A peça sem lugar vai para o fim de qualquer ordenação por endereço:
+        // ela não está em lugar nenhum do corredor, e intercalá-la entre as
+        // prateleiras quebraria a ordem que quem separa segue.
+        const ordemDoLugar = (linha: LinhaEstoque) =>
+            linha.codigo ? (linha.endereco?.ordem ?? 0) : Number.MAX_SAFE_INTEGER
+
+        const comparar = (a: LinhaEstoque, b: LinhaEstoque) => {
+
+            switch (ordem.coluna) {
+
+                case "produto":
+                    return (a.produto?.nome ?? "").localeCompare(b.produto?.nome ?? "", "pt-BR")
+
+                case "peca":
+                    return codigoDaPeca(a).localeCompare(codigoDaPeca(b), "pt-BR")
+
+                case "tipo":
+                    return (a.endereco?.tipo_nome ?? "").localeCompare(b.endereco?.tipo_nome ?? "", "pt-BR")
+
+                default: {
+                    const lugarA = ordemDoLugar(a)
+                    const lugarB = ordemDoLugar(b)
+
+                    if (lugarA !== lugarB) return lugarA - lugarB
+
+                    // Mesmo lugar (ou os dois sem lugar): o código do endereço
+                    // desempata, e depois o produto — para as peças iguais
+                    // ficarem juntas na tela.
+                    if (a.codigo !== b.codigo) return a.codigo.localeCompare(b.codigo, "pt-BR")
+
+                    return (a.produto?.nome ?? "").localeCompare(b.produto?.nome ?? "", "pt-BR")
+                }
+            }
+        }
+
+        return filtradas.sort((a, b) => (ordem.desc ? -comparar(a, b) : comparar(a, b)))
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- as funções acima são puras e só dependem de `recorte`
+    }, [linhas, termoBusca, recorte, ordem])
 
 
     // ==============================
     // PAGINAÇÃO
     // ==============================
 
-    function aoMudarBusca(valor: string) {
-        setBusca(valor)
-        setPaginaSemLocal(1)
-        setPaginaPorLocal({})
-    }
+    const totalPaginas = Math.max(1, Math.ceil(linhasFiltradas.length / ITENS_POR_PAGINA))
+    const paginaAtualCorrigida = Math.min(paginaAtual, totalPaginas)
 
-    const totalPaginasSemLocal = Math.max(1, Math.ceil(semLocalFiltrado.length / ITENS_POR_PAGINA))
-    const paginaSemLocalCorrigida = Math.min(paginaSemLocal, totalPaginasSemLocal)
+    const primeiraDaPagina = (paginaAtualCorrigida - 1) * ITENS_POR_PAGINA
 
-    const semLocalPaginado = semLocalFiltrado.slice(
-        (paginaSemLocalCorrigida - 1) * ITENS_POR_PAGINA,
-        paginaSemLocalCorrigida * ITENS_POR_PAGINA
+    const linhasDaPagina = linhasFiltradas.slice(
+        primeiraDaPagina,
+        primeiraDaPagina + ITENS_POR_PAGINA
     )
 
-    function paginaDoLocal(chave: string): number {
-        return paginaPorLocal[chave] ?? 1
+    function aoMudarBusca(valor: string) {
+        setBusca(valor)
+        setPaginaAtual(1)
     }
 
-    function mudarPaginaDoLocal(chave: string, pagina: number) {
-        setPaginaPorLocal((atual) => ({ ...atual, [chave]: pagina }))
+    function aoMudarRecorte(valor: Recorte) {
+        setRecorte(valor)
+        setPaginaAtual(1)
+    }
+
+    function ordenarPor(coluna: Coluna) {
+
+        setOrdem((atual) =>
+            atual.coluna === coluna
+                ? { coluna, desc: !atual.desc }
+                : { coluna, desc: false }
+        )
+
+        setPaginaAtual(1)
     }
 
 
@@ -281,21 +336,28 @@ export default function Estoque() {
     // ESTATÍSTICAS
     // ==============================
 
-    const totalPecas = useMemo(
-        () => unidades.filter((unidade) => !unidade.vendida && !unidade.avariada).length,
-        [unidades]
-    )
+    const totalPecas = linhas.length
 
-    const totalSemLocal = semLocal.length
+    const totalSemLocal = linhas.filter((linha) => !linha.codigo).length
 
-    const locaisOcupados = locais.length
+    // Quantos lugares diferentes guardam alguma coisa hoje.
+    const locaisOcupados = new Set(
+        linhas.filter((linha) => linha.codigo).map((linha) => linha.codigo)
+    ).size
 
     // Peça que existe, mas já tem dono: está reservada para um pedido e não
     // deveria ser vendida no balcão nem transferida sem querer.
-    const totalReservadas = useMemo(
-        () => unidades.filter((unidade) => unidade.reservada && !unidade.vendida).length,
-        [unidades]
-    )
+    const totalReservadas = linhas.filter((linha) => linha.unidade.reservada).length
+
+    const totalBloqueadas = linhas.filter((linha) => linha.endereco?.bloqueado).length
+
+    /** Os recortes da barra de filtro, já com a contagem de cada um. */
+    const recortes: { chave: Recorte; nome: string; total: number }[] = [
+        { chave: "todas", nome: "Todas", total: totalPecas },
+        { chave: "sem_local", nome: "Sem local", total: totalSemLocal },
+        { chave: "reservadas", nome: "Reservadas", total: totalReservadas },
+        { chave: "bloqueadas", nome: "Em lugar bloqueado", total: totalBloqueadas },
+    ]
 
 
     // ==============================
@@ -633,225 +695,95 @@ export default function Estoque() {
 
 
                     {/* ==========================
-                        ESTATÍSTICAS
+                        RESUMO
                     ========================== */}
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
+                    <div className="card grid grid-cols-2 divide-[#E4E9EB] md:grid-cols-4 md:divide-x">
 
-                        <div className="card p-6">
+                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
 
-                            <div className="flex items-center justify-between">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
+                                <FiBox className="w-4" aria-hidden />
+                            </span>
 
-                                <div>
-                                    <p className="text-sm text-[#5A6469]">
-                                        Peças em estoque
-                                    </p>
-                                    <p className="num mt-2 text-3xl font-bold text-[#1E2428]">
-                                        {totalPecas}
-                                    </p>
-                                </div>
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                    <FiBox className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Peças em estoque</span>
+                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalPecas}</span>
+                            </span>
 
                         </div>
 
-                        <div className="card p-6">
+                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
 
-                            <div className="flex items-center justify-between">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
+                                <FiGrid className="w-4" aria-hidden />
+                            </span>
 
-                                <div>
-                                    <p className="text-sm text-[#5A6469]">
-                                        Endereços ocupados
-                                    </p>
-                                    <p className="num mt-2 text-3xl font-bold text-[#1E2428]">
-                                        {locaisOcupados}
-                                    </p>
-                                </div>
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                    <FiGrid className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Endereços ocupados</span>
+                                <span className="num block text-xl font-extrabold text-[#1E2428]">{locaisOcupados}</span>
+                            </span>
 
                         </div>
 
-                        <div className="card p-6">
+                        <div className="flex items-center gap-3 p-4">
 
-                            <div className="flex items-center justify-between">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
+                                <FiBookmark className="w-4" aria-hidden />
+                            </span>
 
-                                <div>
-                                    <p className="text-sm text-[#5A6469]">
-                                        Reservadas
-                                    </p>
-                                    <p className="num mt-2 text-3xl font-bold text-[#1E2428]">
-                                        {totalReservadas}
-                                    </p>
-                                </div>
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                    <FiBookmark className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Reservadas</span>
+                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalReservadas}</span>
+                            </span>
 
                         </div>
 
-                        <div className="card p-6">
+                        <div className="flex items-center gap-3 p-4">
 
-                            <div className="flex items-center justify-between">
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                totalSemLocal > 0 ? "bg-[#FFF6E0] text-[#8A6C1B]" : "bg-[#F0F3F4] text-[#5A6469]"
+                            }`}>
+                                <FiAlertTriangle className="w-4" aria-hidden />
+                            </span>
 
-                                <div>
-                                    <p className="text-sm text-[#5A6469]">
-                                        Sem local
-                                    </p>
-                                    <p className={`num mt-2 text-3xl font-bold ${totalSemLocal > 0 ? "text-[#8A6C1B]" : "text-[#1E2428]"}`}>
-                                        {totalSemLocal}
-                                    </p>
-                                </div>
-
-                                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${totalSemLocal > 0 ? "bg-[#FFF6E0] text-[#8A6C1B]" : "bg-[#F0F3F4] text-[#5A6469]"}`}>
-                                    <FiAlertTriangle className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Sem local</span>
+                                <span className={`num block text-xl font-extrabold ${
+                                    totalSemLocal > 0 ? "text-[#8A6C1B]" : "text-[#1E2428]"
+                                }`}>
+                                    {totalSemLocal}
+                                </span>
+                            </span>
 
                         </div>
 
                     </div>
 
 
-                    {/* ==========================
-                        BUSCA
-                    ========================== */}
+                    {/* Peça que chegou e ninguém guardou é trabalho parado, e
+                        por isso o aviso fica acima da grade em vez de virar
+                        mais uma linha dentro dela. O botão leva ao recorte,
+                        que é o que a pessoa vai fazer em seguida. */}
+                    {totalSemLocal > 0 && recorte !== "sem_local" && (
 
-                    <div className="mt-8 relative w-full sm:w-80">
+                        <div className="mt-6 flex flex-col gap-3 rounded-lg border-l-4 border-[#FFB800] bg-[#FFF6E0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 
-                        <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
+                            <p className="flex items-center gap-2.5 text-sm text-[#5A6469]">
+                                <FiAlertTriangle className="w-4 shrink-0 text-[#8A6C1B]" aria-hidden />
+                                <span>
+                                    <span className="num font-bold text-[#1E2428]">{totalSemLocal}</span>{" "}
+                                    peça(s) chegaram e ainda não foram guardadas em nenhum endereço.
+                                </span>
+                            </p>
 
-                        <input
-                            type="text"
-                            value={busca}
-                            onChange={(e) => aoMudarBusca(e.target.value)}
-                            placeholder="Buscar por nome ou código"
-                            className="field"
-                            style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
-                        />
-
-                        {busca && (
                             <button
                                 type="button"
-                                onClick={() => aoMudarBusca("")}
-                                aria-label="Limpar busca"
-                                className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                                onClick={() => aoMudarRecorte("sem_local")}
+                                className="btn btn-neutro shrink-0 text-sm"
                             >
-                                <FiX className="w-4" aria-hidden />
+                                Ver só essas
                             </button>
-                        )}
-
-                    </div>
-
-
-                    {/* ==========================
-                        SEM LOCAL DEFINIDO
-                    ========================== */}
-
-                    {semLocalFiltrado.length > 0 && (
-
-                        <div className="card mt-10 overflow-hidden">
-
-                            <div className="flex items-center gap-4 border-l-4 border-[#FFB800] bg-[#FFF6E0] p-5">
-
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-[#8A6C1B]">
-                                    <FiAlertTriangle className="w-5" aria-hidden />
-                                </div>
-
-                                <div>
-                                    <h3 className="font-display text-base text-[#1E2428]">
-                                        Sem local definido
-                                    </h3>
-                                    <p className="text-sm text-[#5A6469]">
-                                        Peças recém-chegadas que ainda não foram guardadas em nenhum endereço.
-                                    </p>
-                                </div>
-
-                            </div>
-
-                            <ul className="divide-y divide-[#D3DADD] px-5">
-
-                                {semLocalPaginado.map((item) => (
-
-                                    <li
-                                        key={item.unidade.id}
-                                        className="flex items-center gap-3 py-3.5"
-                                    >
-
-                                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
-                                            {item.produto?.imagem_url ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
-                                                    src={urlDaImagem(item.produto.imagem_url)}
-                                                    alt={item.produto.nome}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            ) : null}
-                                        </div>
-
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium text-[#1E2428]">
-                                                {item.produto?.nome ?? `Produto #${item.unidade.produto_id}`}
-                                            </p>
-                                            <p className="font-mono text-xs text-[#5A6469]">
-                                                {identificarPeca(item.produto?.codigo, item.unidade.sequencia)}
-                                            </p>
-                                        </div>
-
-                                        <div className="flex shrink-0 gap-2">
-
-                                            <button
-                                                type="button"
-                                                onClick={() => abrirExclusao(item)}
-                                                aria-label="Excluir unidade"
-                                                className="rounded-lg border border-[#D3DADD] px-2.5 py-2 text-xs font-bold text-[#5A6469] transition-colors hover:border-[#D4351C] hover:bg-[#FDECEA] hover:text-[#D4351C]"
-                                            >
-                                                <FiTrash2 className="w-3.5" aria-hidden />
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => abrirAvaria(item)}
-                                                className="rounded-lg border border-[#D3DADD] px-3 py-2 text-xs font-bold text-[#D4351C] transition-colors hover:border-[#D4351C] hover:bg-[#FDECEA]"
-                                            >
-                                                Avariar
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => abrirTransferencia(item)}
-                                                className="rounded-lg bg-[#0086FF] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#0075E2]"
-                                            >
-                                                Guardar
-                                            </button>
-
-                                        </div>
-
-                                    </li>
-
-                                ))}
-
-                            </ul>
-
-                            <Pagination
-                                paginaAtual={paginaSemLocalCorrigida}
-                                totalPaginas={totalPaginasSemLocal}
-                                aoMudarPagina={setPaginaSemLocal}
-                            />
-
-                            <div className="h-5" />
 
                         </div>
 
@@ -859,12 +791,76 @@ export default function Estoque() {
 
 
                     {/* ==========================
-                        LOCAIS
+                        BARRA DA GRADE
                     ========================== */}
 
-                    {locais.length === 0 && semLocal.length === 0 ? (
+                    <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-                        <div className="mt-10 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
+                        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar peças">
+
+                            {recortes.map(({ chave, nome, total }) => {
+
+                                const ativo = chave === recorte
+
+                                return (
+                                    <button
+                                        key={chave}
+                                        type="button"
+                                        aria-pressed={ativo}
+                                        onClick={() => aoMudarRecorte(chave)}
+                                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
+                                            ativo
+                                                ? "border-[#0086FF] bg-[#E6F3FF] text-[#0075E2]"
+                                                : "border-[#D3DADD] bg-white text-[#5A6469] hover:border-[#8C969B] hover:text-[#1E2428]"
+                                        }`}
+                                    >
+                                        {nome}
+
+                                        <span className={`num text-xs font-extrabold ${ativo ? "text-[#0086FF]" : "text-[#8C969B]"}`}>
+                                            {total}
+                                        </span>
+                                    </button>
+                                )
+                            })}
+
+                        </div>
+
+                        <div className="relative w-full lg:w-80">
+
+                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
+
+                            <input
+                                type="text"
+                                value={busca}
+                                onChange={(e) => aoMudarBusca(e.target.value)}
+                                placeholder="Buscar por produto, código ou endereço"
+                                className="field"
+                                style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
+                            />
+
+                            {busca && (
+                                <button
+                                    type="button"
+                                    onClick={() => aoMudarBusca("")}
+                                    aria-label="Limpar busca"
+                                    className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                                >
+                                    <FiX className="w-4" aria-hidden />
+                                </button>
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* ==========================
+                        A GRADE
+                    ========================== */}
+
+                    {totalPecas === 0 ? (
+
+                        <div className="mt-6 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
 
                             <FiMapPin className="mx-auto w-10 text-[#8C969B]" aria-hidden />
 
@@ -881,18 +877,12 @@ export default function Estoque() {
                             <div className="mt-6 flex flex-wrap justify-center gap-3">
 
                                 {enderecos.length === 0 ? (
-                                    <Link
-                                        href="/page/estoque/enderecos"
-                                        className="btn btn-primario"
-                                    >
+                                    <Link href="/page/estoque/enderecos" className="btn btn-primario">
                                         <FiMapPin className="w-4" aria-hidden />
                                         <span>Cadastrar endereços</span>
                                     </Link>
                                 ) : (
-                                    <Link
-                                        href="/page/produto"
-                                        className="btn btn-primario"
-                                    >
+                                    <Link href="/page/produto" className="btn btn-primario">
                                         <FiPlus className="w-4" aria-hidden />
                                         <span>Cadastrar produto</span>
                                     </Link>
@@ -902,188 +892,276 @@ export default function Estoque() {
 
                         </div>
 
-                    ) : locaisFiltrados.length === 0 && semLocalFiltrado.length === 0 ? (
+                    ) : linhasFiltradas.length === 0 ? (
 
-                        <div className="mt-10 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
+                        <div className="mt-6 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
 
                             <FiSearch className="mx-auto w-10 text-[#8C969B]" aria-hidden />
 
                             <h3 className="font-display mt-5 text-xl text-[#1E2428]">
-                                Nenhum produto corresponde à busca
+                                Nenhuma peça corresponde ao filtro
                             </h3>
 
                             <button
                                 type="button"
-                                onClick={() => aoMudarBusca("")}
+                                onClick={() => { aoMudarBusca(""); aoMudarRecorte("todas") }}
                                 className="btn btn-neutro mt-6"
                             >
-                                Limpar busca
+                                Limpar filtros
                             </button>
 
                         </div>
 
                     ) : (
 
-                        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div className="card mt-6 overflow-hidden">
 
-                            {locaisFiltrados.map((local) => {
+                            <div className="overflow-x-auto">
 
-                                const itens = local.unidades
+                                <table className="w-full min-w-[56rem] border-collapse text-sm">
 
-                                const totalPaginasLocal = Math.max(1, Math.ceil(itens.length / ITENS_POR_PAGINA))
-                                const paginaLocalCorrigida = Math.min(paginaDoLocal(local.chave), totalPaginasLocal)
-                                const itensPaginados = itens.slice(
-                                    (paginaLocalCorrigida - 1) * ITENS_POR_PAGINA,
-                                    paginaLocalCorrigida * ITENS_POR_PAGINA
-                                )
+                                    <thead>
+                                        <tr className="border-b border-[#D3DADD] bg-[#F7F9FA] text-left">
 
-                                const tipo = local.endereco?.tipo ?? ""
-                                const capacidade = local.endereco?.capacidade ?? 0
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho
+                                                    ativa={ordem.coluna === "endereco"}
+                                                    desc={ordem.desc}
+                                                    aoClicar={() => ordenarPor("endereco")}
+                                                >
+                                                    Endereço
+                                                </Cabecalho>
+                                            </th>
 
-                                return (
+                                            <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469] xl:table-cell">
+                                                Lugar
+                                            </th>
 
-                                    <div
-                                        key={local.chave}
-                                        className="card card-hover overflow-hidden"
-                                    >
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho
+                                                    ativa={ordem.coluna === "produto"}
+                                                    desc={ordem.desc}
+                                                    aoClicar={() => ordenarPor("produto")}
+                                                >
+                                                    Produto
+                                                </Cabecalho>
+                                            </th>
 
-                                        <div className="flex items-start justify-between gap-3 border-b border-[#D3DADD] p-5">
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho
+                                                    ativa={ordem.coluna === "peca"}
+                                                    desc={ordem.desc}
+                                                    aoClicar={() => ordenarPor("peca")}
+                                                >
+                                                    Peça
+                                                </Cabecalho>
+                                            </th>
 
-                                            <div className="flex min-w-0 items-start gap-3">
+                                            <th scope="col" className="hidden px-4 py-2.5 lg:table-cell">
+                                                <Cabecalho
+                                                    ativa={ordem.coluna === "tipo"}
+                                                    desc={ordem.desc}
+                                                    aoClicar={() => ordenarPor("tipo")}
+                                                >
+                                                    Tipo
+                                                </Cabecalho>
+                                            </th>
 
-                                                <span className={`font-display flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs ${CORES_TIPO[tipo] ?? "bg-[#5A6469] text-white"}`}>
-                                                    <FiMapPin className="w-4" aria-hidden />
-                                                </span>
+                                            <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
+                                                Situação
+                                            </th>
 
-                                                <div className="min-w-0">
+                                            <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
+                                                Ações
+                                            </th>
 
-                                                    <h4 className="font-display num truncate text-base text-[#1E2428]">
-                                                        {local.codigo}
-                                                    </h4>
+                                        </tr>
+                                    </thead>
 
-                                                    <p className="truncate text-xs text-[#5A6469]">
-                                                        {local.nome}
-                                                    </p>
+                                    <tbody>
 
-                                                    <p className="mt-1 flex flex-wrap items-center gap-1.5">
+                                        {linhasDaPagina.map((linha) => {
 
-                                                        {local.endereco ? (
-                                                            <span className="tag tag-neutral">
-                                                                {local.endereco.tipo_nome}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="tag tag-neutral">
-                                                                fora do cadastro
-                                                            </span>
-                                                        )}
+                                            const { unidade, produto, endereco } = linha
+                                            const tipo = endereco?.tipo ?? ""
 
-                                                        {local.endereco?.bloqueado && (
-                                                            <span className="tag tag-neutral">
-                                                                <FiLock className="w-3" aria-hidden />
-                                                                bloqueado
-                                                            </span>
-                                                        )}
+                                            return (
 
-                                                    </p>
-
-                                                </div>
-
-                                            </div>
-
-                                            <span className="tag tag-neutral num shrink-0">
-                                                {itens.length}{capacidade > 0 ? ` / ${capacidade}` : ""}
-                                            </span>
-
-                                        </div>
-
-                                        <ul className="divide-y divide-[#D3DADD] px-5">
-
-                                            {itensPaginados.map((item) => (
-
-                                                <li
-                                                    key={item.unidade.id}
-                                                    className="flex items-center gap-3 py-3.5"
+                                                <tr
+                                                    key={unidade.id}
+                                                    className="border-b border-[#E4E9EB] transition-colors last:border-b-0 hover:bg-[#F7F9FA]"
                                                 >
 
-                                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
-                                                        {item.produto?.imagem_url ? (
-                                                            // eslint-disable-next-line @next/next/no-img-element
-                                                            <img
-                                                                src={urlDaImagem(item.produto.imagem_url)}
-                                                                alt={item.produto.nome}
-                                                                className="h-full w-full object-cover"
-                                                            />
-                                                        ) : null}
-                                                    </div>
-
-                                                    <div className="min-w-0 flex-1">
-
-                                                        <p className="truncate text-sm font-medium text-[#1E2428]">
-                                                            {item.produto?.nome ?? `Produto #${item.unidade.produto_id}`}
-                                                        </p>
-
-                                                        <p className="flex items-center gap-2 font-mono text-xs text-[#5A6469]">
-                                                            <span className="truncate">
-                                                                {identificarPeca(item.produto?.codigo, item.unidade.sequencia)}
+                                                    {/* ENDEREÇO — a primeira
+                                                        coluna porque é a
+                                                        primeira pergunta: para
+                                                        onde eu ando. */}
+                                                    <td className="px-4 py-2.5">
+                                                        {linha.codigo ? (
+                                                            <span className="font-mono text-xs font-bold text-[#1E2428]">
+                                                                {linha.codigo}
                                                             </span>
+                                                        ) : (
+                                                            <span className="tag tag-warning">
+                                                                <FiAlertTriangle className="w-3" aria-hidden />
+                                                                Sem local
+                                                            </span>
+                                                        )}
+                                                    </td>
 
-                                                            {item.unidade.reservada && (
-                                                                <span className="tag tag-neutral shrink-0 font-sans">
-                                                                    reservada
+                                                    {/* LUGAR */}
+                                                    <td className="hidden max-w-[14rem] truncate px-4 py-2.5 text-xs text-[#5A6469] xl:table-cell">
+                                                        {linha.codigo ? linha.nome : SEM_LUGAR}
+                                                    </td>
+
+                                                    {/* PRODUTO */}
+                                                    <td className="px-4 py-2.5">
+
+                                                        <div className="flex items-center gap-3">
+
+                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F0F3F4]">
+                                                                {produto?.imagem_url ? (
+                                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                                    <img
+                                                                        src={urlDaImagem(produto.imagem_url)}
+                                                                        alt=""
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <FiBox className="w-4 text-[#8C969B]" aria-hidden />
+                                                                )}
+                                                            </div>
+
+                                                            <div className="min-w-0">
+
+                                                                <p className="truncate font-bold text-[#1E2428]">
+                                                                    {produto?.nome ?? `Produto #${unidade.produto_id}`}
+                                                                </p>
+
+                                                                {produto?.variacao && (
+                                                                    <p className="truncate text-xs text-[#5A6469]">
+                                                                        {produto.variacao_rotulo || "Variação"}: {produto.variacao}
+                                                                    </p>
+                                                                )}
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                    {/* PEÇA */}
+                                                    <td className="px-4 py-2.5 font-mono text-xs text-[#5A6469]">
+                                                        {identificarPeca(produto?.codigo, unidade.sequencia)}
+                                                    </td>
+
+                                                    {/* TIPO DO LUGAR */}
+                                                    <td className="hidden px-4 py-2.5 lg:table-cell">
+                                                        {endereco ? (
+                                                            <span className={`tag ${CORES_TIPO[tipo] ?? "bg-[#F0F3F4] text-[#5A6469]"}`}>
+                                                                {endereco.tipo_nome}
+                                                            </span>
+                                                        ) : linha.codigo ? (
+                                                            <span className="tag tag-neutral">fora do cadastro</span>
+                                                        ) : (
+                                                            <span className="text-[#8C969B]">—</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* SITUAÇÃO */}
+                                                    <td className="px-4 py-2.5">
+
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+
+                                                            {unidade.reservada ? (
+                                                                <span className="tag tag-info">
+                                                                    <FiBookmark className="w-3" aria-hidden />
+                                                                    Reservada
+                                                                </span>
+                                                            ) : (
+                                                                <span className="tag tag-success">Livre</span>
+                                                            )}
+
+                                                            {endereco?.bloqueado && (
+                                                                <span className="tag tag-warning">
+                                                                    <FiLock className="w-3" aria-hidden />
+                                                                    Bloqueado
                                                                 </span>
                                                             )}
-                                                        </p>
 
-                                                    </div>
+                                                        </div>
 
-                                                    <div className="flex shrink-0 gap-2">
+                                                    </td>
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => abrirExclusao(item)}
-                                                            aria-label="Excluir unidade"
-                                                            className="rounded-lg border border-[#D3DADD] px-2.5 py-2 text-xs font-bold text-[#5A6469] transition-colors hover:border-[#D4351C] hover:bg-[#FDECEA] hover:text-[#D4351C]"
-                                                        >
-                                                            <FiTrash2 className="w-3.5" aria-hidden />
-                                                        </button>
+                                                    {/* AÇÕES */}
+                                                    <td className="px-4 py-2.5">
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => abrirAvaria(item)}
-                                                            className="rounded-lg border border-[#D3DADD] px-3 py-2 text-xs font-bold text-[#D4351C] transition-colors hover:border-[#D4351C] hover:bg-[#FDECEA]"
-                                                        >
-                                                            Avariar
-                                                        </button>
+                                                        <div className="flex items-center justify-end gap-1">
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => abrirTransferencia(item)}
-                                                            className="rounded-lg border border-[#D3DADD] px-3.5 py-2 text-xs font-bold text-[#1E2428] transition-colors hover:bg-[#F0F3F4]"
-                                                        >
-                                                            Transferir
-                                                        </button>
+                                                            <button
+                                                                type="button"
+                                                                title="Transferir de lugar"
+                                                                aria-label={`Transferir ${produto?.nome ?? "peça"}`}
+                                                                onClick={() => abrirTransferencia(linha)}
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4] hover:text-[#0075E2]"
+                                                            >
+                                                                <FiRepeat className="w-4" aria-hidden />
+                                                            </button>
 
-                                                    </div>
+                                                            <button
+                                                                type="button"
+                                                                title="Marcar avaria"
+                                                                aria-label={`Avariar ${produto?.nome ?? "peça"}`}
+                                                                onClick={() => abrirAvaria(linha)}
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#FDECEA] hover:text-[#D4351C]"
+                                                            >
+                                                                <FiAlertTriangle className="w-4" aria-hidden />
+                                                            </button>
 
-                                                </li>
+                                                            <button
+                                                                type="button"
+                                                                title="Excluir peça"
+                                                                aria-label={`Excluir ${produto?.nome ?? "peça"}`}
+                                                                onClick={() => abrirExclusao(linha)}
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#FDECEA] hover:text-[#D4351C]"
+                                                            >
+                                                                <FiTrash2 className="w-4" aria-hidden />
+                                                            </button>
 
-                                            ))}
+                                                        </div>
 
-                                        </ul>
+                                                    </td>
 
-                                        <Pagination
-                                            paginaAtual={paginaLocalCorrigida}
-                                            totalPaginas={totalPaginasLocal}
-                                            aoMudarPagina={(pagina) => mudarPaginaDoLocal(local.chave, pagina)}
-                                        />
+                                                </tr>
+                                            )
+                                        })}
 
-                                        <div className="h-5" />
+                                    </tbody>
 
-                                    </div>
+                                </table>
 
-                                )
+                            </div>
 
-                            })}
+                            <div className="flex flex-col gap-3 border-t border-[#D3DADD] bg-[#F7F9FA] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+
+                                <p className="text-xs text-[#5A6469]">
+                                    Mostrando{" "}
+                                    <span className="num font-bold text-[#1E2428]">
+                                        {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
+                                    </span>{" "}
+                                    de <span className="num font-bold text-[#1E2428]">{linhasFiltradas.length}</span>
+                                    {linhasFiltradas.length !== totalPecas && (
+                                        <> · <span className="num">{totalPecas}</span> no total</>
+                                    )}
+                                </p>
+
+                                <Pagination
+                                    paginaAtual={paginaAtualCorrigida}
+                                    totalPaginas={totalPaginas}
+                                    aoMudarPagina={setPaginaAtual}
+                                />
+
+                            </div>
 
                         </div>
 

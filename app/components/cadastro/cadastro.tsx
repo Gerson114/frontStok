@@ -1,10 +1,10 @@
 "use client"
 
-import { cadastro, escolherPlano } from "@/middleware/auth"
-import { consultarPlanosPublicos, formatarPreco } from "@/middleware/assinatura"
+import { cadastro, irPagar } from "@/middleware/auth"
+import { consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
 import { isValidEmail, isValidPassword } from "@/security/validate"
 import { irParaPaginaExterna } from "@/security/navegacao"
-import type { Plano, PlanoOferta } from "@/app/type/type"
+import type { Oferta } from "@/app/type/type"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
@@ -26,11 +26,11 @@ import MolduraAuth, { type ItemMoldura } from "../auth/moldura"
 const ITENS: ItemMoldura[] = [
     { texto: "Cadastro em dois passos: seus dados e o plano que você escolher.", Icone: FiTag },
     { texto: "Etiqueta com código de barras pronta para imprimir por peça.", Icone: FiPrinter },
-    { texto: "Cartão pedido no cadastro, cobrança só depois do período grátis.", Icone: FiCreditCard },
+    { texto: "Assinatura mensal, cancelada por você mesmo quando quiser.", Icone: FiCreditCard },
 ]
 
 type Campo = "" | "email" | "senha" | "confirmar"
-type Passo = "dados" | "planos"
+type Passo = "dados" | "pagamento"
 
 export default function Cadastro() {
     const [passo, setPasso] = useState<Passo>("dados")
@@ -44,11 +44,10 @@ export default function Cadastro() {
     const [sucesso, setSucesso] = useState(false)
     const [loading, setLoading] = useState(false)
 
-    // Planos e teste grátis vêm do backend — nenhum preço é escrito aqui,
-    // senão um dia a tela mostra um valor e a fatura cobra outro.
-    const [planos, setPlanos] = useState<PlanoOferta[]>([])
-    const [testeDias, setTesteDias] = useState(0)
-    const [planoEnviando, setPlanoEnviando] = useState<Plano | "">("")
+    // A oferta vem do backend — nenhum preço é escrito aqui, senão um dia a
+    // tela mostra um valor e a fatura cobra outro.
+    const [oferta, setOferta] = useState<Oferta | null>(null)
+    const [enviando, setEnviando] = useState(false)
 
     const emailRef = useRef<HTMLInputElement>(null)
     const senhaRef = useRef<HTMLInputElement>(null)
@@ -56,17 +55,16 @@ export default function Cadastro() {
 
     const router = useRouter()
 
-    // Busca os planos já na abertura para a nota do rodapé mostrar os preços
-    // reais antes mesmo de o visitante preencher o formulário. Falhar aqui
-    // não atrapalha: o passo seguinte traz a lista de novo.
+    // Busca a oferta já na abertura para o preço aparecer antes mesmo de o
+    // visitante preencher o formulário. Falhar aqui não atrapalha: o passo
+    // seguinte a traz de novo.
     useEffect(() => {
         let cancelado = false
 
-        consultarPlanosPublicos()
+        consultarOfertaPublica()
             .then((dados) => {
                 if (cancelado) return
-                setPlanos(dados.planos ?? [])
-                setTesteDias(dados.teste_dias ?? 0)
+                setOferta(dados.oferta ?? null)
             })
             .catch(() => { })
 
@@ -82,9 +80,9 @@ export default function Cadastro() {
         { texto: "As duas senhas são iguais", ok: pass.length > 0 && pass === confirmarPass },
     ]
 
-    const nota = planos.length
-        ? planos.map((p) => `${p.nome}: ${formatarPreco(p.preco)}/mês`).join(" · ")
-        : "Dois planos mensais: só o painel de estoque, ou o painel com a vitrine pública da sua loja."
+    const nota = oferta?.preco
+        ? `${formatarPreco(oferta.preco)} por mês, com tudo incluído.`
+        : "Uma assinatura mensal, com tudo incluído: o estoque da loja física, o balcão e a sua loja na internet."
 
     // Marca o campo culpado, mostra o aviso e devolve o cursor para lá.
     function falhar(campo: Exclude<Campo, "">, mensagem: string) {
@@ -137,17 +135,16 @@ export default function Cadastro() {
             const inicio = await cadastro(email, pass)
 
             // Servidor sem cobrança configurada (desenvolvimento): a conta já
-            // foi criada e não há plano a escolher.
+            // foi criada e não há o que pagar.
             if (inicio.proximo_passo === "login") {
                 setSucesso(true)
                 setTimeout(() => router.push("/login"), 1500)
                 return
             }
 
-            if (inicio.planos?.length) setPlanos(inicio.planos)
-            if (inicio.teste_dias) setTesteDias(inicio.teste_dias)
+            if (inicio.oferta) setOferta(inicio.oferta)
 
-            setPasso("planos")
+            setPasso("pagamento")
 
         } catch (error) {
             console.error("Erro:", error)
@@ -163,17 +160,18 @@ export default function Cadastro() {
         }
     }
 
-    // O pagamento acontece numa página do Stripe, fora daqui — por isso a
-    // navegação é uma troca de endereço de verdade, e não router.push.
-    async function irParaPagamento(plano: Plano) {
+    // O pagamento acontece fora daqui, na página do provedor de cobrança —
+    // por isso a navegação é uma troca de endereço de verdade, e não
+    // router.push.
+    async function irParaPagamento() {
         setError("")
-        setPlanoEnviando(plano)
+        setEnviando(true)
 
         try {
-            irParaPaginaExterna(await escolherPlano(plano))
+            irParaPaginaExterna(await irPagar())
         } catch (e) {
             setError(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento")
-            setPlanoEnviando("")
+            setEnviando(false)
         }
     }
 
@@ -207,7 +205,7 @@ export default function Cadastro() {
 
                 </div>
 
-            ) : passo === "planos" ? (
+            ) : passo === "pagamento" ? (
 
                 <div>
 
@@ -221,65 +219,56 @@ export default function Cadastro() {
                     </button>
 
                     <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[#1E2428]">
-                        Escolha o seu plano
+                        Assine para criar a conta
                     </h1>
 
                     <p className="mt-2 text-sm text-[#5A6469]">
-                        {testeDias > 0
-                            ? `Você começa com ${testeDias} dias grátis. O cartão é cadastrado agora, e a primeira cobrança só acontece quando o teste terminar.`
-                            : "A diferença entre eles é a loja na internet. Dá para trocar depois, no portal de cobrança."}
+                        É uma assinatura só, com tudo dentro. A conta é criada assim que
+                        o pagamento for confirmado.
                     </p>
 
                     <p className="mt-1 text-sm text-[#8C969B]">
                         Conta de <span className="font-semibold text-[#5A6469]">{email}</span>
                     </p>
 
-                    <div className="mt-6 space-y-4">
+                    <div className="mt-6 rounded-xl border border-[#E4E9EB] p-5">
 
-                        {planos.map((plano) => (
-                            <div key={plano.chave} className="rounded-xl border border-[#E4E9EB] p-5">
+                        <div className="flex items-baseline justify-between gap-3">
+                            <h2 className="font-display text-lg text-[#1E2428]">
+                                {oferta?.nome ?? "Arara"}
+                            </h2>
 
-                                <div className="flex items-baseline justify-between gap-3">
-                                    <h2 className="font-display text-lg text-[#1E2428]">
-                                        {plano.nome}
-                                    </h2>
+                            <p className="shrink-0 text-right">
+                                <span className="font-display text-xl text-[#1E2428]">
+                                    {formatarPreco(oferta?.preco)}
+                                </span>
+                                <span className="block text-xs text-[#8C969B]">por mês</span>
+                            </p>
+                        </div>
 
-                                    <p className="shrink-0 text-right">
-                                        <span className="font-display text-xl text-[#1E2428]">
-                                            {formatarPreco(plano.preco)}
-                                        </span>
-                                        <span className="block text-xs text-[#8C969B]">por mês</span>
-                                    </p>
-                                </div>
+                        {oferta?.descricao && (
+                            <p className="mt-1.5 text-sm text-[#5A6469]">
+                                {oferta.descricao}
+                            </p>
+                        )}
 
-                                <p className="mt-1.5 text-sm text-[#5A6469]">
-                                    {plano.descricao}
-                                </p>
+                        <ul className="mt-4 space-y-1.5">
+                            {(oferta?.recursos ?? []).map((recurso) => (
+                                <li key={recurso} className="flex items-start gap-2 text-sm text-[#5A6469]">
+                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
+                                    {recurso}
+                                </li>
+                            ))}
+                        </ul>
 
-                                <ul className="mt-4 space-y-1.5">
-                                    {plano.recursos.map((recurso) => (
-                                        <li key={recurso} className="flex items-start gap-2 text-sm text-[#5A6469]">
-                                            <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
-                                            {recurso}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <button
-                                    type="button"
-                                    disabled={planoEnviando !== ""}
-                                    onClick={() => irParaPagamento(plano.chave)}
-                                    className="btn btn-primario mt-5 w-full py-2.5"
-                                >
-                                    {planoEnviando === plano.chave
-                                        ? "Abrindo pagamento..."
-                                        : plano.teste_dias
-                                            ? `Começar ${plano.teste_dias} dias grátis`
-                                            : `Assinar ${plano.nome}`}
-                                </button>
-
-                            </div>
-                        ))}
+                        <button
+                            type="button"
+                            disabled={enviando}
+                            onClick={irParaPagamento}
+                            className="btn btn-primario mt-5 w-full py-2.5"
+                        >
+                            {enviando ? "Abrindo pagamento..." : "Assinar e criar conta"}
+                        </button>
 
                     </div>
 
@@ -295,8 +284,9 @@ export default function Cadastro() {
 
                     <p className="mt-6 flex items-start gap-2 border-t border-[#E4E9EB] pt-6 text-xs leading-relaxed text-[#8C969B]">
                         <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
-                        O cartão é digitado na página do Stripe, nunca aqui. Sua conta
-                        é criada quando o pagamento for confirmado.
+                        O cartão é digitado numa página segura do processador de
+                        cobrança, nunca aqui. Sua conta é criada quando o pagamento
+                        for confirmado.
                     </p>
 
                 </div>

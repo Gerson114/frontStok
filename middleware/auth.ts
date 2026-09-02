@@ -6,7 +6,7 @@
 
 import { sanitizeEmail } from "@/security/sanitize"
 import { ApiError, extrairMensagemErro } from "@/middleware/client"
-import type { CadastroConcluido, InicioCadastro, Plano } from "@/app/type/type"
+import type { CadastroConcluido, InicioCadastro } from "@/app/type/type"
 
 export async function login(email: string, password: string): Promise<void> {
     const response = await fetch("/api/login", {
@@ -29,12 +29,12 @@ export async function login(email: string, password: string): Promise<void> {
 }
 
 /**
- * Primeiro passo do cadastro: guarda os dados e devolve os planos.
+ * Primeiro passo do cadastro: guarda os dados e devolve o que está à venda.
  *
  * A conta ainda NÃO existe aqui — ela só nasce depois do pagamento (ver
- * `escolherPlano` e `concluirCadastro`). Quem decide isso é o backend, e é
- * ele quem diz, em `proximo_passo`, qual é a próxima tela: escolher o plano,
- * ou ir direto ao login quando o servidor roda sem cobrança configurada.
+ * `irPagar` e `concluirCadastro`). Quem decide isso é o backend, e é ele quem
+ * diz, em `proximo_passo`, qual é a próxima tela: pagar, ou ir direto ao
+ * login quando o servidor roda sem cobrança configurada.
  */
 export async function cadastro(email: string, password: string): Promise<InicioCadastro> {
     const response = await fetch("/api/cadastro", {
@@ -60,20 +60,19 @@ export async function cadastro(email: string, password: string): Promise<InicioC
 }
 
 /**
- * Segundo passo: abre o pagamento do plano escolhido e devolve a URL do
- * Stripe. Quem chama leva o navegador até lá com `window.location.assign`.
+ * Segundo passo: abre o pagamento e devolve a URL do provedor de cobrança.
+ * Quem chama leva o navegador até lá com `window.location.assign`.
  *
- * Só a chave do plano é enviada; o preço vive na configuração do backend,
- * para o navegador não ter como assinar um plano pagando o outro.
+ * Nada é enviado: o preço vive na configuração do backend, para o navegador
+ * não ter como assinar por um valor que não é o nosso.
  */
-export async function escolherPlano(plano: Plano): Promise<string> {
+export async function irPagar(): Promise<string> {
     const response = await fetch("/api/assinatura/checkout-publico", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ plano }),
     })
 
     const texto = await response.text().catch(() => "")
@@ -87,11 +86,11 @@ export async function escolherPlano(plano: Plano): Promise<string> {
 }
 
 /**
- * Terceiro passo: na volta do Stripe, troca o id da sessão pela conta criada
- * e pela sessão já aberta.
+ * Terceiro passo: na volta do pagamento, troca o id da sessão pela conta
+ * criada e pela sessão já aberta.
  *
- * Quem confirma o pagamento é o backend, perguntando ao próprio Stripe —
- * esta função só entrega o identificador que veio na URL de retorno.
+ * Quem confirma o pagamento é o backend, perguntando ao provedor de cobrança
+ * — esta função só entrega o identificador que veio na URL de retorno.
  */
 export async function concluirCadastro(sessionId: string): Promise<CadastroConcluido> {
     const response = await fetch("/api/assinatura/sessao", {

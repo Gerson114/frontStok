@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { logout } from "@/middleware/auth"
+import { Simbolo } from "@/app/components/marca/marca"
 import { EVENTO_ASSINATURA_ALTERADA, consultarMenu } from "@/middleware/assinatura"
 import type { ItemMenu } from "@/app/type/type"
 import {
@@ -13,7 +14,6 @@ import {
     FiClipboard,
     FiRepeat,
     FiHome,
-    FiList,
     FiPlus,
     FiMapPin,
     FiAlertTriangle,
@@ -25,7 +25,6 @@ import {
     FiTag,
     FiCheck,
     FiX,
-    FiUsers,
     FiBarChart2,
     FiCornerUpLeft,
     FiCreditCard,
@@ -37,7 +36,6 @@ import {
     FiMenu,
     FiMessageCircle,
     FiPackage,
-    FiPercent,
     FiPrinter,
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
@@ -55,30 +53,22 @@ const ICONES: Record<string, IconType> = {
     "estoque-enderecos": FiMapPin,
     "estoque-config": FiPrinter,
     "estoque-fila": FiClipboard,
-    "estoque-picking": FiList,
     "estoque-reposicao": FiArrowDown,
     "estoque-inventario": FiBarChart2,
     "estoque-ondas": FiRepeat,
     "estoque-devolucoes": FiCornerUpLeft,
     avarias: FiAlertTriangle,
     banners: FiImage,
-    promocoes: FiPercent,
     conversas: FiMessageCircle,
     venda: FiShoppingBag,
     pedidos: FiShoppingCart,
     "pedidos-novo": FiFilePlus,
     etiquetas: FiTag,
     vendidos: FiCheck,
-    cancelados: FiX,
     loja: FiGlobe,
     vitrine: FiEye,
     assinatura: FiCreditCard,
 }
-
-const emBreve: { nome: string; Icone: IconType }[] = [
-    { nome: "Clientes", Icone: FiUsers },
-    { nome: "Relatórios", Icone: FiBarChart2 },
-]
 
 // Enquanto o menu não chega — e se ele não chegar —, o lojista fica ao menos
 // com a tela de assinatura: é dela que sai o pagamento que destrava o resto.
@@ -284,14 +274,16 @@ export default function Sidebar() {
     }
 
     // Bloco azul da marca — o mesmo peso de cor que o Magalu usa no topo.
+    // Aqui o símbolo é branco sobre o azul da barra, e não o quadrado azul:
+    // quadrado azul dentro de faixa azul não tem contorno nenhum.
     const marca = (
         <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-base font-extrabold text-[#0086FF]">
-                M
-            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
+                <Simbolo className="w-[1.4rem]" />
+            </span>
             <div className="leading-tight">
                 <p className="font-display text-[1.05rem] text-white">
-                    Minha Loja
+                    Arara
                 </p>
                 <p className="text-[0.7rem] text-white/75">
                     Painel administrativo
@@ -378,20 +370,6 @@ export default function Sidebar() {
                     </div>
                 ))}
 
-                <p className="mb-2 px-3 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
-                    Em breve
-                </p>
-
-                {emBreve.map((item) => (
-                    <div
-                        key={item.nome}
-                        aria-disabled
-                        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-[#B8C0C4]"
-                    >
-                        <item.Icone className="w-[1.05rem] shrink-0" aria-hidden />
-                        <span>{item.nome}</span>
-                    </div>
-                ))}
             </nav>
 
             <div className="border-t border-[#E4E9EB] p-3">
@@ -438,10 +416,10 @@ export default function Sidebar() {
             {/* Topbar - mobile */}
             <div className="sticky top-0 z-40 flex h-16 items-center justify-between bg-[#0086FF] px-4 md:hidden print:hidden">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-extrabold text-[#0086FF]">
-                        M
-                    </div>
-                    <span className="font-display text-base text-white">Minha Loja</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
+                        <Simbolo className="w-5" />
+                    </span>
+                    <span className="font-display text-base text-white">Arara</span>
                 </div>
 
                 <button

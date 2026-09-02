@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Marca } from "./components/marca/marca"
 import Link from "next/link"
 import Preco from "./components/preco/preco"
 import Topo from "./components/header/topo"
@@ -12,12 +13,11 @@ import {
   FiShoppingCart,
   FiTag,
   FiAlertTriangle,
-  FiX,
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
 
 export const metadata: Metadata = {
-  title: "Minha Loja | Gestão de estoque peça a peça para lojas de roupa",
+  title: "Arara | Gestão de estoque peça a peça para lojas de roupa",
   description:
     "Cadastre produtos, imprima etiquetas com código de barras, controle cada peça pelo endereço em que ela está, receba pedidos pela vitrine e acompanhe vendas, avarias e cancelamentos.",
 }
@@ -92,65 +92,43 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
   },
 ]
 
-// Os dois planos, como eles se apresentam a quem ainda está escolhendo. O
-// básico é o cadastro da loja física — o produto, a peça com código próprio,
-// a etiqueta e a baixa da venda. O completo acrescenta a vitrine pública e
-// tudo o que vive dela: pedidos, banners, promoções e a operação de estoque
-// que só se paga com venda online (endereçamento, tarefas, contagem,
-// reposição de prateleira e devoluções).
+// O que a assinatura entrega, como isso se apresenta a quem ainda está
+// decidindo. É uma só, com tudo dentro: o cadastro da loja física — o
+// produto, a peça com código próprio, a etiqueta, a entrada de mercadoria, os
+// endereços das prateleiras e a venda no balcão — mais a vitrine pública e
+// tudo o que vive dela: pedidos online, separação, devoluções, banners e o
+// estoque se organizando sozinho.
 //
-// A lista que vale é a do servidor (ver RecursosDoPlano, em
+// A lista que vale é a do servidor (ver RecursosDoSistema, em
 // internal/services/assinatura/recursos.go), que é a mesma que a tela de
-// assinatura mostra. Quem mudar o que cada plano inclui mexe lá, e passa
-// aqui para esta página não desmentir aquela.
-const planos: {
-  nome: string
-  para: string
-  valor: number
-  destaque: boolean
-  chamada: string
-  inclui: string[]
-  naoInclui: string[]
-}[] = [
-  {
-    nome: "Estoque",
-    para: "Para organizar o estoque da loja física.",
-    valor: 50,
-    destaque: false,
-    chamada: "Começar pelo estoque",
-    inclui: [
-      "Cadastro de produtos, com tamanho, tecido e cor",
-      "Controle peça a peça, cada uma com código próprio",
-      "Etiqueta com código de barras para imprimir",
-      "Entrada de mercadoria, com custo e fornecedor",
-      "Busca da peça e transferência entre prateleiras",
-      "Baixa de venda no balcão",
-      "Avarias e histórico de vendas",
-    ],
-    naoInclui: [
-      "Vitrine pública da loja",
-      "Pedidos online, banners e promoções",
-      "Endereçamento, tarefas, contagem e devoluções",
-    ],
-  },
-  {
-    nome: "Estoque + Site",
-    para: "Para quem também quer vender pela internet.",
-    valor: 100,
-    destaque: true,
-    chamada: "Quero a loja no ar",
-    inclui: [
-      "Tudo o que tem no plano Estoque",
-      "Vitrine pública alimentada pelo seu próprio estoque",
-      "Pedidos online, de pendente a entregue",
-      "Banners do topo, com ordem e ativação",
-      "Preço promocional com o valor cheio riscado",
-      "Endereçamento do estoque, com placas de prateleira",
-      "Tarefas, contagem, reposição de prateleira e devoluções",
-      "Separação e picking com o endereço de cada peça",
-    ],
-    naoInclui: [],
-  },
+// assinatura mostra. Quem mudar o que o sistema inclui mexe lá, e passa aqui
+// para esta página não desmentir aquela.
+//
+// O valor está escrito aqui de propósito, e é o único lugar do sistema em que
+// isso acontece: esta página é lida por quem ainda não tem conta, e buscar
+// preço no servidor para desenhá-la deixaria a tela de vendas na mão de uma
+// chamada que pode falhar. Quem mudar o preço muda aqui e no provedor de
+// cobrança — no painel de quem já é cliente o valor continua vindo de lá,
+// sempre igual ao da fatura.
+const MENSALIDADE = 100
+
+const inclui: string[] = [
+  "Cadastro de produtos, com tamanho, tecido e cor",
+  "Controle peça a peça, cada uma com código próprio",
+  "Etiqueta com código de barras para imprimir",
+  "Entrada de mercadoria, com custo e fornecedor",
+  "Endereços das prateleiras, com placas para imprimir",
+  "Venda no balcão, bipando a etiqueta",
+  "Promoções, avarias e histórico de vendas",
+  "WhatsApp da loja dentro do painel",
+  "Vitrine pública alimentada pelo seu próprio estoque",
+  "Pedidos online, de pendente a entregue",
+  "Pedidos de WhatsApp e telefone na mesma separação",
+  "Separação com o endereço de cada peça, uma volta só",
+  "Etiquetas de pedido prontas para imprimir",
+  "Devoluções isoladas até a tratativa",
+  "Tarefas, contagem e reposição de prateleira",
+  "Banners do topo, com ordem e ativação",
 ]
 
 export default function Home() {
@@ -174,7 +152,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-4 max-w-xl text-base leading-relaxed text-[#5A6469]">
-              O Minha Loja troca o &ldquo;tenho 8 no estoque&rdquo; por oito peças identificadas
+              O Arara troca o &ldquo;tenho 8 no estoque&rdquo; por oito peças identificadas
               uma a uma: etiqueta com código de barras, endereço de guarda,
               venda no balcão, pedidos da vitrine e o histórico de tudo o que
               saiu, quebrou ou foi cancelado.
@@ -192,8 +170,8 @@ export default function Home() {
             </div>
 
             <p className="mt-5 text-sm text-[#8C969B]">
-              Dois planos mensais, a partir de R$ 50. Pagamento pelo Stripe e
-              cancelamento feito por você mesmo, no portal de cobrança.
+              Uma assinatura mensal de R$ 100, com tudo incluído. Sem
+              fidelidade: o cancelamento é feito por você mesmo.
             </p>
           </div>
 
@@ -353,7 +331,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:py-20 lg:grid-cols-2">
 
           <div>
-            <span className="tag bg-white/15 text-white">Plano Estoque + Site</span>
+            <span className="tag bg-white/15 text-white">Incluído na assinatura</span>
 
             <h2 className="font-display mt-4 text-2xl text-white sm:text-3xl">
               Sua loja também fica de pé na internet
@@ -363,7 +341,7 @@ export default function Home() {
               A vitrine mostra o mesmo estoque do painel: quando a peça é
               vendida no balcão, ela deixa de aparecer para o cliente. O pedido
               feito ali chega direto na tela de pedidos, com nome, contato e
-              itens. A vitrine entra no plano de R$ 100 por mês.
+              itens. A vitrine já vem na assinatura, sem custo à parte.
             </p>
 
             <ul className="mt-6 space-y-2.5">
@@ -417,84 +395,68 @@ export default function Home() {
       </section>
 
       {/* ==================================================================
-          PLANOS
-          Dois cartões lado a lado: o básico cuida só do estoque, o completo
-          acrescenta a loja na internet. O segundo ganha borda azul porque é
-          o que a maioria das lojas contrata.
+          ASSINATURA
+          Um cartão só, no meio da página: não há o que comparar, e uma
+          tabela de comparação com uma coluna seria uma pergunta sem escolha.
           ================================================================== */}
       <section id="assinatura" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-2xl text-[#1E2428] sm:text-3xl">
-            Dois planos, sem pegadinha
+            Um preço, sem pegadinha
           </h2>
 
           <p className="mt-3 text-base text-[#5A6469]">
-            Escolha se você quer só organizar o estoque da loja física ou se
-            quer também colocar a loja na internet. Dá para trocar de plano
-            depois, no portal de cobrança.
+            Não há plano básico nem versão capada: quem assina recebe o sistema
+            inteiro, do cadastro da primeira peça à loja no ar. Sem fidelidade,
+            e o cancelamento é feito por você mesmo.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-2">
+        <div className="mx-auto mt-10 max-w-3xl">
+          <article className="card flex flex-col border-[#0086FF] p-7 shadow-[0_2px_12px_rgba(30,36,40,0.08)] sm:p-8">
 
-          {planos.map((plano) => (
-            <article
-              key={plano.nome}
-              className={`card flex flex-col p-7 sm:p-8 ${plano.destaque ? "border-[#0086FF] shadow-[0_2px_12px_rgba(30,36,40,0.08)]" : ""}`}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display text-lg text-[#1E2428]">
+                  Arara
+                </p>
+                <p className="mt-1 text-sm text-[#5A6469]">
+                  A loja física e a loja na internet, no mesmo estoque.
+                </p>
+              </div>
+
+              <span className="tag tag-info shrink-0">Tudo incluído</span>
+            </div>
+
+            <div className="mt-6 flex items-baseline gap-1.5 border-b border-[#E4E9EB] pb-6">
+              <Preco valor={MENSALIDADE} className="text-4xl" />
+              <span className="text-sm font-bold text-[#5A6469]">/mês</span>
+            </div>
+
+            <ul className="mt-6 mb-8 grid gap-2.5 sm:grid-cols-2">
+              {inclui.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#1E2428]">
+                  <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/cadastro"
+              className="btn btn-primario mt-auto w-full py-3 text-base"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-display text-lg text-[#1E2428]">
-                    {plano.nome}
-                  </p>
-                  <p className="mt-1 text-sm text-[#5A6469]">
-                    {plano.para}
-                  </p>
-                </div>
-
-                {plano.destaque ? (
-                  <span className="tag tag-info shrink-0">Mais completo</span>
-                ) : null}
-              </div>
-
-              <div className="mt-6 flex items-baseline gap-1.5 border-b border-[#E4E9EB] pb-6">
-                <Preco valor={plano.valor} className="text-4xl" />
-                <span className="text-sm font-bold text-[#5A6469]">/mês</span>
-              </div>
-
-              <ul className="mt-6 mb-8 space-y-2.5">
-                {plano.inclui.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#1E2428]">
-                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
-                    {item}
-                  </li>
-                ))}
-
-                {plano.naoInclui.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#B8C0C4]">
-                    <FiX className="mt-0.5 w-4 shrink-0" aria-hidden />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href="/cadastro"
-                className={`btn mt-auto w-full py-3 text-base ${plano.destaque ? "btn-primario" : "btn-secundario"}`}
-              >
-                {plano.chamada}
-                <FiArrowRight className="w-[1.05rem]" aria-hidden />
-              </Link>
-            </article>
-          ))}
-
+              Criar a minha conta
+              <FiArrowRight className="w-[1.05rem]" aria-hidden />
+            </Link>
+          </article>
         </div>
 
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-[#8C969B]">
-          O plano é escolhido no cadastro e cobrado todo mês pelo Stripe.
-          Nenhum dado de cartão passa por este sistema — o pagamento acontece
-          na página do próprio Stripe, e a troca de plano ou o cancelamento
-          ficam no portal de cobrança.
+          A assinatura é cobrada todo mês no cartão. Nenhum dado de cartão passa
+          por este sistema: o pagamento é feito numa página segura do
+          processador de cobrança, e o cancelamento fica na tela de assinatura
+          do seu painel.
         </p>
       </section>
 
@@ -506,12 +468,10 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-between gap-6">
 
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0086FF] text-base font-extrabold text-white">
-                M
-              </span>
+              <Marca />
               <div className="leading-tight">
                 <p className="font-display text-[1.05rem] text-[#1E2428]">
-                  Minha Loja
+                  Arara
                 </p>
                 <p className="text-xs text-[#8C969B]">
                   Gestão de estoque e vendas
@@ -531,7 +491,7 @@ export default function Home() {
           </div>
 
           <p className="mt-8 border-t border-[#D3DADD] pt-6 text-xs text-[#8C969B]">
-            © {new Date().getFullYear()} Minha Loja. Todos os direitos reservados.
+            © {new Date().getFullYear()} Arara. Todos os direitos reservados.
           </p>
         </div>
       </footer>

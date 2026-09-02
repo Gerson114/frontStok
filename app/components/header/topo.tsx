@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Marca } from "@/app/components/marca/marca"
 import { usePathname } from "next/navigation"
 
 // Âncoras das seções da landing. Fora de "/" elas viram links para a página
@@ -30,11 +31,9 @@ export default function Topo() {
             <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
 
                 <Link href="/" className="flex shrink-0 items-center gap-2.5">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0086FF] text-base font-extrabold text-white">
-                        M
-                    </span>
+                    <Marca />
                     <span className="font-display text-lg text-[#1E2428]">
-                        Minha Loja
+                        Arara
                     </span>
                 </Link>
 

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { Pedido, StatusPedido } from "@/app/type/type"
 import { listarPedidos, atualizarStatusPedido } from "@/middleware/pedidos"
 import { ApiError } from "@/middleware/client"
@@ -9,6 +10,21 @@ import Pagination from "@/app/components/pagination/pagination"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import { FiFileText, FiSearch, FiX, FiAlertTriangle, FiDollarSign, FiTag } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
+
+/**
+ * Pedidos: a lista de tudo o que foi pedido, em qualquer situação.
+ *
+ * Cancelado não é outro assunto, é o mesmo pedido num outro fim — e por isso
+ * não tem tela própria. Ter duas telas iguais, uma mostrando o que não foi
+ * cancelado e outra só o que foi, obrigava o lojista a adivinhar em qual
+ * delas o pedido #48 estava para poder procurá-lo, e fazia a mesma busca, o
+ * mesmo cartão e o mesmo seletor de status existirem em dois arquivos.
+ *
+ * Aqui é uma lista só, com abas de situação em cima. A aba escolhida vai
+ * para o endereço (?status=cancelados), então o link continua servindo para
+ * mandar alguém direto ao que interessa — inclusive o link antigo de
+ * /page/cancelados, que aponta para cá.
+ */
 
 const ITENS_POR_PAGINA = 10
 
@@ -30,7 +46,74 @@ const STATUS_TAG: Record<StatusPedido, string> = {
     cancelado: "tag-danger",
 }
 
-export default function Pedidos() {
+
+// ==============================
+// ABAS DE SITUAÇÃO
+// ==============================
+
+type Filtro = "andamento" | "entregues" | "cancelados" | "todos"
+
+const FILTROS: { chave: Filtro; nome: string }[] = [
+    { chave: "andamento", nome: "Em andamento" },
+    { chave: "entregues", nome: "Entregues" },
+    { chave: "cancelados", nome: "Cancelados" },
+    { chave: "todos", nome: "Todos" },
+]
+
+/** A aba padrão é "em andamento": é o que ainda dá trabalho hoje. */
+function filtroDoEndereco(valor: string | null): Filtro {
+    return FILTROS.some((filtro) => filtro.chave === valor) ? (valor as Filtro) : "andamento"
+}
+
+function pertenceAoFiltro(pedido: Pedido, filtro: Filtro): boolean {
+
+    switch (filtro) {
+        case "entregues":
+            return pedido.status === "entregue"
+        case "cancelados":
+            return pedido.status === "cancelado"
+        case "todos":
+            return true
+        default:
+            return pedido.status !== "entregue" && pedido.status !== "cancelado"
+    }
+}
+
+/** O texto da tela muda com a aba — o resto dela, não. */
+const TEXTOS: Record<Filtro, { titulo: string; explicacao: string; rotulo: string; vazio: string }> = {
+    andamento: {
+        titulo: "Pedidos em andamento",
+        explicacao: "O que ainda passa pela sua mão: acompanhe e atualize a situação de cada pedido.",
+        rotulo: "Em andamento",
+        vazio: "Nenhum pedido em andamento no momento.",
+    },
+    entregues: {
+        titulo: "Pedidos entregues",
+        explicacao: "Pedidos que chegaram ao cliente. As peças que saíram estão em Vendidos.",
+        rotulo: "Entregues",
+        vazio: "Nenhum pedido entregue até agora.",
+    },
+    cancelados: {
+        titulo: "Pedidos cancelados",
+        explicacao: "Pedidos que não vão ser atendidos. Mudar a situação aqui traz o pedido de volta.",
+        rotulo: "Cancelados",
+        vazio: "Nenhum pedido foi cancelado até agora.",
+    },
+    todos: {
+        titulo: "Todos os pedidos",
+        explicacao: "A lista inteira, em qualquer situação — é aqui que se acha um pedido antigo.",
+        rotulo: "Pedidos",
+        vazio: "Ainda não há pedidos de clientes registrados.",
+    },
+}
+
+
+function PedidosInterno() {
+
+    const router = useRouter()
+    const parametros = useSearchParams()
+
+    const filtro = filtroDoEndereco(parametros.get("status"))
 
     const [pedidos, setPedidos] = useState<Pedido[]>([])
     const [loading, setLoading] = useState(true)
@@ -69,6 +152,16 @@ export default function Pedidos() {
 
     }, [])
 
+    // Trocar de aba volta para a primeira página: a página 3 da lista de
+    // andamento não quer dizer nada na lista de cancelados.
+    function trocarFiltro(novo: Filtro) {
+
+        if (novo === filtro) return
+
+        setPaginaAtual(1)
+        router.replace(novo === "andamento" ? "/page/pedidos" : `/page/pedidos?status=${novo}`, { scroll: false })
+    }
+
     function aoMudarBusca(valor: string) {
         setBusca(valor)
         setPaginaAtual(1)
@@ -106,30 +199,48 @@ export default function Pedidos() {
 
 
     // ==============================
-    // PEDIDOS ATIVOS
+    // A LISTA DA ABA ESCOLHIDA
     // ==============================
 
-    // Pedido entregue sai daqui e passa a aparecer em Vendidos (a unidade já
-    // foi marcada como vendida, ver AtualizarStatus no backend); cancelado
-    // sai daqui e vai para Cancelados. Nenhum dos dois é mais um pedido "em
-    // andamento", não faz sentido ocupar espaço nesta lista.
-    const pedidosAtivos = pedidos.filter(
-        (pedido) => pedido.status !== "entregue" && pedido.status !== "cancelado"
+    // O pedido que muda de situação troca de aba na hora, sem recarregar:
+    // confirmar um cancelamento aqui faz o cartão sair da lista de andamento
+    // e aparecer na de cancelados, que é o que acabou de acontecer com ele.
+    const daAba = useMemo(
+        () => pedidos.filter((pedido) => pertenceAoFiltro(pedido, filtro)),
+        [pedidos, filtro]
     )
+
+    // Quantos há em cada aba, para o lojista ver o que existe antes de clicar.
+    const contagens = useMemo(() => {
+
+        const conta = {} as Record<Filtro, number>
+
+        for (const { chave } of FILTROS) {
+            conta[chave] = pedidos.filter((pedido) => pertenceAoFiltro(pedido, chave)).length
+        }
+
+        return conta
+
+    }, [pedidos])
 
 
     // ==============================
     // ESTATÍSTICAS
     // ==============================
 
-    const totalPedidos = pedidosAtivos.length
-    const pendentes = pedidosAtivos.filter((pedido) => pedido.status === "pendente").length
+    const textos = TEXTOS[filtro]
+
+    const pendentes = daAba.filter((pedido) => pedido.status === "pendente").length
+
+    // Pendentes só aparece onde pode haver algum: em Entregues e Cancelados
+    // seria um cartão fixo em zero ocupando um terço da linha.
+    const mostraPendentes = filtro === "andamento" || filtro === "todos"
 
     function totalDoPedido(pedido: Pedido): number {
         return pedido.itens.reduce((total, item) => total + item.quantidade * item.preco_unitario, 0)
     }
 
-    const valorTotal = pedidosAtivos.reduce((total, pedido) => total + totalDoPedido(pedido), 0)
+    const valorTotal = daAba.reduce((total, pedido) => total + totalDoPedido(pedido), 0)
 
     const formatarData = (iso: string) =>
         new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -142,7 +253,7 @@ export default function Pedidos() {
     const termoBusca = busca.trim().toLowerCase()
 
     const pedidosFiltrados = termoBusca
-        ? pedidosAtivos.filter((pedido) => {
+        ? daAba.filter((pedido) => {
             return (
                 pedido.cliente_nome.toLowerCase().includes(termoBusca) ||
                 pedido.cliente_contato.toLowerCase().includes(termoBusca) ||
@@ -150,7 +261,7 @@ export default function Pedidos() {
                 String(pedido.id).includes(termoBusca)
             )
         })
-        : pedidosAtivos
+        : daAba
 
 
     // ==============================
@@ -311,12 +422,58 @@ export default function Pedidos() {
                     <div className="mb-8">
 
                         <h2 className="font-display text-3xl text-[#1E2428] sm:text-4xl">
-                            Pedidos de clientes
+                            {textos.titulo}
                         </h2>
 
                         <p className="mt-2 max-w-md text-[#5A6469]">
-                            Acompanhe e atualize o status dos pedidos feitos pelos clientes.
+                            {textos.explicacao}
                         </p>
+
+                    </div>
+
+
+                    {/* ==========================
+                        ABAS DE SITUAÇÃO
+                    ========================== */}
+
+                    <div
+                        role="tablist"
+                        aria-label="Situação dos pedidos"
+                        className="mb-8 flex flex-wrap gap-2 border-b border-[#D3DADD] pb-px"
+                    >
+
+                        {FILTROS.map(({ chave, nome }) => {
+
+                            const ativa = chave === filtro
+
+                            return (
+
+                                <button
+                                    key={chave}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={ativa}
+                                    onClick={() => trocarFiltro(chave)}
+                                    className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                        ativa
+                                            ? "border-[#0086FF] text-[#0086FF]"
+                                            : "border-transparent text-[#5A6469] hover:text-[#1E2428]"
+                                    }`}
+                                >
+
+                                    {nome}
+
+                                    <span className={`num rounded-full px-2 py-0.5 text-xs font-bold ${
+                                        ativa ? "bg-[#E6F3FF] text-[#0086FF]" : "bg-[#F0F3F4] text-[#5A6469]"
+                                    }`}>
+                                        {contagens[chave]}
+                                    </span>
+
+                                </button>
+
+                            )
+
+                        })}
 
                     </div>
 
@@ -325,7 +482,7 @@ export default function Pedidos() {
                         ESTATÍSTICAS
                     ========================== */}
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    <div className={`grid grid-cols-1 gap-5 ${mostraPendentes ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
 
                         <div className="card p-6">
 
@@ -333,10 +490,10 @@ export default function Pedidos() {
 
                                 <div>
                                     <p className="text-sm text-[#5A6469]">
-                                        Pedidos
+                                        {textos.rotulo}
                                     </p>
                                     <p className="num mt-2 text-3xl font-bold text-[#1E2428]">
-                                        {totalPedidos}
+                                        {daAba.length}
                                     </p>
                                 </div>
 
@@ -348,26 +505,30 @@ export default function Pedidos() {
 
                         </div>
 
-                        <div className="card p-6">
+                        {mostraPendentes && (
 
-                            <div className="flex items-center justify-between">
+                            <div className="card p-6">
 
-                                <div>
-                                    <p className="text-sm text-[#5A6469]">
-                                        Pendentes
-                                    </p>
-                                    <p className={`num mt-2 text-3xl font-bold ${pendentes > 0 ? "text-[#8A6C1B]" : "text-[#1E2428]"}`}>
-                                        {pendentes}
-                                    </p>
-                                </div>
+                                <div className="flex items-center justify-between">
 
-                                <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${pendentes > 0 ? "bg-[#FFF6E0] text-[#8A6C1B]" : "bg-[#F0F3F4] text-[#5A6469]"}`}>
-                                    <FiAlertTriangle className="w-5" aria-hidden />
+                                    <div>
+                                        <p className="text-sm text-[#5A6469]">
+                                            Pendentes
+                                        </p>
+                                        <p className={`num mt-2 text-3xl font-bold ${pendentes > 0 ? "text-[#8A6C1B]" : "text-[#1E2428]"}`}>
+                                            {pendentes}
+                                        </p>
+                                    </div>
+
+                                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${pendentes > 0 ? "bg-[#FFF6E0] text-[#8A6C1B]" : "bg-[#F0F3F4] text-[#5A6469]"}`}>
+                                        <FiAlertTriangle className="w-5" aria-hidden />
+                                    </div>
+
                                 </div>
 
                             </div>
 
-                        </div>
+                        )}
 
                         <div className="card p-6">
 
@@ -400,12 +561,12 @@ export default function Pedidos() {
                     <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
                         <p className="text-sm text-[#5A6469]">
-                            {pedidosFiltrados.length} de {pedidos.length} pedido(s) encontrado(s)
+                            {pedidosFiltrados.length} de {daAba.length} pedido(s) encontrado(s)
                         </p>
 
                         <div className="relative w-full sm:w-72">
 
-            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
+                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
 
                             <input
                                 type="text"
@@ -453,12 +614,12 @@ export default function Pedidos() {
                             </h3>
 
                             <p className="mt-2 text-sm text-[#5A6469]">
-                                {totalPedidos === 0
-                                    ? "Ainda não há pedidos de clientes registrados."
+                                {daAba.length === 0
+                                    ? textos.vazio
                                     : "Nenhum pedido corresponde à busca."}
                             </p>
 
-                            {totalPedidos > 0 && (
+                            {daAba.length > 0 && (
 
                                 <button
                                     type="button"
@@ -646,5 +807,14 @@ export default function Pedidos() {
 
         </main>
 
+    )
+}
+
+// A aba vem do endereço, e ler o endereço exige Suspense no App Router.
+export default function Pedidos() {
+    return (
+        <Suspense fallback={<main className="min-h-screen bg-[#F0F3F4] md:ml-64" />}>
+            <PedidosInterno />
+        </Suspense>
     )
 }

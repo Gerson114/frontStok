@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Login from "../components/login/login"
 
 export const metadata: Metadata = {
-  title: "Entrar | Minha Loja",
+  title: "Entrar | Arara",
   description: "Acesse o painel administrativo da sua loja.",
 }
 

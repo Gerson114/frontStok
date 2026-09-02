@@ -63,7 +63,6 @@ export async function POST(request: Request) {
                 proximo_passo: "escolher_plano",
                 email,
                 cobranca_ativa: true,
-                teste_dias: dados?.teste_dias,
                 planos: dados?.planos ?? [],
             },
             { status: 200, headers: { "Cache-Control": "no-store" } }

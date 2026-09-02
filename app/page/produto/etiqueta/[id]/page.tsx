@@ -147,7 +147,7 @@ export default function EtiquetaProduto() {
                     >
 
                         <p className="font-display text-center text-sm text-[#1E2428]">
-                            Minha Loja
+                            Arara
                         </p>
 
                         <div className="mt-3 border-t border-[#D3DADD]" />

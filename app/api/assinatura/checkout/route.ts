@@ -4,43 +4,29 @@ import { url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 
-// POST /api/assinatura/checkout — abre a sessão de pagamento do plano
-// escolhido e devolve a URL hospedada pelo Stripe para onde o lojista deve
-// ser levado.
+// POST /api/assinatura/checkout — abre a sessão de pagamento e devolve a URL
+// hospedada pelo provedor de cobrança para onde o lojista deve ser levado.
 //
-// Do corpo só aproveita o nome do plano; o preço de cada plano vive na
-// configuração do backend, então o navegador não tem como pedir um preço.
+// Não tem corpo: a assinatura é uma só e o preço dela vive na configuração do
+// backend, então o navegador não tem o que escolher nem como pedir outro
+// valor.
 //
 // Nenhum dado de cartão passa por aqui, nem pelo backend: o lojista digita o
-// cartão na página do próprio Stripe. É isso que mantém este sistema fora do
+// cartão numa página do provedor. É isso que mantém este sistema fora do
 // escopo pesado do PCI-DSS — número de cartão e CVV nunca tocam a nossa
 // infraestrutura.
 //
 // Qual loja está sendo cobrada é decidido no backend a partir do token, não
 // do corpo desta requisição, então não há nada aqui que o navegador possa
 // forjar.
-// Os planos oferecidos. Repetidos aqui de propósito: esta rota roda no
-// servidor e não deve encaminhar ao backend qualquer texto que o navegador
-// mande no lugar do plano.
-const PLANOS = ["gratis", "estoque", "site"]
 
-export async function POST(request: Request) {
+export async function POST() {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get("token")?.value
 
         if (!token) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
-        }
-
-        const corpo = safeParse(await request.text().catch(() => ""))
-        const plano = (corpo as { plano?: unknown } | null)?.plano
-
-        if (typeof plano !== "string" || !PLANOS.includes(plano)) {
-            return Response.json(
-                { erro: "Escolha um plano para continuar" },
-                { status: 400 }
-            )
         }
 
         const response = await fetch(url(conta.checkout()), {
@@ -50,7 +36,7 @@ export async function POST(request: Request) {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ plano }),
+            body: "{}",
             cache: "no-store",
         })
 

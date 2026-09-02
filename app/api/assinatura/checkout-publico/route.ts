@@ -13,16 +13,11 @@ import { publico } from "@/app/api/rotas"
 // pelo primeiro passo do formulário. Nos dois casos, quem paga é decidido no
 // servidor e não no corpo da requisição.
 //
-// Nenhum dado de cartão passa por aqui: o cartão é digitado na página do
-// próprio Stripe.
+// Nenhum dado de cartão passa por aqui: o cartão é digitado numa página do
+// provedor de cobrança.
 const COOKIE_CADASTRO = "cadastro"
 
-// Os planos oferecidos. Repetidos aqui de propósito: esta rota roda no
-// servidor e não deve encaminhar ao backend qualquer texto que o navegador
-// mande no lugar do plano.
-const PLANOS = ["gratis", "estoque", "site"]
-
-export async function POST(request: Request) {
+export async function POST() {
     try {
         const cookieStore = await cookies()
         const cadastro = cookieStore.get(COOKIE_CADASTRO)?.value
@@ -34,23 +29,13 @@ export async function POST(request: Request) {
             )
         }
 
-        const corpo = safeParse(await request.text().catch(() => ""))
-        const plano = (corpo as { plano?: unknown } | null)?.plano
-
-        if (typeof plano !== "string" || !PLANOS.includes(plano)) {
-            return Response.json(
-                { erro: "Escolha um plano para continuar" },
-                { status: 400 }
-            )
-        }
-
         const response = await fetch(url(publico.assinaturaCheckout()), {
             method: "POST",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ cadastro_token: cadastro, plano }),
+            body: JSON.stringify({ cadastro_token: cadastro }),
             cache: "no-store",
         })
 

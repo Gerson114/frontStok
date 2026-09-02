@@ -11,6 +11,7 @@ import { ApiError } from "@/middleware/client"
 import Pagination from "@/app/components/pagination/pagination"
 import { atributosParaFicha } from "@/app/components/produto/campos"
 import Preco, { Desconto, formatarMoeda } from "@/app/components/preco/preco"
+import Cabecalho from "@/app/components/grade/cabecalho"
 import {
     FiSearch,
     FiX,
@@ -22,17 +23,50 @@ import {
     FiEdit2,
     FiPrinter,
     FiPlus,
+    FiPercent,
     FiEye,
     FiEyeOff,
 } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 
-interface CartaoProduto {
+/**
+ * A lista de produtos como grade de operação, no padrão de um WMS (a
+ * referência aqui é o Senior WMS): uma linha por peça, colunas fixas,
+ * densidade alta e a ação ao alcance do olho.
+ *
+ * Ela já foi uma vitrine de cartões com foto grande, quatro por linha.
+ * Ficava bonita e servia mal: oito peças por tela, o código e o endereço
+ * perdidos no meio do cartão, e nenhuma forma de comparar duas linhas — que
+ * é o que quem confere estoque faz o dia inteiro. Foto grande é assunto da
+ * vitrine (`app/loja`), não do painel.
+ *
+ * O que a grade assume, e a vitrine de cartões não assumia:
+ *
+ *   - uma linha por PEÇA, com o endereço dela. Duas peças do mesmo produto em
+ *     prateleiras diferentes são duas linhas, porque são dois lugares aonde
+ *     ir;
+ *   - as colunas na ordem em que a pergunta é feita — o que é, que código
+ *     tem, onde está, quanto custa, dá para vender;
+ *   - número à direita e em fonte de largura fixa, para a coluna ser lida de
+ *     cima a baixo sem o olho procurar a vírgula;
+ *   - a linha inteira clicável, e as ações repetidas em botões: quem já sabe
+ *     o que quer não deveria precisar abrir a ficha para chegar lá.
+ */
+
+interface LinhaProduto {
     produto: Produto
     unidade: Unidade | null
 }
 
-const ITENS_POR_PAGINA = 10
+// Grade mostra mais que cartão: 25 linhas cabem numa tela de trabalho sem
+// obrigar a paginar a cada olhada.
+const ITENS_POR_PAGINA = 25
+
+/** As colunas por que a grade pode ser ordenada. */
+type Coluna = "produto" | "codigo" | "endereco" | "preco"
+
+/** Os recortes da barra de filtro, na ordem em que aparecem. */
+type Situacao = "todos" | "disponivel" | "sem_estoque" | "promocao" | "fora_do_site"
 
 export default function Home() {
 
@@ -69,6 +103,14 @@ export default function Home() {
 
     const [busca, setBusca] = useState("")
     const [paginaAtual, setPaginaAtual] = useState(1)
+
+    // Filtro de situação e ordenação vivem no cabeçalho da grade, como em
+    // qualquer WMS: é o que troca "rolar a página procurando" por um clique.
+    const [situacao, setSituacao] = useState<Situacao>("todos")
+    const [ordem, setOrdem] = useState<{ coluna: Coluna; desc: boolean }>({
+        coluna: "produto",
+        desc: false,
+    })
 
     async function carregarProdutos() {
 
@@ -296,10 +338,10 @@ export default function Home() {
 
 
     // ==============================
-    // CARTÕES — um por unidade em estoque, não um por produto
+    // LINHAS — uma por peça em estoque, não uma por produto
     // ==============================
 
-    const cartoes = useMemo(() => {
+    const linhas = useMemo(() => {
 
         const disponiveisPorProduto = new Map<number, Unidade[]>()
 
@@ -314,7 +356,7 @@ export default function Home() {
             disponiveisPorProduto.get(unidade.produto_id)!.push(unidade)
         }
 
-        const lista: CartaoProduto[] = []
+        const lista: LinhaProduto[] = []
 
         for (const produto of produtos) {
 
@@ -329,7 +371,7 @@ export default function Home() {
             } else {
                 // Sem unidade disponível: produto esgotado (ou cadastrado
                 // antes de unidades individuais existirem) — ainda assim
-                // mostra 1 cartão, pra não sumir do catálogo.
+                // rende 1 linha, pra não sumir do catálogo.
                 lista.push({ produto, unidade: null })
             }
         }
@@ -340,41 +382,136 @@ export default function Home() {
 
 
     // ==============================
-    // FILTRO DE BUSCA
+    // BUSCA, FILTRO E ORDEM
     // ==============================
 
     const termoBusca = busca.trim().toLowerCase()
 
-    function codigoDoCartao(cartao: CartaoProduto): string {
+    function codigoDaLinha(linha: LinhaProduto): string {
         // Um código só, o do produto: a peça não tem outro. O id com seis
         // dígitos cobre o produto cadastrado antes de o código existir.
-        return cartao.produto.codigo || String(cartao.produto.id).padStart(6, "0")
+        return linha.produto.codigo || String(linha.produto.id).padStart(6, "0")
     }
 
-    const cartoesFiltrados = termoBusca
-        ? cartoes.filter((cartao) => {
+    /** O preço que vale hoje — o promocional quando existe. */
+    function precoDaLinha(linha: LinhaProduto): number {
+        return Number(linha.produto.preco_promocional ?? linha.produto.preco)
+    }
+
+    function cabeNoFiltro(linha: LinhaProduto): boolean {
+
+        switch (situacao) {
+
+            case "disponivel":
+                return linha.unidade !== null
+
+            case "sem_estoque":
+                return linha.unidade === null
+
+            case "promocao":
+                return Number(linha.produto.preco_promocional ?? 0) > 0
+
+            case "fora_do_site":
+                return !linha.produto.publicado
+
+            default:
+                return true
+        }
+    }
+
+    const linhasFiltradas = useMemo(() => {
+
+        const filtradas = linhas.filter((linha) => {
+
+            if (!cabeNoFiltro(linha)) return false
+
+            if (!termoBusca) return true
+
             return (
-                cartao.produto.nome.toLowerCase().includes(termoBusca) ||
-                codigoDoCartao(cartao).toLowerCase().includes(termoBusca)
+                linha.produto.nome.toLowerCase().includes(termoBusca) ||
+                codigoDaLinha(linha).toLowerCase().includes(termoBusca) ||
+                (linha.unidade?.endereco ?? "").toLowerCase().includes(termoBusca)
             )
         })
-        : cartoes
+
+        // Endereço compara como texto de propósito: é o que faz "001.005" vir
+        // antes de "001.010", que é a ordem do corredor — a mesma que quem
+        // separa segue com o papel na mão.
+        const comparar = (a: LinhaProduto, b: LinhaProduto) => {
+
+            switch (ordem.coluna) {
+
+                case "codigo":
+                    return codigoDaLinha(a).localeCompare(codigoDaLinha(b), "pt-BR")
+
+                case "endereco":
+                    return (a.unidade?.endereco ?? "").localeCompare(b.unidade?.endereco ?? "", "pt-BR")
+
+                case "preco":
+                    return precoDaLinha(a) - precoDaLinha(b)
+
+                default:
+                    return a.produto.nome.localeCompare(b.produto.nome, "pt-BR")
+            }
+        }
+
+        return filtradas.sort((a, b) => (ordem.desc ? -comparar(a, b) : comparar(a, b)))
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- cabeNoFiltro e codigoDaLinha são puras e dependem só de `situacao`
+    }, [linhas, termoBusca, situacao, ordem])
+
+    /** Os recortes da barra de filtro, já com a contagem de cada um. */
+    const filtros: { chave: Situacao; nome: string; total: number }[] = [
+        { chave: "todos", nome: "Todas", total: linhas.length },
+        { chave: "disponivel", nome: "Disponíveis", total: linhas.filter((l) => l.unidade !== null).length },
+        { chave: "sem_estoque", nome: "Sem estoque", total: linhas.filter((l) => l.unidade === null).length },
+        { chave: "promocao", nome: "Em promoção", total: linhas.filter((l) => Number(l.produto.preco_promocional ?? 0) > 0).length },
+    ]
+
+    // "Fora do site" só é pergunta para quem tem site.
+    if (temSite) {
+        filtros.push({
+            chave: "fora_do_site",
+            nome: "Fora do site",
+            total: linhas.filter((l) => !l.produto.publicado).length,
+        })
+    }
 
 
     // ==============================
     // PAGINAÇÃO
     // ==============================
 
-    const totalPaginas = Math.max(1, Math.ceil(cartoesFiltrados.length / ITENS_POR_PAGINA))
+    const totalPaginas = Math.max(1, Math.ceil(linhasFiltradas.length / ITENS_POR_PAGINA))
     const paginaAtualCorrigida = Math.min(paginaAtual, totalPaginas)
 
-    const cartoesDaPagina = cartoesFiltrados.slice(
-        (paginaAtualCorrigida - 1) * ITENS_POR_PAGINA,
-        paginaAtualCorrigida * ITENS_POR_PAGINA
+    const primeiraDaPagina = (paginaAtualCorrigida - 1) * ITENS_POR_PAGINA
+
+    const linhasDaPagina = linhasFiltradas.slice(
+        primeiraDaPagina,
+        primeiraDaPagina + ITENS_POR_PAGINA
     )
 
     function aoMudarBusca(valor: string) {
         setBusca(valor)
+        setPaginaAtual(1)
+    }
+
+    function aoMudarSituacao(valor: Situacao) {
+        setSituacao(valor)
+        setPaginaAtual(1)
+    }
+
+    // Clicar na coluna que já ordena inverte o sentido; clicar em outra
+    // começa dela, crescente. É o que toda grade faz, e o que a mão espera.
+    function ordenarPor(coluna: Coluna) {
+
+        setOrdem((atual) =>
+            atual.coluna === coluna
+                ? { coluna, desc: !atual.desc }
+                : { coluna, desc: false }
+        )
+
         setPaginaAtual(1)
     }
 
@@ -395,39 +532,36 @@ export default function Home() {
 
                     <div className="mt-3 h-4 w-80 animate-pulse rounded bg-[#D3DADD]" />
 
-                    <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
+                    {/* O esqueleto tem a forma do que vem depois: faixa de
+                        resumo e linhas de grade. Esqueleto com outra forma
+                        faz a tela pular quando os dados chegam. */}
+
+                    <div className="card mt-8 h-[4.5rem] animate-pulse" />
+
+                    <div className="mt-6 flex gap-2">
 
                         {[1, 2, 3, 4].map(item => (
-
-                            <div
-                                key={item}
-                                className="card h-28 animate-pulse"
-                            />
-
+                            <div key={item} className="h-9 w-28 animate-pulse rounded-lg bg-[#D3DADD]" />
                         ))}
 
                     </div>
 
-                    <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="card mt-6 overflow-hidden">
+
+                        <div className="h-10 border-b border-[#D3DADD] bg-[#F7F9FA]" />
 
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(item => (
 
                             <div
                                 key={item}
-                                className="card overflow-hidden"
+                                className="flex items-center gap-3 border-b border-[#E4E9EB] px-4 py-2.5 last:border-b-0"
                             >
 
-                                <div className="h-56 animate-pulse bg-[#F0F3F4]" />
+                                <div className="h-9 w-9 shrink-0 animate-pulse rounded-md bg-[#F0F3F4]" />
 
-                                <div className="space-y-3 p-5">
+                                <div className="h-4 w-1/3 animate-pulse rounded bg-[#F0F3F4]" />
 
-                                    <div className="h-5 animate-pulse rounded bg-[#F0F3F4]" />
-
-                                    <div className="h-4 w-1/2 animate-pulse rounded bg-[#F0F3F4]" />
-
-                                    <div className="h-8 w-2/3 animate-pulse rounded bg-[#F0F3F4]" />
-
-                                </div>
+                                <div className="ml-auto h-4 w-20 animate-pulse rounded bg-[#F0F3F4]" />
 
                             </div>
 
@@ -552,131 +686,72 @@ export default function Home() {
 
                 <div className="mx-auto max-w-7xl">
 
-                    {/* INTRODUÇÃO */}
-
-                    <div className="mb-8">
-
-                        <h2 className="font-display text-3xl text-[#1E2428] sm:text-4xl">
-                            Gestão de produtos
-                        </h2>
-
-                        <p className="mt-2 max-w-md text-[#5A6469]">
-                            Visualize os produtos cadastrados no seu sistema.
-                        </p>
-
-                    </div>
-
-
                     {/* ==========================
-                        ESTATÍSTICAS
+                        RESUMO
+                        Faixa fina, e não quatro cartões grandes: o número
+                        interessa de relance, no caminho para a grade — que é
+                        onde o trabalho acontece.
                     ========================== */}
 
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
+                    <div className="card grid grid-cols-2 divide-[#E4E9EB] md:grid-cols-4 md:divide-x">
 
-                        {/* TOTAL */}
+                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
 
-                        <div className="card p-6">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
+                                <FiBox className="w-4" aria-hidden />
+                            </span>
 
-                            <div className="flex items-center justify-between">
-
-                                <div>
-
-                                    <p className="text-sm text-[#5A6469]">
-                                        Produtos
-                                    </p>
-
-                                    <p className="num mt-2 text-3xl font-extrabold text-[#1E2428]">
-                                        {totalProdutos}
-                                    </p>
-
-                                </div>
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E6F3FF] text-[#0086FF]">
-                                    <FiBox className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Produtos</span>
+                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalProdutos}</span>
+                            </span>
 
                         </div>
 
+                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
 
-                        {/* ESTOQUE */}
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E0FFEE] text-[#08A022]">
+                                <FiCheck className="w-4" aria-hidden />
+                            </span>
 
-                        <div className="card p-6">
-
-                            <div className="flex items-center justify-between">
-
-                                <div>
-
-                                    <p className="text-sm text-[#5A6469]">
-                                        Itens em estoque
-                                    </p>
-
-                                    <p className="num mt-2 text-3xl font-extrabold text-[#1E2428]">
-                                        {totalEstoque}
-                                    </p>
-
-                                </div>
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E0FFEE] text-[#08A022]">
-                                    <FiCheck className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Peças em estoque</span>
+                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalEstoque}</span>
+                            </span>
 
                         </div>
 
+                        <div className="flex items-center gap-3 p-4">
 
-                        {/* SEM ESTOQUE */}
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                semEstoque > 0 ? "bg-[#FDECEA] text-[#D4351C]" : "bg-[#F0F3F4] text-[#5A6469]"
+                            }`}>
+                                <FiAlertTriangle className="w-4" aria-hidden />
+                            </span>
 
-                        <div className="card p-6">
-
-                            <div className="flex items-center justify-between">
-
-                                <div>
-
-                                    <p className="text-sm text-[#5A6469]">
-                                        Sem estoque
-                                    </p>
-
-                                    <p className="num mt-2 text-3xl font-extrabold text-[#1E2428]">
-                                        {semEstoque}
-                                    </p>
-
-                                </div>
-
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FDECEA] text-[#D4351C]">
-                                    <FiAlertTriangle className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Sem estoque</span>
+                                <span className={`num block text-xl font-extrabold ${
+                                    semEstoque > 0 ? "text-[#D4351C]" : "text-[#1E2428]"
+                                }`}>
+                                    {semEstoque}
+                                </span>
+                            </span>
 
                         </div>
 
+                        <div className="flex items-center gap-3 p-4">
 
-                        {/* VALOR EM ESTOQUE */}
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFF6E0] text-[#8A6C1B]">
+                                <FiDollarSign className="w-4" aria-hidden />
+                            </span>
 
-                        <div className="card p-6">
-
-                            <div className="flex items-center justify-between gap-3">
-
-                                <div className="min-w-0">
-
-                                    <p className="text-sm text-[#5A6469]">
-                                        Valor em estoque
-                                    </p>
-
-                                    <p className="num mt-2 truncate text-2xl font-extrabold text-[#0086FF]">
-                                        {formatarMoeda(valorEmEstoque)}
-                                    </p>
-
-                                </div>
-
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#FFF6E0] text-[#8A6C1B]">
-                                    <FiDollarSign className="w-5" aria-hidden />
-                                </div>
-
-                            </div>
+                            <span className="min-w-0">
+                                <span className="block text-xs text-[#5A6469]">Valor em estoque</span>
+                                <span className="num block truncate text-xl font-extrabold text-[#0086FF]">
+                                    {formatarMoeda(valorEmEstoque)}
+                                </span>
+                            </span>
 
                         </div>
 
@@ -684,298 +759,362 @@ export default function Home() {
 
 
                     {/* ==========================
-                        PRODUTOS
+                        BARRA DA GRADE
+                        Filtro à esquerda, busca à direita: a pergunta que se
+                        faz por recorte e a que se faz por nome, cada uma no
+                        seu lado.
                     ========================== */}
 
-                    <div className="mt-12">
+                    <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-                        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por situação">
 
-                            <div>
+                            {filtros.map(({ chave, nome, total }) => {
 
-                                <h2 className="font-display text-xl text-[#1E2428]">
-                                    Produtos cadastrados
-                                </h2>
+                                const ativo = chave === situacao
 
-                                <p className="mt-1 text-sm text-[#5A6469]">
-                                    <span className="num">{cartoesFiltrados.length}</span> de{" "}
-                                    <span className="num">{cartoes.length}</span> produto(s) encontrado(s)
+                                return (
+                                    <button
+                                        key={chave}
+                                        type="button"
+                                        aria-pressed={ativo}
+                                        onClick={() => aoMudarSituacao(chave)}
+                                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
+                                            ativo
+                                                ? "border-[#0086FF] bg-[#E6F3FF] text-[#0075E2]"
+                                                : "border-[#D3DADD] bg-white text-[#5A6469] hover:border-[#8C969B] hover:text-[#1E2428]"
+                                        }`}
+                                    >
+                                        {nome}
+
+                                        <span className={`num text-xs font-extrabold ${ativo ? "text-[#0086FF]" : "text-[#8C969B]"}`}>
+                                            {total}
+                                        </span>
+                                    </button>
+                                )
+                            })}
+
+                        </div>
+
+                        <div className="relative w-full lg:w-80">
+
+                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
+
+                            <input
+                                type="text"
+                                value={busca}
+                                onChange={(e) => aoMudarBusca(e.target.value)}
+                                placeholder="Buscar por nome, código ou endereço"
+                                className="field"
+                                style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
+                            />
+
+                            {busca && (
+                                <button
+                                    type="button"
+                                    onClick={() => aoMudarBusca("")}
+                                    aria-label="Limpar busca"
+                                    className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                                >
+                                    <FiX className="w-4" aria-hidden />
+                                </button>
+                            )}
+
+                        </div>
+
+                    </div>
+
+                    {erroSite && (
+                        <div role="alert" className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                            {erroSite}
+                        </div>
+                    )}
+
+
+                    {/* ==========================
+                        A GRADE
+                    ========================== */}
+
+                    {linhasFiltradas.length === 0 ? (
+
+                        <div className="mt-6 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
+
+                            <FiBox className="mx-auto w-10 text-[#8C969B]" aria-hidden />
+
+                            <h3 className="font-display mt-5 text-xl text-[#1E2428]">
+                                Nenhum produto encontrado
+                            </h3>
+
+                            <p className="mt-2 text-sm text-[#5A6469]">
+                                {totalProdutos === 0
+                                    ? "Não existem produtos cadastrados."
+                                    : "Nenhuma peça corresponde ao filtro ou à busca."}
+                            </p>
+
+                            {totalProdutos === 0 ? (
+
+                                <Link href="/page/produto" className="btn btn-primario mt-6">
+                                    <FiPlus className="w-4" aria-hidden />
+                                    <span>Cadastrar produto</span>
+                                </Link>
+
+                            ) : (
+
+                                <button
+                                    type="button"
+                                    onClick={() => { aoMudarBusca(""); aoMudarSituacao("todos") }}
+                                    className="btn btn-neutro mt-6"
+                                >
+                                    Limpar filtros
+                                </button>
+
+                            )}
+
+                        </div>
+
+                    ) : (
+
+                        <div className="card mt-6 overflow-hidden">
+
+                            {/* Em tela estreita a grade rola no eixo X em vez
+                                de virar cartão: coluna que muda de lugar
+                                conforme a largura é coluna que ninguém
+                                aprende onde fica. */}
+                            <div className="overflow-x-auto">
+
+                                <table className="w-full min-w-[52rem] border-collapse text-sm">
+
+                                    <thead>
+                                        <tr className="border-b border-[#D3DADD] bg-[#F7F9FA] text-left">
+
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho ativa={ordem.coluna === "produto"} desc={ordem.desc} aoClicar={() => ordenarPor("produto")}>
+                                                    Produto
+                                                </Cabecalho>
+                                            </th>
+
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho ativa={ordem.coluna === "codigo"} desc={ordem.desc} aoClicar={() => ordenarPor("codigo")}>
+                                                    Código
+                                                </Cabecalho>
+                                            </th>
+
+                                            <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469] xl:table-cell">
+                                                Categoria
+                                            </th>
+
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho ativa={ordem.coluna === "endereco"} desc={ordem.desc} aoClicar={() => ordenarPor("endereco")}>
+                                                    Endereço
+                                                </Cabecalho>
+                                            </th>
+
+                                            <th scope="col" className="px-4 py-2.5">
+                                                <Cabecalho ativa={ordem.coluna === "preco"} desc={ordem.desc} aoClicar={() => ordenarPor("preco")} direita>
+                                                    Preço
+                                                </Cabecalho>
+                                            </th>
+
+                                            <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
+                                                Situação
+                                            </th>
+
+                                            {temSite && (
+                                                <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469] lg:table-cell">
+                                                    Site
+                                                </th>
+                                            )}
+
+                                            <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
+                                                Ações
+                                            </th>
+
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        {linhasDaPagina.map((linha) => {
+
+                                            const { produto, unidade } = linha
+                                            const codigo = codigoDaLinha(linha)
+                                            const emPromocao = Number(produto.preco_promocional ?? 0) > 0
+
+                                            return (
+
+                                                <tr
+                                                    key={unidade ? `unidade-${unidade.id}` : `produto-${produto.id}`}
+                                                    onClick={() => abrirModal(produto)}
+                                                    className="cursor-pointer border-b border-[#E4E9EB] transition-colors last:border-b-0 hover:bg-[#F7F9FA]"
+                                                >
+
+                                                    {/* PRODUTO */}
+                                                    <td className="px-4 py-2.5">
+
+                                                        <div className="flex items-center gap-3">
+
+                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F0F3F4]">
+                                                                {produto.imagem_url ? (
+                                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                                    <img
+                                                                        src={urlDaImagem(produto.imagem_url)}
+                                                                        alt=""
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <FiCamera className="w-4 text-[#8C969B]" aria-hidden />
+                                                                )}
+                                                            </div>
+
+                                                            <div className="min-w-0">
+
+                                                                <p className="truncate font-bold text-[#1E2428]">
+                                                                    {produto.nome}
+                                                                </p>
+
+                                                                {produto.variacao && (
+                                                                    <p className="truncate text-xs text-[#5A6469]">
+                                                                        {produto.variacao_rotulo || "Variação"}: {produto.variacao}
+                                                                    </p>
+                                                                )}
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                    {/* CÓDIGO */}
+                                                    <td className="px-4 py-2.5 font-mono text-xs text-[#5A6469]">
+                                                        {codigo}
+                                                    </td>
+
+                                                    {/* CATEGORIA */}
+                                                    <td className="hidden px-4 py-2.5 text-[#5A6469] xl:table-cell">
+                                                        {produto.categoria || "—"}
+                                                    </td>
+
+                                                    {/* ENDEREÇO */}
+                                                    <td className="px-4 py-2.5">
+                                                        {unidade?.endereco ? (
+                                                            <span className="font-mono text-xs font-bold text-[#1E2428]">
+                                                                {unidade.endereco}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[#8C969B]">—</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* PREÇO */}
+                                                    <td className="px-4 py-2.5 text-right">
+                                                        <Preco
+                                                            valor={Number(produto.preco_promocional ?? produto.preco)}
+                                                            valorAntigo={emPromocao ? Number(produto.preco) : null}
+                                                            className="text-base"
+                                                        />
+                                                    </td>
+
+                                                    {/* SITUAÇÃO */}
+                                                    <td className="px-4 py-2.5">
+                                                        <span className={`tag ${unidade ? "tag-success" : "tag-danger"}`}>
+                                                            {unidade ? "Disponível" : "Sem estoque"}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* SITE */}
+                                                    {temSite && (
+                                                        <td className="hidden px-4 py-2.5 lg:table-cell">
+                                                            <span className={`tag ${produto.publicado ? "tag-info" : "tag-neutral"}`}>
+                                                                {produto.publicado
+                                                                    ? <FiEye className="w-3.5" aria-hidden />
+                                                                    : <FiEyeOff className="w-3.5" aria-hidden />}
+                                                                {produto.publicado ? "No site" : "Fora"}
+                                                            </span>
+                                                        </td>
+                                                    )}
+
+                                                    {/* AÇÕES
+                                                        Repetidas aqui e dentro
+                                                        da ficha: quem já sabe o
+                                                        que quer não deveria
+                                                        precisar abrir nada. */}
+                                                    <td className="px-4 py-2.5">
+
+                                                        <div className="flex items-center justify-end gap-1">
+
+                                                            <button
+                                                                type="button"
+                                                                title="Preço promocional"
+                                                                aria-label={`Preço promocional de ${produto.nome}`}
+                                                                onClick={(e) => { e.stopPropagation(); abrirModal(produto) }}
+                                                                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#F0F3F4] ${
+                                                                    emPromocao ? "text-[#8A6C1B]" : "text-[#5A6469] hover:text-[#1E2428]"
+                                                                }`}
+                                                            >
+                                                                <FiPercent className="w-4" aria-hidden />
+                                                            </button>
+
+                                                            <Link
+                                                                href={`/page/produto/editar/${produto.id}`}
+                                                                title="Editar"
+                                                                aria-label={`Editar ${produto.nome}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4] hover:text-[#1E2428]"
+                                                            >
+                                                                <FiEdit2 className="w-4" aria-hidden />
+                                                            </Link>
+
+                                                            <Link
+                                                                href={`/page/produto/etiqueta/${produto.id}`}
+                                                                title="Etiqueta"
+                                                                aria-label={`Etiqueta de ${produto.nome}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4] hover:text-[#1E2428]"
+                                                            >
+                                                                <FiPrinter className="w-4" aria-hidden />
+                                                            </Link>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                </tr>
+                                            )
+                                        })}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            {/* RODAPÉ DA GRADE — a contagem fica colada nela e
+                                não solta no meio da página: "1–25 de 340" é
+                                parte da tabela, não um aviso à parte. */}
+                            <div className="flex flex-col gap-3 border-t border-[#D3DADD] bg-[#F7F9FA] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+
+                                <p className="text-xs text-[#5A6469]">
+                                    Mostrando{" "}
+                                    <span className="num font-bold text-[#1E2428]">
+                                        {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
+                                    </span>{" "}
+                                    de <span className="num font-bold text-[#1E2428]">{linhasFiltradas.length}</span>
+                                    {linhasFiltradas.length !== linhas.length && (
+                                        <> · <span className="num">{linhas.length}</span> no total</>
+                                    )}
                                 </p>
 
-                            </div>
-
-                            <div className="relative w-full sm:w-72">
-
-                                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
-
-                                <input
-                                    type="text"
-                                    value={busca}
-                                    onChange={(e) => aoMudarBusca(e.target.value)}
-                                    placeholder="Buscar por nome ou código"
-                                    className="field"
-                                    style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
+                                <Pagination
+                                    paginaAtual={paginaAtualCorrigida}
+                                    totalPaginas={totalPaginas}
+                                    aoMudarPagina={setPaginaAtual}
                                 />
 
-                                {busca && (
-                                    <button
-                                        type="button"
-                                        onClick={() => aoMudarBusca("")}
-                                        aria-label="Limpar busca"
-                                        className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
-                                    >
-                                        <FiX className="w-4" aria-hidden />
-                                    </button>
-                                )}
-
                             </div>
 
                         </div>
 
-
-                        {cartoesFiltrados.length === 0 ? (
-
-                            <div className="rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
-
-                                <FiBox className="mx-auto w-10 text-[#8C969B]" aria-hidden />
-
-                                <h3 className="font-display mt-5 text-xl text-[#1E2428]">
-                                    Nenhum produto encontrado
-                                </h3>
-
-                                <p className="mt-2 text-sm text-[#5A6469]">
-                                    {totalProdutos === 0
-                                        ? "Não existem produtos cadastrados."
-                                        : "Nenhum produto corresponde à busca."}
-                                </p>
-
-                                {totalProdutos === 0 ? (
-
-                                    <Link
-                                        href="/page/produto"
-                                        className="btn btn-primario mt-6"
-                                    >
-                                        <FiPlus className="w-4" aria-hidden />
-                                        <span>Cadastrar produto</span>
-                                    </Link>
-
-                                ) : (
-
-                                    <button
-                                        type="button"
-                                        onClick={() => aoMudarBusca("")}
-                                        className="btn btn-neutro mt-6"
-                                    >
-                                        Limpar busca
-                                    </button>
-
-                                )}
-
-                            </div>
-
-                        ) : (
-
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-
-                                {cartoesDaPagina.map((cartao) => {
-
-                                    const { produto, unidade } = cartao
-
-                                    return (
-
-                                    <article
-                                        key={unidade ? `unidade-${unidade.id}` : `produto-${produto.id}`}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => abrirModal(produto)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault()
-                                                abrirModal(produto)
-                                            }
-                                        }}
-                                        className="card card-hover group cursor-pointer overflow-hidden text-left"
-                                    >
-
-                                        {/* IMAGEM */}
-
-                                        <div className="relative h-56 overflow-hidden bg-[#F0F3F4]">
-
-                                            {produto.imagem_url ? (
-
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
-                                                    src={urlDaImagem(produto.imagem_url)}
-                                                    alt={produto.nome}
-                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                                                />
-
-                                            ) : (
-
-                                                <div className="flex h-full items-center justify-center text-[#8C969B]">
-
-                                                    <div className="text-center">
-
-                                                        <FiCamera className="mx-auto w-7" aria-hidden />
-
-                                                        <p className="mt-2 text-sm">
-                                                            Sem imagem
-                                                        </p>
-
-                                                    </div>
-
-                                                </div>
-
-                                            )}
-
-
-                                            {/* CATEGORIA */}
-
-                                            <span className="tag tag-info absolute left-4 top-4 bg-white/95 shadow-sm">
-                                                {produto.categoria || "Sem categoria"}
-                                            </span>
-
-
-                                            {/* DISPONIBILIDADE */}
-
-                                            <span
-                                                className={`tag absolute right-4 top-4 shadow-sm ${
-                                                    unidade ? "tag-success bg-white/95" : "tag-danger bg-white/95"
-                                                }`}
-                                            >
-                                                {unidade ? "Disponível" : "Sem estoque"}
-                                            </span>
-
-
-                                            {/* FORA DO SITE — só quando está
-                                                fora. Um selo em todo produto
-                                                publicado seria ruído: o normal
-                                                é estar no site. */}
-
-                                            {temSite && !produto.publicado && (
-                                                <span className="tag tag-neutral absolute bottom-4 left-4 bg-white/95 shadow-sm">
-                                                    <FiEyeOff className="w-3.5" aria-hidden />
-                                                    Fora do site
-                                                </span>
-                                            )}
-
-                                        </div>
-
-
-                                        {/* DADOS */}
-
-                                        <div className="p-5">
-
-                                            <h3 className="font-display truncate text-lg text-[#1E2428]">
-                                                {produto.nome}
-                                            </h3>
-
-                                            <p className="mt-1 font-mono text-xs text-[#8C969B]">
-                                                {codigoDoCartao(cartao)}
-                                            </p>
-
-
-                                            {/* PREÇO */}
-
-                                            <div className="mt-5">
-
-                                                {produto.preco_promocional ? (
-                                                    <div className="mb-1">
-                                                        <Desconto
-                                                            de={Number(produto.preco)}
-                                                            para={Number(produto.preco_promocional)}
-                                                        />
-                                                    </div>
-                                                ) : null}
-
-                                                <Preco
-                                                    valor={Number(produto.preco_promocional ?? produto.preco)}
-                                                    valorAntigo={produto.preco_promocional ? Number(produto.preco) : null}
-                                                    className="text-2xl"
-                                                />
-
-                                                <p className="mt-1 text-xs text-[#5A6469]">
-                                                    {produto.preco_promocional ? "Promoção ativa" : "Sem promoção"} · clique para gerenciar
-                                                </p>
-
-                                            </div>
-
-
-                                            {/* INFORMAÇÕES */}
-
-                                            <div className="mt-5 space-y-3 border-t border-[#D3DADD] pt-5">
-
-                                                {produto.variacao && (
-                                                    <div className="flex justify-between text-sm">
-
-                                                        <span className="text-[#5A6469]">
-                                                            {produto.variacao_rotulo || "Variação"}
-                                                        </span>
-
-                                                        <span className="font-bold text-[#1E2428]">
-                                                            {produto.variacao}
-                                                        </span>
-
-                                                    </div>
-                                                )}
-
-                                                {atributosParaFicha(produto.atributos).map(({ nome, valor }) => (
-                                                    <div key={nome} className="flex justify-between gap-3 text-sm">
-
-                                                        <span className="text-[#5A6469]">{nome}</span>
-
-                                                        <span className="min-w-0 break-words text-right font-bold text-[#1E2428]">
-                                                            {valor}
-                                                        </span>
-
-                                                    </div>
-                                                ))}
-
-                                                <div className="flex justify-between text-sm">
-
-                                                    <span className="text-[#5A6469]">
-                                                        Local
-                                                    </span>
-
-                                                    <span className="font-mono font-bold text-[#1E2428]">
-                                                        {unidade?.endereco || "—"}
-                                                    </span>
-
-                                                </div>
-
-
-                                                <div className="flex justify-between text-sm">
-
-                                                    <span className="text-[#5A6469]">
-                                                        Código
-                                                    </span>
-
-                                                    <span className="font-mono font-bold text-[#1E2428]">
-                                                        {codigoDoCartao(cartao)}
-                                                    </span>
-
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                    </article>
-
-                                    )
-                                })}
-
-                            </div>
-
-                        )}
-
-                        <Pagination
-                            paginaAtual={paginaAtualCorrigida}
-                            totalPaginas={totalPaginas}
-                            aoMudarPagina={setPaginaAtual}
-                        />
-
-                    </div>
+                    )}
 
                 </div>
 
@@ -1036,6 +1175,25 @@ export default function Home() {
                             </div>
 
                         </div>
+
+                        {/* A ficha do produto: tamanho, tecido, cor. Saiu da
+                            grade e veio para cá quando a lista virou tabela —
+                            na linha isso seria uma coluna por atributo, cada
+                            loja com as suas, e nenhuma largura que servisse
+                            para todas. Aqui é a ficha de um produto só, e
+                            cabe. */}
+                        {atributosParaFicha(produtoSelecionado.atributos).length > 0 && (
+                            <div className="mt-4 flex flex-wrap gap-1.5">
+                                {atributosParaFicha(produtoSelecionado.atributos).map(({ nome, valor }) => (
+                                    <span
+                                        key={nome}
+                                        className="rounded-full bg-[#F0F3F4] px-2.5 py-1 text-xs text-[#5A6469]"
+                                    >
+                                        {nome}: <span className="font-bold text-[#1E2428]">{valor}</span>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
 
                         <div className="mt-5 rounded-lg border border-[#D3DADD] bg-[#F0F3F4] px-4 py-3">
                             <p className="text-xs text-[#5A6469]">

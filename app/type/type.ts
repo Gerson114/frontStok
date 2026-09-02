@@ -173,15 +173,14 @@ export interface Assinatura {
     cobranca_ativa: boolean
     liberada: boolean
     status: string
-    /** Plano contratado. Ver PLANOS para o nome e o preço de cada um. */
-    plano: Plano
     /**
-     * "Esta loja pode usar a vitrine agora?" — já calculado pelo backend:
-     * assinatura em dia E plano que inclui o site. Prefira este campo a
-     * combinar `liberada` com `plano` por conta própria.
+     * Data da próxima cobrança. NÃO é prova de pagamento: o Stripe avança
+     * esse período no momento em que emite a fatura, antes de saber se ela
+     * vai ser paga. Para "até quando está pago", use `pago_ate`.
      */
-    site_liberado: boolean
     periodo_fim_em?: string | null
+    /** Até quando o acesso está pago — o prazo que sobrevive a um cancelamento. */
+    pago_ate?: string | null
     tolerancia_ate?: string | null
     /**
      * O menu do painel já resolvido para esta loja. Só vem o que o plano
@@ -222,41 +221,6 @@ export interface ItemMenu {
 }
 
 /**
- * O que acontece se a loja trocar de plano, calculado pelo backend a partir
- * do próprio Stripe — antes de trocar.
- *
- * `titulo`, `aviso` e `rotulo_confirmar` já vêm escritos: a caixa de
- * confirmação mostra o texto que veio, sem montar frase de cobrança aqui.
- * Frase de valor escrita no front é frase que um dia discorda da fatura.
- */
-export interface PreviaTroca {
-    plano_atual: Plano
-    plano_atual_nome: string
-    plano: Plano
-    plano_nome: string
-    /** "subida", "descida" ou "lateral". */
-    sentido: string
-    /** Vai passar no cartão agora? `valor_agora` é quanto, em centavos. */
-    cobra_agora: boolean
-    valor_agora: number
-    /** Crédito, em centavos, de quem desce de plano no meio do mês pago. */
-    credito: number
-    proximo_valor: number
-    proxima_cobranca_em?: string | null
-    moeda: string
-    /** Preço cheio do plano de destino, lido do Stripe. */
-    mensalidade?: PrecoPlano
-    em_teste: boolean
-    /** Verdadeiro quando o Stripe não respondeu e o valor é aproximado. */
-    estimado: boolean
-    ganha_telas?: string[]
-    perde_telas?: string[]
-    titulo: string
-    aviso: string
-    rotulo_confirmar: string
-}
-
-/**
  * Uma etiqueta de papel: uma peça do pedido, numerada dentro dele ("1/3").
  *
  * `codigo` é o do produto — o mesmo da etiqueta que está na peça, na
@@ -293,17 +257,7 @@ export interface Etiqueta {
     criado_em: string
 }
 
-/**
- * Os planos oferecidos. O texto é o mesmo do backend (ver
- * internal/services/assinatura/planos.go) e viaja até o Stripe, então não
- * pode ser traduzido nem "arrumado" aqui.
- *
- * "gratis" é a porta de entrada: mesmas telas do plano de estoque, com um
- * teto de peças cadastradas.
- */
-export type Plano = "gratis" | "estoque" | "site"
-
-/** Preço de um plano, como o backend o lê do próprio Stripe. */
+/** Preço da assinatura, como o backend o lê do provedor de cobrança. */
 export interface PrecoPlano {
     centavos: number
     moeda: string
@@ -312,47 +266,40 @@ export interface PrecoPlano {
 }
 
 /**
- * Um plano à venda, do jeito que o backend o descreve. Nome, texto, o que
- * inclui e quanto custa vêm todos de lá — o preço, em particular, é lido do
- * Stripe a cada consulta, para a tela nunca mostrar um valor diferente do
- * que a fatura vai cobrar.
+ * O que está à venda, do jeito que o backend descreve. É uma assinatura só,
+ * com tudo dentro: nome, texto, o que inclui e quanto custa vêm todos de lá —
+ * o preço, em particular, é lido do provedor de cobrança a cada consulta,
+ * para a tela nunca mostrar um valor diferente do que a fatura vai cobrar.
  */
-export interface PlanoOferta {
-    chave: Plano
+export interface Oferta {
     nome: string
     descricao: string
     recursos: string[]
     preco?: PrecoPlano
-    /** Dias de teste grátis, quando quem está vendo tem direito a eles. */
-    teste_dias?: number
-    /** Verdadeiro no plano que a loja já assina. */
-    atual?: boolean
 }
 
 /**
  * Resposta do primeiro passo do cadastro. `proximo_passo` é o que decide a
- * tela seguinte: "escolher_plano" quando há cobrança configurada (a conta só
- * nasce depois do pagamento) ou "login" quando o servidor roda sem Stripe e
- * a conta foi criada na hora.
+ * tela seguinte: "pagar" quando há cobrança configurada (a conta só nasce
+ * depois do pagamento) ou "login" quando o servidor roda sem cobrança e a
+ * conta foi criada na hora.
  */
 export interface InicioCadastro {
-    proximo_passo: "escolher_plano" | "login"
+    proximo_passo: "pagar" | "login"
     email: string
     cobranca_ativa: boolean
-    teste_dias?: number
-    planos?: PlanoOferta[]
+    oferta?: Oferta
 }
 
 /** Resposta da volta do pagamento: a conta já existe e a sessão está aberta. */
 export interface CadastroConcluido {
     email: string
-    plano: Plano
 }
 
 /**
  * Identidade pública da loja do lojista logado. `vitrine_liberada` já vem
- * respondido pelo backend: depende de o endereço estar escolhido E de o
- * plano incluir o site.
+ * respondido pelo backend: depende de o endereço estar escolhido E de a
+ * assinatura estar em dia.
  */
 export interface Loja {
     nome_loja: string

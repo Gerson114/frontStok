@@ -220,44 +220,74 @@ export default function EtiquetasPage() {
                             className="w-full rounded-lg border border-[#D3DADD] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
                         >
 
+                            {/* De quem é o pacote vem primeiro e vem grande:
+                                a etiqueta é lida por quem separa, por quem
+                                embala e por quem entrega, e os três procuram
+                                o nome. O produto, que já está dentro da
+                                sacola, desceu para o pé. */}
+
                             <div className="flex items-baseline justify-between gap-2">
-                                <p className="font-display text-sm text-[#1E2428]">
-                                    Minha Loja
+                                <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[#5A6469]">
+                                    Arara
                                 </p>
 
-                                {/* O número do volume é a informação que
-                                    fecha o pacote — vem grande, no alto. */}
+                                {/* O número do volume é o que fecha o pacote:
+                                    quem embala sabe quando acabou, e quem
+                                    recebe percebe se faltou volume. */}
                                 <p className="num text-lg font-extrabold text-[#1E2428]">
                                     {volume.indice}/{volume.total}
                                 </p>
                             </div>
 
+                            <h2 className="font-display mt-2 break-words text-2xl leading-tight text-[#1E2428]">
+                                {etiqueta.cliente_nome || "Cliente"}
+                            </h2>
+
+                            {etiqueta.cliente_contato && (
+                                <p className="num mt-0.5 text-sm font-bold text-[#5A6469]">
+                                    {etiqueta.cliente_contato}
+                                </p>
+                            )}
+
+                            {/* Os dados do pedido, logo abaixo do nome: é o
+                                que se confere no balcão quando o cliente
+                                chega dizendo "vim buscar o meu". */}
+                            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[#D3DADD] pt-3 text-xs">
+
+                                <dt className="text-[#5A6469]">Pedido</dt>
+                                <dd className="num text-right font-bold text-[#1E2428]">{etiqueta.codigo}</dd>
+
+                                <dt className="text-[#5A6469]">Data</dt>
+                                <dd className="text-right text-[#1E2428]">{etiqueta.criado_em}</dd>
+
+                                <dt className="text-[#5A6469]">Peças</dt>
+                                <dd className="num text-right text-[#1E2428]">{etiqueta.pecas}</dd>
+
+                                <dt className="text-[#5A6469]">Total do pedido</dt>
+                                <dd className="num text-right font-bold text-[#1E2428]">{formatarMoeda(etiqueta.total)}</dd>
+
+                            </dl>
+
                             <div className="mt-3 flex justify-center border-t border-[#D3DADD] pt-3">
                                 <Barcode valor={volume.codigo} className="max-w-full" />
                             </div>
 
-                            <h2 className="font-display mt-3 text-center text-base leading-snug text-[#1E2428]">
-                                {volume.nome}
-                            </h2>
+                            {/* A peça deste volume. */}
+                            <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-[#D3DADD] pt-3">
 
-                            <p className="mt-0.5 text-center text-xs text-[#5A6469]">
-                                {[volume.tamanho, volume.cor].filter(Boolean).join(" · ") || "—"}
-                            </p>
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-bold text-[#1E2428]">
+                                        {volume.nome}
+                                    </p>
+                                    <p className="text-xs text-[#5A6469]">
+                                        {[volume.tamanho, volume.cor].filter(Boolean).join(" · ") || "—"}
+                                    </p>
+                                </div>
 
-                            <p className="num mt-2 text-center text-2xl font-extrabold text-[#1E2428]">
-                                {formatarMoeda(volume.valor)}
-                            </p>
-
-                            <div className="mt-3 border-t border-[#D3DADD] pt-3 text-xs text-[#5A6469]">
-                                <p>
-                                    Pedido <span className="num font-bold text-[#1E2428]">{etiqueta.codigo}</span>
-                                    {" · "}
-                                    {etiqueta.criado_em}
+                                <p className="num shrink-0 text-base font-extrabold text-[#1E2428]">
+                                    {formatarMoeda(volume.valor)}
                                 </p>
-                                <p className="truncate">
-                                    {etiqueta.cliente_nome || "Cliente"}
-                                    {etiqueta.cliente_contato ? ` · ${etiqueta.cliente_contato}` : ""}
-                                </p>
+
                             </div>
 
                         </div>

@@ -24,7 +24,11 @@ import {
 } from "react-icons/fi"
 
 /**
- * Ondas de separação: vários pedidos numa volta só pelo estoque.
+ * Separar pedidos: vários numa volta só pelo estoque — a onda.
+ *
+ * Era uma de duas telas de separação; a outra, que separava um pedido só,
+ * saiu. Duas telas chamadas "separar" não diziam qual era qual, e a onda de
+ * um pedido só faz exatamente o mesmo trabalho.
  *
  * Separar pedido por pedido faz a mesma rua ser percorrida uma vez por
  * pedido. A onda junta os pedidos confirmados, soma o que cada endereço tem
@@ -177,10 +181,10 @@ export default function Ondas() {
 
                 <div>
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                        Estoque
+                        Pedidos
                     </p>
                     <h1 className="font-display text-2xl text-[#1E2428]">
-                        Ondas de separação
+                        Separar pedidos
                     </h1>
                     <p className="mt-1 max-w-2xl text-sm text-[#5A6469]">
                         Vários pedidos separados numa volta só. O sistema soma o que cada endereço
@@ -214,22 +218,53 @@ export default function Ondas() {
                         <div>
                             <h2 className="font-display text-base text-[#1E2428]">
                                 Pedidos prontos para separar
+                                {separaveis.length > 0 && (
+                                    <span className="num ml-2 text-sm font-bold text-[#5A6469]">
+                                        {separaveis.length}
+                                    </span>
+                                )}
                             </h2>
                             <p className="mt-1 text-sm text-[#5A6469]">
-                                Só os confirmados: antes disso não há o que separar, depois o pacote
-                                já saiu da loja.
+                                Marque <strong className="font-bold text-[#1E2428]">quantos pedidos quiser</strong>:
+                                a onda junta todos numa volta só pelo estoque. Só aparecem os
+                                confirmados — antes disso não há o que separar, depois o pacote já
+                                saiu da loja.
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={abrir}
-                            disabled={abrindo || escolhidos.length === 0}
-                            className="btn btn-primario"
-                        >
-                            <FiPlusCircle className="w-4" aria-hidden />
-                            {abrindo ? "Abrindo..." : `Abrir onda (${escolhidos.length})`}
-                        </button>
+                        <div className="flex flex-wrap items-center gap-3">
+
+                            {separaveis.length > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setEscolhidos(
+                                            escolhidos.length === separaveis.length
+                                                ? []
+                                                : separaveis.map((pedido) => pedido.id)
+                                        )
+                                    }
+                                    className="btn btn-neutro text-sm"
+                                >
+                                    {escolhidos.length === separaveis.length ? "Desmarcar todos" : "Marcar todos"}
+                                </button>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={abrir}
+                                disabled={abrindo || escolhidos.length === 0}
+                                className="btn btn-primario"
+                            >
+                                <FiPlusCircle className="w-4" aria-hidden />
+                                {abrindo
+                                    ? "Abrindo..."
+                                    : escolhidos.length === 0
+                                        ? "Abrir onda"
+                                        : `Abrir onda com ${escolhidos.length} pedido(s)`}
+                            </button>
+
+                        </div>
 
                     </div>
 

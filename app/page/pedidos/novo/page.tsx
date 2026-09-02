@@ -42,6 +42,16 @@ interface Linha {
     quantidade: string
 }
 
+/** Um pedido lançado nesta sessão, para a lista do rodapé. */
+interface Lancado {
+    id: number
+    codigo: string
+    cliente: string
+    pecas: number
+    faltas: Falta[]
+    quando: Date
+}
+
 export default function LancarPedido() {
 
     const [produtos, setProdutos] = useState<Produto[]>([])
@@ -60,8 +70,12 @@ export default function LancarPedido() {
     const [parcial, setParcial] = useState(false)
     const [lancando, setLancando] = useState(false)
 
-    // O resultado do lançamento: o código do pedido e o que não coube.
-    const [lancado, setLancado] = useState<{ id: number; codigo: string; faltas: Falta[] } | null>(null)
+    // Os pedidos lançados desde que a tela abriu, do mais novo para o mais
+    // velho. Ficam numa lista no rodapé em vez de um aviso que some: quem
+    // lança pedido lança vários seguidos, e a pergunta "o do João já entrou?"
+    // é feita o tempo todo. A lista morre com a tela — o histórico de
+    // verdade é a tela de Pedidos.
+    const [lancados, setLancados] = useState<Lancado[]>([])
 
     const carregar = useCallback(async () => {
 
@@ -107,7 +121,7 @@ export default function LancarPedido() {
     function mudou() {
         setConferencia(null)
         setParcial(false)
-        setLancado(null)
+        setLancados([])
     }
 
     function adicionar(produtoId: number) {
@@ -164,11 +178,17 @@ export default function LancarPedido() {
         try {
             const resultado = await lancarPedido({ nome: nome.trim(), contato: contato.trim() }, itens, parcial)
 
-            setLancado({
-                id: resultado.pedido?.id ?? 0,
-                codigo: resultado.pedido?.codigo ?? "",
-                faltas: resultado.faltas,
-            })
+            setLancados((atuais) => [
+                {
+                    id: resultado.pedido?.id ?? 0,
+                    codigo: resultado.pedido?.codigo ?? "",
+                    cliente: nome.trim(),
+                    pecas: itens.reduce((total, item) => total + item.quantidade, 0),
+                    faltas: resultado.faltas,
+                    quando: new Date(),
+                },
+                ...atuais,
+            ])
 
             setLinhas([])
             setNome("")
@@ -213,58 +233,21 @@ export default function LancarPedido() {
                     </div>
                 )}
 
-                {lancado && (
+                {/* A mensagem do que acabou de ser lançado. Sem botão de
+                    "próximo passo": o pedido já entrou na separação sozinho,
+                    e a fila de botões que havia aqui — gerar lista, ver
+                    pedidos, montar onda, imprimir etiqueta — dava quatro
+                    caminhos para quem só queria lançar o próximo. O que foi
+                    lançado fica na lista do rodapé. */}
+                {lancados.length > 0 && (
 
-                    <div role="status" className="card border-l-4 border-l-[#08A022] p-5">
-
-                        <p className="flex items-start gap-2.5 text-sm font-semibold text-[#08A022]">
-                            <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                            <span>
-                                Pedido <span className="num">#{lancado.codigo}</span> lançado e peças
-                                reservadas. Ele já está na separação.
-                            </span>
-                        </p>
-
-                        {lancado.faltas.length > 0 && (
-                            <div className="mt-3 rounded-lg bg-[#FFF6E0] px-4 py-3 text-sm text-[#8A6C1B]">
-                                <p className="font-semibold">Foi lançado só o que havia em estoque:</p>
-                                <ul className="mt-1 space-y-0.5">
-                                    {lancado.faltas.map((falta) => (
-                                        <li key={falta.produto_id}>
-                                            {falta.produto_nome} — pedido{" "}
-                                            <span className="num">{falta.pedido}</span>, havia{" "}
-                                            <span className="num">{falta.disponivel}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <p className="mt-2">Fale com o cliente sobre a diferença.</p>
-                            </div>
-                        )}
-
-                        <div className="mt-4 flex flex-wrap gap-3">
-
-                            {/* O passo seguinte de quem acabou de lançar: a lista
-                                do que buscar no estoque, com endereço de cada
-                                peça. */}
-                            <Link
-                                href={`/page/estoque/picking?pedido=${lancado.id}`}
-                                className="btn btn-primario text-sm"
-                            >
-                                Gerar lista de separação
-                            </Link>
-
-                            <Link href="/page/pedidos" className="btn btn-neutro text-sm">
-                                Ver pedidos
-                            </Link>
-                            <Link href="/page/estoque/ondas" className="btn btn-neutro text-sm">
-                                Montar onda de separação
-                            </Link>
-                            <Link href="/page/etiquetas" className="btn btn-neutro text-sm">
-                                Imprimir etiqueta
-                            </Link>
-                        </div>
-
-                    </div>
+                    <p role="status" className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]">
+                        <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                        <span>
+                            Pedido <span className="num">#{lancados[0].codigo}</span> lançado e peças
+                            reservadas. Ele já está na separação.
+                        </span>
+                    </p>
 
                 )}
 
@@ -544,6 +527,83 @@ export default function LancarPedido() {
                                 Informe o nome de quem fez o pedido.
                             </p>
                         )}
+
+                    </section>
+
+                )}
+
+
+                {/* ==========================
+                    LANÇADOS AGORA
+                    O rodapé responde "o do João já entrou?" sem trocar de
+                    tela. Some quando a tela fecha: o histórico de verdade é a
+                    tela de Pedidos, e duplicá-lo aqui seria criar uma segunda
+                    verdade sobre o que existe.
+                ========================== */}
+
+                {lancados.length > 0 && (
+
+                    <section className="card overflow-hidden">
+
+                        <div className="flex items-center justify-between gap-3 border-b border-[#D3DADD] px-5 py-3.5">
+
+                            <h2 className="font-display text-base text-[#1E2428]">
+                                Lançados agora
+                                <span className="num ml-2 text-sm font-bold text-[#5A6469]">
+                                    {lancados.length}
+                                </span>
+                            </h2>
+
+                            <Link href="/page/pedidos" className="text-sm font-bold text-[#0086FF] hover:underline">
+                                Ver todos os pedidos
+                            </Link>
+
+                        </div>
+
+                        <ul className="divide-y divide-[#E4E9EB]">
+
+                            {lancados.map((pedido) => (
+
+                                <li key={pedido.id} className="px-5 py-3.5">
+
+                                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+
+                                        <p className="font-bold text-[#1E2428]">
+                                            {pedido.cliente}
+                                            <span className="font-mono ml-2 text-xs font-normal text-[#5A6469]">
+                                                #{pedido.codigo}
+                                            </span>
+                                        </p>
+
+                                        <p className="text-xs text-[#5A6469]">
+                                            <span className="num">{pedido.pecas}</span> peça(s) ·{" "}
+                                            {pedido.quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                        </p>
+
+                                    </div>
+
+                                    {pedido.faltas.length > 0 && (
+
+                                        <p className="mt-1.5 text-xs text-[#8A6C1B]">
+                                            Foi lançado só o que havia:{" "}
+                                            {pedido.faltas.map((falta, indice) => (
+                                                <span key={falta.produto_id}>
+                                                    {indice > 0 ? ", " : ""}
+                                                    {falta.produto_nome} (pedido{" "}
+                                                    <span className="num">{falta.pedido}</span>, havia{" "}
+                                                    <span className="num">{falta.disponivel}</span>)
+                                                </span>
+                                            ))}
+                                            . Fale com o cliente sobre a diferença.
+                                        </p>
+
+                                    )}
+
+                                </li>
+
+                            ))}
+
+                        </ul>
 
                     </section>
 

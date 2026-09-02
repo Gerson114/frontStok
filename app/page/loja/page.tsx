@@ -187,10 +187,10 @@ export default function LojaPage() {
                                     ? "Escolha um endereço abaixo para publicar a sua loja."
                                     : (
                                         <>
-                                            O endereço já está escolhido, mas a vitrine faz parte do
-                                            plano com site.{" "}
+                                            O endereço já está escolhido, mas a vitrine só vai ao ar
+                                            com a assinatura em dia.{" "}
                                             <Link href="/page/assinatura" className="font-semibold text-[#0086FF] hover:underline">
-                                                Ver planos
+                                                Ver assinatura
                                             </Link>
                                         </>
                                     )}

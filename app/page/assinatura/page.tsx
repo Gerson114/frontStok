@@ -3,41 +3,32 @@
 import { useCallback, useEffect, useState } from "react"
 import {
     abrirPortalCobranca,
-    avisarAssinaturaAlterada,
     consultarAssinatura,
-    consultarPlanosDaLoja,
-    descreverPlano,
+    consultarOferta,
     descreverStatus,
-    formatarCentavos,
     formatarData,
     formatarPreco,
     iniciarPagamento,
-    pedirPreviaDaTroca,
-    trocarPlano,
 } from "@/middleware/assinatura"
-import type { Assinatura, Plano, PlanoOferta, PreviaTroca } from "@/app/type/type"
+import type { Assinatura, Oferta } from "@/app/type/type"
 import { irParaPaginaExterna } from "@/security/navegacao"
 import {
     FiAlertCircle,
-    FiAlertTriangle,
     FiCheck,
     FiCheckCircle,
     FiCreditCard,
     FiExternalLink,
-    FiGlobe,
     FiLock,
     FiRefreshCw,
 } from "react-icons/fi"
 
 export default function AssinaturaPage() {
     const [assinatura, setAssinatura] = useState<Assinatura | null>(null)
-    // Planos, preços e o que cada um inclui vêm do backend — nada disso é
-    // escrito aqui, para a tela não discordar do que o Stripe cobra.
-    const [planos, setPlanos] = useState<PlanoOferta[]>([])
+    // Preço e o que a assinatura inclui vêm do backend — nada disso é escrito
+    // aqui, para a tela não discordar do que a fatura cobra.
+    const [oferta, setOferta] = useState<Oferta | null>(null)
     const [carregando, setCarregando] = useState(true)
-    // Guarda qual plano está abrindo o pagamento, para o botão certo mostrar
-    // "Abrindo..." quando há dois deles na tela.
-    const [enviando, setEnviando] = useState<"" | "portal" | Plano>("")
+    const [enviando, setEnviando] = useState<"" | "portal" | "assinar">("")
     const [erro, setErro] = useState("")
 
     // Contador de recargas: mexer nele é o que dispara o efeito de novo,
@@ -45,13 +36,6 @@ export default function AssinaturaPage() {
     // estado acontece depois do await, dentro do efeito — chamar setState
     // de forma síncrona no corpo de um efeito provoca renders em cascata.
     const [recarregar, setRecarregar] = useState(0)
-
-    // Trocar de plano mexe em dinheiro: sobe cobrando a diferença no cartão
-    // na hora, desce tirando telas do painel. Por isso a troca passa por uma
-    // confirmação, e o texto dela vem do backend — é lá que se sabe o valor
-    // exato, porque é lá que ele é calculado com o Stripe.
-    const [previa, setPrevia] = useState<PreviaTroca | null>(null)
-    const [confirmando, setConfirmando] = useState(false)
 
     useEffect(() => {
         let cancelado = false
@@ -65,13 +49,13 @@ export default function AssinaturaPage() {
                 setAssinatura(dados)
                 setErro("")
 
-                // O catálogo é secundário: se falhar, a tela ainda mostra a
+                // A oferta é secundária: se falhar, a tela ainda mostra a
                 // situação da assinatura, que é o que mais importa aqui.
                 try {
-                    const catalogo = await consultarPlanosDaLoja()
-                    if (!cancelado) setPlanos(catalogo.planos ?? [])
+                    const catalogo = await consultarOferta()
+                    if (!cancelado) setOferta(catalogo.oferta ?? null)
                 } catch {
-                    // segue sem a lista de planos
+                    // segue sem a descrição da oferta
                 }
             } catch (e) {
                 if (cancelado) return
@@ -91,56 +75,18 @@ export default function AssinaturaPage() {
 
     const carregar = useCallback(() => setRecarregar((n) => n + 1), [])
 
-    // O pagamento acontece numa página do Stripe, fora daqui. Por isso a
-    // navegação é uma troca de endereço de verdade (location.assign) e não
-    // router.push: o destino é outro domínio.
-    async function irParaPagamento(plano: Plano) {
+    // O pagamento acontece fora daqui, na página do provedor de cobrança. Por
+    // isso a navegação é uma troca de endereço de verdade (location.assign) e
+    // não router.push: o destino é outro domínio.
+    async function irParaPagamento() {
         setErro("")
-        setEnviando(plano)
+        setEnviando("assinar")
 
         try {
-            irParaPaginaExterna(await iniciarPagamento(plano))
+            irParaPaginaExterna(await iniciarPagamento())
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento")
             setEnviando("")
-        }
-    }
-
-    // Quem já assina não passa por checkout de novo: a assinatura que existe
-    // muda de preço. O Stripe acerta a diferença do mês.
-    //
-    // O clique não troca nada ainda: pede a prévia ao backend e abre o aviso.
-    // A troca de verdade só sai de confirmarTroca, com o "eu vi o valor".
-    async function irParaTroca(plano: Plano) {
-        setErro("")
-        setEnviando(plano)
-
-        try {
-            setPrevia(await pedirPreviaDaTroca(plano))
-        } catch (e) {
-            setErro(e instanceof Error ? e.message : "Não foi possível trocar de plano")
-        } finally {
-            setEnviando("")
-        }
-    }
-
-    async function confirmarTroca() {
-        if (!previa) return
-
-        setErro("")
-        setConfirmando(true)
-
-        try {
-            await trocarPlano(previa.plano, true)
-            setPrevia(null)
-            // O menu lateral muda junto com o plano: telas entram ou saem.
-            avisarAssinaturaAlterada()
-            carregar()
-        } catch (e) {
-            setErro(e instanceof Error ? e.message : "Não foi possível trocar de plano")
-            setPrevia(null)
-        } finally {
-            setConfirmando(false)
         }
     }
 
@@ -169,9 +115,10 @@ export default function AssinaturaPage() {
     const liberada = assinatura?.liberada ?? false
     const cobrancaAtiva = assinatura?.cobranca_ativa ?? false
     const jaTemCadastroNoStripe = Boolean(assinatura && assinatura.status !== "sem_assinatura")
-    const planoAtual: Plano = assinatura?.plano ?? "estoque"
-    const temSite = assinatura?.site_liberado ?? false
 
+    // Assinatura correndo no Stripe: é só nesses dois status que existe uma
+    // próxima cobrança marcada.
+    const emCobranca = assinatura?.status === "active" || assinatura?.status === "trialing"
     return (
         <main className="mx-auto max-w-3xl px-4 py-10">
 
@@ -180,8 +127,8 @@ export default function AssinaturaPage() {
             </h1>
 
             <p className="mt-1 text-sm text-[#5A6469]">
-                O acesso ao painel depende da assinatura mensal da sua loja, e a
-                vitrine pública depende do plano contratado.
+                O painel e a sua loja na internet dependem da assinatura mensal
+                estar em dia.
             </p>
 
             {/* SITUAÇÃO ATUAL */}
@@ -213,23 +160,26 @@ export default function AssinaturaPage() {
                                 : "Seu painel está bloqueado até o pagamento ser confirmado."}
                         </p>
 
-                        {cobrancaAtiva && liberada && (
-                            <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-[#5A6469]">
-                                <span>Plano atual:</span>
-                                <span className="tag tag-info">{descreverPlano(planoAtual)}</span>
-                                <span className={`tag ${temSite ? "tag-success" : "tag-neutral"}`}>
-                                    <FiGlobe className="w-3" aria-hidden />
-                                    {temSite ? "vitrine no ar" : "sem vitrine"}
-                                </span>
-                            </p>
-                        )}
-
                         {/* Quem cancelou no meio do mês continua com acesso até o
                             fim do período que já pagou — vale explicar, senão a
                             data parece contradizer o status "cancelada". */}
-                        {assinatura?.periodo_fim_em && (
+                        {assinatura?.pago_ate && (
                             <p className="mt-3 text-sm text-[#5A6469]">
                                 Período pago até{" "}
+                                <strong className="text-[#1E2428]">
+                                    {formatarData(assinatura.pago_ate)}
+                                </strong>
+                            </p>
+                        )}
+
+                        {/* Outra data, outro assunto: esta é a da próxima
+                            cobrança, e só faz sentido enquanto a assinatura
+                            está correndo. Chamá-la de "período pago", como já
+                            se chamou aqui, dizia a quem estava com a fatura
+                            vencida que ele tinha o mês inteiro pago. */}
+                        {emCobranca && assinatura?.periodo_fim_em && (
+                            <p className="mt-1 text-sm text-[#5A6469]">
+                                Próxima cobrança em{" "}
                                 <strong className="text-[#1E2428]">
                                     {formatarData(assinatura.periodo_fim_em)}
                                 </strong>
@@ -297,178 +247,73 @@ export default function AssinaturaPage() {
 
             </section>
 
-            {/* PLANOS
-                Aparece para todo mundo: quem ainda não assina escolhe aqui, e
-                quem já assina troca aqui mesmo. A troca NÃO passa por um
-                checkout novo (isso criaria uma segunda cobrança mensal) — ela
-                muda o preço da assinatura que já existe. */}
-            {cobrancaAtiva && planos.length > 0 && (
+            {/* A ASSINATURA
+                Uma só, com tudo dentro. Quem ainda não assina contrata aqui;
+                quem já assina vê o que está pagando — o que muda entre os dois
+                casos é só o botão no fim do cartão. */}
+            {cobrancaAtiva && oferta && (
                 <section className="mt-6">
 
                     <h2 className="font-display text-lg text-[#1E2428]">
-                        {liberada ? "Planos disponíveis" : "Escolha o seu plano"}
+                        {liberada ? "A sua assinatura" : "Assine para liberar o painel"}
                     </h2>
 
-                    <p className="mt-1 text-sm text-[#5A6469]">
-                        {liberada
-                            ? "Trocar de plano vale na hora. O Stripe acerta a diferença do mês: subindo, cobra a diferença proporcional; descendo, vira crédito na próxima fatura."
-                            : "A diferença entre eles é a loja na internet e o limite de peças."}
-                    </p>
+                    <article className="card mt-4 flex flex-col p-6">
 
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                        {planos.map((plano) => {
+                        <div className="flex items-start justify-between gap-2">
+                            <p className="font-display text-lg text-[#1E2428]">
+                                {oferta.nome}
+                            </p>
 
-                            const ehAtual = liberada && plano.chave === planoAtual
-
-                            return (
-                                <article key={plano.chave} className="card flex flex-col p-6">
-
-                                    <div className="flex items-start justify-between gap-2">
-                                        <p className="font-display text-lg text-[#1E2428]">
-                                            {plano.nome}
-                                        </p>
-
-                                        {ehAtual && (
-                                            <span className="tag tag-success shrink-0">
-                                                seu plano
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <p className="mt-1 text-sm text-[#5A6469]">
-                                        {plano.descricao}
-                                    </p>
-
-                                    <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#E4E9EB] pb-5">
-                                        <span className="font-display text-3xl text-[#1E2428]">
-                                            {formatarPreco(plano.preco)}
-                                        </span>
-                                        <span className="text-sm font-bold text-[#5A6469]">/mês</span>
-                                    </div>
-
-                                    {plano.teste_dias ? (
-                                        <p className="mt-3 text-sm font-semibold text-[#08A022]">
-                                            {plano.teste_dias} dias grátis para começar
-                                        </p>
-                                    ) : null}
-
-                                    <ul className="mt-5 mb-6 space-y-2">
-                                        {plano.recursos.map((item) => (
-                                            <li
-                                                key={item}
-                                                className="flex items-start gap-2 text-sm text-[#1E2428]"
-                                            >
-                                                <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    {ehAtual ? (
-                                        <p className="mt-auto rounded-lg bg-[#F0F3F4] px-4 py-3 text-center text-sm font-semibold text-[#5A6469]">
-                                            É o plano que você usa hoje
-                                        </p>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => liberada ? irParaTroca(plano.chave) : irParaPagamento(plano.chave)}
-                                            disabled={enviando !== ""}
-                                            className={`btn mt-auto w-full items-center justify-center gap-2 ${
-                                                plano.chave === "site" ? "btn-primario" : "btn-secundario"
-                                            }`}
-                                        >
-                                            <FiCreditCard className="w-4" aria-hidden />
-                                            {enviando === plano.chave
-                                                ? (liberada ? "Calculando..." : "Abrindo pagamento...")
-                                                : (liberada ? `Trocar para ${plano.nome}` : `Assinar ${plano.nome}`)}
-                                        </button>
-                                    )}
-
-                                </article>
-                            )
-                        })}
-                    </div>
-
-                </section>
-            )}
-
-            {/* AVISO DA TROCA DE PLANO
-                Título, texto e rótulo do botão vêm prontos do backend: o
-                valor da cobrança é calculado lá, com o Stripe, e escrever a
-                frase aqui seria arriscar dizer um número diferente do que a
-                fatura cobra. */}
-            {previa && (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="titulo-troca"
-                    className="fixed inset-0 z-50 flex items-end justify-center bg-[#1E2428]/50 p-4 sm:items-center"
-                >
-                    <div className="card w-full max-w-lg p-6 sm:p-7">
-
-                        <div className="flex items-start gap-3">
-                            <div
-                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                                    previa.cobra_agora
-                                        ? "bg-[#FFF4E5] text-[#B25E00]"
-                                        : "bg-[#E6F3FF] text-[#0075E2]"
-                                }`}
-                            >
-                                {previa.cobra_agora
-                                    ? <FiAlertTriangle className="w-5" aria-hidden />
-                                    : <FiAlertCircle className="w-5" aria-hidden />}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                                <p id="titulo-troca" className="font-display text-lg text-[#1E2428]">
-                                    {previa.titulo}
-                                </p>
-
-                                <p className="mt-0.5 text-sm text-[#5A6469]">
-                                    Saindo do {previa.plano_atual_nome}
-                                </p>
-                            </div>
+                            {liberada && (
+                                <span className="tag tag-success shrink-0">
+                                    ativa
+                                </span>
+                            )}
                         </div>
 
-                        {/* O valor em destaque: é a informação que o lojista
-                            precisa ver antes de qualquer texto. */}
-                        {previa.cobra_agora && (
-                            <p className="mt-5 rounded-lg bg-[#FFF4E5] px-4 py-3 text-sm font-semibold text-[#B25E00]">
-                                Será cobrado agora{" "}
-                                <strong className="font-display text-lg">
-                                    {formatarCentavos(previa.valor_agora, previa.moeda)}
-                                </strong>{" "}
-                                no seu cartão.
-                            </p>
-                        )}
-
-                        <p className="mt-4 text-sm leading-relaxed text-[#1E2428]">
-                            {previa.aviso}
+                        <p className="mt-1 text-sm text-[#5A6469]">
+                            {oferta.descricao}
                         </p>
 
-                        <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
-                            <button
-                                type="button"
-                                onClick={confirmarTroca}
-                                disabled={confirmando}
-                                className="btn btn-primario flex flex-1 items-center justify-center gap-2"
-                            >
-                                <FiCreditCard className="w-4" aria-hidden />
-                                {confirmando ? "Trocando..." : previa.rotulo_confirmar}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setPrevia(null)}
-                                disabled={confirmando}
-                                className="btn btn-neutro flex-1"
-                            >
-                                Cancelar
-                            </button>
+                        <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#E4E9EB] pb-5">
+                            <span className="font-display text-3xl text-[#1E2428]">
+                                {formatarPreco(oferta.preco)}
+                            </span>
+                            <span className="text-sm font-bold text-[#5A6469]">/mês</span>
                         </div>
 
-                    </div>
-                </div>
+                        <ul className="mt-5 mb-6 grid gap-2 sm:grid-cols-2">
+                            {oferta.recursos.map((item) => (
+                                <li
+                                    key={item}
+                                    className="flex items-start gap-2 text-sm text-[#1E2428]"
+                                >
+                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+
+                        {liberada ? (
+                            <p className="mt-auto rounded-lg bg-[#F0F3F4] px-4 py-3 text-center text-sm font-semibold text-[#5A6469]">
+                                Você já tem tudo isso liberado
+                            </p>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={irParaPagamento}
+                                disabled={enviando !== ""}
+                                className="btn btn-primario mt-auto w-full items-center justify-center gap-2"
+                            >
+                                <FiCreditCard className="w-4" aria-hidden />
+                                {enviando === "assinar" ? "Abrindo pagamento..." : "Assinar agora"}
+                            </button>
+                        )}
+
+                    </article>
+
+                </section>
             )}
 
             {/* Explicação de onde o cartão é digitado. Não é enfeite: o lojista
@@ -478,8 +323,8 @@ export default function AssinaturaPage() {
                 <p className="mt-5 flex items-start gap-2 text-xs text-[#5A6469]">
                     <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                     <span>
-                        O pagamento é processado pelo Stripe. Os dados do seu cartão
-                        são digitados no site dele e nunca passam por este sistema.
+                        Os dados do seu cartão são digitados numa página segura do
+                        processador de cobrança e nunca passam por este sistema.
                     </span>
                 </p>
             )}
