@@ -77,7 +77,24 @@ export function idValido(id: string): boolean {
  * descer como anexo, e reescrevê-los aqui abriria a brecha que lá foi
  * fechada.
  */
-export async function repassarArquivo(caminho: string, request?: Request) {
+export async function repassarArquivo(
+    caminho: string,
+    request?: Request,
+    /**
+     * Por quantos segundos o NAVEGADOR do lojista pode reaproveitar este
+     * arquivo sem pedir de novo. Zero (o padrão) é não guardar nada.
+     *
+     * Existe por causa da foto de perfil, que é o único arquivo daqui que a
+     * tela pede repetidamente: a lista de conversas mostra uma por linha, e
+     * sem cache cada volta à tela rebuscava todas elas — foi o que levou o
+     * painel a tomar 429 do limite de requisições.
+     *
+     * Áudio, imagem e documento das conversas continuam sem cache: são
+     * conteúdo de cliente, e não há motivo para ficarem em disco depois de
+     * vistos.
+     */
+    segundosDeCache = 0
+) {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get("token")?.value
@@ -145,8 +162,14 @@ export async function repassarArquivo(caminho: string, request?: Request) {
             cabecalhos.set("Content-Type", "application/octet-stream")
         }
 
-        // Conversa de cliente não fica em cache de intermediário nenhum.
-        cabecalhos.set("Cache-Control", "private, no-store")
+        // Conversa de cliente não fica em cache de intermediário nenhum. O
+        // "private" é o que garante isso mesmo quando há tempo de cache: ele
+        // permite guardar no navegador de quem pediu e proíbe em qualquer
+        // ponto do caminho — proxy da loja, CDN, cache compartilhado.
+        cabecalhos.set(
+            "Cache-Control",
+            segundosDeCache > 0 ? `private, max-age=${segundosDeCache}` : "private, no-store"
+        )
 
         // O status vai como veio: 206 é a resposta certa a um Range, e
         // reescrevê-lo como 200 diria ao navegador que o pedaço é o todo.

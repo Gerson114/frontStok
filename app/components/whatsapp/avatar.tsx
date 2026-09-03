@@ -87,6 +87,18 @@ export default function Avatar({
         <img
             src={urlDaFoto(conversaId)}
             alt=""
+            // Carrega quando a linha chega perto da tela, e não todas de uma
+            // vez ao montar a lista.
+            //
+            // Uma loja com noventa conversas disparava noventa buscas de foto
+            // no mesmo instante — para mostrar as treze que cabem na tela. O
+            // servidor via aquilo pelo que é, uma rajada, e respondia 429:
+            // navegar para Conversas e voltar bastava para o painel inteiro
+            // travar em "Muitas requisições".
+            loading="lazy"
+            // Decodifica fora da thread da tela: com dezenas de fotos, é o
+            // que impede a lista de engasgar enquanto rola.
+            decoding="async"
             onError={() => setFalhou(true)}
             className={`${tamanho} shrink-0 rounded-full bg-[#F0F3F4] object-cover`}
         />

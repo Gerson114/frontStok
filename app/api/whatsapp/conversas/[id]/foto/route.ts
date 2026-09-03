@@ -10,5 +10,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         return new Response("Conversa inválida", { status: 400 })
     }
 
-    return repassarArquivo(whatsapp.foto(id), request)
+    // Cinco minutos de cache no navegador do lojista.
+    //
+    // Foto de perfil quase não muda, e a lista de conversas pede uma por
+    // linha: sem isto, cada volta à tela rebusca a lista inteira de fotos, e
+    // é essa rajada que fazia o painel tomar "Muitas requisições".
+    //
+    // Curto de propósito: o cliente que troca a foto aparece com a nova em
+    // poucos minutos, sem ninguém precisar limpar nada.
+    return repassarArquivo(whatsapp.foto(id), request, 300)
 }

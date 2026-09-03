@@ -53,7 +53,7 @@ const LIMITE_API = 120 // demais chamadas de API por minuto, por IP
 const LIMITE_IMAGEM = 400 // fotos por minuto, por IP (ver ROTA_IMAGEM)
 
 /**
- * O proxy de imagens tem balde próprio, e não o de 120.
+ * O que é ARQUIVO tem balde próprio, e não o de 120.
  *
  * Antes as fotos vinham direto do host de terceiro e não passavam por aqui;
  * desde que a CSP fechou `img-src`, cada tela do painel manda uma dezena delas
@@ -67,8 +67,24 @@ const LIMITE_IMAGEM = 400 // fotos por minuto, por IP (ver ROTA_IMAGEM)
  * fora, e isso é banda nossa gasta a pedido de outra pessoa. Mas é folgado: a
  * resposta já vem com cache de cinco minutos, então só a primeira visita a
  * cada foto chega até aqui.
+ *
+ * As fotos de perfil e a mídia do WhatsApp entram aqui pelo MESMO motivo, e
+ * ficaram de fora por esquecimento — foi o que fez o painel travar em "Muitas
+ * requisições" ao navegar. A tela de Conversas mostra um avatar por linha:
+ * numa loja com noventa conversas, abrir a tela uma vez gastava quase o
+ * minuto inteiro do balde de API, e a segunda abertura derrubava junto as
+ * chamadas que fazem a tela funcionar. São arquivos, não chamadas de API, e é
+ * no balde de arquivos que eles pertencem.
  */
 const ROTA_IMAGEM = "/api/imagem"
+
+/** Fotos de perfil e mídia das conversas: `/api/whatsapp/.../foto` e `/midia/:id`. */
+const ROTAS_DE_ARQUIVO_WHATSAPP = /^\/api\/whatsapp\/(conversas\/\d+\/foto|midia\/\d+)$/
+
+/** Se o caminho serve um arquivo, e não uma chamada de API. */
+function ehArquivo(pathname: string): boolean {
+    return pathname === ROTA_IMAGEM || ROTAS_DE_ARQUIVO_WHATSAPP.test(pathname)
+}
 
 /**
  * Teto do corpo de uma requisição, o mesmo 1 MiB do backend Go (ver
@@ -311,7 +327,7 @@ export function proxy(request: NextRequest) {
 
         const balde = ROTAS_DE_CONTA.includes(pathname)
             ? { nome: "conta", limite: LIMITE_CONTA }
-            : pathname === ROTA_IMAGEM
+            : ehArquivo(pathname)
                 ? { nome: "imagem", limite: LIMITE_IMAGEM }
                 : { nome: "api", limite: LIMITE_API }
 
