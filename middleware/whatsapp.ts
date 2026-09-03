@@ -177,6 +177,37 @@ export function formatarTelefone(bruto: string): string {
     return `+55 ${ddd} ${comeco}-${fim}`
 }
 
+/**
+ * Os dígitos de um telefone, no formato em que dois números podem ser
+ * comparados.
+ *
+ * O mesmo cliente chega escrito de jeitos diferentes conforme a porta: o
+ * WhatsApp entrega "5581999998888", e o lojista que lançou um pedido pelo
+ * painel digitou "(81) 99999-8888". São o mesmo telefone, e sem tirar a
+ * pontuação e o código do país eles nunca se encontram.
+ *
+ * O "55" só cai quando sobra número depois dele (mais de 11 dígitos): um
+ * telefone que legitimamente comece com 55 no DDD não pode ser mutilado.
+ */
+export function digitosDoTelefone(bruto: string): string {
+
+    const digitos = (bruto ?? "").replace(/\D/g, "")
+
+    return digitos.length > 11 && digitos.startsWith("55") ? digitos.slice(2) : digitos
+}
+
+/** Se dois telefones escritos de formas diferentes são o mesmo. */
+export function mesmoTelefone(um: string, outro: string): boolean {
+
+    const a = digitosDoTelefone(um)
+    const b = digitosDoTelefone(outro)
+
+    // Vazio nunca casa com vazio: pedido sem contato não é "o pedido desta
+    // conversa" — é um pedido sem contato, e mostrá-lo aqui seria inventar um
+    // vínculo que ninguém criou.
+    return a !== "" && a === b
+}
+
 /** A hora da mensagem, curta — "14:32" hoje, "12/03 14:32" antes disso. */
 export function horaDaMensagem(iso: string): string {
 

@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import {
     consultarCanal,
     formatarTelefone,
@@ -13,23 +14,29 @@ import {
     escutarConversas,
     diaDaMensagem,
     mesmoDia,
+    mesmoTelefone,
     type AparelhoWhatsApp,
     type CanalWhatsApp,
     type Conversa,
     type MensagemWhatsApp,
 } from "@/middleware/whatsapp"
 import { ApiError } from "@/middleware/client"
+import { listarPedidos } from "@/middleware/pedidos"
+import type { Pedido } from "@/app/type/type"
 import ConectarWhatsApp from "@/app/components/whatsapp/conectar"
 import ConectarPorQR from "@/app/components/whatsapp/qr"
 import Bolha from "@/app/components/whatsapp/bolha"
 import Avatar from "@/app/components/whatsapp/avatar"
+import CaixaDeProdutos from "@/app/components/whatsapp/produtos"
 import {
     FiAlertCircle,
     FiAlertTriangle,
+    FiBox,
     FiMessageCircle,
     FiSearch,
     FiSend,
     FiSettings,
+    FiShoppingCart,
 } from "react-icons/fi"
 
 /**
@@ -57,6 +64,14 @@ import {
  */
 const INTERVALO_SEGURANCA_MS = 30000
 
+/**
+ * Até onde a caixa de escrever cresce, em pixels.
+ *
+ * Dezesseis linhas de folga: cabe inteira a mensagem de três produtos que a
+ * caixa de produtos monta, que é o texto mais longo que sai daqui.
+ */
+const ALTURA_MAXIMA_DA_CAIXA = 260
+
 export default function Conversas() {
 
     // Dois caminhos para a mesma caixa de entrada: o aparelho vinculado
@@ -79,7 +94,38 @@ export default function Conversas() {
     const [busca, setBusca] = useState("")
     const [ajustando, setAjustando] = useState(false)
 
+    // A caixa de produtos, aberta debaixo do fio. Fechada por padrão: quem
+    // abre a conversa vem responder, não vender uma peça específica.
+    const [caixaAberta, setCaixaAberta] = useState(false)
+
+    // Para que a caixa foi aberta: mandar preço ou fechar a venda. São os
+    // dois destinos da mesma escolha de produtos (ver o componente).
+    const [modoCaixa, setModoCaixa] = useState<"mensagem" | "pedido">("mensagem")
+
+    /**
+     * Os pedidos da loja, para reconhecer os que são desta conversa.
+     *
+     * Buscados uma vez, e não a cada conversa aberta: a lista é a mesma para
+     * todas elas, e uma busca por clique seria dezenas de chamadas iguais
+     * numa tela em que o lojista passa o dia.
+     */
+    const [pedidos, setPedidos] = useState<Pedido[]>([])
+
     const fimDoFio = useRef<HTMLDivElement>(null)
+    const caixaDeEscrever = useRef<HTMLTextAreaElement>(null)
+
+    /**
+     * O último fio já carregado de cada conversa.
+     *
+     * Serve para voltar a uma conversa e vê-la na hora, em vez de olhar um
+     * espaço vazio enquanto o servidor responde. O que está aqui pode estar
+     * alguns segundos velho, e é de propósito: a busca continua saindo, e o
+     * fio se corrige sozinho quando ela volta. Trocar "vazio por meio
+     * segundo" por "quase certo agora" é o que faz a tela parecer rápida.
+     *
+     * Fica num ref, e não em estado: ninguém redesenha por causa dele.
+     */
+    const fiosGuardados = useRef(new Map<number, MensagemWhatsApp[]>())
 
     /* ==========================
        DADOS
@@ -116,6 +162,45 @@ export default function Conversas() {
 
     const conectado = Boolean(aparelho?.conectado || canal?.conectado)
 
+    useEffect(() => {
+        if (!conectado) return
+
+        let cancelado = false
+
+        listarPedidos()
+            .then((lista) => {
+                if (!cancelado) setPedidos(lista)
+            })
+            .catch(() => {
+                // Sem a lista, o topo apenas não mostra código de pedido —
+                // e o botão de gerar continua funcionando, que é o que
+                // importa para quem está atendendo agora.
+            })
+
+        return () => {
+            cancelado = true
+        }
+    }, [conectado])
+
+    /**
+     * O pedido desta conversa: o mais recente feito para este telefone.
+     *
+     * O mais recente, e não todos, porque a pergunta que o topo responde é
+     * "em que pé está o que esta pessoa comprou" — e quem quer o histórico
+     * inteiro abre a tela de Pedidos, que é dela.
+     */
+    const pedidoDaConversa = useMemo(() => {
+
+        if (!aberta) return null
+
+        return (
+            pedidos
+                .filter((pedido) => mesmoTelefone(pedido.cliente_contato, aberta.telefone))
+                .sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null
+        )
+
+    }, [pedidos, aberta])
+
     const atualizarConversas = useCallback(async () => {
         try {
             setConversas(await listarConversas())
@@ -129,8 +214,28 @@ export default function Conversas() {
     const atualizarFio = useCallback(async (id: number) => {
         try {
             const dados = await listarMensagens(id)
+
+            // O que veio do servidor é a verdade do fio, e é ele que fica
+            // guardado. As provisórias não entram aqui: elas ainda não
+            // existem para ninguém além desta tela.
+            fiosGuardados.current.set(id, dados.mensagens)
+
             setAberta(dados.conversa)
-            setMensagens(dados.mensagens)
+
+            // Mas a mensagem que o lojista acabou de mandar e ainda está a
+            // caminho não pode sumir da tela porque a varredura de meio
+            // minuto calhou de cair no meio do envio. Ela volta ao fim do
+            // fio, de onde sai sozinha quando a resposta chega e a troca
+            // pela definitiva.
+            setMensagens((atual) => {
+
+                const aCaminho = atual.filter((mensagem) => mensagem.id < 0)
+
+                return aCaminho.length > 0
+                    ? [...dados.mensagens, ...aCaminho]
+                    : dados.mensagens
+            })
+
         } catch {
             // Mesmo motivo de cima.
         }
@@ -182,13 +287,43 @@ export default function Conversas() {
         fimDoFio.current?.scrollIntoView({ block: "end" })
     }, [mensagens.length, abertaId])
 
+    /**
+     * A caixa de escrever cresce com o que se escreve, até um teto.
+     *
+     * Ela nascia com uma linha e ficava com uma linha. Para responder "ok"
+     * dava; para conferir os três produtos que a caixa acabou de montar, não:
+     * a mensagem tem seis linhas e o lojista via duas, rolando um campo do
+     * tamanho de um botão para ler o que estava prestes a mandar. Ninguém
+     * revisa o que não consegue ver.
+     *
+     * O teto existe para o campo não engolir o fio da conversa numa mensagem
+     * longa — passando dele, volta a rolar, que aí é o comportamento certo.
+     */
+    useEffect(() => {
+
+        const campo = caixaDeEscrever.current
+
+        if (!campo) return
+
+        // Zerar antes de medir: sem isso a altura só cresce, porque
+        // scrollHeight nunca fica menor do que a altura já aplicada.
+        campo.style.height = "auto"
+        campo.style.height = `${Math.min(campo.scrollHeight, ALTURA_MAXIMA_DA_CAIXA)}px`
+
+    }, [texto])
+
     async function abrirConversa(conversa: Conversa) {
 
         setAbertaId(conversa.id)
         setAberta(conversa)
-        setMensagens([])
+
+        // O fio de antes entra na hora, e a busca o corrige logo atrás.
+        // Conversa nunca aberta cai no vazio mesmo — aí não há o que mostrar.
+        setMensagens(fiosGuardados.current.get(conversa.id) ?? [])
+
         setErroEnvio("")
         setTexto("")
+        setCaixaAberta(false)
 
         await atualizarFio(conversa.id)
 
@@ -211,25 +346,74 @@ export default function Conversas() {
 
         if (!conteudo || abertaId === null) return
 
+        const conversaId = abertaId
+
         setErroEnvio("")
         setEnviando(true)
 
-        try {
-            const mensagem = await responder(abertaId, conteudo)
+        // A mensagem entra no fio antes de o servidor responder, e a caixa de
+        // escrever esvazia junto. É o que todo aplicativo de conversa faz, e
+        // pelo motivo certo: quem acabou de apertar enviar quer ver o que
+        // escreveu no lugar dele, não um cursor parado esperando a rede da
+        // loja. O id negativo não colide com nenhum id do banco e é trocado
+        // pelo de verdade assim que a resposta chega.
+        const provisoria: MensagemWhatsApp = {
+            id: -Date.now(),
+            conversa_id: conversaId,
+            direcao: "saida",
+            texto: conteudo,
+            tipo: "text",
+            status: "enfileirada",
+            criada_em: new Date().toISOString(),
+        }
 
-            setMensagens((atual) => [...atual, mensagem])
-            setTexto("")
+        setMensagens((atual) => [...atual, provisoria])
+        setTexto("")
+
+        try {
+            const mensagem = await responder(conversaId, conteudo)
+
+            setMensagens((atual) =>
+                atual.map((item) => (item.id === provisoria.id ? mensagem : item))
+            )
+
             await atualizarConversas()
 
         } catch (e) {
             // O backend grava a mensagem mesmo quando a Meta recusa, então o
             // fio já vai mostrá-la marcada como falhou na próxima atualização.
-            // Aqui só se explica o porquê.
+            // A provisória sai de cena para não ficarem duas cópias da mesma
+            // fala; o texto volta para a caixa, que é onde ele serve para
+            // alguma coisa — tentar de novo sem redigitar.
             setErroEnvio(e instanceof ApiError ? e.message : "Não foi possível enviar")
-            if (abertaId !== null) atualizarFio(abertaId)
+            setMensagens((atual) => atual.filter((item) => item.id !== provisoria.id))
+            setTexto(conteudo)
+            atualizarFio(conversaId)
+
         } finally {
             setEnviando(false)
         }
+    }
+
+    /**
+     * O que a caixa de produtos montou entra na mensagem que está sendo
+     * escrita, e não por cima dela: o lojista costuma já ter digitado "bom
+     * dia, seguem os valores" antes de ir procurar as peças.
+     */
+    function porProdutosNaMensagem(trecho: string) {
+
+        setTexto((atual) => (atual.trim() ? `${atual.trimEnd()}\n\n${trecho}` : trecho))
+        setCaixaAberta(false)
+
+        // O foco volta para onde a pessoa estava, com o cursor no fim — ela
+        // ainda pode querer acrescentar uma linha antes de mandar.
+        requestAnimationFrame(() => {
+            const campo = caixaDeEscrever.current
+            if (!campo) return
+
+            campo.focus()
+            campo.setSelectionRange(campo.value.length, campo.value.length)
+        })
     }
 
     /* ==========================
@@ -519,13 +703,52 @@ export default function Conversas() {
                                 />
 
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate font-display text-[1.05rem] leading-tight text-[#1E2428]">
-                                        {aberta.nome.trim() || formatarTelefone(aberta.telefone)}
-                                    </p>
+
+                                    <div className="flex items-center gap-2">
+
+                                        <p className="truncate font-display text-[1.05rem] leading-tight text-[#1E2428]">
+                                            {aberta.nome.trim() || formatarTelefone(aberta.telefone)}
+                                        </p>
+
+                                        {/* O pedido desta pessoa, ao lado do nome dela.
+                                            É a resposta de "o que essa conversa virou":
+                                            sem isto, saber se o cliente já comprou exigia
+                                            sair daqui, abrir Pedidos e procurar pelo
+                                            telefone. Leva ao pedido, e não abre nada por
+                                            cima da conversa. */}
+                                        {pedidoDaConversa && (
+                                            <Link
+                                                href="/page/pedidos"
+                                                title={`Pedido ${pedidoDaConversa.codigo} · ${pedidoDaConversa.status}`}
+                                                className="num inline-flex shrink-0 items-center gap-1 rounded-full bg-[#E6F3FF] px-2.5 py-0.5 text-[0.68rem] font-bold text-[#0075E2] transition-colors hover:bg-[#CFE7FF]"
+                                            >
+                                                <FiShoppingCart className="w-3" aria-hidden />
+                                                {pedidoDaConversa.codigo}
+                                            </Link>
+                                        )}
+
+                                    </div>
+
                                     <p className="num truncate text-xs text-[#8C969B]">
                                         {formatarTelefone(aberta.telefone)}
                                     </p>
                                 </div>
+
+                                {/* Gerar pedido a partir da conversa: o cliente
+                                    fechou pelo WhatsApp, e a venda tem de virar
+                                    pedido sem o lojista reescrever o nome e o
+                                    telefone que já estão na tela. */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setModoCaixa("pedido")
+                                        setCaixaAberta(true)
+                                    }}
+                                    className="btn btn-secundario hidden shrink-0 sm:inline-flex"
+                                >
+                                    <FiShoppingCart className="w-4" aria-hidden />
+                                    <span>Gerar pedido</span>
+                                </button>
 
                                 {/* A janela de 24h como estado permanente do topo, e
                                     não só como aviso na hora de escrever: o lojista
@@ -623,8 +846,61 @@ export default function Conversas() {
                                 </div>
                             )}
 
+                            {/* A caixa de produtos abre entre o fio e o campo de
+                                escrever, que é o caminho da mão: procurar a peça,
+                                marcá-la e continuar escrevendo logo abaixo. */}
+                            {caixaAberta && (
+                                <CaixaDeProdutos
+                                    modo={modoCaixa}
+                                    cliente={{
+                                        // O pedido precisa de um nome, e nem
+                                        // toda conversa tem um: o telefone
+                                        // serve de nome quando o contato não
+                                        // está salvo, que é o caso comum de
+                                        // quem escreve para a loja pela
+                                        // primeira vez.
+                                        nome: aberta.nome.trim() || formatarTelefone(aberta.telefone),
+                                        contato: aberta.telefone,
+                                    }}
+                                    aoInserir={porProdutosNaMensagem}
+                                    aoPedidoCriado={(pedido) => {
+                                        // Entra na lista local na hora, para o
+                                        // código aparecer ao lado do nome sem
+                                        // esperar uma nova busca.
+                                        setPedidos((atual) => [pedido, ...atual])
+                                    }}
+                                    aoFechar={() => setCaixaAberta(false)}
+                                />
+                            )}
+
                             <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[#E4E9EB] bg-white p-3">
+
+                                {/* Preço de produto é a pergunta que mais chega por
+                                    WhatsApp numa loja, então ela ganha um botão fixo
+                                    ao lado de escrever — e não um menu escondido. */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        // Este botão é sempre o de mandar
+                                        // preço: quem quer pedido entra pelo
+                                        // "Gerar pedido", lá em cima.
+                                        setModoCaixa("mensagem")
+                                        setCaixaAberta((estaAberta) => !estaAberta)
+                                    }}
+                                    aria-expanded={caixaAberta}
+                                    aria-label="Produtos do estoque"
+                                    title="Pôr produtos do estoque na mensagem"
+                                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                                        caixaAberta
+                                            ? "border-[#0086FF] bg-[#E6F3FF] text-[#0075E2]"
+                                            : "border-[#D3DADD] bg-white text-[#5A6469] hover:bg-[#F0F3F4]"
+                                    }`}
+                                >
+                                    <FiBox className="w-[1.05rem]" aria-hidden />
+                                </button>
+
                                 <textarea
+                                    ref={caixaDeEscrever}
                                     rows={1}
                                     value={texto}
                                     onChange={(e) => setTexto(e.target.value)}
@@ -637,7 +913,7 @@ export default function Conversas() {
                                         }
                                     }}
                                     placeholder="Escreva a resposta"
-                                    className="field max-h-32 min-h-11 flex-1 resize-y rounded-2xl"
+                                    className="field min-h-11 flex-1 resize-none overflow-y-auto rounded-2xl"
                                 />
 
                                 {/* Redondo e só com o ícone: a caixa de escrever é
