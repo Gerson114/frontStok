@@ -24,7 +24,7 @@ import {
 import MolduraAuth, { type ItemMoldura } from "../auth/moldura"
 
 const ITENS: ItemMoldura[] = [
-    { texto: "Cadastro em dois passos: seus dados e o plano que você escolher.", Icone: FiTag },
+    { texto: "Cadastro em dois passos: seus dados e o pagamento da assinatura.", Icone: FiTag },
     { texto: "Etiqueta com código de barras pronta para imprimir por peça.", Icone: FiPrinter },
     { texto: "Assinatura mensal, cancelada por você mesmo quando quiser.", Icone: FiCreditCard },
 ]
@@ -301,7 +301,7 @@ export default function Cadastro() {
 
                     <p className="mt-2 text-sm text-[#5A6469]">
                         Comece com seu e-mail e uma senha. No próximo passo você
-                        escolhe o plano.
+                        assina — é uma assinatura só, com tudo incluído.
                     </p>
 
                     <div className="mt-8 space-y-5">

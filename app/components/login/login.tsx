@@ -1,10 +1,12 @@
 "use client"
 
 import { login } from "@/middleware/auth"
+import { consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
+import type { Oferta } from "@/app/type/type"
 import { isValidEmail } from "@/security/validate"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
     FiEye,
     FiEyeOff,
@@ -33,6 +35,31 @@ export default function Login() {
 
     const emailRef = useRef<HTMLInputElement>(null)
     const senhaRef = useRef<HTMLInputElement>(null)
+
+    // O preço da linha do rodapé vem do provedor de cobrança, como em todo
+    // resto do sistema. Escrever o valor aqui foi o que deixou "a partir de
+    // R$ 50" nesta tela por meses depois de o plano único de R$ 100 existir:
+    // número escrito à mão é número que envelhece sozinho.
+    const [oferta, setOferta] = useState<Oferta | null>(null)
+
+    useEffect(() => {
+        let cancelado = false
+
+        consultarOfertaPublica()
+            .then((dados) => {
+                if (!cancelado) setOferta(dados.oferta ?? null)
+            })
+            .catch(() => { })
+
+        return () => {
+            cancelado = true
+        }
+    }, [])
+
+    // Sem resposta do servidor, a nota fica sem preço em vez de chutar um.
+    const nota = oferta?.preco
+        ? `Painel de gestão para lojas de roupa. Uma assinatura só, de ${formatarPreco(oferta.preco)} por mês, com tudo incluído e cancelamento quando você quiser.`
+        : "Painel de gestão para lojas de roupa. Uma assinatura mensal só, com tudo incluído e cancelamento quando você quiser."
 
     const router = useRouter()
 
@@ -95,7 +122,7 @@ export default function Login() {
             etiqueta="Acesso ao painel"
             chamada="O estoque da sua loja, peça a peça."
             itens={ITENS}
-            nota="Painel de gestão para lojas de roupa. Dois planos mensais, a partir de R$ 50, com cancelamento quando você quiser."
+            nota={nota}
         >
 
             <form onSubmit={handleSubmit} noValidate>

@@ -58,12 +58,17 @@ export async function POST(request: Request) {
             )
         }
 
+        // Uma assinatura só, e o preço dela vem do backend (que o lê do
+        // provedor de cobrança): a tela de pagamento recebe a oferta pronta e
+        // não precisa de outra ida ao servidor. Esta rota ainda respondia
+        // "escolher_plano" com uma lista de `planos`, formato dos dois planos
+        // que deixaram de existir — ninguém lia, e a oferta se perdia aqui.
         const saida = Response.json(
             {
-                proximo_passo: "escolher_plano",
+                proximo_passo: "pagar",
                 email,
                 cobranca_ativa: true,
-                planos: dados?.planos ?? [],
+                oferta: dados?.oferta,
             },
             { status: 200, headers: { "Cache-Control": "no-store" } }
         )
