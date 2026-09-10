@@ -7,6 +7,7 @@ import { consultarPorCodigo } from "@/middleware/estoque"
 import { descreverVariacao } from "@/app/components/produto/campos"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import { ApiError } from "@/middleware/client"
+import { Pagina } from "@/app/components/pagina/pagina"
 import {
     FiAlertCircle,
     FiCheckCircle,
@@ -216,28 +217,22 @@ export default function VendaNoBalcao() {
     const disponiveis = alvo ? Number(alvo.estoque) : 0
 
     return (
-        <main className="mx-auto max-w-5xl px-4 py-10">
-
-            <h1 className="font-display text-2xl text-[#1E2428]">
-                Venda no balcão
-            </h1>
-
-            <p className="mt-1 text-sm text-[#5A6469]">
-                Bipe a etiqueta da peça, confira o preço e dê baixa. O sistema
-                escolhe qual peça sai do estoque.
-            </p>
+        <Pagina
+            titulo="Venda no balcão"
+            descricao="Bipe a etiqueta da peça, confira o preço e dê baixa. O sistema escolhe qual peça sai do estoque."
+        >
 
             {erro && (
                 <div
                     role="alert"
-                    className="mt-6 flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                    className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+            <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
 
                 {/* ==========================
                     BALCÃO
@@ -273,7 +268,7 @@ export default function VendaNoBalcao() {
                             </button>
                         </div>
 
-                        <p className="mt-1.5 text-xs text-[#8C969B]">
+                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
                             O leitor de código de barras digita e dá Enter sozinho —
                             é só bipar com o campo em foco.
                         </p>
@@ -283,7 +278,7 @@ export default function VendaNoBalcao() {
                     {erroCodigo && (
                         <div
                             role="alert"
-                            className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                            className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                         >
                             <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                             <span>{erroCodigo}</span>
@@ -297,7 +292,7 @@ export default function VendaNoBalcao() {
 
                             <div className="flex items-start gap-4">
 
-                                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
+                                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
                                     {alvo.imagem_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -310,11 +305,11 @@ export default function VendaNoBalcao() {
 
                                 <div className="min-w-0 flex-1">
 
-                                    <h2 className="font-display truncate text-lg text-[#1E2428]">
+                                    <h2 className="font-display truncate text-lg text-[#303030]">
                                         {alvo.nome}
                                     </h2>
 
-                                    <p className="mt-0.5 truncate text-sm text-[#5A6469]">
+                                    <p className="mt-0.5 truncate text-sm text-[#616161]">
                                         <span className="num">{alvo.codigo}</span>
                                         {descreverVariacao(alvo.variacao_rotulo, alvo.variacao)
                                             ? ` · ${descreverVariacao(alvo.variacao_rotulo, alvo.variacao)}`
@@ -339,7 +334,7 @@ export default function VendaNoBalcao() {
                                     type="button"
                                     onClick={limparVenda}
                                     aria-label="Limpar"
-                                    className="shrink-0 rounded-lg p-2 text-[#8C969B] transition-colors hover:bg-[#F0F3F4] hover:text-[#1E2428]"
+                                    className="shrink-0 rounded-lg p-2 text-[#8A8A8A] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
                                 >
                                     <FiX className="w-4" aria-hidden />
                                 </button>
@@ -383,19 +378,19 @@ export default function VendaNoBalcao() {
                             </label>
 
                             <div className="relative mt-1">
-                                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
+                                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
 
                                 <input
                                     id="busca"
                                     className="field pl-9"
-                                    placeholder="Ex: camisa listrada"
+                                    placeholder="Ex: ventilador de teto"
                                     value={busca}
                                     onChange={(e) => setBusca(e.target.value)}
                                 />
                             </div>
 
                             {carregando && (
-                                <p className="mt-3 text-sm text-[#5A6469]">Carregando produtos...</p>
+                                <p className="mt-3 text-sm text-[#616161]">Carregando produtos...</p>
                             )}
 
                             <ul className="mt-3 space-y-1.5">
@@ -404,20 +399,20 @@ export default function VendaNoBalcao() {
                                         <button
                                             type="button"
                                             onClick={() => escolher(produto)}
-                                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[#F0F3F4]"
+                                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[#F1F1F1]"
                                         >
-                                            <FiTag className="w-4 shrink-0 text-[#8C969B]" aria-hidden />
+                                            <FiTag className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
 
                                             <span className="min-w-0 flex-1">
-                                                <span className="block truncate text-sm font-semibold text-[#1E2428]">
+                                                <span className="block truncate text-sm font-semibold text-[#303030]">
                                                     {produto.nome}
                                                 </span>
-                                                <span className="num block truncate text-xs text-[#8C969B]">
+                                                <span className="num block truncate text-xs text-[#8A8A8A]">
                                                     {produto.codigo} · {produto.estoque} em estoque
                                                 </span>
                                             </span>
 
-                                            <span className="num shrink-0 text-sm font-bold text-[#1E2428]">
+                                            <span className="num shrink-0 text-sm font-bold text-[#303030]">
                                                 {formatarMoeda(precoAtual(produto))}
                                             </span>
                                         </button>
@@ -426,7 +421,7 @@ export default function VendaNoBalcao() {
                             </ul>
 
                             {busca.trim() && encontrados.length === 0 && !carregando && (
-                                <p className="mt-3 text-sm text-[#5A6469]">
+                                <p className="mt-3 text-sm text-[#616161]">
                                     Nenhum produto com esse nome.
                                 </p>
                             )}
@@ -442,17 +437,17 @@ export default function VendaNoBalcao() {
 
                 <aside className="card h-fit p-6">
 
-                    <h2 className="font-display text-lg text-[#1E2428]">
+                    <h2 className="font-display text-lg text-[#303030]">
                         Vendas de agora
                     </h2>
 
-                    <p className="mt-0.5 text-xs text-[#8C969B]">
+                    <p className="mt-0.5 text-xs text-[#8A8A8A]">
                         O que passou por aqui desde que a tela foi aberta. O
                         histórico que fica está em Vendidos.
                     </p>
 
                     {vendas.length === 0 ? (
-                        <p className="mt-5 text-sm text-[#5A6469]">
+                        <p className="mt-5 text-sm text-[#616161]">
                             Nenhuma peça ainda.
                         </p>
                     ) : (
@@ -461,32 +456,32 @@ export default function VendaNoBalcao() {
                                 {vendas.map((venda) => (
                                     <li
                                         key={venda.unidadeId}
-                                        className="flex items-start gap-2 border-b border-[#E4E9EB] pb-2 last:border-0"
+                                        className="flex items-start gap-2 border-b border-[#EBEBEB] pb-2 last:border-0"
                                     >
-                                        <FiCheckCircle className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
+                                        <FiCheckCircle className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
 
                                         <span className="min-w-0 flex-1">
-                                            <span className="block truncate text-sm font-semibold text-[#1E2428]">
+                                            <span className="block truncate text-sm font-semibold text-[#303030]">
                                                 {venda.nome}
                                             </span>
-                                            <span className="num block truncate text-xs text-[#8C969B]">
+                                            <span className="num block truncate text-xs text-[#8A8A8A]">
                                                 {venda.codigo} · peça {venda.sequencia}
                                             </span>
                                         </span>
 
-                                        <span className="num shrink-0 text-sm font-bold text-[#1E2428]">
+                                        <span className="num shrink-0 text-sm font-bold text-[#303030]">
                                             {formatarMoeda(venda.valor)}
                                         </span>
                                     </li>
                                 ))}
                             </ul>
 
-                            <div className="mt-4 flex items-baseline justify-between border-t border-[#D3DADD] pt-3">
-                                <span className="text-sm font-semibold text-[#5A6469]">
+                            <div className="mt-4 flex items-baseline justify-between border-t border-[#E1E1E1] pt-3">
+                                <span className="text-sm font-semibold text-[#616161]">
                                     {vendas.length} {vendas.length === 1 ? "peça" : "peças"}
                                 </span>
 
-                                <span className="num text-xl font-extrabold text-[#0086FF]">
+                                <span className="num text-xl font-extrabold text-[#005BD3]">
                                     {formatarMoeda(total)}
                                 </span>
                             </div>
@@ -497,6 +492,6 @@ export default function VendaNoBalcao() {
 
             </div>
 
-        </main>
+        </Pagina>
     )
 }

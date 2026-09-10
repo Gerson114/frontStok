@@ -6,12 +6,6 @@
 
 import { apiFetch } from "./client"
 
-export interface Fornecedor {
-    id: number
-    nome: string
-    contato?: string
-}
-
 /**
  * Uma linha da remessa: qual produto chegou, quantas peças e por quanto.
  *
@@ -78,20 +72,6 @@ export interface RespostaEntrada {
 
     /** Quantas tarefas de armazenagem a remessa deixou na fila. */
     tarefas_de_armazenagem?: number
-}
-
-export async function listarFornecedores(): Promise<Fornecedor[]> {
-    const dados = await apiFetch<{ fornecedores?: Fornecedor[] }>("/api/fornecedores")
-    return Array.isArray(dados.fornecedores) ? dados.fornecedores : []
-}
-
-export async function criarFornecedor(nome: string, contato: string): Promise<Fornecedor> {
-    const dados = await apiFetch<{ fornecedor: Fornecedor }>("/api/fornecedores", {
-        method: "POST",
-        body: { nome, contato },
-    })
-
-    return dados.fornecedor
 }
 
 /** Dá entrada numa remessa inteira — tudo ou nada, numa transação só. */

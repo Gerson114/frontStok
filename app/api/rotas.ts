@@ -22,6 +22,10 @@
 export const publico = {
     login: () => "/public/login",
     cadastro: () => "/public/cadastro",
+
+    /** Os seis dígitos que provam que o e-mail do cadastro é de quem o digitou. */
+    cadastroConfirmar: () => "/public/cadastro/confirmar",
+    cadastroReenviar: () => "/public/cadastro/reenviar",
     oferta: () => "/public/oferta",
 
     /** Catálogo da vitrine, com busca opcional por nome. */
@@ -36,6 +40,37 @@ export const publico = {
    Conta e assinatura
    ========================================================================== */
 
+/* ==========================================================================
+   Início — os números do negócio
+   ========================================================================== */
+
+export const painel = {
+    inicio: () => "/private/inicio",
+
+    /**
+     * As vendas ao longo do tempo, na régua pedida ("dia", "mes" ou "ano").
+     *
+     * É a mesma informação da tela de início noutra escala, e por isso não é
+     * do dono: quem trabalha na loja vê os números dela.
+     */
+    vendas: (granularidade: string) =>
+        `/private/painel/vendas?granularidade=${encodeURIComponent(granularidade)}`,
+
+    /**
+     * O que a equipe fez com as conversas nos últimos `dias`: quem pegou da
+     * fila, quem passou cliente para quem, quem encerrou. Só o dono.
+     */
+    atendimento: (dias: number) => `/private/painel/atendimento?dias=${dias}`,
+
+    /**
+     * O que chegou e ninguém viu: pedido novo, WhatsApp e chat do site.
+     *
+     * Alimenta a bolinha da barra superior, e é barata de propósito — três
+     * COUNT indexados, pedidos a cada aviso do canal ao vivo.
+     */
+    notificacoes: () => "/private/notificacoes",
+}
+
 export const conta = {
     logout: () => "/private/logout",
 
@@ -46,6 +81,119 @@ export const conta = {
 
     loja: () => "/private/loja",
     tema: () => "/private/loja/tema",
+
+    /** Quanto a loja cobra para entregar, e para onde. */
+    frete: () => "/private/frete",
+}
+
+/* ==========================================================================
+   A equipe da loja
+   ========================================================================== */
+
+/* ==========================================================================
+   As lojas do dono
+   ========================================================================== */
+
+/**
+ * Abrir, renomear, fechar e trocar a loja que o painel está mostrando.
+ *
+ * Nenhum caminho aqui leva o id do dono: quem o preenche é a sessão, no
+ * servidor. E nenhuma loja é alcançada por id sem `dono_id` no mesmo WHERE lá
+ * — o filtro por dono é a única coisa entre um lojista e o estoque da rede
+ * vizinha.
+ */
+export const lojas = {
+    rede: () => "/private/lojas",
+    uma: (id: string | number) => `/private/lojas/${id}`,
+
+    /** Passa a mostrar esta loja no painel. Grava o cookie no servidor. */
+    trocar: (id: string | number) => `/private/lojas/${id}/abrir`,
+}
+
+export const funcionarios = {
+    lista: () => "/private/funcionarios",
+    um: (id: string | number) => `/private/funcionarios/${id}`,
+    senha: (id: string | number) => `/private/funcionarios/${id}/senha`,
+
+    /**
+     * O código único da loja, o que a equipe digita para entrar na conversa
+     * interna. Só o dono abre — é a única rota que devolve o código aberto.
+     */
+}
+
+/* ==========================================================================
+   A conversa interna da equipe
+   ========================================================================== */
+
+/**
+ * O chat entre quem trabalha na loja.
+ *
+ * Nenhum destes caminhos leva o id da loja nem o de quem está falando: quem
+ * decide as duas coisas é a sessão, no servidor. A sala vai como "geral" ou
+ * como o crachá do colega — nunca o nome da sala montado pelo navegador, que
+ * seria deixá-lo escolher de quem é a conversa.
+ */
+export const equipe = {
+    estado: () => "/private/equipe",
+    entrar: () => "/private/equipe/entrar",
+    sair: () => "/private/equipe/sair",
+
+    mensagens: (sala: string, desde?: number) => {
+        const query = new URLSearchParams({ sala })
+
+        if (desde) query.set("desde", String(desde))
+
+        return `/private/equipe/mensagens?${query.toString()}`
+    },
+
+    escrever: () => "/private/equipe/mensagens",
+    lida: () => "/private/equipe/lida",
+
+    /** "Está digitando…". Não grava nada: sai pelo canal ao vivo. */
+    digitando: () => "/private/equipe/digitando",
+
+    /**
+     * O código que destrava a conversa — a única rota que o devolve aberto.
+     *
+     * Não é do dono por natureza: ele pode delegá-la a uma pessoa da equipe.
+     * Quem decide é o backend, pela permissão "equipe-codigo".
+     */
+    codigo: () => "/private/equipe/codigo",
+
+    /**
+     * Quem pediu para entrar, e a decisão sobre cada um. Só o dono, e sem
+     * delegação: passar o código é dar o convite; dizer quem é da empresa é
+     * abrir a porta.
+     */
+    acessos: () => "/private/equipe/acessos",
+
+    /**
+     * O que a equipe pede uma à outra: com prazo, prioridade e destinatário.
+     *
+     * Nada a ver com `estoque.tarefas`, que é a fila de corredor do WMS —
+     * trabalho gerado pelo sistema, amarrado a produto e endereço.
+     */
+    tarefas: () => "/private/equipe/tarefas",
+    tarefa: (id: string | number) => `/private/equipe/tarefas/${id}`,
+
+    /** O mural da loja: os recados que ficam à vista, com a posição de cada um. */
+    notas: (muralID?: number) =>
+        muralID ? `/private/equipe/notas?mural=${muralID}` : "/private/equipe/notas",
+
+    /** Chamar gente para um mural, e sair do mural de outro. */
+    membrosDoMural: (id: string | number, cracha?: string) =>
+        cracha
+            ? `/private/equipe/murais/${id}/membros?cracha=${encodeURIComponent(cracha)}`
+            : `/private/equipe/murais/${id}/membros`,
+    nota: (id: string | number) => `/private/equipe/notas/${id}`,
+
+    /** Os grupos: a sala do meio do caminho, entre a loja toda e dois em dois. */
+    grupos: () => "/private/equipe/grupos",
+    membrosDoGrupo: (id: string | number) => `/private/equipe/grupos/${id}/membros`,
+    sairDoGrupo: (id: string | number, cracha?: string) =>
+        cracha
+            ? `/private/equipe/grupos/${id}/membros?cracha=${encodeURIComponent(cracha)}`
+            : `/private/equipe/grupos/${id}/membros`,
 }
 
 /* ==========================================================================
@@ -115,12 +263,65 @@ export const estoque = {
    ========================================================================== */
 
 export const pedidos = {
+    /** Quem levou o pedido e com que código. */
+    rastreio: (id: string | number) => `/private/pedidos/${id}/rastreio`,
+
+    /** Os pedidos a caminho, pela data em que devem chegar. */
+    entregas: (mes: string) => `/private/entregas?mes=${encodeURIComponent(mes)}`,
+
     lista: () => "/private/pedidos",
+
+    /** Os que estão presos esperando o pagamento cair. */
+    listaAguardando: () => "/private/pedidos?pagamento=aguardando",
+
+    /** Pergunta ao provedor se aquele pedido foi pago, em vez de esperar. */
+    verificarPagamento: (id: string) => `/private/pedidos/${id}/verificar-pagamento`,
+
+    /** A loja declarando que recebeu por fora — Pix direto, dinheiro, maquininha. */
+    pagamentoManual: (id: string) => `/private/pedidos/${id}/pagamento-manual`,
     criar: () => "/pedidos",
     conferir: () => "/pedidos/conferir",
     etiquetas: () => "/private/pedidos/etiquetas",
     separacao: (id: string) => `/private/pedidos/${id}/separacao`,
     status: (id: string) => `/private/pedidos/${id}/status`,
+
+    /** O dia em que o pedido sai da loja — o que o põe na agenda. */
+    envio: (id: string) => `/private/pedidos/${id}/envio`,
+}
+
+/* ==========================================================================
+   Clientes — quem compra na loja
+   ========================================================================== */
+
+export const paginaDaLoja = {
+    /** O desenho da home da vitrine, montado em blocos. */
+    home: () => "/private/loja/pagina",
+}
+
+export const clientes = {
+    lista: () => "/private/clientes",
+    historico: (id: string) => `/private/clientes/${id}`,
+
+    // LGPD: o que a loja precisa para atender um pedido do titular — entregar
+    // uma cópia dos dados (art. 18, II) e eliminá-los (art. 18, VI).
+    dados: (id: string) => `/private/clientes/${id}/dados`,
+    anonimizar: (id: string) => `/private/clientes/${id}/anonimizar`,
+}
+
+/* ==========================================================================
+   Atendimento — o chat do site
+   ========================================================================== */
+
+export const atendimentos = {
+    lista: (encerrados = false) =>
+        encerrados ? "/private/atendimentos?encerrados=1" : "/private/atendimentos",
+    responsavel: (id: string) => `/private/atendimentos/${id}/responsavel`,
+    situacao: (id: string) => `/private/atendimentos/${id}/situacao`,
+
+    /** O aviso de "está digitando" (ver services/atendimento/digitando.go). */
+    digitando: (id: string) => `/private/atendimentos/${id}/digitando`,
+    mensagens: (id: string, desde?: string) =>
+        `/private/atendimentos/${id}/mensagens${desde ? `?desde=${encodeURIComponent(desde)}` : ""}`,
 }
 
 /* ==========================================================================
@@ -129,15 +330,30 @@ export const pedidos = {
 
 // Sem o "/private" na frente: quem chama estas é o repassar() de
 // app/api/whatsapp/proxy.ts, que já o acrescenta.
+/* ==========================================================================
+   Pagamento — a conta da loja no provedor
+   ========================================================================== */
+
+export const pagamento = {
+    /** Uma cobrança de R$ 1,00 para ver se a conta da loja consegue cobrar. */
+    testar: () => "/private/pagamento/testar",
+
+    /** Situação da conexão. O access token NUNCA volta daqui, nem mascarado. */
+    conta: () => "/private/pagamento",
+}
+
 export const whatsapp = {
     canal: () => "/whatsapp/canal",
     bilhete: () => "/whatsapp/bilhete",
     aparelho: () => "/whatsapp/aparelho",
     parear: () => "/whatsapp/aparelho/parear",
 
-    conversas: () => "/whatsapp/conversas",
+    conversas: (encerrados = false) =>
+        encerrados ? "/whatsapp/conversas?encerrados=1" : "/whatsapp/conversas",
     mensagens: (id: string) => `/whatsapp/conversas/${id}/mensagens`,
     lida: (id: string) => `/whatsapp/conversas/${id}/lida`,
+    responsavel: (id: string) => `/whatsapp/conversas/${id}/responsavel`,
+    situacao: (id: string) => `/whatsapp/conversas/${id}/situacao`,
     foto: (id: string) => `/whatsapp/conversas/${id}/foto`,
     midia: (id: string) => `/whatsapp/midia/${id}`,
 }

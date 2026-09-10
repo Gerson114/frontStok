@@ -11,6 +11,7 @@ import {
     iniciarPagamento,
 } from "@/middleware/assinatura"
 import type { Assinatura, Oferta } from "@/app/type/type"
+import { Pagina } from "@/app/components/pagina/pagina"
 import { irParaPaginaExterna } from "@/security/navegacao"
 import {
     FiAlertCircle,
@@ -104,11 +105,11 @@ export default function AssinaturaPage() {
 
     if (carregando) {
         return (
-            <main className="mx-auto max-w-3xl px-4 py-10">
-                <div className="card p-8 text-center text-sm text-[#5A6469]">
+            <Pagina titulo="Assinatura">
+                <div className="card p-8 text-center text-sm text-[#616161]">
                     Carregando assinatura...
                 </div>
-            </main>
+            </Pagina>
         )
     }
 
@@ -119,28 +120,27 @@ export default function AssinaturaPage() {
     // Assinatura correndo no Stripe: é só nesses dois status que existe uma
     // próxima cobrança marcada.
     const emCobranca = assinatura?.status === "active" || assinatura?.status === "trialing"
+
+    // Em teste o painel abre inteiro e nada foi cobrado ainda — e é
+    // justamente por isso que o aviso precisa estar à vista: quem não vê a
+    // data descobre que o teste acabou no dia em que o sistema fecha.
+    const emTeste = assinatura?.em_teste ?? assinatura?.status === "trialing"
     return (
-        <main className="mx-auto max-w-3xl px-4 py-10">
-
-            <h1 className="font-display text-2xl text-[#1E2428]">
-                Assinatura
-            </h1>
-
-            <p className="mt-1 text-sm text-[#5A6469]">
-                O painel e a sua loja na internet dependem da assinatura mensal
-                estar em dia.
-            </p>
+        <Pagina
+            titulo="Assinatura"
+            descricao="O painel e a sua loja na internet dependem da assinatura mensal estar em dia."
+        >
 
             {/* SITUAÇÃO ATUAL */}
-            <section className="card mt-6 p-6 sm:p-7">
+            <section className="card p-6 sm:p-7">
 
                 <div className="flex items-start gap-3">
 
                     <div
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
                             liberada
-                                ? "bg-[#E7F8EE] text-[#1E9E5A]"
-                                : "bg-[#FDECEA] text-[#D4351C]"
+                                ? "bg-[#EAFBF1] text-[#0C5132]"
+                                : "bg-[#FEE9E8] text-[#8E1F0B]"
                         }`}
                     >
                         {liberada
@@ -150,23 +150,25 @@ export default function AssinaturaPage() {
 
                     <div className="min-w-0 flex-1">
 
-                        <p className="font-display text-lg text-[#1E2428]">
+                        <p className="font-display text-lg text-[#303030]">
                             {assinatura ? descreverStatus(assinatura) : "Situação desconhecida"}
                         </p>
 
-                        <p className="mt-1 text-sm text-[#5A6469]">
-                            {liberada
-                                ? "Seu painel está liberado."
-                                : "Seu painel está bloqueado até o pagamento ser confirmado."}
+                        <p className="mt-1 text-sm text-[#616161]">
+                            {emTeste
+                                ? "Seu teste está valendo: o painel abre inteiro e nada foi cobrado até aqui."
+                                : liberada
+                                    ? "Seu painel está liberado."
+                                    : "Seu painel está bloqueado até o pagamento ser confirmado."}
                         </p>
 
                         {/* Quem cancelou no meio do mês continua com acesso até o
                             fim do período que já pagou — vale explicar, senão a
                             data parece contradizer o status "cancelada". */}
                         {assinatura?.pago_ate && (
-                            <p className="mt-3 text-sm text-[#5A6469]">
+                            <p className="mt-3 text-sm text-[#616161]">
                                 Período pago até{" "}
-                                <strong className="text-[#1E2428]">
+                                <strong className="text-[#303030]">
                                     {formatarData(assinatura.pago_ate)}
                                 </strong>
                             </p>
@@ -178,18 +180,19 @@ export default function AssinaturaPage() {
                             se chamou aqui, dizia a quem estava com a fatura
                             vencida que ele tinha o mês inteiro pago. */}
                         {emCobranca && assinatura?.periodo_fim_em && (
-                            <p className="mt-1 text-sm text-[#5A6469]">
-                                Próxima cobrança em{" "}
-                                <strong className="text-[#1E2428]">
+                            <p className="mt-1 text-sm text-[#616161]">
+                                {emTeste ? "Teste até" : "Próxima cobrança em"}{" "}
+                                <strong className="text-[#303030]">
                                     {formatarData(assinatura.periodo_fim_em)}
                                 </strong>
+                                {emTeste ? " — é nesse dia que a primeira cobrança acontece." : ""}
                             </p>
                         )}
 
                         {assinatura?.tolerancia_ate && (
-                            <p className="mt-1 text-sm text-[#5A6469]">
+                            <p className="mt-1 text-sm text-[#616161]">
                                 Prazo para regularizar:{" "}
-                                <strong className="text-[#1E2428]">
+                                <strong className="text-[#303030]">
                                     {formatarData(assinatura.tolerancia_ate)}
                                 </strong>
                             </p>
@@ -202,7 +205,7 @@ export default function AssinaturaPage() {
                         onClick={carregar}
                         title="Atualizar"
                         aria-label="Atualizar situação da assinatura"
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                     >
                         <FiRefreshCw className="w-4" aria-hidden />
                     </button>
@@ -212,7 +215,7 @@ export default function AssinaturaPage() {
                 {erro && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
@@ -220,7 +223,7 @@ export default function AssinaturaPage() {
                 )}
 
                 {!cobrancaAtiva && (
-                    <p className="mt-5 rounded-lg bg-[#F0F3F4] px-4 py-3 text-sm text-[#5A6469]">
+                    <p className="mt-5 rounded-lg bg-[#F1F1F1] px-4 py-3 text-sm text-[#616161]">
                         Este servidor está rodando sem cobrança configurada, então o
                         painel fica liberado para todos. É o esperado em
                         desenvolvimento.
@@ -252,62 +255,76 @@ export default function AssinaturaPage() {
                 quem já assina vê o que está pagando — o que muda entre os dois
                 casos é só o botão no fim do cartão. */}
             {cobrancaAtiva && oferta && (
-                <section className="mt-6">
+                <section>
 
-                    <h2 className="font-display text-lg text-[#1E2428]">
-                        {liberada ? "A sua assinatura" : "Assine para liberar o painel"}
+                    <h2 className="font-display text-lg text-[#303030]">
+                        {emTeste
+                            ? "Continuar depois do teste"
+                            : liberada
+                                ? "A sua assinatura"
+                                : "Assine para liberar o painel"}
                     </h2>
 
                     <article className="card mt-4 flex flex-col p-6">
 
                         <div className="flex items-start justify-between gap-2">
-                            <p className="font-display text-lg text-[#1E2428]">
+                            <p className="font-display text-lg text-[#303030]">
                                 {oferta.nome}
                             </p>
 
                             {liberada && (
-                                <span className="tag tag-success shrink-0">
-                                    ativa
+                                <span className={`shrink-0 tag ${emTeste ? "tag-info" : "tag-success"}`}>
+                                    {emTeste ? "em teste" : "ativa"}
                                 </span>
                             )}
                         </div>
 
-                        <p className="mt-1 text-sm text-[#5A6469]">
+                        <p className="mt-1 text-sm text-[#616161]">
                             {oferta.descricao}
                         </p>
 
-                        <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#E4E9EB] pb-5">
-                            <span className="font-display text-3xl text-[#1E2428]">
+                        <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#EBEBEB] pb-5">
+                            <span className="font-display text-3xl text-[#303030]">
                                 {formatarPreco(oferta.preco)}
                             </span>
-                            <span className="text-sm font-bold text-[#5A6469]">/mês</span>
+                            <span className="text-sm font-bold text-[#616161]">/mês</span>
                         </div>
 
                         <ul className="mt-5 mb-6 grid gap-2 sm:grid-cols-2">
                             {oferta.recursos.map((item) => (
                                 <li
                                     key={item}
-                                    className="flex items-start gap-2 text-sm text-[#1E2428]"
+                                    className="flex items-start gap-2 text-sm text-[#303030]"
                                 >
-                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
+                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
                                     {item}
                                 </li>
                             ))}
                         </ul>
 
-                        {liberada ? (
-                            <p className="mt-auto rounded-lg bg-[#F0F3F4] px-4 py-3 text-center text-sm font-semibold text-[#5A6469]">
+                        {liberada && !emTeste ? (
+                            <p className="mt-auto rounded-lg bg-[#F1F1F1] px-4 py-3 text-center text-sm font-semibold text-[#616161]">
                                 Você já tem tudo isso liberado
                             </p>
                         ) : (
+                            /* Em teste o caminho é o portal, e não um checkout
+                               novo: a assinatura JÁ existe (é ela que está
+                               correndo o teste), e abrir outro criaria uma
+                               segunda cobrança mensal na mesma loja — o
+                               servidor recusa isso, com razão. No portal o
+                               lojista só acrescenta o cartão que faltava. */
                             <button
                                 type="button"
-                                onClick={irParaPagamento}
+                                onClick={emTeste ? irParaPortal : irParaPagamento}
                                 disabled={enviando !== ""}
                                 className="btn btn-primario mt-auto w-full items-center justify-center gap-2"
                             >
                                 <FiCreditCard className="w-4" aria-hidden />
-                                {enviando === "assinar" ? "Abrindo pagamento..." : "Assinar agora"}
+                                {enviando !== ""
+                                    ? emTeste ? "Abrindo portal..." : "Abrindo pagamento..."
+                                    : emTeste
+                                        ? "Cadastrar cartão e continuar"
+                                        : "Assinar agora"}
                             </button>
                         )}
 
@@ -320,7 +337,7 @@ export default function AssinaturaPage() {
                 está prestes a sair do domínio do painel e ver outra marca na
                 barra de endereço, e sem aviso isso parece golpe. */}
             {cobrancaAtiva && (
-                <p className="mt-5 flex items-start gap-2 text-xs text-[#5A6469]">
+                <p className="flex items-start gap-2 text-xs text-[#616161]">
                     <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                     <span>
                         Os dados do seu cartão são digitados numa página segura do
@@ -329,6 +346,6 @@ export default function AssinaturaPage() {
                 </p>
             )}
 
-        </main>
+        </Pagina>
     )
 }

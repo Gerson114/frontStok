@@ -13,9 +13,9 @@
 
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { API_BASE } from "@/app/api/backend"
-import { conta, estoque, produtos as rotasProdutos } from "@/app/api/rotas"
-import type { Assinatura, ItemMenu, Produto, Unidade } from "@/app/type/type"
+import { API_BASE, CABECALHO_DA_LOJA, COOKIE_DA_LOJA } from "@/app/api/backend"
+import { conta, estoque, painel, produtos as rotasProdutos } from "@/app/api/rotas"
+import type { Assinatura, ItemMenu, Produto, ResumoDoPainel, Unidade } from "@/app/type/type"
 
 /**
  * O erro que as telas de servidor deixam subir até o `error.tsx` do trecho.
@@ -44,6 +44,12 @@ async function buscarNoBackend<T>(caminho: string): Promise<T> {
     // dia em que uma rota nova escapar da lista de lá.
     if (!token) redirect("/login")
 
+    // A LOJA aberta viaja junto, como em app/api/* (ver cabecalhosDaSessao).
+    // Sem isto, as telas montadas no servidor mostrariam sempre a loja
+    // principal enquanto o resto do painel mostra a que o lojista escolheu —
+    // e ele veria o estoque de uma unidade com o faturamento de outra.
+    const loja = cookieStore.get(COOKIE_DA_LOJA)?.value
+
     let resposta: Response
 
     try {
@@ -51,6 +57,7 @@ async function buscarNoBackend<T>(caminho: string): Promise<T> {
             headers: {
                 Authorization: `Bearer ${token}`,
                 Accept: "application/json",
+                ...(loja ? { [CABECALHO_DA_LOJA]: loja } : {}),
             },
             cache: "no-store",
         })
@@ -100,4 +107,16 @@ export async function listarTodasUnidades(): Promise<Unidade[]> {
 export async function consultarMenu(): Promise<ItemMenu[]> {
     const assinatura = await buscarNoBackend<Assinatura>(conta.assinatura())
     return assinatura.menu ?? []
+}
+
+/**
+ * Os números da tela de início.
+ *
+ * Lido aqui, no servidor, e não pelo caminho longo: é a primeira tela que o
+ * lojista vê ao entrar, e nela o esqueleto piscando antes do primeiro número
+ * é justamente o que se quer evitar — a pergunta que ela responde ("como foi
+ * hoje?") não admite espera.
+ */
+export async function consultarResumo(): Promise<ResumoDoPainel> {
+    return buscarNoBackend<ResumoDoPainel>(painel.inicio())
 }

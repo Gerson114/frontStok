@@ -35,12 +35,38 @@ export interface Conversa {
      * do computador do lojista pode estar errado.
      */
     janela_aberta: boolean
+
+    /**
+     * De quem é este cliente.
+     *
+     * Vazio é conversa livre, que qualquer um da equipe pode pegar. Numa loja
+     * com cinco pessoas atendendo, a conversa sem dono é a que todos leem e
+     * ninguém responde — ou a que três respondem ao mesmo tempo dizendo
+     * coisas diferentes.
+     */
+    responsavel_id?: number | null
+    responsavel_nome?: string
+
+    /**
+     * Em que pé está o atendimento — os mesmos quatro estados do chat do site:
+     * livre (na fila, à vista de todos), atribuido (alguém pegou),
+     * em_atendimento (começou) e encerrado (saiu da mesa).
+     *
+     * Encerrada não é fim: cliente que escreve de novo devolve a conversa à
+     * fila, para a equipe inteira.
+     */
+    situacao: string
+    iniciado_em?: string | null
+    encerrado_em?: string | null
 }
 
 export interface MensagemWhatsApp {
     id: number
     conversa_id: number
     direcao: "entrada" | "saida"
+
+    /** Quem da loja escreveu. Vazio nas mensagens do cliente e nas antigas. */
+    ator?: string
     texto: string
     tipo: string
     status: "enfileirada" | "enviada" | "entregue" | "lida" | "falhou" | "recebida"
@@ -123,8 +149,16 @@ export async function desconectarCanal(): Promise<void> {
     await apiFetch<{ mensagem: string }>("/api/whatsapp/canal", { method: "DELETE" })
 }
 
-export async function listarConversas(): Promise<Conversa[]> {
-    const dados = await apiFetch<{ conversas?: Conversa[] }>("/api/whatsapp/conversas")
+/**
+ * A lista que esta pessoa pode ver.
+ *
+ * Quem filtra é o servidor: o dono recebe tudo, e o funcionário recebe a fila
+ * mais o que é dele. Com `encerradas`, vêm as que já saíram da mesa.
+ */
+export async function listarConversas(encerradas = false): Promise<Conversa[]> {
+    const dados = await apiFetch<{ conversas?: Conversa[] }>(
+        encerradas ? "/api/whatsapp/conversas?encerrados=1" : "/api/whatsapp/conversas",
+    )
     return Array.isArray(dados.conversas) ? dados.conversas : []
 }
 
@@ -327,6 +361,38 @@ export async function desvincularAparelho(): Promise<void> {
     await apiFetch<{ mensagem: string }>("/api/whatsapp/aparelho", { method: "DELETE" })
 }
 
+/**
+ * Decide de quem é esta conversa.
+ *
+ * Sem argumentos, quem chama assume para si. `liberar` devolve a conversa à
+ * fila. `funcionarioId` passa o cliente para outra pessoa — e isso o servidor
+ * só aceita do dono da loja, porque tirar cliente da mão de outro atendente é
+ * decisão de quem manda.
+ */
+/** Começa ou termina o atendimento desta conversa. */
+export async function mudarSituacaoDaConversa(
+    id: number,
+    acao: "iniciar" | "encerrar",
+): Promise<void> {
+    await apiFetch(`/api/whatsapp/conversas/${id}/situacao`, {
+        method: "POST",
+        body: { acao },
+    })
+}
+
+export async function definirResponsavelDaConversa(
+    id: number,
+    opcoes: { funcionarioId?: number; liberar?: boolean } = {},
+): Promise<void> {
+    await apiFetch(`/api/whatsapp/conversas/${id}/responsavel`, {
+        method: "POST",
+        body: {
+            funcionario_id: opcoes.funcionarioId ?? null,
+            liberar: opcoes.liberar ?? false,
+        },
+    })
+}
+
 /* ==========================================================================
    Entrega ao vivo
    ========================================================================== */
@@ -339,8 +405,33 @@ export async function desvincularAparelho(): Promise<void> {
  * fio fora de ordem por causa de um aviso que chegou na frente do outro.
  */
 export interface AvisoAoVivo {
+    /**
+     * De que assunto é este aviso: "mensagem" e "conversa" (WhatsApp),
+     * "atendimento" (chat do site) ou "pedido".
+     *
+     * É POR AQUI que os assuntos não se atrapalham. O socket é um só por
+     * loja — abrir um por tela dobraria as conexões de cada painel aberto
+     * para entregar a mesma coisa por canos diferentes —, então cada tela lê
+     * o tipo primeiro e IGNORA o que não for dela. Uma tela que reagisse a
+     * tudo recarregaria a lista de pedidos a cada mensagem de WhatsApp.
+     */
     tipo: string
-    conversa_id: number
+
+    /** Só nos avisos de conversa (WhatsApp e chat do site). */
+    conversa_id?: number
+
+    /** Só nos avisos de pedido. */
+    pedido_id?: number
+
+    /**
+     * Só no aviso de "está digitando" da conversa da equipe: a sala em forma
+     * opaca (ver SalaDaEquipe.token) e o nome de quem está escrevendo.
+     */
+    sala_token?: string
+    quem?: string
+
+    /** Nos avisos de pedido: "novo" ou "pago". */
+    evento?: string
 }
 
 const ESQUEMA_DE_SOCKET = /^wss?:\/\//i
@@ -381,94 +472,170 @@ async function pedirBilhete(): Promise<string> {
 }
 
 /**
- * Mantém o fio ao vivo aberto e chama `aoAviso` a cada novidade.
+ * Inscreve `aoAviso` no fio ao vivo da loja e devolve a função que o retira.
  *
- * Devolve a função que fecha tudo — chame-a ao sair da tela, senão a conexão
- * sobrevive à navegação e cada volta abre mais uma.
+ * É o canal da LOJA inteira, não só das conversas: por ele passam as
+ * mensagens do WhatsApp, as do chat do site, os pedidos novos e a conversa
+ * interna da equipe. Quem recebe filtra pelo `tipo` (ver AvisoAoVivo) — foi
+ * para isso que o campo existe.
  *
- * A reconexão é escrita aqui porque o WebSocket não a traz de fábrica (ao
- * contrário do EventSource): rede de loja cai, o servidor reinicia, o
- * notebook dorme. A espera cresce a cada tentativa até 30 segundos, para uma
- * queda longa não virar uma tentativa por segundo contra um servidor que já
- * está em apuros.
+ * A conexão é UMA por aba, compartilhada por todos os inscritos (ver o bloco
+ * logo abaixo). Chame a função devolvida ao sair da tela: o fio só se fecha
+ * quando o último ouvinte sai, e sem isso ele sobrevive à navegação.
  */
-export function escutarConversas(aoAviso: (aviso: AvisoAoVivo) => void): () => void {
+export function escutarLoja(aoAviso: (aviso: AvisoAoVivo) => void): () => void {
 
-    let fechado = false
-    let socket: WebSocket | null = null
-    let tentativas = 0
-    let agendado: ReturnType<typeof setTimeout> | null = null
+    ouvintes.add(aoAviso)
 
-    async function conectar() {
+    // A primeira inscrição abre o fio; as seguintes pegam carona. Trocar de
+    // tela dentro do painel também passa por aqui, então um fechamento que
+    // acontecesse antes da inscrição seguinte derrubaria e reabriria o socket
+    // a cada navegação — ver o desligamento adiado lá embaixo.
+    if (encerrando) {
+        clearTimeout(encerrando)
+        encerrando = null
+    }
 
-        if (fechado) return
+    if (!socket && !agendado) conectar()
 
-        try {
-            const bilhete = await pedirBilhete()
+    return () => {
 
-            if (fechado) return
+        ouvintes.delete(aoAviso)
 
-            const endereco = enderecoDoFluxo(bilhete)
+        if (ouvintes.size > 0) return
 
-            // Endereço mal configurado não melhora tentando de novo: em vez
-            // de bater no servidor a cada 30 segundos para sempre, para por
-            // aqui e a varredura de meio minuto da tela segura as conversas.
-            if (endereco === null) {
-                fechado = true
+        // Ninguém mais ouvindo — mas talvez a próxima tela se inscreva no
+        // próximo instante. Esperar um pouco antes de desligar é o que
+        // transforma "sair de Conversas e entrar em Pedidos" numa conexão
+        // contínua em vez de um fecha-e-abre com pedido de bilhete no meio.
+        encerrando = setTimeout(desligar, 5000)
+    }
+}
+
+/* --------------------------------------------------------------------------
+   O fio, um por aba
+
+   Antes cada tela abria o seu. Com a barra superior contando as mensagens não
+   lidas da equipe, a tela de conversas e a de funcionários ouvindo ao mesmo
+   tempo, isso virou três e às vezes quatro sockets por aba entregando
+   exatamente os mesmos avisos — cada um com o seu bilhete, a sua reconexão e
+   o seu peso do lado do servidor.
+
+   O canal é da LOJA e sempre foi (ver internal/services/whatsapp/fluxo.go, que
+   publica para todos os ouvintes dela). Quem separa os assuntos é o campo
+   `tipo` do aviso, lido por cada ouvinte. Então basta um fio, e cada tela se
+   inscreve nele.
+   -------------------------------------------------------------------------- */
+
+const ouvintes = new Set<(aviso: AvisoAoVivo) => void>()
+
+let socket: WebSocket | null = null
+let tentativas = 0
+let agendado: ReturnType<typeof setTimeout> | null = null
+let encerrando: ReturnType<typeof setTimeout> | null = null
+
+/** Desiste de vez: endereço mal configurado não melhora tentando de novo. */
+let desistiu = false
+
+async function conectar() {
+
+    if (desistiu || socket || ouvintes.size === 0) return
+
+    try {
+        const bilhete = await pedirBilhete()
+
+        // Todo mundo saiu enquanto o bilhete vinha: não adianta abrir.
+        if (ouvintes.size === 0) return
+
+        const endereco = enderecoDoFluxo(bilhete)
+
+        // Endereço mal configurado não melhora tentando de novo: em vez de
+        // bater no servidor a cada 30 segundos para sempre, para por aqui e a
+        // varredura de meio minuto de cada tela segura o que falta.
+        if (endereco === null) {
+            desistiu = true
+            return
+        }
+
+        const aberto = new WebSocket(endereco)
+        socket = aberto
+
+        aberto.onopen = () => {
+            tentativas = 0
+        }
+
+        aberto.onmessage = (evento) => {
+
+            let aviso: AvisoAoVivo
+
+            try {
+                aviso = JSON.parse(evento.data) as AvisoAoVivo
+            } catch {
+                // Aviso ilegível não derruba a conexão: a varredura de
+                // segurança de cada tela cobre o que se perdeu.
                 return
             }
 
-            const aberto = new WebSocket(endereco)
-            socket = aberto
-
-            aberto.onopen = () => {
-                tentativas = 0
-            }
-
-            aberto.onmessage = (evento) => {
+            // Uma cópia da lista antes de entregar: um ouvinte que se
+            // desinscreva ao receber o aviso — o que acontece quando ele
+            // navega para outra tela — mudaria o conjunto no meio do laço.
+            for (const ouvinte of [...ouvintes]) {
                 try {
-                    aoAviso(JSON.parse(evento.data) as AvisoAoVivo)
+                    ouvinte(aviso)
                 } catch {
-                    // Aviso ilegível não derruba a conexão: a varredura de
-                    // segurança da tela cobre o que se perdeu.
+                    // Uma tela que quebre ao tratar o aviso não pode impedir
+                    // as outras de receberem o mesmo aviso.
                 }
             }
+        }
 
-            aberto.onclose = () => {
-                if (socket === aberto) socket = null
-                reagendar()
-            }
-
-            // O erro sempre vem seguido de close, que é quem reagenda.
-            aberto.onerror = () => aberto.close()
-
-        } catch {
+        aberto.onclose = () => {
+            if (socket === aberto) socket = null
             reagendar()
         }
+
+        // O erro sempre vem seguido de close, que é quem reagenda.
+        aberto.onerror = () => aberto.close()
+
+    } catch {
+        reagendar()
+    }
+}
+
+/**
+ * A reconexão é escrita aqui porque o WebSocket não a traz de fábrica (ao
+ * contrário do EventSource): rede de loja cai, o servidor reinicia, o notebook
+ * dorme. A espera cresce a cada tentativa até 30 segundos, para uma queda
+ * longa não virar uma tentativa por segundo contra um servidor que já está em
+ * apuros.
+ */
+function reagendar() {
+
+    if (desistiu || agendado || ouvintes.size === 0) return
+
+    tentativas += 1
+
+    const espera = Math.min(1000 * 2 ** (tentativas - 1), 30000)
+
+    agendado = setTimeout(() => {
+        agendado = null
+        conectar()
+    }, espera)
+}
+
+function desligar() {
+
+    encerrando = null
+
+    // Alguém se inscreveu enquanto o desligamento estava agendado.
+    if (ouvintes.size > 0) return
+
+    if (agendado) {
+        clearTimeout(agendado)
+        agendado = null
     }
 
-    function reagendar() {
-
-        if (fechado || agendado) return
-
-        tentativas += 1
-
-        const espera = Math.min(1000 * 2 ** (tentativas - 1), 30000)
-
-        agendado = setTimeout(() => {
-            agendado = null
-            conectar()
-        }, espera)
-    }
-
-    conectar()
-
-    return () => {
-        fechado = true
-
-        if (agendado) clearTimeout(agendado)
-
-        socket?.close()
-        socket = null
-    }
+    socket?.close()
+    socket = null
+    tentativas = 0
 }

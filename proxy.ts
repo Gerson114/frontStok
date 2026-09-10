@@ -19,7 +19,16 @@ const ROTAS_PROTEGIDAS = [
     // sem token), mas o painel do lojista se desenhava inteiro para um
     // estranho — e "não vazou nada porque a outra ponta barrou" é exatamente
     // a defesa que se perde quando a outra ponta muda.
+    // As lojas do dono. Sem ela aqui, a tela abriria para quem não tem sessão
+    // — vazia, porque a API recusa, mas desenhada: o painel do lojista se
+    // montando inteiro para um estranho.
+    "/page/lojas",
     "/page/conversas",
+    // A conversa interna da equipe, pelo mesmo motivo da linha acima: sem
+    // ela aqui, a tela do cadeado se desenharia para um estranho, e o campo
+    // de código ficaria exposto a quem nem sessão tem — que é o oposto de
+    // exigir dois fatores.
+    "/page/equipe",
     "/page/venda",
     // Exige sessão como as demais, mas note que NÃO exige assinatura em dia:
     // é a tela onde o lojista bloqueado paga para voltar a ter acesso.
@@ -51,6 +60,7 @@ const JANELA_MS = 60_000
 const LIMITE_CONTA = 5 // tentativas por minuto, por IP, nas rotas de conta
 const LIMITE_API = 120 // demais chamadas de API por minuto, por IP
 const LIMITE_IMAGEM = 400 // fotos por minuto, por IP (ver ROTA_IMAGEM)
+const LIMITE_LEITURA = 600 // consultas de acompanhamento por minuto, por IP
 
 /**
  * O que é ARQUIVO tem balde próprio, e não o de 120.
@@ -121,6 +131,31 @@ const LIMITE_PAGINA = 300
  * para abrir sessão de pagamento no Stripe em série — o que custa dinheiro e
  * suja a conta da loja mesmo sem ninguém pagar nada.
  */
+/**
+ * As leituras de acompanhamento, que têm balde próprio e folgado.
+ *
+ * O painel ficou ao vivo: a barra superior conta o que chegou, a conversa se
+ * atualiza sozinha, o "está digitando" avisa enquanto alguém escreve. Isso é
+ * muita chamada — e A LOJA INTEIRA SAI POR UM IP SÓ, então cinco pessoas
+ * trabalhando somavam no mesmo balde de 120 e batiam no limite bem no meio de
+ * um atendimento, que é o pior momento possível.
+ *
+ * Separá-las não afrouxa nada do que o limite protege. Estas rotas só LEEM,
+ * exigem sessão, respondem números pequenos e não criam nem cobram nada; o
+ * balde apertado continua valendo para tudo o que escreve, e o de 5 por minuto
+ * para as portas abertas a quem não tem conta.
+ *
+ * É a mesma ideia do balde das imagens logo acima, e pelo mesmo motivo:
+ * tráfego legítimo de natureza diferente não pode dividir a régua com o
+ * tráfego que a régua existe para conter.
+ */
+const ROTAS_DE_LEITURA = [
+    "/api/notificacoes",
+    "/api/equipe",
+    "/api/atendimentos",
+    "/api/whatsapp/conversas",
+]
+
 const ROTAS_DE_CONTA = [
     "/api/login",
     "/api/cadastro",
@@ -169,6 +204,22 @@ const PROXIES_CONFIAVEIS = proxiesConfiaveis()
  * proxy e é o que ele viu de verdade.
  */
 function obterIp(request: NextRequest): string {
+
+    // Com Cloudflare na frente, o CF-Connecting-IP é o caminho mais firme: ela
+    // o REESCREVE em toda requisição, então ele não carrega nada que o
+    // visitante tenha escrito — ao contrário do X-Forwarded-For, cuja primeira
+    // posição vem de quem chama.
+    //
+    // Ele só vale se a origem for inalcançável por fora da Cloudflare; senão
+    // qualquer um bate direto no servidor com o cabeçalho que quiser. Por isso
+    // depende de TRUSTED_PROXY_COUNT estar declarado, e por isso o firewall da
+    // VPS tem de aceitar só as faixas dela (ver deploy/PRODUCAO.md).
+    if (PROXIES_CONFIAVEIS > 0) {
+        const daCloudflare = request.headers.get("cf-connecting-ip")?.trim()
+
+        if (daCloudflare) return daCloudflare.slice(0, 45)
+    }
+
     // Zero proxies: nada de X-Forwarded-For. Sem ninguém confiável na frente
     // para reescrevê-lo, o cabeçalho é só texto que quem chama inventou.
     const encaminhado = PROXIES_CONFIAVEIS > 0 ? request.headers.get("x-forwarded-for") : null
@@ -300,6 +351,29 @@ function origemConfiavel(request: NextRequest): boolean {
     return false
 }
 
+/**
+ * Se esta chamada é uma leitura de acompanhamento (ver ROTAS_DE_LEITURA).
+ *
+ * O MÉTODO entra na conta, e não só o caminho: `/api/equipe` também recebe
+ * POST — escrever mensagem, entrar na conversa —, e essas são escritas de
+ * verdade, que continuam no balde apertado. Só o GET é acompanhamento.
+ *
+ * O "está digitando" é a exceção deliberada: é POST porque avisa, mas não
+ * grava nada, não devolve corpo e é a chamada mais frequente do painel. Deixá-
+ * la no balde comum faria uma pessoa escrevendo consumir sozinha um sexto do
+ * limite da loja.
+ */
+function ehLeituraDeAcompanhamento(request: NextRequest, pathname: string): boolean {
+
+    if (pathname === "/api/equipe/digitando") return request.method === "POST"
+
+    if (request.method !== "GET") return false
+
+    return ROTAS_DE_LEITURA.some(
+        (rota) => pathname === rota || pathname.startsWith(`${rota}/`)
+    )
+}
+
 /** Se o corpo declarado passa do teto — ver LIMITE_CORPO_BYTES. */
 function corpoGrandeDemais(request: NextRequest): boolean {
 
@@ -327,6 +401,8 @@ export function proxy(request: NextRequest) {
 
         const balde = ROTAS_DE_CONTA.includes(pathname)
             ? { nome: "conta", limite: LIMITE_CONTA }
+            : ehLeituraDeAcompanhamento(request, pathname)
+                ? { nome: "leitura", limite: LIMITE_LEITURA }
             : ehArquivo(pathname)
                 ? { nome: "imagem", limite: LIMITE_IMAGEM }
                 : { nome: "api", limite: LIMITE_API }

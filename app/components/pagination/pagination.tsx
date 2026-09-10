@@ -46,7 +46,7 @@ export default function Pagination({ paginaAtual, totalPaginas, aoMudarPagina }:
                 onClick={() => aoMudarPagina(paginaAtual - 1)}
                 disabled={paginaAtual === 1}
                 aria-label="Página anterior"
-                className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-[#D3DADD] bg-white px-2 text-sm font-semibold text-[#1E2428] transition-colors hover:bg-[#F0F3F4] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+                className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-[#E1E1E1] bg-white px-2 text-sm font-semibold text-[#303030] transition-colors hover:bg-[#F1F1F1] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
             >
                 <FiChevronLeft className="w-4" aria-hidden />
             </button>
@@ -56,7 +56,7 @@ export default function Pagination({ paginaAtual, totalPaginas, aoMudarPagina }:
 
                     <span
                         key={`reticencias-${indice}`}
-                        className="flex h-9 min-w-9 items-center justify-center text-sm text-[#8C969B]"
+                        className="flex h-9 min-w-9 items-center justify-center text-sm text-[#8A8A8A]"
                     >
                         …
                     </span>
@@ -70,8 +70,8 @@ export default function Pagination({ paginaAtual, totalPaginas, aoMudarPagina }:
                         aria-current={item === paginaAtual ? "page" : undefined}
                         className={`num flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-bold transition-colors ${
                             item === paginaAtual
-                                ? "bg-[#0086FF] text-white"
-                                : "border border-[#D3DADD] bg-white text-[#1E2428] hover:bg-[#F0F3F4]"
+                                ? "bg-[#005BD3] text-white"
+                                : "border border-[#E1E1E1] bg-white text-[#303030] hover:bg-[#F1F1F1]"
                         }`}
                     >
                         {item}
@@ -85,7 +85,7 @@ export default function Pagination({ paginaAtual, totalPaginas, aoMudarPagina }:
                 onClick={() => aoMudarPagina(paginaAtual + 1)}
                 disabled={paginaAtual === totalPaginas}
                 aria-label="Próxima página"
-                className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-[#D3DADD] bg-white px-2 text-sm font-semibold text-[#1E2428] transition-colors hover:bg-[#F0F3F4] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+                className="flex h-9 min-w-9 items-center justify-center rounded-lg border border-[#E1E1E1] bg-white px-2 text-sm font-semibold text-[#303030] transition-colors hover:bg-[#F1F1F1] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
             >
                 <FiChevronRight className="w-4" aria-hidden />
             </button>

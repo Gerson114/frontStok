@@ -1,3 +1,5 @@
+import { Pagina } from "@/app/components/pagina/pagina"
+
 /**
  * O esqueleto da grade de produtos.
  *
@@ -10,52 +12,49 @@
  * A forma é a do que vem depois — faixa de resumo, filtros e linhas de
  * grade. Esqueleto com outra forma faz a tela pular quando os dados chegam,
  * que é pior do que não ter esqueleto.
+ *
+ * O título e a descrição não são mais barras cinzas: vêm do mesmo <Pagina>
+ * que a tela pronta usa, e por isso já nascem escritos. Fingir o cabeçalho
+ * era fingir a única parte da tela que não depende de dado nenhum.
  */
 export default function Carregando() {
     return (
-        <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
+        <Pagina
+            titulo="Produtos"
+            descricao="Uma linha por peça física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
+        >
 
-            <div className="mx-auto max-w-7xl">
+            <div className="card h-[4.5rem] animate-pulse" />
 
-                <div className="h-9 w-64 animate-pulse rounded-lg bg-[#D3DADD]" />
+            <div className="flex gap-2">
+                {[1, 2, 3, 4].map(item => (
+                    <div key={item} className="h-9 w-28 animate-pulse rounded-lg bg-[#E1E1E1]" />
+                ))}
+            </div>
 
-                <div className="mt-3 h-4 w-80 animate-pulse rounded bg-[#D3DADD]" />
+            <div className="card overflow-hidden">
 
-                <div className="card mt-8 h-[4.5rem] animate-pulse" />
+                <div className="h-10 border-b border-[#E1E1E1] bg-[#F7F7F7]" />
 
-                <div className="mt-6 flex gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(item => (
 
-                    {[1, 2, 3, 4].map(item => (
-                        <div key={item} className="h-9 w-28 animate-pulse rounded-lg bg-[#D3DADD]" />
-                    ))}
+                    <div
+                        key={item}
+                        className="flex items-center gap-3 border-b border-[#EBEBEB] px-4 py-2.5 last:border-b-0"
+                    >
 
-                </div>
+                        <div className="h-9 w-9 shrink-0 animate-pulse rounded-md bg-[#F1F1F1]" />
 
-                <div className="card mt-6 overflow-hidden">
+                        <div className="h-4 w-1/3 animate-pulse rounded bg-[#F1F1F1]" />
 
-                    <div className="h-10 border-b border-[#D3DADD] bg-[#F7F9FA]" />
+                        <div className="ml-auto h-4 w-20 animate-pulse rounded bg-[#F1F1F1]" />
 
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(item => (
+                    </div>
 
-                        <div
-                            key={item}
-                            className="flex items-center gap-3 border-b border-[#E4E9EB] px-4 py-2.5 last:border-b-0"
-                        >
-
-                            <div className="h-9 w-9 shrink-0 animate-pulse rounded-md bg-[#F0F3F4]" />
-
-                            <div className="h-4 w-1/3 animate-pulse rounded bg-[#F0F3F4]" />
-
-                            <div className="ml-auto h-4 w-20 animate-pulse rounded bg-[#F0F3F4]" />
-
-                        </div>
-
-                    ))}
-
-                </div>
+                ))}
 
             </div>
 
-        </main>
+        </Pagina>
     )
 }

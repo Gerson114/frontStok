@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { buscarProdutoPorId, editarProduto } from "@/middleware/produtos"
+import { buscarProdutoPorId, editarProduto, listarProdutos } from "@/middleware/produtos"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao } from "@/security/sanitize"
 import { validarProdutoEditavel, type ProdutoEditavel } from "@/security/validate"
 import { ApiError } from "@/middleware/client"
@@ -14,6 +14,7 @@ import {
 } from "@/app/components/produto/campos"
 import Preco from "@/app/components/preco/preco"
 import { FiAlertCircle, FiCheckCircle } from "react-icons/fi"
+import { Pagina, Estado } from "@/app/components/pagina/pagina"
 import { urlDaImagem } from "@/security/imagem"
 
 // Mapa simples de nomes de cores em PT-BR para hex, usado no preview da etiqueta.
@@ -81,6 +82,11 @@ export default function EditarProduto() {
   const router = useRouter()
 
   const [carregando, setCarregando] = useState(true)
+
+  // As categorias que ESTA loja já usou, para sugerir enquanto se digita. O
+  // sistema não tem lista própria: ele não sabe (nem deve supor) se a loja
+  // vende ventilador, panela ou camisa.
+  const [categorias, setCategorias] = useState<string[]>([])
   const [ficha, setFicha] = useState<LinhaFicha[]>([])
   const [erroCarregamento, setErroCarregamento] = useState("")
 
@@ -115,6 +121,20 @@ export default function EditarProduto() {
         })
 
         setFicha(atributosParaFicha(produto.atributos))
+
+        // As sugestões vêm depois do produto e num try próprio: falhar aqui
+        // não pode impedir a edição de abrir.
+        try {
+          const produtos = await listarProdutos()
+
+          const nomes = produtos
+            .map((item) => item.categoria?.trim())
+            .filter((nome): nome is string => Boolean(nome))
+
+          setCategorias(Array.from(new Set(nomes)).sort((a, b) => a.localeCompare(b, "pt-BR")))
+        } catch {
+          // Sem sugestões, o campo continua sendo o que é: texto livre.
+        }
 
       } catch (error) {
 
@@ -202,334 +222,334 @@ export default function EditarProduto() {
 
   if (carregando) {
     return (
-      <div className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
-        <p className="text-[#5A6469]">Carregando...</p>
-      </div>
+      <Pagina titulo="Editar produto" volta={{ nome: "Produtos", rota: "/page/produtos" }}>
+        <div className="card p-8 text-center text-sm text-[#616161]">Carregando...</div>
+      </Pagina>
     )
   }
 
   if (erroCarregamento) {
     return (
-      <div className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
-        <div className="card mx-auto max-w-md p-8 text-center">
-          <p className="text-[#1E2428]">{erroCarregamento}</p>
-          <button
-            onClick={() => router.push("/page/produtos")}
-            className="btn btn-primario mt-4"
-          >
-            Voltar
-          </button>
-        </div>
-      </div>
+      <Pagina titulo="Editar produto" volta={{ nome: "Produtos", rota: "/page/produtos" }}>
+        <Estado
+          Icone={FiAlertCircle}
+          tom="erro"
+          titulo="Não foi possível abrir este produto"
+          texto={erroCarregamento}
+          acao={
+            <button onClick={() => router.push("/page/produtos")} className="btn btn-primario">
+              Voltar para Produtos
+            </button>
+          }
+        />
+      </Pagina>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F3F4] text-[#1E2428] antialiased md:ml-64">
-      <main className="px-4 py-8 sm:px-6 md:px-10 md:py-12 lg:px-14 pb-16">
-        <div className="max-w-6xl mx-auto">
-          {/* Cabeçalho */}
-          <div className="space-y-2 mb-8 md:mb-10">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#5A6469]">
-              <span>Produtos</span>
-              <span>/</span>
-              <span className="text-[#1E2428]">Editar</span>
+    <Pagina
+      titulo="Editar produto"
+      descricao="Atualize a ficha do produto. A etiqueta ao lado é atualizada em tempo real."
+      volta={{ nome: "Produtos", rota: "/page/produtos" }}
+    >
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+        {/* Formulário */}
+        <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
+          {/* Bloco 1 */}
+          <section className="card p-5 sm:p-7 space-y-5">
+            <div className="flex items-center gap-3">
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">01</span>
+              <h2 className="font-display text-sm text-[#303030]">Informações básicas</h2>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl tracking-tight text-[#1E2428]">
-              Editar produto
-            </h1>
-            <p className="text-sm text-[#5A6469] max-w-md">
-              Atualize a ficha do produto. A etiqueta ao lado é atualizada em tempo real.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
-            {/* Formulário */}
-            <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
-              {/* Bloco 1 */}
-              <section className="card p-5 sm:p-7 space-y-5">
-                <div className="flex items-center gap-3">
-                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">01</span>
-                  <h2 className="font-display text-sm text-[#1E2428]">Informações básicas</h2>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="rotulo">Nome do produto</label>
-                    <input
-                      type="text"
-                      name="nome"
-                      value={formData.nome}
-                      onChange={handleChange}
-                      placeholder="Ex: Camiseta Algodão Premium"
-                      className="field"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="rotulo">Categoria</label>
-                    <select
-                      name="categoria"
-                      value={formData.categoria}
-                      onChange={handleChange}
-                      className="field cursor-pointer"
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="Camisetas">Camisetas</option>
-                      <option value="Calças">Calças</option>
-                      <option value="Vestidos">Vestidos</option>
-                      <option value="Casacos">Casacos</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="rotulo">Descrição</label>
-                  <textarea
-                    name="descricao"
-                    value={formData.descricao}
-                    onChange={handleChange}
-                    placeholder="Detalhes do produto para o cliente: o que é, para que serve, como usar..."
-                    rows={4}
-                    className="field resize-y"
-                  />
-                </div>
-              </section>
-
-              {/* Bloco 2 */}
-              <section className="card p-5 sm:p-7 space-y-5">
-                <div className="flex items-center gap-3">
-                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">02</span>
-                  <h2 className="font-display text-sm text-[#1E2428]">Variação e ficha técnica</h2>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="rotulo" htmlFor="variacao_rotulo">
-                      O que divide este produto?
-                    </label>
-                    <input
-                      id="variacao_rotulo"
-                      type="text"
-                      name="variacao_rotulo"
-                      list="rotulos-edicao"
-                      value={formData.variacao_rotulo}
-                      onChange={handleChange}
-                      placeholder="Ex: Tamanho, Voltagem, Peso"
-                      className="field"
-                    />
-                    <datalist id="rotulos-edicao">
-                      <option value="Tamanho" />
-                      <option value="Voltagem" />
-                      <option value="Peso" />
-                      <option value="Volume" />
-                      <option value="Cor" />
-                      <option value="Sabor" />
-                      <option value="Numeração" />
-                      <option value="Modelo" />
-                    </datalist>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="rotulo" htmlFor="variacao">
-                      {formData.variacao_rotulo.trim() || "Variação"}
-                    </label>
-                    <input
-                      id="variacao"
-                      type="text"
-                      name="variacao"
-                      value={formData.variacao}
-                      onChange={handleChange}
-                      placeholder="Ex: P, 220V, 500 g"
-                      className="field"
-                    />
-                    <p className="text-xs text-[#5A6469]">
-                      Cada variação é um produto próprio. Para cadastrar outra, use a
-                      tela de cadastro — aqui muda só esta.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 border-t border-[#E4E9EB] pt-5">
-                  <label className="rotulo">Ficha técnica</label>
-                  <p className="pb-1 text-xs text-[#5A6469]">
-                    O que descreve este produto no seu ramo: material, marca, garantia,
-                    validade, dimensões.
-                  </p>
-
-                  <CamposDeFicha linhas={ficha} aoMudar={setFicha} />
-                </div>
-              </section>
-
-              {/* Bloco 3 */}
-              <section className="card p-5 sm:p-7 space-y-5">
-                <div className="flex items-center gap-3">
-                  <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-xs font-bold text-[#0075E2]">03</span>
-                  <h2 className="font-display text-sm text-[#1E2428]">Valores e mídia</h2>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="rotulo">Preço (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="preco"
-                      value={formData.preco}
-                      onChange={handleChange}
-                      placeholder="89.90"
-                      className="field num"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="rotulo">Estoque</label>
-                    <input
-                      type="number"
-                      min="0"
-                      name="estoque"
-                      value={formData.estoque}
-                      onChange={handleChange}
-                      placeholder="50"
-                      className="field num"
-                    />
-                    <p className="text-xs text-[#5A6469]">
-                      Peças novas (estoque maior) entram sem local — guarde-as na tela de Estoque.
-                    </p>
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="rotulo">URL da imagem</label>
-                    <input
-                      type="url"
-                      name="imagem_url"
-                      value={formData.imagem_url}
-                      onChange={handleChange}
-                      placeholder="https://exemplo.com/imagem.jpg"
-                      className="field"
-                    />
-                  </div>
-                </div>
-              </section>
-
-              {/* Feedback */}
-              {erros.length > 0 && (
-                <div
-                  role="alert"
-                  className="flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
-                >
-                  <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                  <div className="space-y-1">
-                    {erros.map((mensagem) => (
-                      <p key={mensagem}>{mensagem}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {sucesso && (
-                <div
-                  role="status"
-                  className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]"
-                >
-                  <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                  <span>Produto atualizado com sucesso! Redirecionando...</span>
-                </div>
-              )}
-
-              {/* Ações */}
-              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={handleCancelar}
-                  disabled={enviando}
-                  className="btn btn-neutro"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={enviando}
-                  className="btn btn-primario"
-                >
-                  {enviando ? "Salvando..." : "Salvar alterações"}
-                </button>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="rotulo">Nome do produto</label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={formData.nome}
+                  onChange={handleChange}
+                  placeholder="Ex: Ventilador de teto 3 pás"
+                  className="field"
+                />
               </div>
-            </form>
 
-            {/* Etiqueta / preview ao vivo */}
-            <div className="lg:sticky lg:top-10">
-              <div className="card relative overflow-hidden p-5">
-                <p className="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
-                  Pré-visualização da etiqueta
+              <div className="space-y-1.5">
+                <label className="rotulo" htmlFor="categoria">Categoria</label>
+
+                {/* Campo livre com sugestões, e não uma lista fixa.
+                    A lista fixa que morava aqui era de vestuário, e fazia dois
+                    estragos numa loja de outro ramo: não havia o que escolher,
+                    e a categoria que o produto JÁ tinha sumia da tela ao abrir
+                    a edição — bastava salvar para perdê-la. */}
+                <input
+                  id="categoria"
+                  type="text"
+                  name="categoria"
+                  list="categorias-da-loja"
+                  value={formData.categoria}
+                  onChange={handleChange}
+                  placeholder="Ex: Ventiladores"
+                  maxLength={60}
+                  className="field"
+                  autoComplete="off"
+                />
+
+                <datalist id="categorias-da-loja">
+                  {categorias.map((categoria) => (
+                    <option key={categoria} value={categoria} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="rotulo">Descrição</label>
+              <textarea
+                name="descricao"
+                value={formData.descricao}
+                onChange={handleChange}
+                placeholder="Detalhes do produto para o cliente: o que é, para que serve, como usar..."
+                rows={4}
+                className="field resize-y"
+              />
+            </div>
+          </section>
+
+          {/* Bloco 2 */}
+          <section className="card p-5 sm:p-7 space-y-5">
+            <div className="flex items-center gap-3">
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">02</span>
+              <h2 className="font-display text-sm text-[#303030]">Variação e ficha técnica</h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="rotulo" htmlFor="variacao_rotulo">
+                  O que divide este produto?
+                </label>
+                <input
+                  id="variacao_rotulo"
+                  type="text"
+                  name="variacao_rotulo"
+                  list="rotulos-edicao"
+                  value={formData.variacao_rotulo}
+                  onChange={handleChange}
+                  placeholder="Ex: Tamanho, Voltagem, Peso"
+                  className="field"
+                />
+                <datalist id="rotulos-edicao">
+                  <option value="Tamanho" />
+                  <option value="Voltagem" />
+                  <option value="Peso" />
+                  <option value="Volume" />
+                  <option value="Cor" />
+                  <option value="Sabor" />
+                  <option value="Numeração" />
+                  <option value="Modelo" />
+                </datalist>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="rotulo" htmlFor="variacao">
+                  {formData.variacao_rotulo.trim() || "Variação"}
+                </label>
+                <input
+                  id="variacao"
+                  type="text"
+                  name="variacao"
+                  value={formData.variacao}
+                  onChange={handleChange}
+                  placeholder="Ex: P, 220V, 500 g"
+                  className="field"
+                />
+                <p className="text-xs text-[#616161]">
+                  Cada variação é um produto próprio. Para cadastrar outra, use a
+                  tela de cadastro — aqui muda só esta.
                 </p>
+              </div>
+            </div>
 
-                {/* Ticket / hang tag */}
-                <div className="rounded-lg bg-[#F0F3F4] p-5">
+            <div className="space-y-1.5 border-t border-[#EBEBEB] pt-5">
+              <label className="rotulo">Ficha técnica</label>
+              <p className="pb-1 text-xs text-[#616161]">
+                O que descreve este produto no seu ramo: material, marca, garantia,
+                validade, dimensões.
+              </p>
 
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl leading-snug text-[#1E2428] break-words">
-                      {formData.nome || "Nome do produto"}
-                    </h3>
-                    {swatch ? (
-                      <span
-                        className="w-6 h-6 rounded-full border border-black/10 shrink-0 mt-1"
-                        style={{ backgroundColor: swatch }}
-                        title={corDaFicha}
-                      />
-                    ) : corDaFicha ? (
-                      <span className="tag tag-neutral shrink-0 mt-1">
-                        {corDaFicha}
-                      </span>
-                    ) : null}
-                  </div>
+              <CamposDeFicha linhas={ficha} aoMudar={setFicha} />
+            </div>
+          </section>
 
-                  <p className="text-xs text-[#5A6469] mt-1">
-                    {formData.categoria || "Categoria"}
-                  </p>
+          {/* Bloco 3 */}
+          <section className="card p-5 sm:p-7 space-y-5">
+            <div className="flex items-center gap-3">
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">03</span>
+              <h2 className="font-display text-sm text-[#303030]">Valores e mídia</h2>
+            </div>
 
-                  <div className="mt-4">
-                    {precoNumero != null ? (
-                      <Preco valor={precoNumero} className="text-2xl" />
-                    ) : (
-                      <span className="preco text-2xl text-[#8C969B]">R$ —</span>
-                    )}
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="rotulo">Preço (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="preco"
+                  value={formData.preco}
+                  onChange={handleChange}
+                  placeholder="89.90"
+                  className="field num"
+                />
+              </div>
 
+              <div className="space-y-1.5">
+                <label className="rotulo">Estoque</label>
+                <input
+                  type="number"
+                  min="0"
+                  name="estoque"
+                  value={formData.estoque}
+                  onChange={handleChange}
+                  placeholder="50"
+                  className="field num"
+                />
+                <p className="text-xs text-[#616161]">
+                  Peças novas (estoque maior) entram sem local — guarde-as na tela de Estoque.
+                </p>
+              </div>
 
-                  <dl className="grid grid-cols-2 gap-y-2.5 text-xs">
-                    <dt className="text-[#5A6469]">
-                      {formData.variacao_rotulo.trim() || "Variação"}
-                    </dt>
-                    <dd className="text-right font-semibold text-[#1E2428] break-words">
-                      {formData.variacao || "—"}
-                    </dd>
-                    <dt className="text-[#5A6469]">Estoque</dt>
-                    <dd className="num text-right font-semibold text-[#1E2428]">
-                      {formData.estoque || "—"}
-                    </dd>
-                  </dl>
-                </div>
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="rotulo">URL da imagem</label>
+                <input
+                  type="url"
+                  name="imagem_url"
+                  value={formData.imagem_url}
+                  onChange={handleChange}
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  className="field"
+                />
+              </div>
+            </div>
+          </section>
 
-                {formData.imagem_url && (
-                  <div className="mt-4 rounded-xl overflow-hidden border border-[#D3DADD] aspect-[4/3] bg-[#F0F3F4]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={urlDaImagem(formData.imagem_url)}
-                      alt={formData.nome || "Pré-visualização do produto"}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none"
-                      }}
-                    />
-                  </div>
+          {/* Feedback */}
+          {erros.length > 0 && (
+            <div
+              role="alert"
+              className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+            >
+              <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+              <div className="space-y-1">
+                {erros.map((mensagem) => (
+                  <p key={mensagem}>{mensagem}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sucesso && (
+            <div
+              role="status"
+              className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]"
+            >
+              <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+              <span>Produto atualizado com sucesso! Redirecionando...</span>
+            </div>
+          )}
+
+          {/* Ações */}
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleCancelar}
+              disabled={enviando}
+              className="btn btn-neutro"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={enviando}
+              className="btn btn-primario"
+            >
+              {enviando ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+        </form>
+
+        {/* Etiqueta / preview ao vivo */}
+        <div className="lg:sticky lg:top-10">
+          <div className="card relative overflow-hidden p-5">
+            <p className="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+              Pré-visualização da etiqueta
+            </p>
+
+            {/* Ticket / hang tag */}
+            <div className="rounded-lg bg-[#F1F1F1] p-5">
+
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="font-display text-xl leading-snug text-[#303030] break-words">
+                  {formData.nome || "Nome do produto"}
+                </h3>
+                {swatch ? (
+                  <span
+                    className="w-6 h-6 rounded-full border border-black/10 shrink-0 mt-1"
+                    style={{ backgroundColor: swatch }}
+                    title={corDaFicha}
+                  />
+                ) : corDaFicha ? (
+                  <span className="tag tag-neutral shrink-0 mt-1">
+                    {corDaFicha}
+                  </span>
+                ) : null}
+              </div>
+
+              <p className="text-xs text-[#616161] mt-1">
+                {formData.categoria || "Categoria"}
+              </p>
+
+              <div className="mt-4">
+                {precoNumero != null ? (
+                  <Preco valor={precoNumero} className="text-2xl" />
+                ) : (
+                  <span className="preco text-2xl text-[#8A8A8A]">R$ —</span>
                 )}
               </div>
+
+
+              <dl className="grid grid-cols-2 gap-y-2.5 text-xs">
+                <dt className="text-[#616161]">
+                  {formData.variacao_rotulo.trim() || "Variação"}
+                </dt>
+                <dd className="text-right font-semibold text-[#303030] break-words">
+                  {formData.variacao || "—"}
+                </dd>
+                <dt className="text-[#616161]">Estoque</dt>
+                <dd className="num text-right font-semibold text-[#303030]">
+                  {formData.estoque || "—"}
+                </dd>
+              </dl>
             </div>
+
+            {formData.imagem_url && (
+              <div className="mt-4 rounded-xl overflow-hidden border border-[#E1E1E1] aspect-[4/3] bg-[#F1F1F1]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={urlDaImagem(formData.imagem_url)}
+                  alt={formData.nome || "Pré-visualização do produto"}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none"
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Pagina>
   )
 }

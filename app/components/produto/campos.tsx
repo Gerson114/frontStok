@@ -108,7 +108,7 @@ export function CamposDeVariacao({ rotulo, aoMudarRotulo, linhas, aoMudarLinhas 
                     ))}
                 </datalist>
 
-                <p className="text-xs text-[#5A6469]">
+                <p className="text-xs text-[#616161]">
                     Cada variação vira um produto separado, com seu próprio estoque e código
                     de barras. Produto que não se divide em nada leva uma variação só.
                 </p>
@@ -128,8 +128,8 @@ export function CamposDeVariacao({ rotulo, aoMudarRotulo, linhas, aoMudarLinhas 
                                 disabled={jaTem}
                                 className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
                                     jaTem
-                                        ? "border-[#E4E9EB] text-[#B8C0C4]"
-                                        : "border-[#D3DADD] text-[#1E2428] hover:border-[#0086FF] hover:text-[#0086FF]"
+                                        ? "border-[#EBEBEB] text-[#B5B5B5]"
+                                        : "border-[#E1E1E1] text-[#303030] hover:border-[#005BD3] hover:text-[#005BD3]"
                                 }`}
                             >
                                 {valor}
@@ -166,7 +166,7 @@ export function CamposDeVariacao({ rotulo, aoMudarRotulo, linhas, aoMudarLinhas 
                             type="button"
                             onClick={() => remover(indice)}
                             aria-label={`Remover variação ${indice + 1}`}
-                            className="shrink-0 rounded-lg p-2.5 text-[#8C969B] transition-colors hover:bg-[#FDECEA] hover:text-[#D4351C]"
+                            className="shrink-0 rounded-lg p-2.5 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
@@ -239,7 +239,7 @@ export function CamposDeFicha({ linhas, aoMudar }: FichaProps) {
                             type="button"
                             onClick={() => aoMudar(linhas.filter((_, i) => i !== indice))}
                             aria-label={`Remover item ${indice + 1} da ficha técnica`}
-                            className="shrink-0 rounded-lg p-2.5 text-[#8C969B] transition-colors hover:bg-[#FDECEA] hover:text-[#D4351C]"
+                            className="shrink-0 rounded-lg p-2.5 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
@@ -289,25 +289,6 @@ export function atributosParaFicha(atributos?: Atributos): LinhaFicha[] {
     return Object.entries(atributos)
         .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
         .map(([nome, valor]) => ({ nome, valor }))
-}
-
-/** A ficha técnica como o lojista e o cliente a leem. */
-export function FichaTecnica({ atributos, className }: { atributos?: Atributos; className?: string }) {
-
-    const linhas = atributosParaFicha(atributos)
-
-    if (linhas.length === 0) return null
-
-    return (
-        <dl className={className ?? "space-y-1 text-sm"}>
-            {linhas.map(({ nome, valor }) => (
-                <div key={nome} className="flex gap-2">
-                    <dt className="shrink-0 text-[#5A6469]">{nome}:</dt>
-                    <dd className="min-w-0 font-medium text-[#1E2428]">{valor}</dd>
-                </div>
-            ))}
-        </dl>
-    )
 }
 
 /**

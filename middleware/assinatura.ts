@@ -81,21 +81,6 @@ export async function consultarOferta(): Promise<{
 }
 
 /**
- * Nome do evento que o painel dispara quando a assinatura da loja muda. O
- * menu lateral escuta e se remonta: pagar (ou deixar vencer) acabou de
- * liberar ou bloquear as telas, e deixá-las como estavam até o próximo F5 é
- * mostrar o que não vale mais.
- */
-export const EVENTO_ASSINATURA_ALTERADA = "assinatura-alterada"
-
-/** Avisa o painel de que a assinatura mudou (ver EVENTO_ASSINATURA_ALTERADA). */
-export function avisarAssinaturaAlterada(): void {
-    if (typeof window === "undefined") return
-
-    window.dispatchEvent(new Event(EVENTO_ASSINATURA_ALTERADA))
-}
-
-/**
  * O menu do painel desta loja, já na ordem e nas seções em que deve
  * aparecer, com o que está bloqueado por mensalidade atrasada marcado como
  * tal.

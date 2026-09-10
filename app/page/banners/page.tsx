@@ -10,6 +10,7 @@ import { ApiError } from "@/middleware/client"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import { FiImage } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
+import { Pagina } from "@/app/components/pagina/pagina"
 
 interface FormState {
     titulo: string
@@ -182,314 +183,292 @@ export default function Banners() {
     }
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] text-[#1E2428] md:ml-64">
-            <header className="sticky top-16 z-30 border-b border-[#D3DADD] bg-[#F0F3F4]/95 backdrop-blur md:top-0">
-                <div className="flex min-h-20 items-center justify-between gap-6 px-6 md:px-10">
-                    <div>
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
-                            Painel administrativo
-                        </p>
-                        <h1 className="font-display text-2xl text-[#1E2428]">
-                            Banners
-                        </h1>
-                    </div>
+        <Pagina
+            titulo="Banners"
+            descricao="Os slides do topo da sua vitrine: controle a imagem, o texto e o valor que cada um mostra."
+        >
+
+            <form
+                onSubmit={handleSubmit}
+                className="card space-y-5 p-5 sm:p-7"
+            >
+                <div className="flex items-center gap-3">
+                    <span className={`tag ${editandoId ? "tag-warning" : "tag-info"}`}>
+                        {editandoId ? "Editar" : "Novo"}
+                    </span>
+                    <h3 className="text-sm font-bold text-[#303030]">
+                        {editandoId ? `Editando banner #${editandoId}` : "Novo banner"}
+                    </h3>
                 </div>
-            </header>
 
-            <div className="p-6 md:p-10">
-                <div className="mx-auto max-w-4xl">
-                    <div className="mb-8">
-                        <h2 className="font-display text-3xl text-[#1E2428] sm:text-4xl">
-                            Slides do topo da loja
-                        </h2>
-                        <p className="mt-2 max-w-md text-[#5A6469]">
-                            Controle a imagem, o texto e o valor mostrados no banner da loja (frontp).
-                        </p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                        <label className="rotulo">Título</label>
+                        <input
+                            type="text"
+                            name="titulo"
+                            value={formData.titulo}
+                            onChange={handleChange}
+                            placeholder="Ex: Camiseta Básica"
+                            className="field"
+                        />
                     </div>
 
-                    <form
-                        onSubmit={handleSubmit}
-                        className="card mb-10 space-y-5 p-5 sm:p-7"
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className={`tag ${editandoId ? "tag-warning" : "tag-info"}`}>
-                                {editandoId ? "Editar" : "Novo"}
-                            </span>
-                            <h3 className="text-sm font-bold text-[#1E2428]">
-                                {editandoId ? `Editando banner #${editandoId}` : "Novo banner"}
-                            </h3>
-                        </div>
+                    <div className="sm:col-span-2">
+                        <label className="rotulo">Descrição</label>
+                        <textarea
+                            name="descricao"
+                            value={formData.descricao}
+                            onChange={handleChange}
+                            placeholder="Texto curto abaixo do título"
+                            rows={2}
+                            className="field resize-y"
+                        />
+                    </div>
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="sm:col-span-2">
-                                <label className="rotulo">Título</label>
-                                <input
-                                    type="text"
-                                    name="titulo"
-                                    value={formData.titulo}
-                                    onChange={handleChange}
-                                    placeholder="Ex: Camiseta Básica"
-                                    className="field"
-                                />
-                            </div>
+                    <div className="sm:col-span-2">
+                        <label className="rotulo">URL da imagem</label>
+                        <input
+                            type="text"
+                            name="imagem_url"
+                            value={formData.imagem_url}
+                            onChange={handleChange}
+                            placeholder="https://..."
+                            className="field"
+                        />
+                    </div>
 
-                            <div className="sm:col-span-2">
-                                <label className="rotulo">Descrição</label>
-                                <textarea
-                                    name="descricao"
-                                    value={formData.descricao}
-                                    onChange={handleChange}
-                                    placeholder="Texto curto abaixo do título"
-                                    rows={2}
-                                    className="field resize-y"
-                                />
-                            </div>
+                    <div>
+                        <label className="rotulo">Valor (R$)</label>
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            name="valor"
+                            value={formData.valor}
+                            onChange={handleChange}
+                            placeholder="0,00"
+                            className="field"
+                        />
+                    </div>
 
-                            <div className="sm:col-span-2">
-                                <label className="rotulo">URL da imagem</label>
-                                <input
-                                    type="text"
-                                    name="imagem_url"
-                                    value={formData.imagem_url}
-                                    onChange={handleChange}
-                                    placeholder="https://..."
-                                    className="field"
-                                />
-                            </div>
+                    <div>
+                        <label className="rotulo">
+                            Valor antigo (R$) — opcional
+                        </label>
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            name="valor_antigo"
+                            value={formData.valor_antigo}
+                            onChange={handleChange}
+                            placeholder="0,00"
+                            className="field"
+                        />
+                    </div>
 
-                            <div>
-                                <label className="rotulo">Valor (R$)</label>
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    name="valor"
-                                    value={formData.valor}
-                                    onChange={handleChange}
-                                    placeholder="0,00"
-                                    className="field"
-                                />
-                            </div>
+                    <div className="sm:col-span-2">
+                        <label className="rotulo">
+                            Link pro clique no banner (opcional)
+                        </label>
 
-                            <div>
-                                <label className="rotulo">
-                                    Valor antigo (R$) — opcional
-                                </label>
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    name="valor_antigo"
-                                    value={formData.valor_antigo}
-                                    onChange={handleChange}
-                                    placeholder="0,00"
-                                    className="field"
-                                />
-                            </div>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={buscaProduto}
+                                onChange={(e) => {
+                                    setBuscaProduto(e.target.value)
+                                    setMostrarSugestoes(true)
+                                }}
+                                onFocus={() => setMostrarSugestoes(true)}
+                                onBlur={() => setTimeout(() => setMostrarSugestoes(false), 120)}
+                                placeholder="Buscar um produto pra linkar..."
+                                className="field"
+                            />
 
-                            <div className="sm:col-span-2">
-                                <label className="rotulo">
-                                    Link pro clique no banner (opcional)
-                                </label>
-
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={buscaProduto}
-                                        onChange={(e) => {
-                                            setBuscaProduto(e.target.value)
-                                            setMostrarSugestoes(true)
-                                        }}
-                                        onFocus={() => setMostrarSugestoes(true)}
-                                        onBlur={() => setTimeout(() => setMostrarSugestoes(false), 120)}
-                                        placeholder="Buscar um produto pra linkar..."
-                                        className="field"
-                                    />
-
-                                    {mostrarSugestoes && produtosFiltrados.length > 0 && (
-                                        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-[#D3DADD] bg-white shadow-lg">
-                                            {produtosFiltrados.map((produto) => (
-                                                <button
-                                                    key={produto.id}
-                                                    type="button"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault()
-                                                        selecionarProduto(produto)
-                                                    }}
-                                                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-[#F0F3F4]"
-                                                >
-                                                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-[#F0F3F4]">
-                                                        {produto.imagem_url && (
-                                                            // eslint-disable-next-line @next/next/no-img-element
-                                                            <img
-                                                                src={urlDaImagem(produto.imagem_url)}
-                                                                alt=""
-                                                                className="h-full w-full object-cover"
-                                                            />
-                                                        )}
-                                                    </div>
-                                                    <span className="min-w-0 flex-1 truncate">{produto.nome}</span>
-                                                    <span className="num shrink-0 text-xs font-bold text-[#5A6469]">
-                                                        {formatarMoeda(produto.preco)}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
+                            {mostrarSugestoes && produtosFiltrados.length > 0 && (
+                                <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-[#E1E1E1] bg-white shadow-lg">
+                                    {produtosFiltrados.map((produto) => (
+                                        <button
+                                            key={produto.id}
+                                            type="button"
+                                            onMouseDown={(e) => {
+                                                e.preventDefault()
+                                                selecionarProduto(produto)
+                                            }}
+                                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-[#F1F1F1]"
+                                        >
+                                            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-[#F1F1F1]">
+                                                {produto.imagem_url && (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={urlDaImagem(produto.imagem_url)}
+                                                        alt=""
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                )}
+                                            </div>
+                                            <span className="min-w-0 flex-1 truncate">{produto.nome}</span>
+                                            <span className="num shrink-0 text-xs font-bold text-[#616161]">
+                                                {formatarMoeda(produto.preco)}
+                                            </span>
+                                        </button>
+                                    ))}
                                 </div>
-
-                                <input
-                                    type="text"
-                                    name="link"
-                                    value={formData.link}
-                                    onChange={(e) => {
-                                        handleChange(e)
-                                        setBuscaProduto("")
-                                    }}
-                                    placeholder="Ou cole um link direto: /produto/108, https://..."
-                                    className="field font-mono text-xs"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="rotulo">Ordem</label>
-                                <input
-                                    type="number"
-                                    name="ordem"
-                                    value={formData.ordem}
-                                    onChange={handleChange}
-                                    className="field"
-                                />
-                            </div>
-
-                            <label className="flex items-center gap-2 self-end pb-2 text-sm text-[#1E2428]">
-                                <input
-                                    type="checkbox"
-                                    name="ativo"
-                                    checked={formData.ativo}
-                                    onChange={handleChange}
-                                    className="h-4 w-4 rounded border-[#D3DADD] accent-[#0086FF]"
-                                />
-                                Ativo (aparece na loja)
-                            </label>
-                        </div>
-
-                        {errosForm.length > 0 && (
-                            <div role="alert" className="rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
-                                {errosForm[0]}
-                            </div>
-                        )}
-
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="submit"
-                                disabled={salvando}
-                                className="btn btn-primario"
-                            >
-                                {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Criar banner"}
-                            </button>
-
-                            {editandoId && (
-                                <button
-                                    type="button"
-                                    onClick={cancelarEdicao}
-                                    className="btn btn-neutro"
-                                >
-                                    Cancelar
-                                </button>
                             )}
                         </div>
-                    </form>
 
-                    {erroExclusao && (
-                        <div role="alert" className="mb-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
-                            {erroExclusao}
-                        </div>
-                    )}
+                        <input
+                            type="text"
+                            name="link"
+                            value={formData.link}
+                            onChange={(e) => {
+                                handleChange(e)
+                                setBuscaProduto("")
+                            }}
+                            placeholder="Ou cole um link direto: /produto/108, https://..."
+                            className="field font-mono text-xs"
+                        />
+                    </div>
 
-                    {loading ? (
-                        <div className="space-y-3">
-                            {[1, 2].map((item) => (
-                                <div key={item} className="card h-24 animate-pulse" />
-                            ))}
-                        </div>
-                    ) : erro ? (
-                        <p role="alert" className="rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
-                            {erro}
-                        </p>
-                    ) : banners.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
-                            <FiImage className="mx-auto w-10 text-[#8C969B]" aria-hidden />
-                            <h3 className="font-display mt-5 text-xl text-[#1E2428]">
-                                Nenhum banner cadastrado
-                            </h3>
-                            <p className="mt-2 text-sm text-[#5A6469]">
-                                Crie o primeiro banner acima pra ele aparecer na loja.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {banners.map((banner) => (
-                                <div
-                                    key={banner.id}
-                                    className="card flex items-center gap-4 overflow-hidden p-4"
-                                >
-                                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
-                                        {banner.imagem_url ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img
-                                                src={urlDaImagem(banner.imagem_url)}
-                                                alt={banner.titulo}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : null}
-                                    </div>
+                    <div>
+                        <label className="rotulo">Ordem</label>
+                        <input
+                            type="number"
+                            name="ordem"
+                            value={formData.ordem}
+                            onChange={handleChange}
+                            className="field"
+                        />
+                    </div>
 
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <p className="truncate text-sm font-bold text-[#1E2428]">
-                                                {banner.titulo}
-                                            </p>
-                                            <span className={`tag shrink-0 ${banner.ativo ? "tag-success" : "tag-neutral"}`}>
-                                                {banner.ativo ? "Ativo" : "Inativo"}
-                                            </span>
-                                        </div>
+                    <label className="flex items-center gap-2 self-end pb-2 text-sm text-[#303030]">
+                        <input
+                            type="checkbox"
+                            name="ativo"
+                            checked={formData.ativo}
+                            onChange={handleChange}
+                            className="h-4 w-4 rounded border-[#E1E1E1] accent-[#005BD3]"
+                        />
+                        Ativo (aparece na loja)
+                    </label>
+                </div>
 
-                                        <div className="mt-1">
-                                            <Preco
-                                                valor={banner.valor}
-                                                valorAntigo={banner.valor_antigo > 0 ? banner.valor_antigo : null}
-                                                className="text-lg"
-                                            />
-                                        </div>
+                {errosForm.length > 0 && (
+                    <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                        {errosForm[0]}
+                    </div>
+                )}
 
-                                        <p className="mt-0.5 truncate text-xs text-[#8C969B]">
-                                            ordem <span className="num">{banner.ordem}</span>
-                                            {banner.link ? <> · <span className="font-mono">{banner.link}</span></> : null}
-                                        </p>
-                                    </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        type="submit"
+                        disabled={salvando}
+                        className="btn btn-primario"
+                    >
+                        {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Criar banner"}
+                    </button>
 
-                                    <div className="flex shrink-0 items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => iniciarEdicao(banner)}
-                                            className="rounded-lg border border-[#D3DADD] bg-white px-3 py-2 text-xs font-bold text-[#1E2428] transition-colors hover:bg-[#F0F3F4]"
-                                        >
-                                            Editar
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleExcluir(banner.id)}
-                                            disabled={excluindoId === banner.id}
-                                            className="rounded-lg border border-[#D4351C] bg-white px-3 py-2 text-xs font-bold text-[#D4351C] transition-colors hover:bg-[#FDECEA] disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            {excluindoId === banner.id ? "Excluindo..." : "Excluir"}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                    {editandoId && (
+                        <button
+                            type="button"
+                            onClick={cancelarEdicao}
+                            className="btn btn-neutro"
+                        >
+                            Cancelar
+                        </button>
                     )}
                 </div>
-            </div>
-        </main>
+            </form>
+
+            {erroExclusao && (
+                <div role="alert" className="mb-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                    {erroExclusao}
+                </div>
+            )}
+
+            {loading ? (
+                <div className="space-y-3">
+                    {[1, 2].map((item) => (
+                        <div key={item} className="card h-24 animate-pulse" />
+                    ))}
+                </div>
+            ) : erro ? (
+                <p role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                    {erro}
+                </p>
+            ) : banners.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
+                    <FiImage className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
+                    <h3 className="font-display mt-5 text-xl text-[#303030]">
+                        Nenhum banner cadastrado
+                    </h3>
+                    <p className="mt-2 text-sm text-[#616161]">
+                        Crie o primeiro banner acima pra ele aparecer na loja.
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {banners.map((banner) => (
+                        <div
+                            key={banner.id}
+                            className="card flex items-center gap-4 overflow-hidden p-4"
+                        >
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                                {banner.imagem_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={urlDaImagem(banner.imagem_url)}
+                                        alt={banner.titulo}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : null}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <p className="truncate text-sm font-bold text-[#303030]">
+                                        {banner.titulo}
+                                    </p>
+                                    <span className={`tag shrink-0 ${banner.ativo ? "tag-success" : "tag-neutral"}`}>
+                                        {banner.ativo ? "Ativo" : "Inativo"}
+                                    </span>
+                                </div>
+
+                                <div className="mt-1">
+                                    <Preco
+                                        valor={banner.valor}
+                                        valorAntigo={banner.valor_antigo > 0 ? banner.valor_antigo : null}
+                                        className="text-lg"
+                                    />
+                                </div>
+
+                                <p className="mt-0.5 truncate text-xs text-[#8A8A8A]">
+                                    ordem <span className="num">{banner.ordem}</span>
+                                    {banner.link ? <> · <span className="font-mono">{banner.link}</span></> : null}
+                                </p>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => iniciarEdicao(banner)}
+                                    className="rounded-lg border border-[#E1E1E1] bg-white px-3 py-2 text-xs font-bold text-[#303030] transition-colors hover:bg-[#F1F1F1]"
+                                >
+                                    Editar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleExcluir(banner.id)}
+                                    disabled={excluindoId === banner.id}
+                                    className="rounded-lg border border-[#8E1F0B] bg-white px-3 py-2 text-xs font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {excluindoId === banner.id ? "Excluindo..." : "Excluir"}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </Pagina>
     )
 }

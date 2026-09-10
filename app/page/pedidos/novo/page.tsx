@@ -21,6 +21,7 @@ import {
     FiSearch,
     FiTrash2,
 } from "react-icons/fi"
+import { Pagina } from "@/app/components/pagina/pagina"
 
 /**
  * Lançar um pedido que veio de fora.
@@ -209,407 +210,394 @@ export default function LancarPedido() {
     const podeLancar = itens.length > 0 && nome.trim() !== "" && conferencia !== null && (!faltaAlgo || parcial)
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
-            <div className="mx-auto max-w-4xl space-y-6">
+        <Pagina
+            titulo="Lançar pedido"
+            descricao="O pedido que chegou por fora — WhatsApp, telefone, lista de papel. Confira a lista contra o estoque, lance, e ele entra na separação como qualquer pedido da vitrine."
+        >
+
+            {erro && (
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                    <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>{erro}</span>
+                </div>
+            )}
+
+            {/* A mensagem do que acabou de ser lançado. Sem botão de
+                "próximo passo": o pedido já entrou na separação sozinho,
+                e a fila de botões que havia aqui — gerar lista, ver
+                pedidos, montar onda, imprimir etiqueta — dava quatro
+                caminhos para quem só queria lançar o próximo. O que foi
+                lançado fica na lista do rodapé. */}
+            {lancados.length > 0 && (
+
+                <p role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                    <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>
+                        Pedido <span className="num">#{lancados[0].codigo}</span> lançado e peças
+                        reservadas. Ele já está na separação.
+                    </span>
+                </p>
+
+            )}
+
+            {/* ==========================
+                QUEM PEDIU
+            ========================== */}
+
+            <section className="card space-y-4 p-5 sm:p-7">
+
+                <h2 className="font-display text-base text-[#303030]">
+                    Quem pediu
+                </h2>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                    <div className="space-y-1.5">
+                        <label className="rotulo" htmlFor="nome">Nome</label>
+                        <input
+                            id="nome"
+                            type="text"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            placeholder="Como o cliente se identificou"
+                            className="field"
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="rotulo" htmlFor="contato">Contato</label>
+                        <input
+                            id="contato"
+                            type="text"
+                            value={contato}
+                            onChange={(e) => setContato(e.target.value)}
+                            placeholder="Telefone ou e-mail"
+                            className="field"
+                        />
+                    </div>
+
+                </div>
+
+            </section>
+
+            {/* ==========================
+                A LISTA
+            ========================== */}
+
+            <section className="card space-y-4 p-5 sm:p-7">
 
                 <div>
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                        Vendas
-                    </p>
-                    <h1 className="font-display text-2xl text-[#1E2428]">
-                        Lançar pedido
-                    </h1>
-                    <p className="mt-1 max-w-2xl text-sm text-[#5A6469]">
-                        O pedido que chegou por fora — WhatsApp, telefone, lista de papel. Confira a
-                        lista contra o estoque, lance, e ele entra na separação como qualquer pedido
-                        da vitrine.
+                    <h2 className="font-display text-base text-[#303030]">
+                        O que ele pediu
+                    </h2>
+                    <p className="mt-1 text-sm text-[#616161]">
+                        Busque o produto e diga a quantidade. O preço é o mesmo da vitrine,
+                        promoção incluída.
                     </p>
                 </div>
 
-                {erro && (
-                    <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]">
-                        <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>{erro}</span>
-                    </div>
-                )}
+                {carregando ? (
 
-                {/* A mensagem do que acabou de ser lançado. Sem botão de
-                    "próximo passo": o pedido já entrou na separação sozinho,
-                    e a fila de botões que havia aqui — gerar lista, ver
-                    pedidos, montar onda, imprimir etiqueta — dava quatro
-                    caminhos para quem só queria lançar o próximo. O que foi
-                    lançado fica na lista do rodapé. */}
-                {lancados.length > 0 && (
+                    <p className="text-[#616161]">Carregando produtos...</p>
 
-                    <p role="status" className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]">
-                        <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>
-                            Pedido <span className="num">#{lancados[0].codigo}</span> lançado e peças
-                            reservadas. Ele já está na separação.
-                        </span>
-                    </p>
+                ) : (
 
-                )}
+                    <>
+                        {linhas.length > 0 && (
 
-                {/* ==========================
-                    QUEM PEDIU
-                ========================== */}
+                            <ul className="divide-y divide-[#E1E1E1]">
 
-                <section className="card space-y-4 p-5 sm:p-7">
+                                {linhas.map((linha) => {
 
-                    <h2 className="font-display text-base text-[#1E2428]">
-                        Quem pediu
-                    </h2>
+                                    const produto = produtosPorId.get(linha.produtoId)
+                                    const preco = Number(produto?.preco_promocional ?? produto?.preco ?? 0)
+                                    const conferida = conferencia?.itens.find((item) => item.produto_id === linha.produtoId)
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    return (
+                                        <li key={linha.produtoId} className="flex flex-wrap items-center gap-3 py-3">
 
-                        <div className="space-y-1.5">
-                            <label className="rotulo" htmlFor="nome">Nome</label>
+                                            <div className="min-w-0 flex-1">
+
+                                                <p className="truncate text-sm font-medium text-[#303030]">
+                                                    {produto?.nome ?? `Produto #${linha.produtoId}`}
+                                                    {produto?.variacao ? ` · ${produto.variacao}` : ""}
+                                                </p>
+
+                                                <p className="flex items-center gap-2 font-mono text-xs text-[#616161]">
+                                                    <span>{produto?.codigo}</span>
+                                                    <span className="font-sans">{formatarMoeda(preco)}</span>
+
+                                                    {conferida && (
+                                                        conferida.falta > 0 ? (
+                                                            <span className="tag tag-danger font-sans">
+                                                                faltam {conferida.falta} (há {conferida.disponivel})
+                                                            </span>
+                                                        ) : (
+                                                            <span className="tag tag-success font-sans">
+                                                                tem em estoque
+                                                            </span>
+                                                        )
+                                                    )}
+                                                </p>
+
+                                            </div>
+
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={linha.quantidade}
+                                                onChange={(e) => mudarQuantidade(linha.produtoId, e.target.value)}
+                                                aria-label={`Quantidade de ${produto?.nome ?? "produto"}`}
+                                                className="field num w-20 shrink-0"
+                                            />
+
+                                            <button
+                                                type="button"
+                                                onClick={() => remover(linha.produtoId)}
+                                                aria-label="Remover item"
+                                                className="shrink-0 rounded-lg border border-[#E1E1E1] px-2.5 py-2 text-xs font-bold text-[#616161] transition-colors hover:border-[#8E1F0B] hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                            >
+                                                <FiTrash2 className="w-3.5" aria-hidden />
+                                            </button>
+
+                                        </li>
+                                    )
+                                })}
+
+                            </ul>
+
+                        )}
+
+                        <div className="relative">
+
+                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+
                             <input
-                                id="nome"
                                 type="text"
-                                value={nome}
-                                onChange={(e) => setNome(e.target.value)}
-                                placeholder="Como o cliente se identificou"
+                                value={busca}
+                                onChange={(e) => setBusca(e.target.value)}
+                                placeholder="Buscar produto por nome ou código"
                                 className="field"
+                                style={{ paddingLeft: "2.25rem" }}
                             />
+
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="rotulo" htmlFor="contato">Contato</label>
-                            <input
-                                id="contato"
-                                type="text"
-                                value={contato}
-                                onChange={(e) => setContato(e.target.value)}
-                                placeholder="Telefone ou e-mail"
-                                className="field"
-                            />
-                        </div>
+                        {termo && (
 
-                    </div>
+                            <ul className="divide-y divide-[#E1E1E1] rounded-lg border border-[#E1E1E1]">
 
-                </section>
+                                {disponiveisParaAdicionar.length === 0 ? (
 
-                {/* ==========================
-                    A LISTA
-                ========================== */}
+                                    <li className="px-4 py-3 text-sm text-[#616161]">
+                                        Nenhum produto encontrado.
+                                    </li>
 
-                <section className="card space-y-4 p-5 sm:p-7">
+                                ) : disponiveisParaAdicionar.map((produto) => (
 
-                    <div>
-                        <h2 className="font-display text-base text-[#1E2428]">
-                            O que ele pediu
-                        </h2>
-                        <p className="mt-1 text-sm text-[#5A6469]">
-                            Busque o produto e diga a quantidade. O preço é o mesmo da vitrine,
-                            promoção incluída.
+                                    <li key={produto.id}>
+                                        <button
+                                            type="button"
+                                            onClick={() => adicionar(produto.id)}
+                                            className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[#F1F1F1]"
+                                        >
+                                            <span className="min-w-0">
+                                                <span className="block truncate text-sm text-[#303030]">
+                                                    {produto.nome}
+                                                    {produto.variacao ? ` · ${produto.variacao}` : ""}
+                                                </span>
+                                                <span className="block font-mono text-xs text-[#616161]">
+                                                    {produto.codigo}
+                                                </span>
+                                            </span>
+
+                                            <FiPlus className="w-4 shrink-0 text-[#005BD3]" aria-hidden />
+                                        </button>
+                                    </li>
+
+                                ))}
+
+                            </ul>
+
+                        )}
+                    </>
+
+                )}
+
+                {itens.length > 0 && (
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F1F1F1] p-4">
+
+                        <p className="text-sm text-[#303030]">
+                            <span className="num font-bold">{itens.length}</span> produto(s) ·{" "}
+                            <span className="num font-bold">{formatarMoeda(total)}</span>
                         </p>
+
+                        <button
+                            type="button"
+                            onClick={conferir}
+                            disabled={conferindo}
+                            className="btn btn-neutro"
+                        >
+                            {conferindo ? "Conferindo..." : "Conferir estoque"}
+                        </button>
+
                     </div>
 
-                    {carregando ? (
+                )}
 
-                        <p className="text-[#5A6469]">Carregando produtos...</p>
+            </section>
+
+            {/* ==========================
+                CONFERÊNCIA E LANÇAMENTO
+            ========================== */}
+
+            {conferencia && (
+
+                <section className="card space-y-4 p-5 sm:p-7">
+
+                    {faltaAlgo ? (
+
+                        <>
+                            <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                                <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                                <span>
+                                    O estoque não cobre a lista inteira. Ou você lança só o que há
+                                    agora e acerta a diferença com o cliente, ou espera a
+                                    mercadoria chegar e lança tudo de uma vez.
+                                </span>
+                            </div>
+
+                            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[#303030]">
+                                <input
+                                    type="checkbox"
+                                    checked={parcial}
+                                    onChange={(e) => setParcial(e.target.checked)}
+                                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#005BD3]"
+                                />
+                                <span>
+                                    Lançar só o que há em estoque.{" "}
+                                    <span className="text-[#616161]">
+                                        O que faltar não entra no pedido, e a diferença aparece na
+                                        confirmação.
+                                    </span>
+                                </span>
+                            </label>
+                        </>
 
                     ) : (
 
-                        <>
-                            {linhas.length > 0 && (
-
-                                <ul className="divide-y divide-[#D3DADD]">
-
-                                    {linhas.map((linha) => {
-
-                                        const produto = produtosPorId.get(linha.produtoId)
-                                        const preco = Number(produto?.preco_promocional ?? produto?.preco ?? 0)
-                                        const conferida = conferencia?.itens.find((item) => item.produto_id === linha.produtoId)
-
-                                        return (
-                                            <li key={linha.produtoId} className="flex flex-wrap items-center gap-3 py-3">
-
-                                                <div className="min-w-0 flex-1">
-
-                                                    <p className="truncate text-sm font-medium text-[#1E2428]">
-                                                        {produto?.nome ?? `Produto #${linha.produtoId}`}
-                                                        {produto?.variacao ? ` · ${produto.variacao}` : ""}
-                                                    </p>
-
-                                                    <p className="flex items-center gap-2 font-mono text-xs text-[#5A6469]">
-                                                        <span>{produto?.codigo}</span>
-                                                        <span className="font-sans">{formatarMoeda(preco)}</span>
-
-                                                        {conferida && (
-                                                            conferida.falta > 0 ? (
-                                                                <span className="tag tag-danger font-sans">
-                                                                    faltam {conferida.falta} (há {conferida.disponivel})
-                                                                </span>
-                                                            ) : (
-                                                                <span className="tag tag-success font-sans">
-                                                                    tem em estoque
-                                                                </span>
-                                                            )
-                                                        )}
-                                                    </p>
-
-                                                </div>
-
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={linha.quantidade}
-                                                    onChange={(e) => mudarQuantidade(linha.produtoId, e.target.value)}
-                                                    aria-label={`Quantidade de ${produto?.nome ?? "produto"}`}
-                                                    className="field num w-20 shrink-0"
-                                                />
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => remover(linha.produtoId)}
-                                                    aria-label="Remover item"
-                                                    className="shrink-0 rounded-lg border border-[#D3DADD] px-2.5 py-2 text-xs font-bold text-[#5A6469] transition-colors hover:border-[#D4351C] hover:bg-[#FDECEA] hover:text-[#D4351C]"
-                                                >
-                                                    <FiTrash2 className="w-3.5" aria-hidden />
-                                                </button>
-
-                                            </li>
-                                        )
-                                    })}
-
-                                </ul>
-
-                            )}
-
-                            <div className="relative">
-
-                                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
-
-                                <input
-                                    type="text"
-                                    value={busca}
-                                    onChange={(e) => setBusca(e.target.value)}
-                                    placeholder="Buscar produto por nome ou código"
-                                    className="field"
-                                    style={{ paddingLeft: "2.25rem" }}
-                                />
-
-                            </div>
-
-                            {termo && (
-
-                                <ul className="divide-y divide-[#D3DADD] rounded-lg border border-[#D3DADD]">
-
-                                    {disponiveisParaAdicionar.length === 0 ? (
-
-                                        <li className="px-4 py-3 text-sm text-[#5A6469]">
-                                            Nenhum produto encontrado.
-                                        </li>
-
-                                    ) : disponiveisParaAdicionar.map((produto) => (
-
-                                        <li key={produto.id}>
-                                            <button
-                                                type="button"
-                                                onClick={() => adicionar(produto.id)}
-                                                className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[#F0F3F4]"
-                                            >
-                                                <span className="min-w-0">
-                                                    <span className="block truncate text-sm text-[#1E2428]">
-                                                        {produto.nome}
-                                                        {produto.variacao ? ` · ${produto.variacao}` : ""}
-                                                    </span>
-                                                    <span className="block font-mono text-xs text-[#5A6469]">
-                                                        {produto.codigo}
-                                                    </span>
-                                                </span>
-
-                                                <FiPlus className="w-4 shrink-0 text-[#0086FF]" aria-hidden />
-                                            </button>
-                                        </li>
-
-                                    ))}
-
-                                </ul>
-
-                            )}
-                        </>
+                        <p className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                            <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                            <span>Tem peça para tudo. Pode lançar.</span>
+                        </p>
 
                     )}
 
-                    {itens.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
 
-                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F0F3F4] p-4">
+                        <p className="text-sm text-[#616161]">
+                            O pedido nasce confirmado e reserva as peças na hora.
+                        </p>
 
-                            <p className="text-sm text-[#1E2428]">
-                                <span className="num font-bold">{itens.length}</span> produto(s) ·{" "}
-                                <span className="num font-bold">{formatarMoeda(total)}</span>
-                            </p>
+                        <button
+                            type="button"
+                            onClick={lancar}
+                            disabled={!podeLancar || lancando}
+                            className="btn btn-primario"
+                        >
+                            {lancando ? "Lançando..." : "Lançar pedido"}
+                        </button>
 
-                            <button
-                                type="button"
-                                onClick={conferir}
-                                disabled={conferindo}
-                                className="btn btn-neutro"
-                            >
-                                {conferindo ? "Conferindo..." : "Conferir estoque"}
-                            </button>
+                    </div>
 
-                        </div>
-
+                    {!nome.trim() && (
+                        <p className="text-xs text-[#8E1F0B]">
+                            Informe o nome de quem fez o pedido.
+                        </p>
                     )}
 
                 </section>
 
-                {/* ==========================
-                    CONFERÊNCIA E LANÇAMENTO
-                ========================== */}
+            )}
 
-                {conferencia && (
 
-                    <section className="card space-y-4 p-5 sm:p-7">
+            {/* ==========================
+                LANÇADOS AGORA
+                O rodapé responde "o do João já entrou?" sem trocar de
+                tela. Some quando a tela fecha: o histórico de verdade é a
+                tela de Pedidos, e duplicá-lo aqui seria criar uma segunda
+                verdade sobre o que existe.
+            ========================== */}
 
-                        {faltaAlgo ? (
+            {lancados.length > 0 && (
 
-                            <>
-                                <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[#FFB800] bg-[#FFF6E0] px-4 py-3 text-sm text-[#8A6C1B]">
-                                    <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                                    <span>
-                                        O estoque não cobre a lista inteira. Ou você lança só o que há
-                                        agora e acerta a diferença com o cliente, ou espera a
-                                        mercadoria chegar e lança tudo de uma vez.
-                                    </span>
+                <section className="card overflow-hidden">
+
+                    <div className="flex items-center justify-between gap-3 border-b border-[#E1E1E1] px-5 py-3.5">
+
+                        <h2 className="font-display text-base text-[#303030]">
+                            Lançados agora
+                            <span className="num ml-2 text-sm font-bold text-[#616161]">
+                                {lancados.length}
+                            </span>
+                        </h2>
+
+                        <Link href="/page/pedidos" className="text-sm font-bold text-[#005BD3] hover:underline">
+                            Ver todos os pedidos
+                        </Link>
+
+                    </div>
+
+                    <ul className="divide-y divide-[#EBEBEB]">
+
+                        {lancados.map((pedido) => (
+
+                            <li key={pedido.id} className="px-5 py-3.5">
+
+                                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+
+                                    <p className="font-bold text-[#303030]">
+                                        {pedido.cliente}
+                                        <span className="font-mono ml-2 text-xs font-normal text-[#616161]">
+                                            #{pedido.codigo}
+                                        </span>
+                                    </p>
+
+                                    <p className="text-xs text-[#616161]">
+                                        <span className="num">{pedido.pecas}</span> peça(s) ·{" "}
+                                        {pedido.quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                    </p>
+
                                 </div>
 
-                                <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[#1E2428]">
-                                    <input
-                                        type="checkbox"
-                                        checked={parcial}
-                                        onChange={(e) => setParcial(e.target.checked)}
-                                        className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#0086FF]"
-                                    />
-                                    <span>
-                                        Lançar só o que há em estoque.{" "}
-                                        <span className="text-[#5A6469]">
-                                            O que faltar não entra no pedido, e a diferença aparece na
-                                            confirmação.
-                                        </span>
-                                    </span>
-                                </label>
-                            </>
+                                {pedido.faltas.length > 0 && (
 
-                        ) : (
-
-                            <p className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]">
-                                <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                                <span>Tem peça para tudo. Pode lançar.</span>
-                            </p>
-
-                        )}
-
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-
-                            <p className="text-sm text-[#5A6469]">
-                                O pedido nasce confirmado e reserva as peças na hora.
-                            </p>
-
-                            <button
-                                type="button"
-                                onClick={lancar}
-                                disabled={!podeLancar || lancando}
-                                className="btn btn-primario"
-                            >
-                                {lancando ? "Lançando..." : "Lançar pedido"}
-                            </button>
-
-                        </div>
-
-                        {!nome.trim() && (
-                            <p className="text-xs text-[#D4351C]">
-                                Informe o nome de quem fez o pedido.
-                            </p>
-                        )}
-
-                    </section>
-
-                )}
-
-
-                {/* ==========================
-                    LANÇADOS AGORA
-                    O rodapé responde "o do João já entrou?" sem trocar de
-                    tela. Some quando a tela fecha: o histórico de verdade é a
-                    tela de Pedidos, e duplicá-lo aqui seria criar uma segunda
-                    verdade sobre o que existe.
-                ========================== */}
-
-                {lancados.length > 0 && (
-
-                    <section className="card overflow-hidden">
-
-                        <div className="flex items-center justify-between gap-3 border-b border-[#D3DADD] px-5 py-3.5">
-
-                            <h2 className="font-display text-base text-[#1E2428]">
-                                Lançados agora
-                                <span className="num ml-2 text-sm font-bold text-[#5A6469]">
-                                    {lancados.length}
-                                </span>
-                            </h2>
-
-                            <Link href="/page/pedidos" className="text-sm font-bold text-[#0086FF] hover:underline">
-                                Ver todos os pedidos
-                            </Link>
-
-                        </div>
-
-                        <ul className="divide-y divide-[#E4E9EB]">
-
-                            {lancados.map((pedido) => (
-
-                                <li key={pedido.id} className="px-5 py-3.5">
-
-                                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-
-                                        <p className="font-bold text-[#1E2428]">
-                                            {pedido.cliente}
-                                            <span className="font-mono ml-2 text-xs font-normal text-[#5A6469]">
-                                                #{pedido.codigo}
+                                    <p className="mt-1.5 text-xs text-[#5E4200]">
+                                        Foi lançado só o que havia:{" "}
+                                        {pedido.faltas.map((falta, indice) => (
+                                            <span key={falta.produto_id}>
+                                                {indice > 0 ? ", " : ""}
+                                                {falta.produto_nome} (pedido{" "}
+                                                <span className="num">{falta.pedido}</span>, havia{" "}
+                                                <span className="num">{falta.disponivel}</span>)
                                             </span>
-                                        </p>
+                                        ))}
+                                        . Fale com o cliente sobre a diferença.
+                                    </p>
 
-                                        <p className="text-xs text-[#5A6469]">
-                                            <span className="num">{pedido.pecas}</span> peça(s) ·{" "}
-                                            {pedido.quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                                        </p>
+                                )}
 
-                                    </div>
+                            </li>
 
-                                    {pedido.faltas.length > 0 && (
+                        ))}
 
-                                        <p className="mt-1.5 text-xs text-[#8A6C1B]">
-                                            Foi lançado só o que havia:{" "}
-                                            {pedido.faltas.map((falta, indice) => (
-                                                <span key={falta.produto_id}>
-                                                    {indice > 0 ? ", " : ""}
-                                                    {falta.produto_nome} (pedido{" "}
-                                                    <span className="num">{falta.pedido}</span>, havia{" "}
-                                                    <span className="num">{falta.disponivel}</span>)
-                                                </span>
-                                            ))}
-                                            . Fale com o cliente sobre a diferença.
-                                        </p>
+                    </ul>
 
-                                    )}
+                </section>
 
-                                </li>
+            )}
 
-                            ))}
-
-                        </ul>
-
-                    </section>
-
-                )}
-
-            </div>
-        </main>
+        </Pagina>
     )
 }

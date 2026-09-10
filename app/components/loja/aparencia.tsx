@@ -120,7 +120,7 @@ export default function Aparencia() {
 
     if (carregando) {
         return (
-            <section className="card mt-6 p-6 text-sm text-[#5A6469]">
+            <section className="card mt-6 p-6 text-sm text-[#616161]">
                 Carregando a aparência da loja...
             </section>
         )
@@ -129,11 +129,11 @@ export default function Aparencia() {
     return (
         <form onSubmit={handleSubmit} className="card mt-6 p-6 sm:p-7">
 
-            <h2 className="font-display text-lg text-[#1E2428]">
+            <h2 className="font-display text-lg text-[#303030]">
                 Aparência
             </h2>
 
-            <p className="mt-1 text-sm text-[#5A6469]">
+            <p className="mt-1 text-sm text-[#616161]">
                 As cores da sua vitrine. O resto da loja acompanha sozinho — as
                 bordas e os cinzas nascem do fundo e do texto que você escolher.
             </p>
@@ -151,7 +151,7 @@ export default function Aparencia() {
                                 type="color"
                                 value={tema[chave]}
                                 onChange={(e) => mudar(chave, e.target.value)}
-                                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-[#D3DADD] bg-white p-1"
+                                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-[#E1E1E1] bg-white p-1"
                             />
 
                             {/* O campo de texto ao lado do seletor existe para
@@ -168,7 +168,7 @@ export default function Aparencia() {
                             />
                         </div>
 
-                        <p className="mt-1.5 text-xs text-[#8C969B]">{ajuda}</p>
+                        <p className="mt-1.5 text-xs text-[#8A8A8A]">{ajuda}</p>
                     </div>
                 ))}
             </div>
@@ -188,7 +188,7 @@ export default function Aparencia() {
                     onChange={(e) => mudar("logo_url", e.target.value)}
                 />
 
-                <p className="mt-1.5 text-xs text-[#8C969B]">
+                <p className="mt-1.5 text-xs text-[#8A8A8A]">
                     Com logo, ele substitui o nome escrito no topo da vitrine. Deixe
                     vazio para manter o nome. Use um endereço de imagem que já esteja
                     na internet — o sistema ainda não guarda arquivos.
@@ -198,7 +198,7 @@ export default function Aparencia() {
             <Previa tema={tema} />
 
             {avisos.length > 0 && (
-                <div className="mt-5 rounded-lg bg-[#FFF6E0] px-4 py-3 text-sm text-[#8A6C1B]">
+                <div className="mt-5 rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
                     <p className="flex items-center gap-2 font-semibold">
                         <FiAlertTriangle className="w-4 shrink-0" aria-hidden />
                         Dá para salvar assim, mas repare:
@@ -213,7 +213,7 @@ export default function Aparencia() {
             {erro && (
                 <div
                     role="alert"
-                    className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                    className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
@@ -221,7 +221,7 @@ export default function Aparencia() {
             )}
 
             {salvo && !erro && (
-                <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]">
+                <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>Cores salvas. Recarregue a vitrine para vê-las no ar.</span>
                 </div>
@@ -266,7 +266,7 @@ function Previa({ tema }: { tema: TemaLoja }) {
             <p className="rotulo">Como vai ficar</p>
 
             <div
-                className="mt-2 overflow-hidden rounded-lg border border-[#D3DADD]"
+                className="mt-2 overflow-hidden rounded-lg border border-[#E1E1E1]"
                 style={{ background: tema.fundo, color: tema.texto }}
             >
                 <div

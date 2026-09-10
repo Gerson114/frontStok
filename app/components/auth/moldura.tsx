@@ -41,7 +41,7 @@ export default function MolduraAuth({ etiqueta, chamada, itens, nota, children }
 
             <Topo />
 
-            <section className="flex flex-1 items-center border-b border-[#E4E9EB] bg-[#F0F3F4]">
+            <section className="flex flex-1 items-center border-b border-[#EBEBEB] bg-[#F1F1F1]">
                 <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-14 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
 
                     {/* ======================================================
@@ -52,24 +52,24 @@ export default function MolduraAuth({ etiqueta, chamada, itens, nota, children }
 
                         <span className="tag tag-info">{etiqueta}</span>
 
-                        <p className="font-display mt-4 text-3xl leading-tight text-[#1E2428]">
+                        <p className="font-display mt-4 text-3xl leading-tight text-[#303030]">
                             {chamada}
                         </p>
 
                         <ul className="mt-8 space-y-4">
                             {itens.map(({ texto, Icone }) => (
                                 <li key={texto} className="flex items-start gap-3">
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF]">
-                                        <Icone className="w-[1.05rem] text-[#0075E2]" aria-hidden />
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF]">
+                                        <Icone className="w-[1.05rem] text-[#00369B]" aria-hidden />
                                     </span>
-                                    <span className="pt-1.5 text-[0.95rem] leading-relaxed text-[#5A6469]">
+                                    <span className="pt-1.5 text-[0.95rem] leading-relaxed text-[#616161]">
                                         {texto}
                                     </span>
                                 </li>
                             ))}
                         </ul>
 
-                        <p className="mt-8 max-w-md text-sm leading-relaxed text-[#8C969B]">
+                        <p className="mt-8 max-w-md text-sm leading-relaxed text-[#8A8A8A]">
                             {nota}
                         </p>
 
@@ -80,7 +80,7 @@ export default function MolduraAuth({ etiqueta, chamada, itens, nota, children }
                                 <span
                                     key={i}
                                     style={{ width: `${largura * 3}px` }}
-                                    className={i % 2 === 0 ? "bg-[#1E2428]" : "bg-transparent"}
+                                    className={i % 2 === 0 ? "bg-[#303030]" : "bg-transparent"}
                                 />
                             ))}
                         </div>

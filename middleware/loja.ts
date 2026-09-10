@@ -3,17 +3,57 @@
 // /api/loja, como o resto do painel.
 
 import { apiFetch } from "./client"
-import type { Loja } from "@/app/type/type"
+import type { Bloco, Loja } from "@/app/type/type"
 
 export async function consultarLoja(): Promise<Loja> {
     return apiFetch<Loja>("/api/loja")
 }
 
-export async function salvarLoja(nomeLoja: string, slug: string): Promise<Loja> {
+/** O que o formulário da loja grava: identidade e contato público. */
+export interface DadosDaLoja {
+    nome_loja: string
+    slug: string
+    whatsapp: string
+    telefone: string
+    endereco: string
+    horario: string
+}
+
+/**
+ * Grava a identidade e o contato público da loja.
+ *
+ * Os campos de contato vão sempre, inclusive vazios: em branco é como o
+ * lojista apaga um número que mudou, e mandar só o que foi preenchido faria
+ * o campo apagado voltar sozinho na próxima leitura.
+ */
+export async function salvarLoja(dados: DadosDaLoja): Promise<Loja> {
     return apiFetch<Loja>("/api/loja", {
         method: "PUT",
-        body: { nome_loja: nomeLoja, slug },
+        body: dados,
     })
+}
+
+/**
+ * O desenho da home da vitrine.
+ *
+ * O que trafega é uma lista de blocos — dado, não marcação. Quem valida é o
+ * servidor: tipo fora do catálogo, propriedade que não pertence ao bloco e
+ * texto acima do limite não entram no banco, e o que ele devolve é a página
+ * já limpa. A tela mostra o que voltou, e não o que mandou, justamente para o
+ * lojista ver o que de fato ficou gravado.
+ */
+export async function consultarPaginaDaLoja(): Promise<Bloco[]> {
+    const dados = await apiFetch<{ blocos?: Bloco[] }>("/api/loja/pagina")
+    return Array.isArray(dados.blocos) ? dados.blocos : []
+}
+
+export async function salvarPaginaDaLoja(blocos: Bloco[]): Promise<Bloco[]> {
+    const dados = await apiFetch<{ blocos?: Bloco[] }>("/api/loja/pagina", {
+        method: "PUT",
+        body: { blocos },
+    })
+
+    return Array.isArray(dados.blocos) ? dados.blocos : []
 }
 
 /**

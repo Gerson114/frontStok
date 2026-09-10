@@ -3,6 +3,7 @@ import { FiPlus } from "react-icons/fi"
 import { unstable_rethrow } from "next/navigation"
 import { consultarMenu, listarProdutos, listarTodasUnidades } from "@/app/api/servidor"
 import Grade from "./grade"
+import { Pagina } from "@/app/components/pagina/pagina"
 
 /**
  * A lista de produtos, montada no servidor.
@@ -49,62 +50,17 @@ export default async function ProdutosPage() {
     const temSite = menu.some((item) => item.chave === "loja")
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] text-[#1E2428] md:ml-64">
-
-            {/* ==========================
-                HEADER
-            ========================== */}
-
-            <header className="sticky top-16 z-30 border-b border-[#D3DADD] bg-[#F0F3F4]/95 backdrop-blur md:top-0">
-
-                <div className="flex min-h-20 items-center justify-between gap-6 px-6 md:px-10">
-
-                    <div>
-
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
-                            Painel administrativo
-                        </p>
-
-                        <h1 className="font-display text-2xl text-[#1E2428]">
-                            Produtos
-                        </h1>
-
-                    </div>
-
-                    <div className="flex items-center gap-3">
-
-                        <Link
-                            href="/page/produto"
-                            className="btn btn-primario hidden sm:inline-flex"
-                        >
-                            <FiPlus className="w-4" aria-hidden />
-                            <span>Novo produto</span>
-                        </Link>
-
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E6F3FF] text-sm font-extrabold text-[#0075E2]">
-                            AD
-                        </div>
-
-                        <div className="hidden sm:block">
-
-                            <p className="text-sm font-bold text-[#1E2428]">
-                                Administrador
-                            </p>
-
-                            <p className="text-xs text-[#8C969B]">
-                                Loja única
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </header>
-
+        <Pagina
+            titulo="Produtos"
+            descricao="Uma linha por peça física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
+            acoes={
+                <Link href="/page/produto" className="btn btn-primario">
+                    <FiPlus className="w-4" aria-hidden />
+                    <span>Novo produto</span>
+                </Link>
+            }
+        >
             <Grade produtos={produtos} unidades={unidades} temSite={temSite} />
-
-        </main>
+        </Pagina>
     )
 }

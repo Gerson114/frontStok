@@ -15,6 +15,7 @@ import {
     FiSearch,
 } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
+import { Pagina } from "@/app/components/pagina/pagina"
 
 /**
  * Produtos do site: o que a vitrine mostra.
@@ -113,7 +114,7 @@ export default function ProdutosDoSite() {
 
                 <div className="flex min-w-0 items-center gap-3">
 
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
                         {produto.imagem_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={urlDaImagem(produto.imagem_url)} alt={produto.nome} className="h-full w-full object-cover" />
@@ -122,12 +123,12 @@ export default function ProdutosDoSite() {
 
                     <div className="min-w-0">
 
-                        <p className="truncate text-sm font-medium text-[#1E2428]">
+                        <p className="truncate text-sm font-medium text-[#303030]">
                             {produto.nome}
                             {produto.variacao ? ` · ${produto.variacao}` : ""}
                         </p>
 
-                        <p className="flex flex-wrap items-center gap-2 font-mono text-xs text-[#5A6469]">
+                        <p className="flex flex-wrap items-center gap-2 font-mono text-xs text-[#616161]">
                             <span>{produto.codigo}</span>
                             <span className="font-sans">{formatarMoeda(preco)}</span>
                             <span className="font-sans">{produto.estoque} em estoque</span>
@@ -169,135 +170,122 @@ export default function ProdutosDoSite() {
     }
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
-            <div className="mx-auto max-w-4xl space-y-6">
+        <Pagina
+            titulo="Produtos do site"
+            descricao="Escolha, do que já existe no estoque, o que a vitrine mostra. Aqui não se cadastra produto — ele nasce no estoque, e esta é a segunda decisão. Tirar do site não apaga nada: a mercadoria continua contada e endereçada."
+        >
 
-                <div>
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                        Meu site
-                    </p>
-                    <h1 className="font-display text-2xl text-[#1E2428]">
-                        Produtos do site
-                    </h1>
-                    <p className="mt-1 max-w-2xl text-sm text-[#5A6469]">
-                        Escolha, do que já existe no estoque, o que a vitrine mostra. Aqui não se
-                        cadastra produto — ele nasce no estoque, e esta é a segunda decisão. Tirar do
-                        site não apaga nada: a mercadoria continua contada e endereçada.
-                    </p>
+            {erro && (
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                    <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>{erro}</span>
                 </div>
+            )}
 
-                {erro && (
-                    <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]">
-                        <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>{erro}</span>
-                    </div>
-                )}
-
-                {aviso && (
-                    <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]">
-                        <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>{aviso}</span>
-                    </div>
-                )}
-
-                <div className="relative w-full sm:w-80">
-
-                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
-
-                    <input
-                        type="text"
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        placeholder="Buscar por nome ou código"
-                        className="field"
-                        style={{ paddingLeft: "2.25rem" }}
-                    />
-
+            {aviso && (
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                    <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>{aviso}</span>
                 </div>
+            )}
 
-                {/* ==========================
-                    NA VITRINE
-                ========================== */}
+            <div className="relative w-full sm:w-80">
 
-                <section className="card space-y-4 p-5 sm:p-7">
+                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
 
-                    <div>
-                        <h2 className="font-display flex items-center gap-2 text-base text-[#1E2428]">
-                            <FiEye className="w-4 text-[#0086FF]" aria-hidden />
-                            No site
-                        </h2>
-                        <p className="mt-1 text-sm text-[#5A6469]">
-                            {carregando
-                                ? "Carregando..."
-                                : `${naVitrine.length} produto(s) aparecendo para quem visita a loja.`}
-                        </p>
-                    </div>
-
-                    {!carregando && (
-                        naVitrine.length === 0 ? (
-
-                            <p className="rounded-lg border border-dashed border-[#D3DADD] p-8 text-center text-sm text-[#5A6469]">
-                                {termo
-                                    ? "Nenhum produto do site corresponde à busca."
-                                    : "Sua vitrine está vazia. Escolha abaixo o que vai para o site."}
-                            </p>
-
-                        ) : (
-
-                            <ul className="divide-y divide-[#D3DADD]">
-                                {naVitrine.map((produto) => linha(produto, true))}
-                            </ul>
-
-                        )
-                    )}
-
-                </section>
-
-                {/* ==========================
-                    SÓ NO ESTOQUE
-                ========================== */}
-
-                <section className="card space-y-4 p-5 sm:p-7">
-
-                    <div>
-                        <h2 className="font-display flex items-center gap-2 text-base text-[#1E2428]">
-                            <FiPackage className="w-4 text-[#5A6469]" aria-hidden />
-                            Só no estoque
-                        </h2>
-                        <p className="mt-1 text-sm text-[#5A6469]">
-                            Existe na loja, não aparece no site.
-                        </p>
-                    </div>
-
-                    {!carregando && (
-                        soNoEstoque.length === 0 ? (
-
-                            <p className="rounded-lg border border-dashed border-[#D3DADD] p-8 text-center text-sm text-[#5A6469]">
-                                {termo
-                                    ? "Nenhum produto fora do site corresponde à busca."
-                                    : (
-                                        <>
-                                            Todo o estoque já está no site. Mercadoria nova entra por{" "}
-                                            <Link href="/page/estoque/inserir" className="font-bold underline">
-                                                Entrada de mercadoria
-                                            </Link>
-                                            .
-                                        </>
-                                    )}
-                            </p>
-
-                        ) : (
-
-                            <ul className="divide-y divide-[#D3DADD]">
-                                {soNoEstoque.map((produto) => linha(produto, false))}
-                            </ul>
-
-                        )
-                    )}
-
-                </section>
+                <input
+                    type="text"
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder="Buscar por nome ou código"
+                    className="field"
+                    style={{ paddingLeft: "2.25rem" }}
+                />
 
             </div>
-        </main>
+
+            {/* ==========================
+                NA VITRINE
+            ========================== */}
+
+            <section className="card space-y-4 p-5 sm:p-7">
+
+                <div>
+                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
+                        <FiEye className="w-4 text-[#005BD3]" aria-hidden />
+                        No site
+                    </h2>
+                    <p className="mt-1 text-sm text-[#616161]">
+                        {carregando
+                            ? "Carregando..."
+                            : `${naVitrine.length} produto(s) aparecendo para quem visita a loja.`}
+                    </p>
+                </div>
+
+                {!carregando && (
+                    naVitrine.length === 0 ? (
+
+                        <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
+                            {termo
+                                ? "Nenhum produto do site corresponde à busca."
+                                : "Sua vitrine está vazia. Escolha abaixo o que vai para o site."}
+                        </p>
+
+                    ) : (
+
+                        <ul className="divide-y divide-[#E1E1E1]">
+                            {naVitrine.map((produto) => linha(produto, true))}
+                        </ul>
+
+                    )
+                )}
+
+            </section>
+
+            {/* ==========================
+                SÓ NO ESTOQUE
+            ========================== */}
+
+            <section className="card space-y-4 p-5 sm:p-7">
+
+                <div>
+                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
+                        <FiPackage className="w-4 text-[#616161]" aria-hidden />
+                        Só no estoque
+                    </h2>
+                    <p className="mt-1 text-sm text-[#616161]">
+                        Existe na loja, não aparece no site.
+                    </p>
+                </div>
+
+                {!carregando && (
+                    soNoEstoque.length === 0 ? (
+
+                        <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
+                            {termo
+                                ? "Nenhum produto fora do site corresponde à busca."
+                                : (
+                                    <>
+                                        Todo o estoque já está no site. Mercadoria nova entra por{" "}
+                                        <Link href="/page/estoque/inserir" className="font-bold underline">
+                                            Entrada de mercadoria
+                                        </Link>
+                                        .
+                                    </>
+                                )}
+                        </p>
+
+                    ) : (
+
+                        <ul className="divide-y divide-[#E1E1E1]">
+                            {soNoEstoque.map((produto) => linha(produto, false))}
+                        </ul>
+
+                    )
+                )}
+
+            </section>
+
+        </Pagina>
     )
 }

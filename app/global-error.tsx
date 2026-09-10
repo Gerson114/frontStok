@@ -32,8 +32,8 @@ export default function GlobalError({
                     alignItems: "center",
                     justifyContent: "center",
                     padding: "1.5rem",
-                    background: "#F0F3F4",
-                    color: "#1E2428",
+                    background: "#F1F1F1",
+                    color: "#303030",
                     fontFamily: "ui-sans-serif, system-ui, sans-serif",
                 }}
             >
@@ -44,7 +44,7 @@ export default function GlobalError({
                         width: "100%",
                         maxWidth: "32rem",
                         background: "#FFFFFF",
-                        border: "1px solid #D3DADD",
+                        border: "1px solid #E1E1E1",
                         borderRadius: "0.5rem",
                         padding: "2.5rem",
                         textAlign: "center",
@@ -54,7 +54,7 @@ export default function GlobalError({
                         O painel não conseguiu abrir
                     </h1>
 
-                    <p style={{ margin: "0.75rem 0 0", color: "#5A6469", lineHeight: 1.5 }}>
+                    <p style={{ margin: "0.75rem 0 0", color: "#616161", lineHeight: 1.5 }}>
                         Foi uma falha nossa, e não alguma coisa que você fez. Seus dados
                         estão salvos.
                     </p>
@@ -67,7 +67,7 @@ export default function GlobalError({
                             padding: "0.7rem 1.1rem",
                             borderRadius: "0.5rem",
                             border: "none",
-                            background: "#0086FF",
+                            background: "#005BD3",
                             color: "#FFFFFF",
                             fontSize: "0.9rem",
                             fontWeight: 700,
@@ -78,7 +78,7 @@ export default function GlobalError({
                     </button>
 
                     {error.digest && (
-                        <p style={{ margin: "1.5rem 0 0", fontSize: "0.75rem", color: "#8C969B" }}>
+                        <p style={{ margin: "1.5rem 0 0", fontSize: "0.75rem", color: "#8A8A8A" }}>
                             Código do erro: <strong>{error.digest}</strong>
                         </p>
                     )}

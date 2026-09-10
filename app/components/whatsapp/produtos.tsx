@@ -357,16 +357,16 @@ export default function CaixaDeProdutos({
     }
 
     return (
-        <div className="flex max-h-[22rem] flex-col border-t border-[#E4E9EB] bg-white">
+        <div className="flex max-h-[22rem] flex-col border-t border-[#EBEBEB] bg-white">
 
             {/* ==========================
                 BUSCA
             ========================== */}
 
-            <div className="flex items-center gap-2 border-b border-[#E4E9EB] px-3 py-2.5">
+            <div className="flex items-center gap-2 border-b border-[#EBEBEB] px-3 py-2.5">
 
                 <div className="relative flex-1">
-                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
+                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
 
                     <input
                         autoFocus
@@ -381,7 +381,7 @@ export default function CaixaDeProdutos({
                     type="button"
                     onClick={aoFechar}
                     aria-label="Fechar a caixa de produtos"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                 >
                     <FiX className="w-4" aria-hidden />
                 </button>
@@ -395,14 +395,14 @@ export default function CaixaDeProdutos({
             <div className="min-h-0 flex-1 overflow-y-auto">
 
                 {carregando && (
-                    <p className="px-4 py-6 text-center text-sm text-[#8C969B]">
+                    <p className="px-4 py-6 text-center text-sm text-[#8A8A8A]">
                         Carregando o estoque...
                     </p>
                 )}
 
                 {erro && (
                     <div role="alert" className="px-4 py-6 text-center">
-                        <p className="text-sm font-semibold text-[#D4351C]">{erro}</p>
+                        <p className="text-sm font-semibold text-[#8E1F0B]">{erro}</p>
 
                         <button type="button" onClick={carregar} className="btn btn-neutro mt-3">
                             <FiRefreshCw className="w-4" aria-hidden />
@@ -412,14 +412,14 @@ export default function CaixaDeProdutos({
                 )}
 
                 {!carregando && !erro && filtradas.length === 0 && (
-                    <p className="px-4 py-6 text-center text-sm text-[#8C969B]">
+                    <p className="px-4 py-6 text-center text-sm text-[#8A8A8A]">
                         {soComEstoque
                             ? "Nada com esse nome em estoque. Desmarque “só com estoque” para ver o catálogo inteiro."
                             : "Nenhum produto com esse nome ou código."}
                     </p>
                 )}
 
-                <ul className="divide-y divide-[#F0F3F4]">
+                <ul className="divide-y divide-[#F1F1F1]">
                     {filtradas.map((linha) => {
 
                         const marcado = marcados.includes(linha.produto.id)
@@ -433,7 +433,7 @@ export default function CaixaDeProdutos({
                             <li
                                 key={linha.produto.id}
                                 className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${
-                                    marcado ? "bg-[#E6F3FF]" : "hover:bg-[#F7F9FA]"
+                                    marcado ? "bg-[#EAF4FF]" : "hover:bg-[#F7F7F7]"
                                 }`}
                             >
                                 <button
@@ -446,19 +446,19 @@ export default function CaixaDeProdutos({
                                         aria-hidden
                                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
                                             marcado
-                                                ? "border-[#0086FF] bg-[#0086FF] text-white"
-                                                : "border-[#D3DADD] bg-white"
+                                                ? "border-[#005BD3] bg-[#005BD3] text-white"
+                                                : "border-[#E1E1E1] bg-white"
                                         }`}
                                     >
                                         {marcado && <FiCheck className="w-3" />}
                                     </span>
 
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-sm font-semibold text-[#1E2428]">
+                                        <span className="block truncate text-sm font-semibold text-[#303030]">
                                             {nomeCompleto(linha.produto)}
                                         </span>
 
-                                        <span className="num block truncate text-xs text-[#8C969B]">
+                                        <span className="num block truncate text-xs text-[#8A8A8A]">
                                             {codigoDoProduto(linha.produto)}
                                             {" · "}
                                             {linha.disponivel > 0
@@ -475,12 +475,12 @@ export default function CaixaDeProdutos({
                                             onClick={() => mudarQuantidade(linha.produto.id, -1)}
                                             disabled={quantidadeDe(linha.produto.id) <= 1}
                                             aria-label={`Menos uma peça de ${nomeCompleto(linha.produto)}`}
-                                            className="flex h-7 w-7 items-center justify-center rounded-md border border-[#D3DADD] bg-white text-[#5A6469] transition-colors hover:bg-[#F0F3F4] disabled:opacity-40"
+                                            className="flex h-7 w-7 items-center justify-center rounded-md border border-[#E1E1E1] bg-white text-[#616161] transition-colors hover:bg-[#F1F1F1] disabled:opacity-40"
                                         >
                                             <FiMinus className="w-3" aria-hidden />
                                         </button>
 
-                                        <span className="num w-6 text-center text-sm font-bold text-[#1E2428]">
+                                        <span className="num w-6 text-center text-sm font-bold text-[#303030]">
                                             {quantidadeDe(linha.produto.id)}
                                         </span>
 
@@ -488,7 +488,7 @@ export default function CaixaDeProdutos({
                                             type="button"
                                             onClick={() => mudarQuantidade(linha.produto.id, 1)}
                                             aria-label={`Mais uma peça de ${nomeCompleto(linha.produto)}`}
-                                            className="flex h-7 w-7 items-center justify-center rounded-md border border-[#D3DADD] bg-white text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                                            className="flex h-7 w-7 items-center justify-center rounded-md border border-[#E1E1E1] bg-white text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                                         >
                                             <FiPlus className="w-3" aria-hidden />
                                         </button>
@@ -497,14 +497,14 @@ export default function CaixaDeProdutos({
 
                                 <span className="shrink-0 text-right">
                                     {linha.precoAntigo && (
-                                        <span className="num block text-[0.68rem] text-[#8C969B] line-through">
+                                        <span className="num block text-[0.68rem] text-[#8A8A8A] line-through">
                                             {formatarMoeda(linha.precoAntigo)}
                                         </span>
                                     )}
 
                                     <span
                                         className={`num block text-sm font-bold ${
-                                            linha.precoAntigo ? "text-[#08A022]" : "text-[#1E2428]"
+                                            linha.precoAntigo ? "text-[#0C5132]" : "text-[#303030]"
                                         }`}
                                     >
                                         {formatarMoeda(linha.preco)}
@@ -523,15 +523,15 @@ export default function CaixaDeProdutos({
 
             {/* A recusa por falta de peça, com a pergunta que ela levanta. */}
             {erroPedido && (
-                <div role="alert" className="border-t border-[#E4E9EB] bg-[#FDECEA] px-4 py-2.5">
+                <div role="alert" className="border-t border-[#EBEBEB] bg-[#FEE9E8] px-4 py-2.5">
 
-                    <p className="text-xs font-semibold text-[#D4351C]">{erroPedido}</p>
+                    <p className="text-xs font-semibold text-[#8E1F0B]">{erroPedido}</p>
 
                     {faltas.length > 0 && (
                         <>
                             <ul className="mt-1.5 space-y-0.5">
                                 {faltas.map((falta) => (
-                                    <li key={falta.produto_id} className="text-xs text-[#8A2A16]">
+                                    <li key={falta.produto_id} className="text-xs text-[#8E1F0B]">
                                         {falta.produto_nome}: pediu{" "}
                                         <span className="num font-bold">{falta.pedido}</span>, tem{" "}
                                         <span className="num font-bold">{falta.disponivel}</span>
@@ -553,23 +553,23 @@ export default function CaixaDeProdutos({
                 </div>
             )}
 
-            <div className="flex items-center gap-3 border-t border-[#E4E9EB] px-3 py-2.5">
+            <div className="flex items-center gap-3 border-t border-[#EBEBEB] px-3 py-2.5">
 
-                <label className="flex cursor-pointer items-center gap-2 text-xs text-[#5A6469]">
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-[#616161]">
                     <input
                         type="checkbox"
                         checked={soComEstoque}
                         onChange={(e) => setSoComEstoque(e.target.checked)}
-                        className="h-3.5 w-3.5 accent-[#0086FF]"
+                        className="h-3.5 w-3.5 accent-[#005BD3]"
                     />
                     Só com estoque
                 </label>
 
                 {modo === "pedido" ? (
                     <>
-                        <span className="ml-auto text-xs text-[#5A6469]">
+                        <span className="ml-auto text-xs text-[#616161]">
                             Total{" "}
-                            <span className="num text-sm font-bold text-[#1E2428]">
+                            <span className="num text-sm font-bold text-[#303030]">
                                 {formatarMoeda(total)}
                             </span>
                         </span>
@@ -586,7 +586,7 @@ export default function CaixaDeProdutos({
                     </>
                 ) : (
                     <>
-                        <span className="num ml-auto text-xs text-[#8C969B]">
+                        <span className="num ml-auto text-xs text-[#8A8A8A]">
                             {escolhidas.length > 0 && `${escolhidas.length} marcado${escolhidas.length > 1 ? "s" : ""}`}
                         </span>
 

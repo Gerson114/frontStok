@@ -35,7 +35,7 @@ export default function ErroProdutos({
             }
             rodape={
                 error.digest ? (
-                    <p className="text-xs text-[#8C969B]">
+                    <p className="text-xs text-[#8A8A8A]">
                         Código do erro: <span className="num font-bold">{error.digest}</span>
                     </p>
                 ) : undefined

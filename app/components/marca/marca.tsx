@@ -44,7 +44,7 @@ export function Simbolo({ className = "w-6", ...resto }: SVGProps<SVGSVGElement>
  */
 export function Marca({ className = "h-9 w-9" }: { className?: string }) {
     return (
-        <span className={`flex shrink-0 items-center justify-center rounded-lg bg-[#0086FF] text-white ${className}`}>
+        <span className={`flex shrink-0 items-center justify-center rounded-lg bg-[#005BD3] text-white ${className}`}>
             <Simbolo className="w-[68%]" />
         </span>
     )

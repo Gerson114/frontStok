@@ -23,6 +23,7 @@ import {
     FiRepeat,
 } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
+import { Pagina, Estado } from "@/app/components/pagina/pagina"
 
 /**
  * O estoque como grade de operação, no padrão de um WMS (a referência é o
@@ -90,12 +91,12 @@ interface ExclusaoAlvo {
  * apagaria o que importa — o endereço e a situação da peça.
  */
 const CORES_TIPO: Record<string, string> = {
-    picking: "bg-[#E6F3FF] text-[#0075E2]",
-    pulmao: "bg-[#F0F3F4] text-[#1E2428]",
-    recebimento: "bg-[#F0F3F4] text-[#5A6469]",
-    expedicao: "bg-[#F0F3F4] text-[#5A6469]",
-    quarentena: "bg-[#FFF6E0] text-[#8A6C1B]",
-    avaria: "bg-[#FDECEA] text-[#D4351C]",
+    picking: "bg-[#EAF4FF] text-[#00369B]",
+    pulmao: "bg-[#F1F1F1] text-[#303030]",
+    recebimento: "bg-[#F1F1F1] text-[#616161]",
+    expedicao: "bg-[#F1F1F1] text-[#616161]",
+    quarentena: "bg-[#FFF1E3] text-[#5E4200]",
+    avaria: "bg-[#FEE9E8] text-[#8E1F0B]",
 }
 
 export default function Estoque() {
@@ -542,43 +543,21 @@ export default function Estoque() {
 
         return (
 
-            <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
+            <Pagina titulo="Estoque">
 
-                <div className="mx-auto max-w-7xl">
-
-                    <div className="h-9 w-64 animate-pulse rounded-lg bg-[#D3DADD]" />
-
-                    <div className="mt-3 h-4 w-80 animate-pulse rounded bg-[#D3DADD]" />
-
-                    <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
-
-                        {[1, 2, 3, 4].map(item => (
-
-                            <div
-                                key={item}
-                                className="card h-28 animate-pulse"
-                            />
-
-                        ))}
-
-                    </div>
-
-                    <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-
-                        {[1, 2, 3, 4, 5, 6].map(item => (
-
-                            <div
-                                key={item}
-                                className="card h-48 animate-pulse"
-                            />
-
-                        ))}
-
-                    </div>
-
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
+                    {[1, 2, 3, 4].map(item => (
+                        <div key={item} className="card h-28 animate-pulse" />
+                    ))}
                 </div>
 
-            </main>
+                <div className="space-y-3">
+                    {[1, 2, 3, 4].map(item => (
+                        <div key={item} className="card h-16 animate-pulse" />
+                    ))}
+                </div>
+
+            </Pagina>
 
         )
     }
@@ -592,32 +571,21 @@ export default function Estoque() {
 
         return (
 
-            <main className="min-h-screen bg-[#F0F3F4] p-8 md:ml-64">
+            <Pagina titulo="Estoque">
 
-                <div className="card mx-auto max-w-xl p-10 text-center">
+                <Estado
+                    Icone={FiAlertTriangle}
+                    tom="erro"
+                    titulo="Erro ao carregar o estoque"
+                    texto={erro}
+                    acao={
+                        <button onClick={() => window.location.reload()} className="btn btn-primario">
+                            Tentar novamente
+                        </button>
+                    }
+                />
 
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FDECEA] text-[#D4351C]">
-                        <FiAlertTriangle className="w-7" aria-hidden />
-                    </div>
-
-                    <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
-                        Erro ao carregar estoque
-                    </h1>
-
-                    <p className="mt-2 text-[#5A6469]">
-                        {erro}
-                    </p>
-
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="btn btn-primario mt-6"
-                    >
-                        Tentar novamente
-                    </button>
-
-                </div>
-
-            </main>
+            </Pagina>
 
         )
     }
@@ -631,547 +599,492 @@ export default function Estoque() {
 
         <>
 
-        <main className="min-h-screen bg-[#F0F3F4] text-[#1E2428] md:ml-64">
+        <Pagina
+            titulo="Estoque"
+            descricao="Mapa dos endereços do estoque, peça por peça, na ordem em que se anda pelo corredor. Transfira ou marque avaria individualmente."
+            acoes={
+                <Link href="/page/avarias" className="btn btn-neutro">
+                    <FiAlertTriangle className="w-4" aria-hidden />
+                    <span>Ver avarias</span>
+                </Link>
+            }
+        >
+
 
             {/* ==========================
-                HEADER
+                RESUMO
             ========================== */}
 
-            <header className="sticky top-16 z-30 border-b border-[#D3DADD] bg-[#F0F3F4]/95 backdrop-blur md:top-0">
+            <div className="card grid grid-cols-2 divide-[#EBEBEB] md:grid-cols-4 md:divide-x">
 
-                <div className="flex min-h-20 items-center justify-between gap-6 px-6 md:px-10">
+                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
 
-                    <div>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
+                        <FiBox className="w-4" aria-hidden />
+                    </span>
 
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8C969B]">
-                            Painel administrativo
-                        </p>
-
-                        <h1 className="font-display text-2xl text-[#1E2428]">
-                            Estoque
-                        </h1>
-
-                    </div>
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Peças em estoque</span>
+                        <span className="num block text-xl font-extrabold text-[#303030]">{totalPecas}</span>
+                    </span>
 
                 </div>
 
-            </header>
+                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
+
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
+                        <FiGrid className="w-4" aria-hidden />
+                    </span>
+
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Endereços ocupados</span>
+                        <span className="num block text-xl font-extrabold text-[#303030]">{locaisOcupados}</span>
+                    </span>
+
+                </div>
+
+                <div className="flex items-center gap-3 p-4">
+
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
+                        <FiBookmark className="w-4" aria-hidden />
+                    </span>
+
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Reservadas</span>
+                        <span className="num block text-xl font-extrabold text-[#303030]">{totalReservadas}</span>
+                    </span>
+
+                </div>
+
+                <div className="flex items-center gap-3 p-4">
+
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                        totalSemLocal > 0 ? "bg-[#FFF1E3] text-[#5E4200]" : "bg-[#F1F1F1] text-[#616161]"
+                    }`}>
+                        <FiAlertTriangle className="w-4" aria-hidden />
+                    </span>
+
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Sem local</span>
+                        <span className={`num block text-xl font-extrabold ${
+                            totalSemLocal > 0 ? "text-[#5E4200]" : "text-[#303030]"
+                        }`}>
+                            {totalSemLocal}
+                        </span>
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            {/* Peça que chegou e ninguém guardou é trabalho parado, e
+                por isso o aviso fica acima da grade em vez de virar
+                mais uma linha dentro dela. O botão leva ao recorte,
+                que é o que a pessoa vai fazer em seguida. */}
+            {totalSemLocal > 0 && recorte !== "sem_local" && (
+
+                <div className="mt-6 flex flex-col gap-3 rounded-lg border-l-4 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+
+                    <p className="flex items-center gap-2.5 text-sm text-[#616161]">
+                        <FiAlertTriangle className="w-4 shrink-0 text-[#5E4200]" aria-hidden />
+                        <span>
+                            <span className="num font-bold text-[#303030]">{totalSemLocal}</span>{" "}
+                            peça(s) chegaram e ainda não foram guardadas em nenhum endereço.
+                        </span>
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() => aoMudarRecorte("sem_local")}
+                        className="btn btn-neutro shrink-0 text-sm"
+                    >
+                        Ver só essas
+                    </button>
+
+                </div>
+
+            )}
 
 
             {/* ==========================
-                CONTEÚDO
+                BARRA DA GRADE
             ========================== */}
 
-            <div className="p-6 md:p-10">
+            <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-                <div className="mx-auto max-w-7xl">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar peças">
 
-                    {/* INTRODUÇÃO */}
+                    {recortes.map(({ chave, nome, total }) => {
 
-                    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        const ativo = chave === recorte
 
-                        <div>
+                        return (
+                            <button
+                                key={chave}
+                                type="button"
+                                aria-pressed={ativo}
+                                onClick={() => aoMudarRecorte(chave)}
+                                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
+                                    ativo
+                                        ? "border-[#005BD3] bg-[#EAF4FF] text-[#00369B]"
+                                        : "border-[#E1E1E1] bg-white text-[#616161] hover:border-[#8A8A8A] hover:text-[#303030]"
+                                }`}
+                            >
+                                {nome}
 
-                            <h2 className="font-display text-3xl tracking-tight text-[#1E2428] sm:text-4xl">
-                                Onde cada peça está guardada
-                            </h2>
+                                <span className={`num text-xs font-extrabold ${ativo ? "text-[#005BD3]" : "text-[#8A8A8A]"}`}>
+                                    {total}
+                                </span>
+                            </button>
+                        )
+                    })}
 
-                            <p className="mt-2 max-w-md text-[#5A6469]">
-                                Mapa dos endereços do estoque, peça por peça, na ordem em que se anda pelo
-                                corredor. Transfira ou marque avaria individualmente.
-                            </p>
+                </div>
 
-                        </div>
+                <div className="relative w-full lg:w-80">
 
-                        <Link
-                            href="/page/avarias"
-                            className="btn btn-neutro shrink-0"
+                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+
+                    <input
+                        type="text"
+                        value={busca}
+                        onChange={(e) => aoMudarBusca(e.target.value)}
+                        placeholder="Buscar por produto, código ou endereço"
+                        className="field"
+                        style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
+                    />
+
+                    {busca && (
+                        <button
+                            type="button"
+                            onClick={() => aoMudarBusca("")}
+                            aria-label="Limpar busca"
+                            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                         >
-                            <FiAlertTriangle className="w-4" aria-hidden />
-                            <span>Ver avarias</span>
-                        </Link>
-
-                    </div>
-
-
-                    {/* ==========================
-                        RESUMO
-                    ========================== */}
-
-                    <div className="card grid grid-cols-2 divide-[#E4E9EB] md:grid-cols-4 md:divide-x">
-
-                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
-
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                <FiBox className="w-4" aria-hidden />
-                            </span>
-
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Peças em estoque</span>
-                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalPecas}</span>
-                            </span>
-
-                        </div>
-
-                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
-
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                <FiGrid className="w-4" aria-hidden />
-                            </span>
-
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Endereços ocupados</span>
-                                <span className="num block text-xl font-extrabold text-[#1E2428]">{locaisOcupados}</span>
-                            </span>
-
-                        </div>
-
-                        <div className="flex items-center gap-3 p-4">
-
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                <FiBookmark className="w-4" aria-hidden />
-                            </span>
-
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Reservadas</span>
-                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalReservadas}</span>
-                            </span>
-
-                        </div>
-
-                        <div className="flex items-center gap-3 p-4">
-
-                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                totalSemLocal > 0 ? "bg-[#FFF6E0] text-[#8A6C1B]" : "bg-[#F0F3F4] text-[#5A6469]"
-                            }`}>
-                                <FiAlertTriangle className="w-4" aria-hidden />
-                            </span>
-
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Sem local</span>
-                                <span className={`num block text-xl font-extrabold ${
-                                    totalSemLocal > 0 ? "text-[#8A6C1B]" : "text-[#1E2428]"
-                                }`}>
-                                    {totalSemLocal}
-                                </span>
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    {/* Peça que chegou e ninguém guardou é trabalho parado, e
-                        por isso o aviso fica acima da grade em vez de virar
-                        mais uma linha dentro dela. O botão leva ao recorte,
-                        que é o que a pessoa vai fazer em seguida. */}
-                    {totalSemLocal > 0 && recorte !== "sem_local" && (
-
-                        <div className="mt-6 flex flex-col gap-3 rounded-lg border-l-4 border-[#FFB800] bg-[#FFF6E0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-
-                            <p className="flex items-center gap-2.5 text-sm text-[#5A6469]">
-                                <FiAlertTriangle className="w-4 shrink-0 text-[#8A6C1B]" aria-hidden />
-                                <span>
-                                    <span className="num font-bold text-[#1E2428]">{totalSemLocal}</span>{" "}
-                                    peça(s) chegaram e ainda não foram guardadas em nenhum endereço.
-                                </span>
-                            </p>
-
-                            <button
-                                type="button"
-                                onClick={() => aoMudarRecorte("sem_local")}
-                                className="btn btn-neutro shrink-0 text-sm"
-                            >
-                                Ver só essas
-                            </button>
-
-                        </div>
-
-                    )}
-
-
-                    {/* ==========================
-                        BARRA DA GRADE
-                    ========================== */}
-
-                    <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-                        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar peças">
-
-                            {recortes.map(({ chave, nome, total }) => {
-
-                                const ativo = chave === recorte
-
-                                return (
-                                    <button
-                                        key={chave}
-                                        type="button"
-                                        aria-pressed={ativo}
-                                        onClick={() => aoMudarRecorte(chave)}
-                                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
-                                            ativo
-                                                ? "border-[#0086FF] bg-[#E6F3FF] text-[#0075E2]"
-                                                : "border-[#D3DADD] bg-white text-[#5A6469] hover:border-[#8C969B] hover:text-[#1E2428]"
-                                        }`}
-                                    >
-                                        {nome}
-
-                                        <span className={`num text-xs font-extrabold ${ativo ? "text-[#0086FF]" : "text-[#8C969B]"}`}>
-                                            {total}
-                                        </span>
-                                    </button>
-                                )
-                            })}
-
-                        </div>
-
-                        <div className="relative w-full lg:w-80">
-
-                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
-
-                            <input
-                                type="text"
-                                value={busca}
-                                onChange={(e) => aoMudarBusca(e.target.value)}
-                                placeholder="Buscar por produto, código ou endereço"
-                                className="field"
-                                style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
-                            />
-
-                            {busca && (
-                                <button
-                                    type="button"
-                                    onClick={() => aoMudarBusca("")}
-                                    aria-label="Limpar busca"
-                                    className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
-                                >
-                                    <FiX className="w-4" aria-hidden />
-                                </button>
-                            )}
-
-                        </div>
-
-                    </div>
-
-
-                    {/* ==========================
-                        A GRADE
-                    ========================== */}
-
-                    {totalPecas === 0 ? (
-
-                        <div className="mt-6 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
-
-                            <FiMapPin className="mx-auto w-10 text-[#8C969B]" aria-hidden />
-
-                            <h3 className="font-display mt-5 text-xl text-[#1E2428]">
-                                Nenhuma peça guardada ainda
-                            </h3>
-
-                            <p className="mt-2 text-sm text-[#5A6469]">
-                                {enderecos.length === 0
-                                    ? "Cadastre os endereços do seu estoque: é por eles que o sistema decide sozinho onde guardar o que entra."
-                                    : "Cadastre um produto ou dê entrada numa remessa — o sistema escolhe o endereço."}
-                            </p>
-
-                            <div className="mt-6 flex flex-wrap justify-center gap-3">
-
-                                {enderecos.length === 0 ? (
-                                    <Link href="/page/estoque/enderecos" className="btn btn-primario">
-                                        <FiMapPin className="w-4" aria-hidden />
-                                        <span>Cadastrar endereços</span>
-                                    </Link>
-                                ) : (
-                                    <Link href="/page/produto" className="btn btn-primario">
-                                        <FiPlus className="w-4" aria-hidden />
-                                        <span>Cadastrar produto</span>
-                                    </Link>
-                                )}
-
-                            </div>
-
-                        </div>
-
-                    ) : linhasFiltradas.length === 0 ? (
-
-                        <div className="mt-6 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
-
-                            <FiSearch className="mx-auto w-10 text-[#8C969B]" aria-hidden />
-
-                            <h3 className="font-display mt-5 text-xl text-[#1E2428]">
-                                Nenhuma peça corresponde ao filtro
-                            </h3>
-
-                            <button
-                                type="button"
-                                onClick={() => { aoMudarBusca(""); aoMudarRecorte("todas") }}
-                                className="btn btn-neutro mt-6"
-                            >
-                                Limpar filtros
-                            </button>
-
-                        </div>
-
-                    ) : (
-
-                        <div className="card mt-6 overflow-hidden">
-
-                            <div className="overflow-x-auto">
-
-                                <table className="w-full min-w-[56rem] border-collapse text-sm">
-
-                                    <thead>
-                                        <tr className="border-b border-[#D3DADD] bg-[#F7F9FA] text-left">
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho
-                                                    ativa={ordem.coluna === "endereco"}
-                                                    desc={ordem.desc}
-                                                    aoClicar={() => ordenarPor("endereco")}
-                                                >
-                                                    Endereço
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469] xl:table-cell">
-                                                Lugar
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho
-                                                    ativa={ordem.coluna === "produto"}
-                                                    desc={ordem.desc}
-                                                    aoClicar={() => ordenarPor("produto")}
-                                                >
-                                                    Produto
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho
-                                                    ativa={ordem.coluna === "peca"}
-                                                    desc={ordem.desc}
-                                                    aoClicar={() => ordenarPor("peca")}
-                                                >
-                                                    Peça
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="hidden px-4 py-2.5 lg:table-cell">
-                                                <Cabecalho
-                                                    ativa={ordem.coluna === "tipo"}
-                                                    desc={ordem.desc}
-                                                    aoClicar={() => ordenarPor("tipo")}
-                                                >
-                                                    Tipo
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                                                Situação
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                                                Ações
-                                            </th>
-
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-
-                                        {linhasDaPagina.map((linha) => {
-
-                                            const { unidade, produto, endereco } = linha
-                                            const tipo = endereco?.tipo ?? ""
-
-                                            return (
-
-                                                <tr
-                                                    key={unidade.id}
-                                                    className="border-b border-[#E4E9EB] transition-colors last:border-b-0 hover:bg-[#F7F9FA]"
-                                                >
-
-                                                    {/* ENDEREÇO — a primeira
-                                                        coluna porque é a
-                                                        primeira pergunta: para
-                                                        onde eu ando. */}
-                                                    <td className="px-4 py-2.5">
-                                                        {linha.codigo ? (
-                                                            <span className="font-mono text-xs font-bold text-[#1E2428]">
-                                                                {linha.codigo}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="tag tag-warning">
-                                                                <FiAlertTriangle className="w-3" aria-hidden />
-                                                                Sem local
-                                                            </span>
-                                                        )}
-                                                    </td>
-
-                                                    {/* LUGAR */}
-                                                    <td className="hidden max-w-[14rem] truncate px-4 py-2.5 text-xs text-[#5A6469] xl:table-cell">
-                                                        {linha.codigo ? linha.nome : SEM_LUGAR}
-                                                    </td>
-
-                                                    {/* PRODUTO */}
-                                                    <td className="px-4 py-2.5">
-
-                                                        <div className="flex items-center gap-3">
-
-                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F0F3F4]">
-                                                                {produto?.imagem_url ? (
-                                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                                    <img
-                                                                        src={urlDaImagem(produto.imagem_url)}
-                                                                        alt=""
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <FiBox className="w-4 text-[#8C969B]" aria-hidden />
-                                                                )}
-                                                            </div>
-
-                                                            <div className="min-w-0">
-
-                                                                <p className="truncate font-bold text-[#1E2428]">
-                                                                    {produto?.nome ?? `Produto #${unidade.produto_id}`}
-                                                                </p>
-
-                                                                {produto?.variacao && (
-                                                                    <p className="truncate text-xs text-[#5A6469]">
-                                                                        {produto.variacao_rotulo || "Variação"}: {produto.variacao}
-                                                                    </p>
-                                                                )}
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </td>
-
-                                                    {/* PEÇA */}
-                                                    <td className="px-4 py-2.5 font-mono text-xs text-[#5A6469]">
-                                                        {identificarPeca(produto?.codigo, unidade.sequencia)}
-                                                    </td>
-
-                                                    {/* TIPO DO LUGAR */}
-                                                    <td className="hidden px-4 py-2.5 lg:table-cell">
-                                                        {endereco ? (
-                                                            <span className={`tag ${CORES_TIPO[tipo] ?? "bg-[#F0F3F4] text-[#5A6469]"}`}>
-                                                                {endereco.tipo_nome}
-                                                            </span>
-                                                        ) : linha.codigo ? (
-                                                            <span className="tag tag-neutral">fora do cadastro</span>
-                                                        ) : (
-                                                            <span className="text-[#8C969B]">—</span>
-                                                        )}
-                                                    </td>
-
-                                                    {/* SITUAÇÃO */}
-                                                    <td className="px-4 py-2.5">
-
-                                                        <div className="flex flex-wrap items-center gap-1.5">
-
-                                                            {unidade.reservada ? (
-                                                                <span className="tag tag-info">
-                                                                    <FiBookmark className="w-3" aria-hidden />
-                                                                    Reservada
-                                                                </span>
-                                                            ) : (
-                                                                <span className="tag tag-success">Livre</span>
-                                                            )}
-
-                                                            {endereco?.bloqueado && (
-                                                                <span className="tag tag-warning">
-                                                                    <FiLock className="w-3" aria-hidden />
-                                                                    Bloqueado
-                                                                </span>
-                                                            )}
-
-                                                        </div>
-
-                                                    </td>
-
-                                                    {/* AÇÕES */}
-                                                    <td className="px-4 py-2.5">
-
-                                                        <div className="flex items-center justify-end gap-1">
-
-                                                            <button
-                                                                type="button"
-                                                                title="Transferir de lugar"
-                                                                aria-label={`Transferir ${produto?.nome ?? "peça"}`}
-                                                                onClick={() => abrirTransferencia(linha)}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4] hover:text-[#0075E2]"
-                                                            >
-                                                                <FiRepeat className="w-4" aria-hidden />
-                                                            </button>
-
-                                                            <button
-                                                                type="button"
-                                                                title="Marcar avaria"
-                                                                aria-label={`Avariar ${produto?.nome ?? "peça"}`}
-                                                                onClick={() => abrirAvaria(linha)}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#FDECEA] hover:text-[#D4351C]"
-                                                            >
-                                                                <FiAlertTriangle className="w-4" aria-hidden />
-                                                            </button>
-
-                                                            <button
-                                                                type="button"
-                                                                title="Excluir peça"
-                                                                aria-label={`Excluir ${produto?.nome ?? "peça"}`}
-                                                                onClick={() => abrirExclusao(linha)}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#FDECEA] hover:text-[#D4351C]"
-                                                            >
-                                                                <FiTrash2 className="w-4" aria-hidden />
-                                                            </button>
-
-                                                        </div>
-
-                                                    </td>
-
-                                                </tr>
-                                            )
-                                        })}
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-                            <div className="flex flex-col gap-3 border-t border-[#D3DADD] bg-[#F7F9FA] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-
-                                <p className="text-xs text-[#5A6469]">
-                                    Mostrando{" "}
-                                    <span className="num font-bold text-[#1E2428]">
-                                        {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
-                                    </span>{" "}
-                                    de <span className="num font-bold text-[#1E2428]">{linhasFiltradas.length}</span>
-                                    {linhasFiltradas.length !== totalPecas && (
-                                        <> · <span className="num">{totalPecas}</span> no total</>
-                                    )}
-                                </p>
-
-                                <Pagination
-                                    paginaAtual={paginaAtualCorrigida}
-                                    totalPaginas={totalPaginas}
-                                    aoMudarPagina={setPaginaAtual}
-                                />
-
-                            </div>
-
-                        </div>
-
+                            <FiX className="w-4" aria-hidden />
+                        </button>
                     )}
 
                 </div>
 
             </div>
 
-        </main>
+
+            {/* ==========================
+                A GRADE
+            ========================== */}
+
+            {totalPecas === 0 ? (
+
+                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
+
+                    <FiMapPin className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
+
+                    <h3 className="font-display mt-5 text-xl text-[#303030]">
+                        Nenhuma peça guardada ainda
+                    </h3>
+
+                    <p className="mt-2 text-sm text-[#616161]">
+                        {enderecos.length === 0
+                            ? "Cadastre os endereços do seu estoque: é por eles que o sistema decide sozinho onde guardar o que entra."
+                            : "Cadastre um produto ou dê entrada numa remessa — o sistema escolhe o endereço."}
+                    </p>
+
+                    <div className="mt-6 flex flex-wrap justify-center gap-3">
+
+                        {enderecos.length === 0 ? (
+                            <Link href="/page/estoque/enderecos" className="btn btn-primario">
+                                <FiMapPin className="w-4" aria-hidden />
+                                <span>Cadastrar endereços</span>
+                            </Link>
+                        ) : (
+                            <Link href="/page/produto" className="btn btn-primario">
+                                <FiPlus className="w-4" aria-hidden />
+                                <span>Cadastrar produto</span>
+                            </Link>
+                        )}
+
+                    </div>
+
+                </div>
+
+            ) : linhasFiltradas.length === 0 ? (
+
+                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
+
+                    <FiSearch className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
+
+                    <h3 className="font-display mt-5 text-xl text-[#303030]">
+                        Nenhuma peça corresponde ao filtro
+                    </h3>
+
+                    <button
+                        type="button"
+                        onClick={() => { aoMudarBusca(""); aoMudarRecorte("todas") }}
+                        className="btn btn-neutro mt-6"
+                    >
+                        Limpar filtros
+                    </button>
+
+                </div>
+
+            ) : (
+
+                <div className="card mt-6 overflow-hidden">
+
+                    <div className="overflow-x-auto">
+
+                        <table className="w-full min-w-[56rem] border-collapse text-sm">
+
+                            <thead>
+                                <tr className="border-b border-[#E1E1E1] bg-[#F7F7F7] text-left">
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho
+                                            ativa={ordem.coluna === "endereco"}
+                                            desc={ordem.desc}
+                                            aoClicar={() => ordenarPor("endereco")}
+                                        >
+                                            Endereço
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161] xl:table-cell">
+                                        Lugar
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho
+                                            ativa={ordem.coluna === "produto"}
+                                            desc={ordem.desc}
+                                            aoClicar={() => ordenarPor("produto")}
+                                        >
+                                            Produto
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho
+                                            ativa={ordem.coluna === "peca"}
+                                            desc={ordem.desc}
+                                            aoClicar={() => ordenarPor("peca")}
+                                        >
+                                            Peça
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="hidden px-4 py-2.5 lg:table-cell">
+                                        <Cabecalho
+                                            ativa={ordem.coluna === "tipo"}
+                                            desc={ordem.desc}
+                                            aoClicar={() => ordenarPor("tipo")}
+                                        >
+                                            Tipo
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                        Situação
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                        Ações
+                                    </th>
+
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {linhasDaPagina.map((linha) => {
+
+                                    const { unidade, produto, endereco } = linha
+                                    const tipo = endereco?.tipo ?? ""
+
+                                    return (
+
+                                        <tr
+                                            key={unidade.id}
+                                            className="border-b border-[#EBEBEB] transition-colors last:border-b-0 hover:bg-[#F7F7F7]"
+                                        >
+
+                                            {/* ENDEREÇO — a primeira
+                                                coluna porque é a
+                                                primeira pergunta: para
+                                                onde eu ando. */}
+                                            <td className="px-4 py-2.5">
+                                                {linha.codigo ? (
+                                                    <span className="font-mono text-xs font-bold text-[#303030]">
+                                                        {linha.codigo}
+                                                    </span>
+                                                ) : (
+                                                    <span className="tag tag-warning">
+                                                        <FiAlertTriangle className="w-3" aria-hidden />
+                                                        Sem local
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            {/* LUGAR */}
+                                            <td className="hidden max-w-[14rem] truncate px-4 py-2.5 text-xs text-[#616161] xl:table-cell">
+                                                {linha.codigo ? linha.nome : SEM_LUGAR}
+                                            </td>
+
+                                            {/* PRODUTO */}
+                                            <td className="px-4 py-2.5">
+
+                                                <div className="flex items-center gap-3">
+
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F1F1F1]">
+                                                        {produto?.imagem_url ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={urlDaImagem(produto.imagem_url)}
+                                                                alt=""
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <FiBox className="w-4 text-[#8A8A8A]" aria-hidden />
+                                                        )}
+                                                    </div>
+
+                                                    <div className="min-w-0">
+
+                                                        <p className="truncate font-bold text-[#303030]">
+                                                            {produto?.nome ?? `Produto #${unidade.produto_id}`}
+                                                        </p>
+
+                                                        {produto?.variacao && (
+                                                            <p className="truncate text-xs text-[#616161]">
+                                                                {produto.variacao_rotulo || "Variação"}: {produto.variacao}
+                                                            </p>
+                                                        )}
+
+                                                    </div>
+
+                                                </div>
+
+                                            </td>
+
+                                            {/* PEÇA */}
+                                            <td className="px-4 py-2.5 font-mono text-xs text-[#616161]">
+                                                {identificarPeca(produto?.codigo, unidade.sequencia)}
+                                            </td>
+
+                                            {/* TIPO DO LUGAR */}
+                                            <td className="hidden px-4 py-2.5 lg:table-cell">
+                                                {endereco ? (
+                                                    <span className={`tag ${CORES_TIPO[tipo] ?? "bg-[#F1F1F1] text-[#616161]"}`}>
+                                                        {endereco.tipo_nome}
+                                                    </span>
+                                                ) : linha.codigo ? (
+                                                    <span className="tag tag-neutral">fora do cadastro</span>
+                                                ) : (
+                                                    <span className="text-[#8A8A8A]">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* SITUAÇÃO */}
+                                            <td className="px-4 py-2.5">
+
+                                                <div className="flex flex-wrap items-center gap-1.5">
+
+                                                    {unidade.reservada ? (
+                                                        <span className="tag tag-info">
+                                                            <FiBookmark className="w-3" aria-hidden />
+                                                            Reservada
+                                                        </span>
+                                                    ) : (
+                                                        <span className="tag tag-success">Livre</span>
+                                                    )}
+
+                                                    {endereco?.bloqueado && (
+                                                        <span className="tag tag-warning">
+                                                            <FiLock className="w-3" aria-hidden />
+                                                            Bloqueado
+                                                        </span>
+                                                    )}
+
+                                                </div>
+
+                                            </td>
+
+                                            {/* AÇÕES */}
+                                            <td className="px-4 py-2.5">
+
+                                                <div className="flex items-center justify-end gap-1">
+
+                                                    <button
+                                                        type="button"
+                                                        title="Transferir de lugar"
+                                                        aria-label={`Transferir ${produto?.nome ?? "peça"}`}
+                                                        onClick={() => abrirTransferencia(linha)}
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#00369B]"
+                                                    >
+                                                        <FiRepeat className="w-4" aria-hidden />
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        title="Marcar avaria"
+                                                        aria-label={`Avariar ${produto?.nome ?? "peça"}`}
+                                                        onClick={() => abrirAvaria(linha)}
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                    >
+                                                        <FiAlertTriangle className="w-4" aria-hidden />
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        title="Excluir peça"
+                                                        aria-label={`Excluir ${produto?.nome ?? "peça"}`}
+                                                        onClick={() => abrirExclusao(linha)}
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                    >
+                                                        <FiTrash2 className="w-4" aria-hidden />
+                                                    </button>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+                                    )
+                                })}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <div className="flex flex-col gap-3 border-t border-[#E1E1E1] bg-[#F7F7F7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+
+                        <p className="text-xs text-[#616161]">
+                            Mostrando{" "}
+                            <span className="num font-bold text-[#303030]">
+                                {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
+                            </span>{" "}
+                            de <span className="num font-bold text-[#303030]">{linhasFiltradas.length}</span>
+                            {linhasFiltradas.length !== totalPecas && (
+                                <> · <span className="num">{totalPecas}</span> no total</>
+                            )}
+                        </p>
+
+                        <Pagination
+                            paginaAtual={paginaAtualCorrigida}
+                            totalPaginas={totalPaginas}
+                            aoMudarPagina={setPaginaAtual}
+                        />
+
+                    </div>
+
+                </div>
+
+            )}
+
+        </Pagina>
 
 
         {/* ==========================
@@ -1185,7 +1098,7 @@ export default function Estoque() {
                 onClick={fecharTransferencia}
             >
 
-                <div className="absolute inset-0 bg-[#1E2428]/50" />
+                <div className="absolute inset-0 bg-[#303030]/50" />
 
                 <div
                     onClick={(e) => e.stopPropagation()}
@@ -1196,26 +1109,26 @@ export default function Estoque() {
                         type="button"
                         onClick={fecharTransferencia}
                         aria-label="Fechar"
-                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
 
                     <div className="flex items-center gap-2 pr-8">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E6F3FF] text-[#0086FF]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#005BD3]">
                             <FiRepeat className="w-3.5" aria-hidden />
                         </span>
-                        <h2 className="font-display truncate text-lg text-[#1E2428]">
+                        <h2 className="font-display truncate text-lg text-[#303030]">
                             Transferir {alvo.produtoNome}
                         </h2>
                     </div>
 
-                    <p className="mt-2 font-mono text-xs text-[#5A6469]">
+                    <p className="mt-2 font-mono text-xs text-[#616161]">
                         {alvo.codigo}
                     </p>
 
-                    <p className="mt-2 text-sm text-[#5A6469]">
-                        De <span className="num font-medium text-[#1E2428]">
+                    <p className="mt-2 text-sm text-[#616161]">
+                        De <span className="num font-medium text-[#303030]">
                             {alvo.localAtual}
                         </span>
                     </p>
@@ -1228,7 +1141,7 @@ export default function Estoque() {
 
                         {enderecosDisponiveis.length === 0 ? (
 
-                            <p className="rounded-lg bg-[#FFF6E0] px-4 py-3 text-sm text-[#8A6C1B]">
+                            <p className="rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
                                 Não há endereço liberado para receber esta peça.{" "}
                                 <Link href="/page/estoque/enderecos" className="font-bold underline">
                                     Cadastre um endereço
@@ -1258,7 +1171,7 @@ export default function Estoque() {
 
                         )}
 
-                        <p className="text-xs text-[#5A6469]">
+                        <p className="text-xs text-[#616161]">
                             Só aparecem os endereços liberados. Se o escolhido não couber mais a
                             peça, quem avisa é o servidor, que tem a ocupação na frente.
                         </p>
@@ -1266,7 +1179,7 @@ export default function Estoque() {
                     </div>
 
                     {erroTransferencia && (
-                        <div className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                        <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
                             {erroTransferencia}
                         </div>
                     )}
@@ -1311,7 +1224,7 @@ export default function Estoque() {
                 onClick={fecharAvaria}
             >
 
-                <div className="absolute inset-0 bg-[#1E2428]/50" />
+                <div className="absolute inset-0 bg-[#303030]/50" />
 
                 <div
                     onClick={(e) => e.stopPropagation()}
@@ -1322,34 +1235,34 @@ export default function Estoque() {
                         type="button"
                         onClick={fecharAvaria}
                         aria-label="Fechar"
-                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
 
                     <div className="flex items-center gap-2 pr-8">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FDECEA] text-[#D4351C]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FEE9E8] text-[#8E1F0B]">
                             <FiAlertTriangle className="w-3.5" aria-hidden />
                         </span>
-                        <h2 className="font-display truncate text-lg text-[#1E2428]">
+                        <h2 className="font-display truncate text-lg text-[#303030]">
                             Registrar avaria
                         </h2>
                     </div>
 
-                    <p className="mt-3 text-sm text-[#1E2428]">
+                    <p className="mt-3 text-sm text-[#303030]">
                         {alvoAvaria.produtoNome}
                     </p>
 
-                    <p className="mt-1 font-mono text-xs text-[#5A6469]">
+                    <p className="mt-1 font-mono text-xs text-[#616161]">
                         {alvoAvaria.codigo}
                     </p>
 
-                    <p className="mt-3 text-sm text-[#5A6469]">
+                    <p className="mt-3 text-sm text-[#616161]">
                         Essa unidade sai do estoque vendável. Dá pra restaurar depois em &ldquo;Ver avarias&rdquo; se for engano.
                     </p>
 
                     {erroAvaria && (
-                        <div className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                        <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
                             {erroAvaria}
                         </div>
                     )}
@@ -1394,7 +1307,7 @@ export default function Estoque() {
                 onClick={fecharExclusao}
             >
 
-                <div className="absolute inset-0 bg-[#1E2428]/50" />
+                <div className="absolute inset-0 bg-[#303030]/50" />
 
                 <div
                     onClick={(e) => e.stopPropagation()}
@@ -1405,34 +1318,34 @@ export default function Estoque() {
                         type="button"
                         onClick={fecharExclusao}
                         aria-label="Fechar"
-                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
 
                     <div className="flex items-center gap-2 pr-8">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FDECEA] text-[#D4351C]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FEE9E8] text-[#8E1F0B]">
                             <FiTrash2 className="w-3.5" aria-hidden />
                         </span>
-                        <h2 className="font-display truncate text-lg text-[#1E2428]">
+                        <h2 className="font-display truncate text-lg text-[#303030]">
                             Excluir unidade
                         </h2>
                     </div>
 
-                    <p className="mt-3 text-sm text-[#1E2428]">
+                    <p className="mt-3 text-sm text-[#303030]">
                         {alvoExclusao.produtoNome}
                     </p>
 
-                    <p className="mt-1 font-mono text-xs text-[#5A6469]">
+                    <p className="mt-1 font-mono text-xs text-[#616161]">
                         {alvoExclusao.codigo}
                     </p>
 
-                    <p className="mt-3 text-sm text-[#5A6469]">
+                    <p className="mt-3 text-sm text-[#616161]">
                         Essa unidade é removida permanentemente do estoque. Diferente de uma avaria, essa ação não pode ser desfeita.
                     </p>
 
                     {erroExclusao && (
-                        <div className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                        <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
                             {erroExclusao}
                         </div>
                     )}

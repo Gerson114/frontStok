@@ -512,443 +512,437 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                 CONTEÚDO
             ========================== */}
 
-            <div className="p-6 md:p-10">
 
-                <div className="mx-auto max-w-7xl">
+            {/* ==========================
+                RESUMO
+                Faixa fina, e não quatro cartões grandes: o número
+                interessa de relance, no caminho para a grade — que é
+                onde o trabalho acontece.
+            ========================== */}
 
-                    {/* ==========================
-                        RESUMO
-                        Faixa fina, e não quatro cartões grandes: o número
-                        interessa de relance, no caminho para a grade — que é
-                        onde o trabalho acontece.
-                    ========================== */}
+            <div className="card grid grid-cols-2 divide-[#EBEBEB] md:grid-cols-4 md:divide-x">
 
-                    <div className="card grid grid-cols-2 divide-[#E4E9EB] md:grid-cols-4 md:divide-x">
+                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
 
-                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
+                        <FiBox className="w-4" aria-hidden />
+                    </span>
 
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E6F3FF] text-[#0086FF]">
-                                <FiBox className="w-4" aria-hidden />
-                            </span>
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Produtos</span>
+                        <span className="num block text-xl font-extrabold text-[#303030]">{totalProdutos}</span>
+                    </span>
 
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Produtos</span>
-                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalProdutos}</span>
-                            </span>
+                </div>
 
-                        </div>
+                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
 
-                        <div className="flex items-center gap-3 border-b border-[#E4E9EB] p-4 md:border-b-0">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#CDFEE1] text-[#0C5132]">
+                        <FiCheck className="w-4" aria-hidden />
+                    </span>
 
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E0FFEE] text-[#08A022]">
-                                <FiCheck className="w-4" aria-hidden />
-                            </span>
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Peças em estoque</span>
+                        <span className="num block text-xl font-extrabold text-[#303030]">{totalEstoque}</span>
+                    </span>
 
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Peças em estoque</span>
-                                <span className="num block text-xl font-extrabold text-[#1E2428]">{totalEstoque}</span>
-                            </span>
+                </div>
 
-                        </div>
+                <div className="flex items-center gap-3 p-4">
 
-                        <div className="flex items-center gap-3 p-4">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                        semEstoque > 0 ? "bg-[#FEE9E8] text-[#8E1F0B]" : "bg-[#F1F1F1] text-[#616161]"
+                    }`}>
+                        <FiAlertTriangle className="w-4" aria-hidden />
+                    </span>
 
-                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                semEstoque > 0 ? "bg-[#FDECEA] text-[#D4351C]" : "bg-[#F0F3F4] text-[#5A6469]"
-                            }`}>
-                                <FiAlertTriangle className="w-4" aria-hidden />
-                            </span>
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Sem estoque</span>
+                        <span className={`num block text-xl font-extrabold ${
+                            semEstoque > 0 ? "text-[#8E1F0B]" : "text-[#303030]"
+                        }`}>
+                            {semEstoque}
+                        </span>
+                    </span>
 
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Sem estoque</span>
-                                <span className={`num block text-xl font-extrabold ${
-                                    semEstoque > 0 ? "text-[#D4351C]" : "text-[#1E2428]"
-                                }`}>
-                                    {semEstoque}
+                </div>
+
+                <div className="flex items-center gap-3 p-4">
+
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFF1E3] text-[#5E4200]">
+                        <FiDollarSign className="w-4" aria-hidden />
+                    </span>
+
+                    <span className="min-w-0">
+                        <span className="block text-xs text-[#616161]">Valor em estoque</span>
+                        <span className="num block truncate text-xl font-extrabold text-[#005BD3]">
+                            {formatarMoeda(valorEmEstoque)}
+                        </span>
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            {/* ==========================
+                BARRA DA GRADE
+                Filtro à esquerda, busca à direita: a pergunta que se
+                faz por recorte e a que se faz por nome, cada uma no
+                seu lado.
+            ========================== */}
+
+            <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por situação">
+
+                    {filtros.map(({ chave, nome, total }) => {
+
+                        const ativo = chave === situacao
+
+                        return (
+                            <button
+                                key={chave}
+                                type="button"
+                                aria-pressed={ativo}
+                                onClick={() => aoMudarSituacao(chave)}
+                                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
+                                    ativo
+                                        ? "border-[#005BD3] bg-[#EAF4FF] text-[#00369B]"
+                                        : "border-[#E1E1E1] bg-white text-[#616161] hover:border-[#8A8A8A] hover:text-[#303030]"
+                                }`}
+                            >
+                                {nome}
+
+                                <span className={`num text-xs font-extrabold ${ativo ? "text-[#005BD3]" : "text-[#8A8A8A]"}`}>
+                                    {total}
                                 </span>
-                            </span>
-
-                        </div>
-
-                        <div className="flex items-center gap-3 p-4">
-
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFF6E0] text-[#8A6C1B]">
-                                <FiDollarSign className="w-4" aria-hidden />
-                            </span>
-
-                            <span className="min-w-0">
-                                <span className="block text-xs text-[#5A6469]">Valor em estoque</span>
-                                <span className="num block truncate text-xl font-extrabold text-[#0086FF]">
-                                    {formatarMoeda(valorEmEstoque)}
-                                </span>
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    {/* ==========================
-                        BARRA DA GRADE
-                        Filtro à esquerda, busca à direita: a pergunta que se
-                        faz por recorte e a que se faz por nome, cada uma no
-                        seu lado.
-                    ========================== */}
-
-                    <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-                        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por situação">
-
-                            {filtros.map(({ chave, nome, total }) => {
-
-                                const ativo = chave === situacao
-
-                                return (
-                                    <button
-                                        key={chave}
-                                        type="button"
-                                        aria-pressed={ativo}
-                                        onClick={() => aoMudarSituacao(chave)}
-                                        className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
-                                            ativo
-                                                ? "border-[#0086FF] bg-[#E6F3FF] text-[#0075E2]"
-                                                : "border-[#D3DADD] bg-white text-[#5A6469] hover:border-[#8C969B] hover:text-[#1E2428]"
-                                        }`}
-                                    >
-                                        {nome}
-
-                                        <span className={`num text-xs font-extrabold ${ativo ? "text-[#0086FF]" : "text-[#8C969B]"}`}>
-                                            {total}
-                                        </span>
-                                    </button>
-                                )
-                            })}
-
-                        </div>
-
-                        <div className="relative w-full lg:w-80">
-
-                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8C969B]" aria-hidden />
-
-                            <input
-                                type="text"
-                                value={busca}
-                                onChange={(e) => aoMudarBusca(e.target.value)}
-                                placeholder="Buscar por nome, código ou endereço"
-                                className="field"
-                                style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
-                            />
-
-                            {busca && (
-                                <button
-                                    type="button"
-                                    onClick={() => aoMudarBusca("")}
-                                    aria-label="Limpar busca"
-                                    className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
-                                >
-                                    <FiX className="w-4" aria-hidden />
-                                </button>
-                            )}
-
-                        </div>
-
-                    </div>
-
-                    {erroSite && (
-                        <div role="alert" className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
-                            {erroSite}
-                        </div>
-                    )}
-
-
-                    {/* ==========================
-                        A GRADE
-                    ========================== */}
-
-                    {linhasFiltradas.length === 0 ? (
-
-                        <div className="mt-6 rounded-lg border border-dashed border-[#D3DADD] bg-white p-16 text-center">
-
-                            <FiBox className="mx-auto w-10 text-[#8C969B]" aria-hidden />
-
-                            <h3 className="font-display mt-5 text-xl text-[#1E2428]">
-                                Nenhum produto encontrado
-                            </h3>
-
-                            <p className="mt-2 text-sm text-[#5A6469]">
-                                {totalProdutos === 0
-                                    ? "Não existem produtos cadastrados."
-                                    : "Nenhuma peça corresponde ao filtro ou à busca."}
-                            </p>
-
-                            {totalProdutos === 0 ? (
-
-                                <Link href="/page/produto" className="btn btn-primario mt-6">
-                                    <FiPlus className="w-4" aria-hidden />
-                                    <span>Cadastrar produto</span>
-                                </Link>
-
-                            ) : (
-
-                                <button
-                                    type="button"
-                                    onClick={() => { aoMudarBusca(""); aoMudarSituacao("todos") }}
-                                    className="btn btn-neutro mt-6"
-                                >
-                                    Limpar filtros
-                                </button>
-
-                            )}
-
-                        </div>
-
-                    ) : (
-
-                        <div className="card mt-6 overflow-hidden">
-
-                            {/* Em tela estreita a grade rola no eixo X em vez
-                                de virar cartão: coluna que muda de lugar
-                                conforme a largura é coluna que ninguém
-                                aprende onde fica. */}
-                            <div className="overflow-x-auto">
-
-                                <table className="w-full min-w-[52rem] border-collapse text-sm">
-
-                                    <thead>
-                                        <tr className="border-b border-[#D3DADD] bg-[#F7F9FA] text-left">
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho ativa={ordem.coluna === "produto"} desc={ordem.desc} aoClicar={() => ordenarPor("produto")}>
-                                                    Produto
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho ativa={ordem.coluna === "codigo"} desc={ordem.desc} aoClicar={() => ordenarPor("codigo")}>
-                                                    Código
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469] xl:table-cell">
-                                                Categoria
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho ativa={ordem.coluna === "endereco"} desc={ordem.desc} aoClicar={() => ordenarPor("endereco")}>
-                                                    Endereço
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5">
-                                                <Cabecalho ativa={ordem.coluna === "preco"} desc={ordem.desc} aoClicar={() => ordenarPor("preco")} direita>
-                                                    Preço
-                                                </Cabecalho>
-                                            </th>
-
-                                            <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                                                Situação
-                                            </th>
-
-                                            {temSite && (
-                                                <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469] lg:table-cell">
-                                                    Site
-                                                </th>
-                                            )}
-
-                                            <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                                                Ações
-                                            </th>
-
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-
-                                        {linhasDaPagina.map((linha) => {
-
-                                            const { produto, unidade } = linha
-                                            const codigo = codigoDaLinha(linha)
-                                            const emPromocao = Number(produto.preco_promocional ?? 0) > 0
-
-                                            return (
-
-                                                <tr
-                                                    key={unidade ? `unidade-${unidade.id}` : `produto-${produto.id}`}
-                                                    onClick={() => abrirModal(produto)}
-                                                    className="cursor-pointer border-b border-[#E4E9EB] transition-colors last:border-b-0 hover:bg-[#F7F9FA]"
-                                                >
-
-                                                    {/* PRODUTO */}
-                                                    <td className="px-4 py-2.5">
-
-                                                        <div className="flex items-center gap-3">
-
-                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F0F3F4]">
-                                                                {produto.imagem_url ? (
-                                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                                    <img
-                                                                        src={urlDaImagem(produto.imagem_url)}
-                                                                        alt=""
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <FiCamera className="w-4 text-[#8C969B]" aria-hidden />
-                                                                )}
-                                                            </div>
-
-                                                            <div className="min-w-0">
-
-                                                                <p className="truncate font-bold text-[#1E2428]">
-                                                                    {produto.nome}
-                                                                </p>
-
-                                                                {produto.variacao && (
-                                                                    <p className="truncate text-xs text-[#5A6469]">
-                                                                        {produto.variacao_rotulo || "Variação"}: {produto.variacao}
-                                                                    </p>
-                                                                )}
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </td>
-
-                                                    {/* CÓDIGO */}
-                                                    <td className="px-4 py-2.5 font-mono text-xs text-[#5A6469]">
-                                                        {codigo}
-                                                    </td>
-
-                                                    {/* CATEGORIA */}
-                                                    <td className="hidden px-4 py-2.5 text-[#5A6469] xl:table-cell">
-                                                        {produto.categoria || "—"}
-                                                    </td>
-
-                                                    {/* ENDEREÇO */}
-                                                    <td className="px-4 py-2.5">
-                                                        {unidade?.endereco ? (
-                                                            <span className="font-mono text-xs font-bold text-[#1E2428]">
-                                                                {unidade.endereco}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[#8C969B]">—</span>
-                                                        )}
-                                                    </td>
-
-                                                    {/* PREÇO */}
-                                                    <td className="px-4 py-2.5 text-right">
-                                                        <Preco
-                                                            valor={Number(produto.preco_promocional ?? produto.preco)}
-                                                            valorAntigo={emPromocao ? Number(produto.preco) : null}
-                                                            className="text-base"
-                                                        />
-                                                    </td>
-
-                                                    {/* SITUAÇÃO */}
-                                                    <td className="px-4 py-2.5">
-                                                        <span className={`tag ${unidade ? "tag-success" : "tag-danger"}`}>
-                                                            {unidade ? "Disponível" : "Sem estoque"}
-                                                        </span>
-                                                    </td>
-
-                                                    {/* SITE */}
-                                                    {temSite && (
-                                                        <td className="hidden px-4 py-2.5 lg:table-cell">
-                                                            <span className={`tag ${produto.publicado ? "tag-info" : "tag-neutral"}`}>
-                                                                {produto.publicado
-                                                                    ? <FiEye className="w-3.5" aria-hidden />
-                                                                    : <FiEyeOff className="w-3.5" aria-hidden />}
-                                                                {produto.publicado ? "No site" : "Fora"}
-                                                            </span>
-                                                        </td>
-                                                    )}
-
-                                                    {/* AÇÕES
-                                                        Repetidas aqui e dentro
-                                                        da ficha: quem já sabe o
-                                                        que quer não deveria
-                                                        precisar abrir nada. */}
-                                                    <td className="px-4 py-2.5">
-
-                                                        <div className="flex items-center justify-end gap-1">
-
-                                                            <button
-                                                                type="button"
-                                                                title="Preço promocional"
-                                                                aria-label={`Preço promocional de ${produto.nome}`}
-                                                                onClick={(e) => { e.stopPropagation(); abrirModal(produto) }}
-                                                                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#F0F3F4] ${
-                                                                    emPromocao ? "text-[#8A6C1B]" : "text-[#5A6469] hover:text-[#1E2428]"
-                                                                }`}
-                                                            >
-                                                                <FiPercent className="w-4" aria-hidden />
-                                                            </button>
-
-                                                            <Link
-                                                                href={`/page/produto/editar/${produto.id}`}
-                                                                title="Editar"
-                                                                aria-label={`Editar ${produto.nome}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4] hover:text-[#1E2428]"
-                                                            >
-                                                                <FiEdit2 className="w-4" aria-hidden />
-                                                            </Link>
-
-                                                            <Link
-                                                                href={`/page/produto/etiqueta/${produto.id}`}
-                                                                title="Etiqueta"
-                                                                aria-label={`Etiqueta de ${produto.nome}`}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md text-[#5A6469] transition-colors hover:bg-[#F0F3F4] hover:text-[#1E2428]"
-                                                            >
-                                                                <FiPrinter className="w-4" aria-hidden />
-                                                            </Link>
-
-                                                        </div>
-
-                                                    </td>
-
-                                                </tr>
-                                            )
-                                        })}
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-                            {/* RODAPÉ DA GRADE — a contagem fica colada nela e
-                                não solta no meio da página: "1–25 de 340" é
-                                parte da tabela, não um aviso à parte. */}
-                            <div className="flex flex-col gap-3 border-t border-[#D3DADD] bg-[#F7F9FA] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-
-                                <p className="text-xs text-[#5A6469]">
-                                    Mostrando{" "}
-                                    <span className="num font-bold text-[#1E2428]">
-                                        {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
-                                    </span>{" "}
-                                    de <span className="num font-bold text-[#1E2428]">{linhasFiltradas.length}</span>
-                                    {linhasFiltradas.length !== linhas.length && (
-                                        <> · <span className="num">{linhas.length}</span> no total</>
-                                    )}
-                                </p>
-
-                                <Pagination
-                                    paginaAtual={paginaAtualCorrigida}
-                                    totalPaginas={totalPaginas}
-                                    aoMudarPagina={setPaginaAtual}
-                                />
-
-                            </div>
-
-                        </div>
-
+                            </button>
+                        )
+                    })}
+
+                </div>
+
+                <div className="relative w-full lg:w-80">
+
+                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+
+                    <input
+                        type="text"
+                        value={busca}
+                        onChange={(e) => aoMudarBusca(e.target.value)}
+                        placeholder="Buscar por nome, código ou endereço"
+                        className="field"
+                        style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
+                    />
+
+                    {busca && (
+                        <button
+                            type="button"
+                            onClick={() => aoMudarBusca("")}
+                            aria-label="Limpar busca"
+                            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        >
+                            <FiX className="w-4" aria-hidden />
+                        </button>
                     )}
 
                 </div>
 
             </div>
+
+            {erroSite && (
+                <div role="alert" className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                    {erroSite}
+                </div>
+            )}
+
+
+            {/* ==========================
+                A GRADE
+            ========================== */}
+
+            {linhasFiltradas.length === 0 ? (
+
+                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
+
+                    <FiBox className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
+
+                    <h3 className="font-display mt-5 text-xl text-[#303030]">
+                        Nenhum produto encontrado
+                    </h3>
+
+                    <p className="mt-2 text-sm text-[#616161]">
+                        {totalProdutos === 0
+                            ? "Não existem produtos cadastrados."
+                            : "Nenhuma peça corresponde ao filtro ou à busca."}
+                    </p>
+
+                    {totalProdutos === 0 ? (
+
+                        <Link href="/page/produto" className="btn btn-primario mt-6">
+                            <FiPlus className="w-4" aria-hidden />
+                            <span>Cadastrar produto</span>
+                        </Link>
+
+                    ) : (
+
+                        <button
+                            type="button"
+                            onClick={() => { aoMudarBusca(""); aoMudarSituacao("todos") }}
+                            className="btn btn-neutro mt-6"
+                        >
+                            Limpar filtros
+                        </button>
+
+                    )}
+
+                </div>
+
+            ) : (
+
+                <div className="card mt-6 overflow-hidden">
+
+                    {/* Em tela estreita a grade rola no eixo X em vez
+                        de virar cartão: coluna que muda de lugar
+                        conforme a largura é coluna que ninguém
+                        aprende onde fica. */}
+                    <div className="overflow-x-auto">
+
+                        <table className="w-full min-w-[52rem] border-collapse text-sm">
+
+                            <thead>
+                                <tr className="border-b border-[#E1E1E1] bg-[#F7F7F7] text-left">
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho ativa={ordem.coluna === "produto"} desc={ordem.desc} aoClicar={() => ordenarPor("produto")}>
+                                            Produto
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho ativa={ordem.coluna === "codigo"} desc={ordem.desc} aoClicar={() => ordenarPor("codigo")}>
+                                            Código
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161] xl:table-cell">
+                                        Categoria
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho ativa={ordem.coluna === "endereco"} desc={ordem.desc} aoClicar={() => ordenarPor("endereco")}>
+                                            Endereço
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5">
+                                        <Cabecalho ativa={ordem.coluna === "preco"} desc={ordem.desc} aoClicar={() => ordenarPor("preco")} direita>
+                                            Preço
+                                        </Cabecalho>
+                                    </th>
+
+                                    <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                        Situação
+                                    </th>
+
+                                    {temSite && (
+                                        <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161] lg:table-cell">
+                                            Site
+                                        </th>
+                                    )}
+
+                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                        Ações
+                                    </th>
+
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {linhasDaPagina.map((linha) => {
+
+                                    const { produto, unidade } = linha
+                                    const codigo = codigoDaLinha(linha)
+                                    const emPromocao = Number(produto.preco_promocional ?? 0) > 0
+
+                                    return (
+
+                                        <tr
+                                            key={unidade ? `unidade-${unidade.id}` : `produto-${produto.id}`}
+                                            onClick={() => abrirModal(produto)}
+                                            className="cursor-pointer border-b border-[#EBEBEB] transition-colors last:border-b-0 hover:bg-[#F7F7F7]"
+                                        >
+
+                                            {/* PRODUTO */}
+                                            <td className="px-4 py-2.5">
+
+                                                <div className="flex items-center gap-3">
+
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F1F1F1]">
+                                                        {produto.imagem_url ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={urlDaImagem(produto.imagem_url)}
+                                                                alt=""
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <FiCamera className="w-4 text-[#8A8A8A]" aria-hidden />
+                                                        )}
+                                                    </div>
+
+                                                    <div className="min-w-0">
+
+                                                        <p className="truncate font-bold text-[#303030]">
+                                                            {produto.nome}
+                                                        </p>
+
+                                                        {produto.variacao && (
+                                                            <p className="truncate text-xs text-[#616161]">
+                                                                {produto.variacao_rotulo || "Variação"}: {produto.variacao}
+                                                            </p>
+                                                        )}
+
+                                                    </div>
+
+                                                </div>
+
+                                            </td>
+
+                                            {/* CÓDIGO */}
+                                            <td className="px-4 py-2.5 font-mono text-xs text-[#616161]">
+                                                {codigo}
+                                            </td>
+
+                                            {/* CATEGORIA */}
+                                            <td className="hidden px-4 py-2.5 text-[#616161] xl:table-cell">
+                                                {produto.categoria || "—"}
+                                            </td>
+
+                                            {/* ENDEREÇO */}
+                                            <td className="px-4 py-2.5">
+                                                {unidade?.endereco ? (
+                                                    <span className="font-mono text-xs font-bold text-[#303030]">
+                                                        {unidade.endereco}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[#8A8A8A]">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* PREÇO */}
+                                            <td className="px-4 py-2.5 text-right">
+                                                <Preco
+                                                    valor={Number(produto.preco_promocional ?? produto.preco)}
+                                                    valorAntigo={emPromocao ? Number(produto.preco) : null}
+                                                    className="text-base"
+                                                />
+                                            </td>
+
+                                            {/* SITUAÇÃO */}
+                                            <td className="px-4 py-2.5">
+                                                <span className={`tag ${unidade ? "tag-success" : "tag-danger"}`}>
+                                                    {unidade ? "Disponível" : "Sem estoque"}
+                                                </span>
+                                            </td>
+
+                                            {/* SITE */}
+                                            {temSite && (
+                                                <td className="hidden px-4 py-2.5 lg:table-cell">
+                                                    <span className={`tag ${produto.publicado ? "tag-info" : "tag-neutral"}`}>
+                                                        {produto.publicado
+                                                            ? <FiEye className="w-3.5" aria-hidden />
+                                                            : <FiEyeOff className="w-3.5" aria-hidden />}
+                                                        {produto.publicado ? "No site" : "Fora"}
+                                                    </span>
+                                                </td>
+                                            )}
+
+                                            {/* AÇÕES
+                                                Repetidas aqui e dentro
+                                                da ficha: quem já sabe o
+                                                que quer não deveria
+                                                precisar abrir nada. */}
+                                            <td className="px-4 py-2.5">
+
+                                                <div className="flex items-center justify-end gap-1">
+
+                                                    <button
+                                                        type="button"
+                                                        title="Preço promocional"
+                                                        aria-label={`Preço promocional de ${produto.nome}`}
+                                                        onClick={(e) => { e.stopPropagation(); abrirModal(produto) }}
+                                                        className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#F1F1F1] ${
+                                                            emPromocao ? "text-[#5E4200]" : "text-[#616161] hover:text-[#303030]"
+                                                        }`}
+                                                    >
+                                                        <FiPercent className="w-4" aria-hidden />
+                                                    </button>
+
+                                                    <Link
+                                                        href={`/page/produto/editar/${produto.id}`}
+                                                        title="Editar"
+                                                        aria-label={`Editar ${produto.nome}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
+                                                    >
+                                                        <FiEdit2 className="w-4" aria-hidden />
+                                                    </Link>
+
+                                                    <Link
+                                                        href={`/page/produto/etiqueta/${produto.id}`}
+                                                        title="Etiqueta"
+                                                        aria-label={`Etiqueta de ${produto.nome}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
+                                                    >
+                                                        <FiPrinter className="w-4" aria-hidden />
+                                                    </Link>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+                                    )
+                                })}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {/* RODAPÉ DA GRADE — a contagem fica colada nela e
+                        não solta no meio da página: "1–25 de 340" é
+                        parte da tabela, não um aviso à parte. */}
+                    <div className="flex flex-col gap-3 border-t border-[#E1E1E1] bg-[#F7F7F7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+
+                        <p className="text-xs text-[#616161]">
+                            Mostrando{" "}
+                            <span className="num font-bold text-[#303030]">
+                                {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
+                            </span>{" "}
+                            de <span className="num font-bold text-[#303030]">{linhasFiltradas.length}</span>
+                            {linhasFiltradas.length !== linhas.length && (
+                                <> · <span className="num">{linhas.length}</span> no total</>
+                            )}
+                        </p>
+
+                        <Pagination
+                            paginaAtual={paginaAtualCorrigida}
+                            totalPaginas={totalPaginas}
+                            aoMudarPagina={setPaginaAtual}
+                        />
+
+                    </div>
+
+                </div>
+
+            )}
+
 
         {/* ==========================
             MODAL DE PROMOÇÃO
@@ -964,7 +958,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                     className="fixed inset-0 z-50 flex items-center justify-center p-4"
                     onClick={fecharModal}
                 >
-                    <div className="absolute inset-0 bg-[#1E2428]/50" />
+                    <div className="absolute inset-0 bg-[#303030]/50" />
 
                     <div
                         onClick={(e) => e.stopPropagation()}
@@ -975,14 +969,14 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                             type="button"
                             onClick={fecharModal}
                             aria-label="Fechar"
-                            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
 
                         <div className="flex items-center gap-4 pr-8">
 
-                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F0F3F4]">
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
                                 {produtoSelecionado.imagem_url ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -994,10 +988,10 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                             </div>
 
                             <div className="min-w-0">
-                                <h2 className="font-display truncate text-lg text-[#1E2428]">
+                                <h2 className="font-display truncate text-lg text-[#303030]">
                                     {produtoSelecionado.nome}
                                 </h2>
-                                <p className="text-sm text-[#5A6469]">
+                                <p className="text-sm text-[#616161]">
                                     Preço atual: <span className="num">{formatarMoeda(Number(produtoSelecionado.preco))}</span>
                                 </p>
                             </div>
@@ -1015,19 +1009,19 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 {atributosParaFicha(produtoSelecionado.atributos).map(({ nome, valor }) => (
                                     <span
                                         key={nome}
-                                        className="rounded-full bg-[#F0F3F4] px-2.5 py-1 text-xs text-[#5A6469]"
+                                        className="rounded-full bg-[#F1F1F1] px-2.5 py-1 text-xs text-[#616161]"
                                     >
-                                        {nome}: <span className="font-bold text-[#1E2428]">{valor}</span>
+                                        {nome}: <span className="font-bold text-[#303030]">{valor}</span>
                                     </span>
                                 ))}
                             </div>
                         )}
 
-                        <div className="mt-5 rounded-lg border border-[#D3DADD] bg-[#F0F3F4] px-4 py-3">
-                            <p className="text-xs text-[#5A6469]">
+                        <div className="mt-5 rounded-lg border border-[#E1E1E1] bg-[#F1F1F1] px-4 py-3">
+                            <p className="text-xs text-[#616161]">
                                 Estoque disponível
                             </p>
-                            <p className="num text-lg font-extrabold text-[#1E2428]">
+                            <p className="num text-lg font-extrabold text-[#303030]">
                                 {produtoSelecionado.estoque} un.
                             </p>
                         </div>
@@ -1049,7 +1043,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 className="field num"
                             />
 
-                            <p className="text-xs text-[#5A6469]">
+                            <p className="text-xs text-[#616161]">
                                 Escolha um valor menor (desconto) ou maior (reajuste) que o preço atual.
                             </p>
 
@@ -1070,13 +1064,13 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                         )}
 
                         {erroPromo && (
-                            <div className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                            <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
                                 {erroPromo}
                             </div>
                         )}
 
                         {erroSite && (
-                            <div className="mt-4 rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                            <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
                                 {erroSite}
                             </div>
                         )}
@@ -1136,7 +1130,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                         type="button"
                                         onClick={excluirPromocao}
                                         disabled={salvandoPromo}
-                                        className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#D4351C] transition-colors hover:bg-[#FDECEA] disabled:opacity-50"
+                                        className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8] disabled:opacity-50"
                                     >
                                         Remover promoção
                                     </button>
@@ -1146,7 +1140,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                     type="button"
                                     onClick={fecharModal}
                                     disabled={salvandoPromo}
-                                    className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#5A6469] transition-colors hover:bg-[#F0F3F4] disabled:opacity-50"
+                                    className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#616161] transition-colors hover:bg-[#F1F1F1] disabled:opacity-50"
                                 >
                                     Cancelar
                                 </button>
@@ -1157,18 +1151,18 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
                         {/* EXCLUIR PRODUTO */}
 
-                        <div className="mt-4 border-t border-[#D3DADD] pt-4">
+                        <div className="mt-4 border-t border-[#E1E1E1] pt-4">
 
                             {confirmandoExclusao ? (
 
                                 <div className="space-y-2">
 
-                                    <p className="text-sm font-semibold text-[#D4351C]">
+                                    <p className="text-sm font-semibold text-[#8E1F0B]">
                                         Excluir permanentemente &ldquo;{produtoSelecionado.nome}&rdquo;? Essa ação não pode ser desfeita.
                                     </p>
 
                                     {erroExclusao && (
-                                        <div className="rounded-lg bg-[#FDECEA] px-4 py-2.5 text-sm font-semibold text-[#D4351C]">
+                                        <div className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
                                             {erroExclusao}
                                         </div>
                                     )}
@@ -1179,7 +1173,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                             type="button"
                                             onClick={() => setConfirmandoExclusao(false)}
                                             disabled={excluindoProduto}
-                                            className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#5A6469] transition-colors hover:bg-[#F0F3F4] disabled:opacity-50"
+                                            className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#616161] transition-colors hover:bg-[#F1F1F1] disabled:opacity-50"
                                         >
                                             Cancelar
                                         </button>
@@ -1202,7 +1196,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setConfirmandoExclusao(true)}
-                                    className="w-full rounded-lg px-3 py-2 text-sm font-bold text-[#D4351C] transition-colors hover:bg-[#FDECEA]"
+                                    className="w-full rounded-lg px-3 py-2 text-sm font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8]"
                                 >
                                     Excluir produto
                                 </button>

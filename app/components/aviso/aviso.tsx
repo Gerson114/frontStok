@@ -31,11 +31,11 @@ export default function Aviso({
 }) {
     const cores =
         tom === "erro"
-            ? "bg-[#FDECEA] text-[#D4351C]"
-            : "bg-[#F0F3F4] text-[#5A6469]"
+            ? "bg-[#FEE9E8] text-[#8E1F0B]"
+            : "bg-[#F1F1F1] text-[#616161]"
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#F0F3F4] p-6 md:ml-64">
+        <main className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#F1F1F1] p-6 md:ml-64">
 
             <div className="card w-full max-w-xl p-8 text-center md:p-10">
 
@@ -46,11 +46,11 @@ export default function Aviso({
                     {icone}
                 </div>
 
-                <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
+                <h1 className="font-display mt-5 text-2xl text-[#303030]">
                     {titulo}
                 </h1>
 
-                <div className="mt-2 text-[#5A6469]">
+                <div className="mt-2 text-[#616161]">
                     {children}
                 </div>
 
@@ -61,7 +61,7 @@ export default function Aviso({
                 )}
 
                 {rodape && (
-                    <div className="mt-6 border-t border-[#E4E9EB] pt-4">
+                    <div className="mt-6 border-t border-[#EBEBEB] pt-4">
                         {rodape}
                     </div>
                 )}

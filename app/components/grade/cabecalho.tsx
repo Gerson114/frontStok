@@ -34,7 +34,7 @@ export default function Cabecalho({
             onClick={aoClicar}
             className={`flex w-full items-center gap-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] transition-colors ${
                 direita ? "justify-end" : ""
-            } ${ativa ? "text-[#0075E2]" : "text-[#5A6469] hover:text-[#1E2428]"}`}
+            } ${ativa ? "text-[#00369B]" : "text-[#616161] hover:text-[#303030]"}`}
         >
             {children}
 

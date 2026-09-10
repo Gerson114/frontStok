@@ -7,6 +7,7 @@ import { listarEtiquetas } from "@/middleware/pedidos"
 import Barcode from "@/app/components/barcode/barcode"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import { FiAlertCircle, FiPrinter, FiRefreshCw, FiShoppingCart } from "react-icons/fi"
+import { Pagina } from "@/app/components/pagina/pagina"
 
 /**
  * Etiquetas dos pedidos confirmados.
@@ -75,51 +76,46 @@ export default function EtiquetasPage() {
 
     if (carregando) {
         return (
-            <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10 print:hidden">
-                <p className="text-[#5A6469]">Carregando etiquetas...</p>
-            </main>
+            <Pagina titulo="Etiquetas" paraImpressao>
+                <div className="card p-8 text-center text-sm text-[#616161]">Carregando etiquetas...</div>
+            </Pagina>
         )
     }
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10 print:m-0 print:min-h-0 print:bg-white print:p-0">
+        <Pagina
+            titulo="Etiquetas"
+            descricao={
+                <>
+                    Uma etiqueta para cada peça dos pedidos confirmados, numeradas 1/3, 2/3, 3/3
+                    dentro de cada pedido. Confirme o pedido em{" "}
+                    <Link href="/page/pedidos" className="font-semibold text-[#005BD3] hover:underline">
+                        Pedidos
+                    </Link>{" "}
+                    e ele aparece aqui.
+                </>
+            }
+            paraImpressao
+            acoes={
+                <button
+                    type="button"
+                    onClick={() => setRecarregar((n) => n + 1)}
+                    title="Atualizar"
+                    aria-label="Atualizar a fila de etiquetas"
+                    className="btn btn-neutro"
+                >
+                    <FiRefreshCw className="w-4" aria-hidden />
+                    <span>Atualizar</span>
+                </button>
+            }
+        >
 
-            {/* AÇÕES — somem na impressão */}
-            <div className="mx-auto max-w-4xl print:hidden">
-
-                <div className="flex flex-wrap items-start justify-between gap-4">
-
-                    <div>
-                        <h1 className="font-display text-2xl text-[#1E2428]">
-                            Etiquetas
-                        </h1>
-
-                        <p className="mt-1 text-sm text-[#5A6469]">
-                            Uma etiqueta para cada peça dos pedidos confirmados, numeradas
-                            1/3, 2/3, 3/3 dentro de cada pedido. Confirme o pedido em{" "}
-                            <Link href="/page/pedidos" className="font-semibold text-[#0086FF] hover:underline">
-                                Pedidos
-                            </Link>{" "}
-                            e ele aparece aqui.
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => setRecarregar((n) => n + 1)}
-                        title="Atualizar"
-                        aria-label="Atualizar a fila de etiquetas"
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-white"
-                    >
-                        <FiRefreshCw className="w-4" aria-hidden />
-                    </button>
-
-                </div>
+            <div className="space-y-6 print:hidden">
 
                 {erro && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
@@ -128,11 +124,11 @@ export default function EtiquetasPage() {
 
                 {!erro && etiquetas.length === 0 && (
                     <div className="card mt-6 flex flex-col items-center p-10 text-center">
-                        <FiShoppingCart className="w-8 text-[#B8C0C4]" aria-hidden />
-                        <p className="mt-3 font-display text-lg text-[#1E2428]">
+                        <FiShoppingCart className="w-8 text-[#B5B5B5]" aria-hidden />
+                        <p className="mt-3 font-display text-lg text-[#303030]">
                             Nenhuma etiqueta na fila
                         </p>
-                        <p className="mt-1 max-w-sm text-sm text-[#5A6469]">
+                        <p className="mt-1 max-w-sm text-sm text-[#616161]">
                             Assim que um pedido for confirmado, a etiqueta dele aparece
                             aqui pronta para imprimir.
                         </p>
@@ -189,13 +185,13 @@ export default function EtiquetasPage() {
                                         onChange={() => alternar(etiqueta.pedido_id)}
                                         className="h-4 w-4"
                                     />
-                                    <span className="num font-bold text-[#1E2428]">
+                                    <span className="num font-bold text-[#303030]">
                                         {etiqueta.codigo}
                                     </span>
-                                    <span className="truncate text-[#5A6469]">
+                                    <span className="truncate text-[#616161]">
                                         {etiqueta.cliente_nome || "Cliente"} · {etiqueta.pecas} etiqueta(s)
                                     </span>
-                                    <span className="num ml-auto shrink-0 font-bold text-[#1E2428]">
+                                    <span className="num ml-auto shrink-0 font-bold text-[#303030]">
                                         {formatarMoeda(etiqueta.total)}
                                     </span>
                                 </label>
@@ -204,98 +200,99 @@ export default function EtiquetasPage() {
                     </ul>
                 )}
 
+
+
             </div>
 
-            {/* ETIQUETAS — o que efetivamente vai para o papel.
-                Uma por peça: um pedido de três peças imprime três, numeradas
-                1/3, 2/3 e 3/3, para quem embala saber quando a sacola está
-                fechada e quem recebe perceber se chegou volume faltando. */}
-            <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 print:mt-0 print:max-w-none print:grid-cols-2">
+        {/* ETIQUETAS — o que efetivamente vai para o papel.
+            Uma por peça: um pedido de três peças imprime três, numeradas
+            1/3, 2/3 e 3/3, para quem embala saber quando a sacola está
+            fechada e quem recebe perceber se chegou volume faltando. */}
+        <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 print:mt-0 print:max-w-none print:grid-cols-2">
 
-                {paraImprimir.flatMap((etiqueta) =>
-                    etiqueta.volumes.map((volume) => (
+            {paraImprimir.flatMap((etiqueta) =>
+                etiqueta.volumes.map((volume) => (
 
-                        <div
-                            key={`${etiqueta.pedido_id}-${volume.indice}`}
-                            className="w-full rounded-lg border border-[#D3DADD] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
-                        >
+                    <div
+                        key={`${etiqueta.pedido_id}-${volume.indice}`}
+                        className="w-full rounded-lg border border-[#E1E1E1] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
+                    >
 
-                            {/* De quem é o pacote vem primeiro e vem grande:
-                                a etiqueta é lida por quem separa, por quem
-                                embala e por quem entrega, e os três procuram
-                                o nome. O produto, que já está dentro da
-                                sacola, desceu para o pé. */}
+                        {/* De quem é o pacote vem primeiro e vem grande:
+                            a etiqueta é lida por quem separa, por quem
+                            embala e por quem entrega, e os três procuram
+                            o nome. O produto, que já está dentro da
+                            sacola, desceu para o pé. */}
 
-                            <div className="flex items-baseline justify-between gap-2">
-                                <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[#5A6469]">
-                                    Arara
+                        <div className="flex items-baseline justify-between gap-2">
+                            <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[#616161]">
+                                Arara
+                            </p>
+
+                            {/* O número do volume é o que fecha o pacote:
+                                quem embala sabe quando acabou, e quem
+                                recebe percebe se faltou volume. */}
+                            <p className="num text-lg font-extrabold text-[#303030]">
+                                {volume.indice}/{volume.total}
+                            </p>
+                        </div>
+
+                        <h2 className="font-display mt-2 break-words text-2xl leading-tight text-[#303030]">
+                            {etiqueta.cliente_nome || "Cliente"}
+                        </h2>
+
+                        {etiqueta.cliente_contato && (
+                            <p className="num mt-0.5 text-sm font-bold text-[#616161]">
+                                {etiqueta.cliente_contato}
+                            </p>
+                        )}
+
+                        {/* Os dados do pedido, logo abaixo do nome: é o
+                            que se confere no balcão quando o cliente
+                            chega dizendo "vim buscar o meu". */}
+                        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[#E1E1E1] pt-3 text-xs">
+
+                            <dt className="text-[#616161]">Pedido</dt>
+                            <dd className="num text-right font-bold text-[#303030]">{etiqueta.codigo}</dd>
+
+                            <dt className="text-[#616161]">Data</dt>
+                            <dd className="text-right text-[#303030]">{etiqueta.criado_em}</dd>
+
+                            <dt className="text-[#616161]">Peças</dt>
+                            <dd className="num text-right text-[#303030]">{etiqueta.pecas}</dd>
+
+                            <dt className="text-[#616161]">Total do pedido</dt>
+                            <dd className="num text-right font-bold text-[#303030]">{formatarMoeda(etiqueta.total)}</dd>
+
+                        </dl>
+
+                        <div className="mt-3 flex justify-center border-t border-[#E1E1E1] pt-3">
+                            <Barcode valor={volume.codigo} className="max-w-full" />
+                        </div>
+
+                        {/* A peça deste volume. */}
+                        <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-[#E1E1E1] pt-3">
+
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-[#303030]">
+                                    {volume.nome}
                                 </p>
-
-                                {/* O número do volume é o que fecha o pacote:
-                                    quem embala sabe quando acabou, e quem
-                                    recebe percebe se faltou volume. */}
-                                <p className="num text-lg font-extrabold text-[#1E2428]">
-                                    {volume.indice}/{volume.total}
+                                <p className="text-xs text-[#616161]">
+                                    {[volume.tamanho, volume.cor].filter(Boolean).join(" · ") || "—"}
                                 </p>
                             </div>
 
-                            <h2 className="font-display mt-2 break-words text-2xl leading-tight text-[#1E2428]">
-                                {etiqueta.cliente_nome || "Cliente"}
-                            </h2>
-
-                            {etiqueta.cliente_contato && (
-                                <p className="num mt-0.5 text-sm font-bold text-[#5A6469]">
-                                    {etiqueta.cliente_contato}
-                                </p>
-                            )}
-
-                            {/* Os dados do pedido, logo abaixo do nome: é o
-                                que se confere no balcão quando o cliente
-                                chega dizendo "vim buscar o meu". */}
-                            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[#D3DADD] pt-3 text-xs">
-
-                                <dt className="text-[#5A6469]">Pedido</dt>
-                                <dd className="num text-right font-bold text-[#1E2428]">{etiqueta.codigo}</dd>
-
-                                <dt className="text-[#5A6469]">Data</dt>
-                                <dd className="text-right text-[#1E2428]">{etiqueta.criado_em}</dd>
-
-                                <dt className="text-[#5A6469]">Peças</dt>
-                                <dd className="num text-right text-[#1E2428]">{etiqueta.pecas}</dd>
-
-                                <dt className="text-[#5A6469]">Total do pedido</dt>
-                                <dd className="num text-right font-bold text-[#1E2428]">{formatarMoeda(etiqueta.total)}</dd>
-
-                            </dl>
-
-                            <div className="mt-3 flex justify-center border-t border-[#D3DADD] pt-3">
-                                <Barcode valor={volume.codigo} className="max-w-full" />
-                            </div>
-
-                            {/* A peça deste volume. */}
-                            <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-[#D3DADD] pt-3">
-
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm font-bold text-[#1E2428]">
-                                        {volume.nome}
-                                    </p>
-                                    <p className="text-xs text-[#5A6469]">
-                                        {[volume.tamanho, volume.cor].filter(Boolean).join(" · ") || "—"}
-                                    </p>
-                                </div>
-
-                                <p className="num shrink-0 text-base font-extrabold text-[#1E2428]">
-                                    {formatarMoeda(volume.valor)}
-                                </p>
-
-                            </div>
+                            <p className="num shrink-0 text-base font-extrabold text-[#303030]">
+                                {formatarMoeda(volume.valor)}
+                            </p>
 
                         </div>
-                    ))
-                )}
 
-            </div>
+                    </div>
+                ))
+            )}
 
-        </main>
+        </div>
+        </Pagina>
     )
 }

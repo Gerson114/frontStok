@@ -4,8 +4,13 @@ import { url, API_BASE } from "@/app/api/backend"
 import { pedidos } from "@/app/api/rotas"
 
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        // ?pagamento=aguardando abre a lista dos pedidos presos. Quem decide o
+        // que cada valor significa é o backend; aqui só se repassa o pedido da
+        // tela, e qualquer outro valor cai na lista normal.
+        const aguardando = new URL(request.url).searchParams.get("pagamento") === "aguardando"
+
         const cookieStore = await cookies()
         const token = cookieStore.get("token")?.value
 
@@ -13,7 +18,7 @@ export async function GET() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        const response = await fetch(url(pedidos.lista()), {
+        const response = await fetch(url(aguardando ? pedidos.listaAguardando() : pedidos.lista()), {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

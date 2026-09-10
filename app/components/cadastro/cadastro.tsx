@@ -1,6 +1,6 @@
 "use client"
 
-import { cadastro, irPagar } from "@/middleware/auth"
+import { cadastro, confirmarCadastro, irPagar, reenviarCodigo } from "@/middleware/auth"
 import { consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
 import { isValidEmail, isValidPassword } from "@/security/validate"
 import { irParaPaginaExterna } from "@/security/navegacao"
@@ -30,7 +30,11 @@ const ITENS: ItemMoldura[] = [
 ]
 
 type Campo = "" | "email" | "senha" | "confirmar"
-type Passo = "dados" | "pagamento"
+
+// Os três momentos do cadastro. "confirmacao" só existe quando o servidor
+// sabe enviar e-mail: é ele que manda o código e diz que este passo cabe (ver
+// proximo_passo).
+type Passo = "dados" | "confirmacao" | "pagamento"
 
 export default function Cadastro() {
     const [passo, setPasso] = useState<Passo>("dados")
@@ -48,6 +52,13 @@ export default function Cadastro() {
     // tela mostra um valor e a fatura cobra outro.
     const [oferta, setOferta] = useState<Oferta | null>(null)
     const [enviando, setEnviando] = useState(false)
+
+    // Os seis dígitos e o que a tela precisa dizer sobre eles.
+    const [codigo, setCodigo] = useState("")
+    const [reenviando, setReenviando] = useState(false)
+    const [avisoCodigo, setAvisoCodigo] = useState("")
+
+    const codigoRef = useRef<HTMLInputElement>(null)
 
     const emailRef = useRef<HTMLInputElement>(null)
     const senhaRef = useRef<HTMLInputElement>(null)
@@ -80,9 +91,18 @@ export default function Cadastro() {
         { texto: "As duas senhas são iguais", ok: pass.length > 0 && pass === confirmarPass },
     ]
 
-    const nota = oferta?.preco
-        ? `${formatarPreco(oferta.preco)} por mês, com tudo incluído.`
-        : "Uma assinatura mensal, com tudo incluído: o estoque da loja física, o balcão e a sua loja na internet."
+    // Quantos dias de teste este servidor dá. Quem decide é ele, não esta
+    // tela: um número escrito aqui viraria promessa quebrada no dia em que a
+    // configuração mudasse.
+    const testeDias = oferta?.teste_dias ?? 0
+    const temTeste = testeDias > 0
+    const pedeCartao = oferta?.teste_pede_cartao === true
+
+    const nota = temTeste
+        ? `${testeDias} dias grátis${pedeCartao ? "" : ", sem cartão"}${oferta?.preco ? ` — depois, ${formatarPreco(oferta.preco)} por mês` : ""}, com tudo incluído.`
+        : oferta?.preco
+            ? `${formatarPreco(oferta.preco)} por mês, com tudo incluído.`
+            : "Uma assinatura mensal, com tudo incluído: o estoque da loja física, o balcão e a sua loja na internet."
 
     // Marca o campo culpado, mostra o aviso e devolve o cursor para lá.
     function falhar(campo: Exclude<Campo, "">, mensagem: string) {
@@ -144,6 +164,13 @@ export default function Cadastro() {
 
             if (inicio.oferta) setOferta(inicio.oferta)
 
+            if (inicio.proximo_passo === "confirmar") {
+                setCodigo("")
+                setAvisoCodigo(inicio.mensagem ?? `Enviamos um código de 6 dígitos para ${email}`)
+                setPasso("confirmacao")
+                return
+            }
+
             setPasso("pagamento")
 
         } catch (error) {
@@ -157,6 +184,57 @@ export default function Cadastro() {
 
         } finally {
             setLoading(false)
+        }
+    }
+
+    // Confirmar o e-mail. Quem decide se o código está certo, se venceu e
+    // quantas tentativas restam é o servidor — esta tela só entrega o que foi
+    // digitado e mostra a resposta.
+    async function confirmar(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+
+        setError("")
+
+        if (codigo.trim().length !== 6) {
+            setError("Digite os 6 dígitos que enviamos por e-mail")
+            codigoRef.current?.focus()
+            return
+        }
+
+        try {
+            setLoading(true)
+
+            const confirmado = await confirmarCadastro(codigo)
+
+            if (confirmado.oferta) setOferta(confirmado.oferta)
+
+            setAvisoCodigo("")
+            setPasso("pagamento")
+
+        } catch (erro) {
+            setError(erro instanceof Error ? erro.message : "Não foi possível confirmar o código")
+            setCodigo("")
+            codigoRef.current?.focus()
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Pedir outro código. O intervalo entre um pedido e outro é do servidor:
+    // ele responde "aguarde um minuto" quando é cedo demais, e é essa frase
+    // que aparece na tela.
+    async function pedirOutroCodigo() {
+        setError("")
+        setReenviando(true)
+
+        try {
+            setAvisoCodigo(await reenviarCodigo())
+            setCodigo("")
+            codigoRef.current?.focus()
+        } catch (erro) {
+            setError(erro instanceof Error ? erro.message : "Não foi possível reenviar o código")
+        } finally {
+            setReenviando(false)
         }
     }
 
@@ -187,20 +265,118 @@ export default function Cadastro() {
 
                 <div className="text-center">
 
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E0FFEE] text-[#08A022]">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#CDFEE1] text-[#0C5132]">
                         <FiCheckCircle className="w-6" aria-hidden />
                     </div>
 
-                    <h1 className="font-display mt-5 text-[1.75rem] leading-tight text-[#1E2428]">
+                    <h1 className="font-display mt-5 text-[1.75rem] leading-tight text-[#303030]">
                         Conta criada
                     </h1>
 
-                    <p className="mt-3 text-sm leading-relaxed text-[#5A6469]">
+                    <p className="mt-3 text-sm leading-relaxed text-[#616161]">
                         Entre com seus dados para abrir o painel.
                     </p>
 
-                    <p className="mt-6 text-sm font-semibold text-[#8C969B]">
+                    <p className="mt-6 text-sm font-semibold text-[#8A8A8A]">
                         Redirecionando para a identificação...
+                    </p>
+
+                </div>
+
+            ) : passo === "confirmacao" ? (
+
+                <div>
+
+                    <button
+                        type="button"
+                        onClick={() => { setPasso("dados"); setError(""); setAvisoCodigo("") }}
+                        className="flex items-center gap-1.5 text-sm font-semibold text-[#616161] transition-colors hover:text-[#303030]"
+                    >
+                        <FiArrowLeft className="w-4" aria-hidden />
+                        Usar outro e-mail
+                    </button>
+
+                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[#303030]">
+                        Confirme seu e-mail
+                    </h1>
+
+                    <p className="mt-2 text-sm leading-relaxed text-[#616161]">
+                        Enviamos um código de 6 dígitos para{" "}
+                        <span className="font-semibold text-[#303030]">{email}</span>. Ele
+                        vale por 10 minutos.
+                    </p>
+
+                    <p className="mt-1 text-sm text-[#8A8A8A]">
+                        É o endereço que vai abrir o seu painel — por isso pedimos para
+                        conferir agora, e não depois de você já ter pago.
+                    </p>
+
+                    <form onSubmit={confirmar} noValidate className="mt-6">
+
+                        <label htmlFor="codigo" className="rotulo">
+                            Código
+                        </label>
+
+                        <input
+                            id="codigo"
+                            ref={codigoRef}
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            autoFocus
+                            maxLength={6}
+                            placeholder="000000"
+                            className="field text-center text-2xl tracking-[0.5em]"
+                            disabled={loading}
+                            value={codigo}
+                            onChange={(e) => {
+                                // Só dígitos: quem cola o código do e-mail costuma trazer
+                                // espaço junto, e recusar isso seria implicância.
+                                setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))
+                                if (error) setError("")
+                            }}
+                        />
+
+                        {avisoCodigo && !error && (
+                            <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#EAFBF1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                                <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                                <span>{avisoCodigo}</span>
+                            </p>
+                        )}
+
+                        {error && (
+                            <div
+                                role="alert"
+                                className="mt-3 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                            >
+                                <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading || codigo.length !== 6}
+                            className="btn btn-primario mt-5 w-full py-2.5"
+                        >
+                            {loading ? "Confirmando..." : "Confirmar e continuar"}
+                        </button>
+
+                    </form>
+
+                    <button
+                        type="button"
+                        onClick={pedirOutroCodigo}
+                        disabled={reenviando || loading}
+                        className="mt-4 text-sm font-semibold text-[#005BD3] transition-colors hover:text-[#004299] disabled:text-[#8A8A8A]"
+                    >
+                        {reenviando ? "Enviando..." : "Não recebi o código, enviar de novo"}
+                    </button>
+
+                    <p className="mt-6 flex items-start gap-2 border-t border-[#EBEBEB] pt-6 text-xs leading-relaxed text-[#8A8A8A]">
+                        <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
+                        Nenhuma conta é criada antes desta confirmação. Se o e-mail não
+                        chegar, confira a caixa de spam antes de pedir outro.
                     </p>
 
                 </div>
@@ -212,50 +388,58 @@ export default function Cadastro() {
                     <button
                         type="button"
                         onClick={() => { setPasso("dados"); setError("") }}
-                        className="flex items-center gap-1.5 text-sm font-semibold text-[#5A6469] transition-colors hover:text-[#1E2428]"
+                        className="flex items-center gap-1.5 text-sm font-semibold text-[#616161] transition-colors hover:text-[#303030]"
                     >
                         <FiArrowLeft className="w-4" aria-hidden />
                         Corrigir meus dados
                     </button>
 
-                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[#1E2428]">
+                    {/* O e-mail já foi confirmado neste ponto quando o servidor
+                        pede confirmação — dizer isso aqui evita a dúvida de
+                        quem acabou de digitar o código. */}
+
+                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[#303030]">
                         Assine para criar a conta
                     </h1>
 
-                    <p className="mt-2 text-sm text-[#5A6469]">
+                    <p className="mt-2 text-sm text-[#616161]">
                         É uma assinatura só, com tudo dentro. A conta é criada assim que
                         o pagamento for confirmado.
                     </p>
 
-                    <p className="mt-1 text-sm text-[#8C969B]">
-                        Conta de <span className="font-semibold text-[#5A6469]">{email}</span>
+                    <p className="mt-1 text-sm text-[#8A8A8A]">
+                        Conta de <span className="font-semibold text-[#616161]">{email}</span>
                     </p>
 
-                    <div className="mt-6 rounded-xl border border-[#E4E9EB] p-5">
+                    <div className="mt-6 rounded-xl border border-[#EBEBEB] p-5">
 
                         <div className="flex items-baseline justify-between gap-3">
-                            <h2 className="font-display text-lg text-[#1E2428]">
+                            <h2 className="font-display text-lg text-[#303030]">
                                 {oferta?.nome ?? "Arara"}
                             </h2>
 
                             <p className="shrink-0 text-right">
-                                <span className="font-display text-xl text-[#1E2428]">
-                                    {formatarPreco(oferta?.preco)}
+                                <span className="font-display text-xl text-[#303030]">
+                                    {temTeste ? "Grátis" : formatarPreco(oferta?.preco)}
                                 </span>
-                                <span className="block text-xs text-[#8C969B]">por mês</span>
+                                <span className="block text-xs text-[#8A8A8A]">
+                                    {temTeste
+                                        ? `por ${testeDias} dias, depois ${formatarPreco(oferta?.preco)}/mês`
+                                        : "por mês"}
+                                </span>
                             </p>
                         </div>
 
                         {oferta?.descricao && (
-                            <p className="mt-1.5 text-sm text-[#5A6469]">
+                            <p className="mt-1.5 text-sm text-[#616161]">
                                 {oferta.descricao}
                             </p>
                         )}
 
                         <ul className="mt-4 space-y-1.5">
                             {(oferta?.recursos ?? []).map((recurso) => (
-                                <li key={recurso} className="flex items-start gap-2 text-sm text-[#5A6469]">
-                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#08A022]" aria-hidden />
+                                <li key={recurso} className="flex items-start gap-2 text-sm text-[#616161]">
+                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
                                     {recurso}
                                 </li>
                             ))}
@@ -267,7 +451,11 @@ export default function Cadastro() {
                             onClick={irParaPagamento}
                             className="btn btn-primario mt-5 w-full py-2.5"
                         >
-                            {enviando ? "Abrindo pagamento..." : "Assinar e criar conta"}
+                            {enviando
+                                ? "Abrindo..."
+                                : temTeste
+                                    ? `Começar os ${testeDias} dias grátis`
+                                    : "Assinar e criar conta"}
                         </button>
 
                     </div>
@@ -275,18 +463,32 @@ export default function Cadastro() {
                     {error && (
                         <div
                             role="alert"
-                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#F5C6C0] bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                         >
                             <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                             <span>{error}</span>
                         </div>
                     )}
 
-                    <p className="mt-6 flex items-start gap-2 border-t border-[#E4E9EB] pt-6 text-xs leading-relaxed text-[#8C969B]">
+                    <p className="mt-6 flex items-start gap-2 border-t border-[#EBEBEB] pt-6 text-xs leading-relaxed text-[#8A8A8A]">
                         <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
-                        O cartão é digitado numa página segura do processador de
-                        cobrança, nunca aqui. Sua conta é criada quando o pagamento
-                        for confirmado.
+                        {temTeste && !pedeCartao ? (
+                            <>
+                                Nenhum cartão é pedido agora: sua conta é criada na
+                                volta desta confirmação e o teste começa na hora. Para
+                                continuar depois dos {testeDias} dias, o cartão é
+                                cadastrado no painel, numa página segura do processador
+                                de cobrança — nunca aqui.
+                            </>
+                        ) : (
+                            <>
+                                O cartão é digitado numa página segura do processador de
+                                cobrança, nunca aqui.{" "}
+                                {temTeste
+                                    ? `Nada é cobrado hoje: a primeira cobrança acontece depois dos ${testeDias} dias de teste.`
+                                    : "Sua conta é criada quando o pagamento for confirmado."}
+                            </>
+                        )}
                     </p>
 
                 </div>
@@ -295,11 +497,11 @@ export default function Cadastro() {
 
                 <form onSubmit={handleSubmit} noValidate>
 
-                    <h1 className="font-display text-[1.75rem] leading-tight text-[#1E2428]">
+                    <h1 className="font-display text-[1.75rem] leading-tight text-[#303030]">
                         Criar conta
                     </h1>
 
-                    <p className="mt-2 text-sm text-[#5A6469]">
+                    <p className="mt-2 text-sm text-[#616161]">
                         Comece com seu e-mail e uma senha. No próximo passo você
                         assina — é uma assinatura só, com tudo incluído.
                     </p>
@@ -355,7 +557,7 @@ export default function Cadastro() {
                                     type="button"
                                     onClick={() => setMostrarSenha((v) => !v)}
                                     aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                                    className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                                    className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                                 >
                                     {mostrarSenha
                                         ? <FiEyeOff className="w-[1.05rem]" aria-hidden />
@@ -388,11 +590,11 @@ export default function Cadastro() {
 
                         {/* Regras da senha, marcadas conforme vão sendo atendidas. */}
                         {pass.length > 0 && (
-                            <ul className="space-y-1.5 rounded-lg bg-[#F0F3F4] px-4 py-3">
+                            <ul className="space-y-1.5 rounded-lg bg-[#F1F1F1] px-4 py-3">
                                 {regras.map(({ texto, ok }) => (
                                     <li
                                         key={texto}
-                                        className={`flex items-center gap-2 text-xs font-semibold ${ok ? "text-[#08A022]" : "text-[#5A6469]"}`}
+                                        className={`flex items-center gap-2 text-xs font-semibold ${ok ? "text-[#0C5132]" : "text-[#616161]"}`}
                                     >
                                         {ok
                                             ? <FiCheck className="w-3.5 shrink-0" aria-hidden />
@@ -409,7 +611,7 @@ export default function Cadastro() {
                     {error && (
                         <div
                             role="alert"
-                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#F5C6C0] bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                         >
                             <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                             <span>{error}</span>
@@ -424,9 +626,9 @@ export default function Cadastro() {
                         {loading ? "Aguarde..." : "Continuar"}
                     </button>
 
-                    <p className="mt-6 border-t border-[#E4E9EB] pt-6 text-center text-sm text-[#5A6469]">
+                    <p className="mt-6 border-t border-[#EBEBEB] pt-6 text-center text-sm text-[#616161]">
                         Já tem uma conta?{" "}
-                        <Link href="/login" className="font-semibold text-[#0086FF] hover:underline">
+                        <Link href="/login" className="font-semibold text-[#005BD3] hover:underline">
                             Entrar
                         </Link>
                     </p>

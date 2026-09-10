@@ -36,6 +36,9 @@ export async function PUT(
             return Response.json({ erro: "status inválido" }, { status: 400 })
         }
 
+        // Só o status vai. O dia da saída tem rota própria (ver
+        // /api/pedidos/:id/envio): confirmar é dizer "estou preparando", e
+        // misturar as duas gravações faria a loja assumir um dia sem querer.
         const response = await fetch(url(pedidos.status(id)), {
             method: "PUT",
             headers: {

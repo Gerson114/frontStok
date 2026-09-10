@@ -20,15 +20,31 @@ export async function PUT(request: Request) {
         return Response.json({ erro: "Corpo da requisição inválido" }, { status: 400 })
     }
 
-    const { nome_loja, slug } = corpo as { nome_loja?: unknown; slug?: unknown }
+    const {
+        nome_loja,
+        slug,
+        whatsapp,
+        telefone,
+        endereco,
+        horario,
+    } = corpo as Record<string, unknown>
 
     if (typeof slug !== "string" || slug.trim() === "") {
         return Response.json({ erro: "Escolha um endereço para a sua loja" }, { status: 400 })
     }
 
+    // Texto que não veio vira string vazia, e não some do corpo: vazio é o
+    // jeito de o lojista apagar um contato que mudou.
+    const texto = (valor: unknown, tamanho: number) =>
+        typeof valor === "string" ? valor.slice(0, tamanho) : ""
+
     return encaminhar("PUT", {
-        nome_loja: typeof nome_loja === "string" ? nome_loja.slice(0, 60) : "",
+        nome_loja: texto(nome_loja, 60),
         slug: slug.slice(0, 40),
+        whatsapp: texto(whatsapp, 24),
+        telefone: texto(telefone, 32),
+        endereco: texto(endereco, 200),
+        horario: texto(horario, 120),
     })
 }
 

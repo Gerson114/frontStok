@@ -7,7 +7,8 @@ import { buscarProdutoPorId, listarUnidades } from "@/middleware/produtos"
 import Barcode from "@/app/components/barcode/barcode"
 import { descreverVariacao } from "@/app/components/produto/campos"
 import { formatarMoeda } from "@/app/components/preco/preco"
-import { FiArrowLeft, FiPrinter } from "react-icons/fi"
+import { FiPrinter } from "react-icons/fi"
+import { Pagina, Estado } from "@/app/components/pagina/pagina"
 
 export default function EtiquetaProduto() {
     const params = useParams<{ id: string }>()
@@ -57,25 +58,27 @@ export default function EtiquetaProduto() {
 
     if (loading) {
         return (
-            <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10 print:hidden">
-                <p className="text-[#5A6469]">Carregando...</p>
-            </main>
+            <Pagina titulo="Etiquetas do produto" volta={{ nome: "Produtos", rota: "/page/produtos" }} paraImpressao>
+                <div className="card p-8 text-center text-sm text-[#616161]">Carregando...</div>
+            </Pagina>
         )
     }
 
     if (erro || !produto) {
         return (
-            <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10 print:hidden">
-                <div className="card mx-auto max-w-md p-8 text-center">
-                    <p className="text-[#1E2428]">{erro || "Produto não encontrado."}</p>
-                    <button
-                        onClick={() => router.push("/page/produtos")}
-                        className="btn btn-primario mt-4"
-                    >
-                        Voltar
-                    </button>
-                </div>
-            </main>
+            <Pagina titulo="Etiquetas do produto" volta={{ nome: "Produtos", rota: "/page/produtos" }} paraImpressao>
+                <Estado
+                    Icone={FiPrinter}
+                    tom="erro"
+                    titulo="Não foi possível montar as etiquetas"
+                    texto={erro || "Produto não encontrado."}
+                    acao={
+                        <button onClick={() => router.push("/page/produtos")} className="btn btn-primario">
+                            Voltar para Produtos
+                        </button>
+                    }
+                />
+            </Pagina>
         )
     }
 
@@ -98,42 +101,20 @@ export default function EtiquetaProduto() {
     const codigosParaImprimir = Array.from({ length: quantidade }, () => codigoProduto)
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10 print:m-0 print:min-h-0 print:bg-white print:p-0">
-
-            {/* AÇÕES — somem na impressão */}
-
-            <div className="mx-auto max-w-md print:hidden">
-
-                <button
-                    onClick={() => router.back()}
-                    className="mb-6 flex items-center gap-1.5 text-sm font-medium text-[#5A6469] transition hover:text-[#1E2428]"
-                >
-                    <FiArrowLeft className="w-4" aria-hidden />
-                    <span>Voltar</span>
+        <Pagina
+            titulo="Etiquetas do produto"
+            descricao={codigosParaImprimir.length > 0
+                ? `${codigosParaImprimir.length} etiqueta(s) pronta(s), uma para cada peça em estoque — todas com o código ${codigoProduto}.`
+                : "Todas as unidades deste produto já foram vendidas."}
+            volta={{ nome: "Produtos", rota: "/page/produtos" }}
+            paraImpressao
+            acoes={codigosParaImprimir.length > 0 ? (
+                <button onClick={() => window.print()} className="btn btn-primario">
+                    <FiPrinter className="w-4" aria-hidden />
+                    <span>Imprimir etiquetas</span>
                 </button>
-
-                <h1 className="font-display text-2xl text-[#1E2428]">
-                    Etiquetas do produto
-                </h1>
-
-                <p className="mt-1 text-sm text-[#5A6469]">
-                    {codigosParaImprimir.length > 0
-                        ? `${codigosParaImprimir.length} etiqueta(s) pronta(s), uma para cada peça em estoque — todas com o código ${codigoProduto}.`
-                        : "Todas as unidades deste produto já foram vendidas."}
-                </p>
-
-                {codigosParaImprimir.length > 0 && (
-                    <button
-                        onClick={() => window.print()}
-                        className="btn btn-primario mt-6"
-                    >
-                        <FiPrinter className="w-4" aria-hidden />
-                        <span>Imprimir etiquetas</span>
-                    </button>
-                )}
-
-            </div>
-
+            ) : undefined}
+        >
 
             {/* ETIQUETAS — o que efetivamente é impresso, uma por unidade */}
 
@@ -143,20 +124,20 @@ export default function EtiquetaProduto() {
 
                     <div
                         key={indice}
-                        className="w-full rounded-lg border border-[#D3DADD] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
+                        className="w-full rounded-lg border border-[#E1E1E1] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
                     >
 
-                        <p className="font-display text-center text-sm text-[#1E2428]">
+                        <p className="font-display text-center text-sm text-[#303030]">
                             Arara
                         </p>
 
-                        <div className="mt-3 border-t border-[#D3DADD]" />
+                        <div className="mt-3 border-t border-[#E1E1E1]" />
 
-                        <h2 className="font-display mt-4 text-center text-lg leading-snug text-[#1E2428]">
+                        <h2 className="font-display mt-4 text-center text-lg leading-snug text-[#303030]">
                             {produto.nome}
                         </h2>
 
-                        <p className="mt-1 text-center text-xs text-[#5A6469]">
+                        <p className="mt-1 text-center text-xs text-[#616161]">
                             {[produto.categoria, descreverVariacao(produto.variacao_rotulo, produto.variacao)]
                                 .filter(Boolean)
                                 .join(" · ") || "—"}
@@ -173,7 +154,7 @@ export default function EtiquetaProduto() {
                             {/* Etiqueta física: valor cheio em preto, sem os centavos
                                 reduzidos da vitrine — imprime legível e não gasta
                                 tinta colorida em impressora monocromática. */}
-                            <span className="num text-2xl font-extrabold text-[#1E2428]">
+                            <span className="num text-2xl font-extrabold text-[#303030]">
                                 {formatarMoeda(Number(precoExibido))}
                             </span>
 
@@ -189,6 +170,6 @@ export default function EtiquetaProduto() {
 
             </div>
 
-        </main>
+        </Pagina>
     )
 }

@@ -31,6 +31,47 @@ import { extrairMensagemErro } from "@/middleware/client"
 export const API_BASE = (process.env.API_URL ?? "http://localhost:8080").trim().replace(/\/+$/, "")
 
 /**
+ * O cookie em que este servidor guarda a loja que o lojista está vendo, e o
+ * cabeçalho em que ele a repassa ao backend.
+ *
+ * São dois nomes para a mesma escolha porque são dois mundos: o navegador só
+ * fala com ESTE servidor, e o backend só recebe o que este servidor manda —
+ * ele nunca vê cookie nenhum. A tradução acontece em `cabecalhosDaSessao`, num
+ * lugar só, para nenhuma rota esquecer de repassar a loja e mostrar
+ * silenciosamente os dados da loja errada.
+ *
+ * O valor NÃO é confiado: o backend confere a cada requisição que aquela loja é
+ * mesmo do dono logado (ver auth.lojaAberta). Aqui ele é preferência de tela.
+ */
+export const COOKIE_DA_LOJA = "loja"
+export const CABECALHO_DA_LOJA = "X-Loja"
+
+/**
+ * Os cabeçalhos que toda chamada ao backend leva: quem é o lojista, e em qual
+ * loja ele está.
+ *
+ * Sem sessão devolve null — quem chama responde 401 sem tentar a chamada.
+ */
+export async function cabecalhosDaSessao(): Promise<Record<string, string> | null> {
+
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+
+    if (!token) return null
+
+    const cabecalhos: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+    }
+
+    const loja = cookieStore.get(COOKIE_DA_LOJA)?.value
+
+    if (loja) cabecalhos[CABECALHO_DA_LOJA] = loja
+
+    return cabecalhos
+}
+
+/**
  * O endereço completo de um caminho do catálogo (ver app/api/rotas.ts).
  *
  * É o único ponto em que o endereço do servidor encontra o caminho. Quem
@@ -49,10 +90,9 @@ export async function repassarAoBackend(
     corpo?: unknown
 ): Promise<Response> {
     try {
-        const cookieStore = await cookies()
-        const token = cookieStore.get("token")?.value
+        const cabecalhos = await cabecalhosDaSessao()
 
-        if (!token) {
+        if (!cabecalhos) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
@@ -61,8 +101,7 @@ export async function repassarAoBackend(
         const response = await fetch(`${API_BASE}${caminho}`, {
             method: metodo,
             headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
+                ...cabecalhos,
                 ...(temCorpo ? { "Content-Type": "application/json" } : {}),
             },
             body: temCorpo ? JSON.stringify(corpo) : undefined,

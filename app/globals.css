@@ -1,61 +1,148 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   SISTEMA VISUAL — referência: magazineluiza.com.br
-   Paleta, raios e anatomia de card extraídos do CSS do próprio Magalu.
-   O app é light-only por decisão de projeto (o Magalu também é), então
-   todas as cores são pintadas explicitamente, sem depender do tema do SO.
+   SISTEMA VISUAL DO PAINEL — referência: Shopify Admin (Polaris)
+   ==========================================================================
+
+   O painel anterior seguia o magazineluiza.com.br: azul de marca em faixa
+   larga no topo da barra lateral, botão principal azul, cor forte por toda
+   parte. Isso funciona numa VITRINE, onde a cor tem de chamar quem passa —
+   mas num painel de trabalho ela compete com o que o lojista precisa ler.
+
+   A referência agora é o painel do Shopify, que é o padrão de credibilidade
+   em software de loja: a moldura inteira é cinza neutro, o conteúdo mora em
+   cartões brancos, e a cor aparece em três lugares só — o azul do que é
+   clicável, o verde do que deu certo, o vermelho do que precisa de atenção.
+   O botão principal é quase preto: destaca sem gritar, e sobra contraste
+   para o estado que realmente importa na tela.
+
+   Light-only por decisão de projeto, como o próprio Shopify Admin: todas as
+   cores são pintadas explicitamente, sem depender do tema do sistema.
    ========================================================================== */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-nunito);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
 
-  /* Escala de raio do Magalu: 8px é o cavalo de batalha (103 usos no site
-     deles), 4px para elementos pequenos, 12/16px para contêineres grandes.
-     Nada de cantos "bolha" de SaaS genérico. */
-  --radius-sm: 0.125rem;
-  --radius-md: 0.25rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.5rem;
-  --radius-2xl: 0.75rem;
-  --radius-3xl: 1rem;
+  /* Canto reto, em toda a escala.
+     
+     O painel teve a escala de raio do Polaris (8px no controle, 12px no
+     contêiner). Saiu por decisão de desenho: a vitrine sempre foi quadrada —
+     é a assinatura dela, do card de produto ao botão — e as duas telas do
+     mesmo sistema falarem línguas diferentes fazia o painel parecer outro
+     produto.
+     
+     Zerar a escala aqui vale para tudo de uma vez: as classes de componente
+     (.card, .btn, .field, .tag) leem estas variáveis, e toda utilitária
+     `rounded-*` do Tailwind sai delas. Não há canto arredondado escrito à mão
+     em lugar nenhum para escapar.
+     
+     `rounded-full` continua redondo, e é de propósito: ele não vem desta
+     escala, e o que o usa é círculo por natureza — a foto do contato, a
+     bolinha de não lidas, o ponto de estado. Um ponto de estado quadrado de
+     seis pixels não lê como escolha de desenho, lê como defeito. */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
 }
 
 :root {
-  /* Neutros com viés frio, puxando para o azul da marca — cinza puro
-     ficaria descolado do acento. Valores retirados do site do Magalu. */
-  --background: #F0F3F4;
-  --foreground: #1E2428;
+  /* Neutros puros, sem viés de matiz. O Polaris abandonou o cinza azulado
+     justamente para que o azul do link seja a única coisa azul da tela. */
+  --background: #F1F1F1;
+  --foreground: #303030;
 
-  --azul: #0086FF;
-  --azul-escuro: #0075E2;
-  --azul-suave: #E6F3FF;
+  /* Azul de interação: link, foco, item selecionado. Nunca é fundo de
+     botão principal — no Polaris o azul significa "isto leva a algum
+     lugar", e usá-lo também como ação apagaria essa distinção. */
+  --azul: #005BD3;
+  --azul-escuro: #00369B;
+  --azul-suave: #EAF4FF;
 
-  --ink: #1E2428;
-  --ink-2: #5A6469;
-  --ink-3: #8C969B;
+  /* Ação: o quase-preto do botão principal do Shopify. */
+  --acao: #303030;
+  --acao-forte: #1A1A1A;
 
-  --linha: #D3DADD;
-  --linha-suave: #E4E9EB;
+  --ink: #303030;
+  --ink-2: #616161;
+  --ink-3: #8A8A8A;
+  --ink-4: #B5B5B5;
+
+  --linha: #E1E1E1;
+  --linha-suave: #EBEBEB;
+  --linha-campo: #B5B5B5;
   --superficie: #FFFFFF;
-  --fundo: #F0F3F4;
+  --superficie-2: #F7F7F7;
+  --fundo: #F1F1F1;
 
-  --verde: #08A022;
-  --verde-fundo: #E0FFEE;
-  --vermelho: #D4351C;
-  --vermelho-fundo: #FDECEA;
-  --amarelo: #FFB800;
-  --amarelo-fundo: #FFF6E0;
+  /* Barra superior escura — a moldura do painel do Shopify. Ela existe
+     para que a marca e a busca não ocupem espaço de cor dentro da tela de
+     trabalho. */
+  --topo: #1A1A1A;
+  --topo-2: #303030;
+
+  --verde: #0C5132;
+  --verde-fundo: #CDFEE1;
+  --verde-suave: #EAFBF1;
+  --vermelho: #8E1F0B;
+  --vermelho-forte: #E51C00;
+  --vermelho-fundo: #FEE9E8;
+  --amarelo: #5E4200;
+  --amarelo-forte: #C7920A;
+  --amarelo-fundo: #FFF1E3;
+
+  /* ------------------------------------------------------------------
+     GRÁFICOS
+
+     Uma paleta à parte, e não os tokens de estado reaproveitados: verde e
+     vermelho no painel significam "deu certo" e "deu errado", e usá-los
+     como série de gráfico faria "conversas recebidas" parecer um problema.
+
+     A ordem é fixa e nunca circula: a série 1 é sempre a primeira do
+     gráfico, mesmo quando um filtro tira as outras da tela. Cor que se
+     rearranja conforme o que sobrou faz o leitor comparar a barra de hoje
+     com a memória da barra de ontem, que era de outra coisa.
+
+     Os quatro primeiros passam nas separações de daltonismo sobre fundo
+     branco (protan/deutan ΔE 9.1, visão normal 22.9). Aqua e amarelo ficam
+     abaixo de 3:1 de contraste com o branco — por isso todo gráfico que os
+     usa traz rótulo escrito e a mesma informação em tabela, nunca a cor
+     sozinha.
+     ------------------------------------------------------------------ */
+  --serie-1: #005BD3;
+  --serie-2: #EB6834;
+  --serie-3: #1BAF7A;
+  --serie-4: #EDA100;
+  --serie-5: #E87BA4;
+  --serie-6: #4A3AA7;
+
+  /* As situações do atendimento. São estado, não série: livre é o que
+     espera alguém, e por isso é a cor de atenção do painel. */
+  --situacao-livre: #C7920A;
+  --situacao-atribuido: #005BD3;
+  --situacao-atendendo: #0C8A5D;
+
+  /* A grade e o eixo do gráfico. Recessivos de propósito: a linha de
+     referência não pode competir com o dado que ela mede. */
+  --grade: #EBEBEB;
+  --eixo: #D9D9D9;
+
+  /* Sombras do Polaris: rasas de propósito. O cartão não flutua — ele
+     apenas assenta sobre o cinza. Sombra grande é o tique de template. */
+  --sombra-cartao: 0 1px 0 rgba(0, 0, 0, 0.05);
+  --sombra-suspensa: 0 4px 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 @layer base {
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   }
 
   /* Acessibilidade: foco sempre visível para quem navega pelo teclado. */
@@ -81,31 +168,31 @@
    silenciosamente não valeria. */
 @layer components {
 
-/* Títulos. O Magalu não usa serifa — o peso e o tracking apertado é que
-   fazem a hierarquia. Mantém o nome `.font-display` para não precisar
-   reescrever as centenas de chamadas espalhadas pelas páginas. */
+/* Títulos. Peso 600 e tracking levemente negativo, como o Polaris — o
+   painel do Shopify não passa de semibold em lugar nenhum, porque texto
+   preto e pesado numa tela cheia de dados vira ruído.
+   Mantém o nome `.font-display` para não precisar reescrever as centenas
+   de chamadas espalhadas pelas páginas. */
 .font-display {
-  font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.012em;
 }
 
 /* ==========================================================================
    PREÇO
-   Detalhe-assinatura do e-commerce brasileiro: o valor cheio em peso alto
-   e os centavos menores, alinhados ao topo. Use com <Preco/>.
    ========================================================================== */
 .preco {
-  font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 800;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 650;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 .preco-centavos {
-  font-size: 0.62em;
-  font-weight: 700;
+  font-size: 0.68em;
+  font-weight: 600;
   vertical-align: baseline;
 }
 
@@ -122,17 +209,21 @@
 
 /* ==========================================================================
    FORMULÁRIO
-   Padrão do Magalu: campo branco, borda cinza fria, foco em azul.
+   O campo do Polaris tem a borda mais escura que a do cartão em que ele
+   está. É o que faz o campo parecer operável em vez de decorativo — a
+   borda clara demais é o motivo de tanto formulário parecer maquete.
    ========================================================================== */
 .field {
   width: 100%;
   background: var(--superficie);
   color: var(--ink);
-  padding: 0.7rem 0.9rem;
-  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--linha);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  border: 1px solid var(--linha-campo);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .field::placeholder {
@@ -142,126 +233,156 @@
 .field:focus {
   outline: none;
   border-color: var(--azul);
-  box-shadow: 0 0 0 3px rgba(0, 134, 255, 0.18);
+  box-shadow: 0 0 0 2px var(--azul);
 }
 
 /* Campo recusado na validação: a borda vermelha diz qual linha do formulário
    o aviso do topo está reclamando. */
 .field[aria-invalid="true"] {
-  border-color: var(--vermelho);
+  border-color: var(--vermelho-forte);
 }
 
 .field[aria-invalid="true"]:focus {
-  border-color: var(--vermelho);
-  box-shadow: 0 0 0 3px rgba(212, 53, 28, 0.18);
+  border-color: var(--vermelho-forte);
+  box-shadow: 0 0 0 2px var(--vermelho-forte);
 }
 
 /* Enquanto o formulário está enviando, os campos ficam bloqueados e precisam
    parecer bloqueados. */
 .field:disabled {
-  background: var(--fundo);
-  color: var(--ink-2);
+  background: var(--superficie-2);
+  color: var(--ink-3);
+  border-color: var(--linha);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
 .rotulo {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--ink);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 /* ==========================================================================
    BOTÕES
+   O botão do Shopify não tem borda desenhada: tem sombra interna. A linha
+   escura embaixo e a clara em cima dão a ele uma espessura física de
+   milímetro — é o detalhe que separa um botão desenhado de um retângulo
+   colorido.
    ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   border-radius: var(--radius-lg);
-  padding: 0.7rem 1.1rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  padding: 0.4375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  letter-spacing: -0.003em;
+  transition: background-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
   cursor: pointer;
 }
 
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
+/* Principal: o quase-preto. Um por tela — é a ação que a tela existe para
+   fazer. */
 .btn-primario {
-  background: var(--azul);
+  background: var(--acao);
   color: #FFFFFF;
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .btn-primario:hover:not(:disabled) {
-  background: var(--azul-escuro);
+  background: var(--acao-forte);
 }
 
+/* Secundário: branco com texto azul — o que leva a outro lugar sem ser a
+   ação principal desta tela. */
 .btn-secundario {
   background: var(--superficie);
   color: var(--azul);
-  border: 1px solid var(--azul);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px var(--linha);
 }
 
 .btn-secundario:hover:not(:disabled) {
   background: var(--azul-suave);
 }
 
+/* Neutro: branco com texto escuro — companhia do principal (Cancelar,
+   Voltar, Exportar). */
 .btn-neutro {
   background: var(--superficie);
   color: var(--ink);
-  border: 1px solid var(--linha);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px var(--linha);
 }
 
 .btn-neutro:hover:not(:disabled) {
-  background: var(--fundo);
+  background: var(--superficie-2);
 }
 
 .btn-perigo {
-  background: var(--vermelho);
+  background: var(--vermelho-forte);
   color: #FFFFFF;
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-perigo:hover:not(:disabled) {
-  background: #B02D18;
+  background: #B81600;
 }
 
 /* ==========================================================================
    CARD
-   Card branco, borda fina fria, raio 8px — a unidade básica do layout.
+   A unidade de layout do painel: branco, raio 12px, borda de fio e a
+   sombra de 1px que o assenta sobre o cinza da moldura.
    ========================================================================== */
 .card {
   background: var(--superficie);
   border: 1px solid var(--linha);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--sombra-cartao);
 }
 
 .card-hover {
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .card-hover:hover {
-  border-color: var(--azul);
-  box-shadow: 0 2px 12px rgba(30, 36, 40, 0.08);
+  border-color: var(--ink-4);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 /* ==========================================================================
    ETIQUETAS DE ESTADO
-   Retangulares e compactas, como os selos de desconto/cupom do Magalu.
+   O badge do Polaris é discreto: fundo pastel, texto escuro da mesma
+   família, peso médio. Ele informa o estado da linha sem disputar leitura
+   com o nome do produto ao lado.
    ========================================================================== */
 .tag {
   display: inline-flex;
   align-items: center;
   gap: 0.3em;
-  border-radius: var(--radius-md);
-  padding: 0.2rem 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 700;
+  border-radius: var(--radius-lg);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 550;
+  line-height: 1.125rem;
   white-space: nowrap;
 }
 
@@ -277,7 +398,7 @@
 
 .tag-warning {
   background: var(--amarelo-fundo);
-  color: #8A6C1B;
+  color: var(--amarelo);
 }
 
 .tag-info {
@@ -286,8 +407,49 @@
 }
 
 .tag-neutral {
-  background: var(--fundo);
+  background: #E3E3E3;
   color: var(--ink-2);
+}
+
+/* ==========================================================================
+   TABELA
+   As telas operacionais (produtos, estoque, endereços) montam suas tabelas
+   à mão. Estas classes existem para que a anatomia seja a mesma em todas:
+   cabeçalho cinza que gruda no topo ao rolar, linha de 1px entre as
+   linhas, e o realce da linha sob o cursor.
+   ========================================================================== */
+.tabela {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+}
+
+.tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--superficie-2);
+  color: var(--ink-2);
+  font-weight: 550;
+  text-align: left;
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--linha);
+}
+
+.tabela tbody td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--linha-suave);
+  vertical-align: middle;
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabela tbody tr:hover td {
+  background: var(--superficie-2);
 }
 
 /* ==========================================================================
@@ -310,9 +472,9 @@
  * cliente, não o papel de parede.
  */
 .fio-conversa {
-  background-color: #f7f9fa;
+  background-color: #F7F7F7;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(30, 36, 40, 0.045) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.045) 1px, transparent 0);
   background-size: 22px 22px;
 }
 
@@ -337,7 +499,7 @@
 }
 
 .audio-linha-escura::-webkit-slider-thumb {
-  background: #0086ff;
+  background: var(--azul);
 }
 
 .audio-linha-clara::-moz-range-thumb,
@@ -354,7 +516,53 @@
 }
 
 .audio-linha-escura::-moz-range-thumb {
-  background: #0086ff;
+  background: var(--azul);
+}
+
+/* "Está digitando…" — as três bolinhas do chat de atendimento.
+   O mesmo desenho da vitrine (ver vendas/frontp/app/globals.css): as duas
+   pontas da mesma conversa devem falar a mesma língua visual. Só aparece
+   quando o outro lado DE FATO digitou nos últimos segundos — o sinal vem do
+   backend (services/atendimento/digitando.go), não é animação de enfeite. */
+.digitando {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.digitando span {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.4;
+  animation: pulinho 1.2s infinite ease-in-out;
+}
+
+.digitando span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.digitando span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes pulinho {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-0.22rem);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .digitando span {
+    animation: none;
+    opacity: 0.8;
+  }
 }
 
 }
@@ -363,5 +571,214 @@
 @media print {
   @page {
     margin: 8mm;
+  }
+}
+
+/* ==========================================================================
+   MOVIMENTO
+
+   As animações do painel moram aqui, e não soltas em cada tela, pelo mesmo
+   motivo dos botões e das etiquetas: duração e curva escritas à mão em cada
+   componente viram dez velocidades diferentes na mesma tela, e o conjunto
+   passa a parecer montado por pessoas que não se falaram.
+
+   A régua é curta de propósito. Nada aqui passa de 260ms: numa tela de
+   trabalho, animação é o que explica de onde a coisa veio — não é espetáculo,
+   e quem usa o sistema o dia inteiro vai ver o mesmo movimento mil vezes.
+   Meio segundo, repetido mil vezes, é oito minutos esperando.
+
+   E tudo respeita `prefers-reduced-motion`. Não é formalidade: para quem tem
+   sensibilidade vestibular, movimento na tela causa enjoo de verdade, e o
+   sistema operacional já carrega essa resposta — basta perguntar.
+   ========================================================================== */
+
+@keyframes surgir-de-baixo {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes entrar-da-esquerda {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A bolinha do "está digitando". A escala não vai a zero: a bolinha que
+   desaparece pisca, e três piscando viram um alarme. Ela encolhe e clareia,
+   que é como se lê "alguém está no meio de uma frase". */
+@keyframes pulsar-bolinha {
+  0%, 60%, 100% {
+    opacity: 0.35;
+    transform: translateY(0) scale(0.75);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1);
+  }
+}
+
+/* A mensagem que chega. Sobe um pouco porque é de baixo que a conversa
+   cresce — descer contrariaria a direção que o olho já está seguindo. */
+.anim-mensagem {
+  animation: surgir-de-baixo 200ms ease-out both;
+}
+
+/* A tela que entra: a conversa ao abrir, o painel de tarefas, a sala trocada.
+   Só opacidade e um passo curto — a tela inteira deslizando é o tique de
+   template. */
+.anim-tela {
+  animation: surgir-de-baixo 220ms ease-out both;
+}
+
+.anim-surgir {
+  animation: surgir 180ms ease-out both;
+}
+
+/* O item da lista lateral, quando a lista chega. O atraso é aplicado item a
+   item no componente, em cascata curta. */
+.anim-item {
+  animation: entrar-da-esquerda 220ms ease-out both;
+}
+
+/* As três bolinhas, defasadas para o movimento correr da esquerda para a
+   direita — é o que faz parecer uma onda em vez de três coisas piscando
+   juntas. */
+.bolinha-digitando {
+  animation: pulsar-bolinha 1.2s ease-in-out infinite;
+}
+
+.bolinha-digitando:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.bolinha-digitando:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+/* ==========================================================================
+   MURAL
+
+   O papel de recado. As cores são claras porque o texto é preto por cima
+   delas: papel de recado saturado transforma a leitura em esforço, e um mural
+   cheio deles vira uma parede de néon.
+
+   A sombra é curta e o papel não flutua parado — ele só levanta enquanto
+   alguém o segura. Sombra grande em repouso é o tique de template.
+   ========================================================================== */
+
+.nota {
+  --nota-papel: #FFF3BF;
+  --nota-borda: #F2E08A;
+
+  background: var(--nota-papel);
+  border: 1px solid var(--nota-borda);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 160ms ease-out, transform 160ms ease-out;
+}
+
+.nota-amarela { --nota-papel: #FFF3BF; --nota-borda: #F2E08A; }
+.nota-verde   { --nota-papel: #D9F5E3; --nota-borda: #A9E3C3; }
+.nota-azul    { --nota-papel: #DCECFF; --nota-borda: #AFD2F5; }
+.nota-rosa    { --nota-papel: #FFE1EC; --nota-borda: #F7BBD0; }
+.nota-cinza   { --nota-papel: #ECECEC; --nota-borda: #D4D4D4; }
+
+/* Enquanto a mão segura. Levanta um pouco e inclina de leve — é o que faz o
+   papel parecer solto do quadro em vez de escorregar sobre ele. A transição
+   sai durante o arrasto: com ela, a nota persegue o cursor com atraso. */
+.nota-na-mao {
+  transition: none;
+  transform: scale(1.03) rotate(-1deg);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  cursor: grabbing;
+}
+
+.nota-pousando {
+  animation: pousar 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes pousar {
+  from {
+    transform: scale(1.03) rotate(-1deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* O papel novo, chegando ao quadro. */
+@keyframes pendurar {
+  from {
+    opacity: 0;
+    transform: scale(0.86) rotate(-4deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nota-nova {
+  animation: pendurar 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* A trama do quadro, para o vazio não parecer erro de carregamento e para o
+   olho ter referência de distância ao arrastar. */
+.quadro-do-mural {
+  background-color: var(--superficie-2);
+  background-image:
+    linear-gradient(var(--linha-suave) 1px, transparent 1px),
+    linear-gradient(90deg, var(--linha-suave) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Quem pediu menos movimento recebe menos movimento. O conteúdo continua
+   inteiro: o que sai é o deslocamento, não a informação. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-mensagem,
+  .anim-tela,
+  .anim-surgir,
+  .anim-item {
+    animation: surgir 1ms linear both;
+  }
+
+  .bolinha-digitando {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .nota,
+  .nota-na-mao,
+  .nota-pousando,
+  .nota-nova {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+
+  /* O arrasto continua funcionando: o que sai é a inclinação e o salto, não
+     a capacidade de mover o papel. A sombra maior fica, porque ela é o que
+     diz "este está na mão" sem depender de movimento. */
+  .nota-na-mao {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   }
 }

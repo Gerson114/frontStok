@@ -20,6 +20,7 @@ import {
     FiMapPin,
     FiPlusCircle,
 } from "react-icons/fi"
+import { Pagina } from "@/app/components/pagina/pagina"
 
 /**
  * Ressuprimento: o que está faltando na prateleira de venda agora.
@@ -180,274 +181,259 @@ export default function Reposicao() {
     }
 
     return (
-        <main className="min-h-screen bg-[#F0F3F4] p-6 md:ml-64 md:p-10">
-            <div className="mx-auto max-w-4xl space-y-6">
+        <Pagina
+            titulo="Reposição"
+            descricao="O que está abaixo do mínimo na prateleira de venda, com o pulmão de onde tirar. Ver não mexe em nada; pôr na fila é que cria trabalho para alguém."
+            acoes={
+                <button
+                    type="button"
+                    onClick={porNaFila}
+                    disabled={gerando || reposicoes.length === 0}
+                    className="btn btn-primario"
+                >
+                    <FiPlusCircle className="w-4" aria-hidden />
+                    {gerando ? "Gerando..." : "Pôr na fila"}
+                </button>
+            }
+        >
 
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            {erro && (
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                    <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>{erro}</span>
+                </div>
+            )}
 
-                    <div>
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#5A6469]">
-                            Estoque
-                        </p>
-                        <h1 className="font-display text-2xl text-[#1E2428]">
-                            Reposição
-                        </h1>
-                        <p className="mt-1 max-w-2xl text-sm text-[#5A6469]">
-                            O que está abaixo do mínimo na prateleira de venda, com o pulmão de onde
-                            tirar. Ver não mexe em nada; pôr na fila é que cria trabalho para alguém.
-                        </p>
-                    </div>
+            {aviso && (
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                    <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>{aviso}</span>
+                </div>
+            )}
 
-                    <button
-                        type="button"
-                        onClick={porNaFila}
-                        disabled={gerando || reposicoes.length === 0}
-                        className="btn btn-primario"
-                    >
-                        <FiPlusCircle className="w-4" aria-hidden />
-                        {gerando ? "Gerando..." : "Pôr na fila"}
-                    </button>
+            {urgentes > 0 && (
+                <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[#8E1F0B] bg-[#FEE9E8] px-4 py-3 text-sm text-[#8E1F0B]">
+                    <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                    <span>
+                        <span className="num font-bold">{urgentes}</span> prateleira(s) já estão
+                        vazias. Não falta pouco: falta tudo — e é venda perdida agora, não amanhã.
+                    </span>
+                </div>
+            )}
+
+            {carregando ? (
+
+                <p className="text-[#616161]">Carregando o ressuprimento...</p>
+
+            ) : reposicoes.length === 0 ? (
+
+                <div className="rounded-lg border border-dashed border-[#E1E1E1] bg-white p-12 text-center">
+
+                    <FiCheckCircle className="mx-auto w-9 text-[#8A8A8A]" aria-hidden />
+
+                    <h2 className="font-display mt-4 text-lg text-[#303030]">
+                        Nada faltando na prateleira
+                    </h2>
+
+                    <p className="mt-2 text-sm text-[#616161]">
+                        Ou está tudo acima do mínimo, ou nenhum produto tem prateleira de venda
+                        definida ainda — sem dizer onde o produto deve ficar e quanto tem de ter
+                        ali, &ldquo;abaixo do mínimo&rdquo; não quer dizer nada.
+                    </p>
 
                 </div>
 
-                {erro && (
-                    <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]">
-                        <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>{erro}</span>
-                    </div>
-                )}
+            ) : (
 
-                {aviso && (
-                    <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#E0FFEE] px-4 py-3 text-sm font-semibold text-[#08A022]">
-                        <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>{aviso}</span>
-                    </div>
-                )}
+                <ul className="space-y-3">
 
-                {urgentes > 0 && (
-                    <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[#D4351C] bg-[#FDECEA] px-4 py-3 text-sm text-[#D4351C]">
-                        <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                        <span>
-                            <span className="num font-bold">{urgentes}</span> prateleira(s) já estão
-                            vazias. Não falta pouco: falta tudo — e é venda perdida agora, não amanhã.
-                        </span>
-                    </div>
-                )}
+                    {reposicoes.map((reposicao) => (
 
-                {carregando ? (
+                        <li
+                            key={`${reposicao.produto_id}-${reposicao.destino_id}`}
+                            className={`card border-l-4 p-5 ${reposicao.urgente ? "border-l-[#8E1F0B]" : "border-l-[#C7920A]"}`}
+                        >
 
-                    <p className="text-[#5A6469]">Carregando o ressuprimento...</p>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
 
-                ) : reposicoes.length === 0 ? (
+                                <div className="min-w-0">
 
-                    <div className="rounded-lg border border-dashed border-[#D3DADD] bg-white p-12 text-center">
+                                    <p className="font-display text-base text-[#303030]">
+                                        {reposicao.produto_nome}
+                                        {reposicao.variacao ? ` · ${reposicao.variacao}` : ""}
+                                    </p>
 
-                        <FiCheckCircle className="mx-auto w-9 text-[#8C969B]" aria-hidden />
+                                    <p className="font-mono text-xs text-[#616161]">
+                                        {reposicao.produto_codigo}
+                                    </p>
 
-                        <h2 className="font-display mt-4 text-lg text-[#1E2428]">
-                            Nada faltando na prateleira
-                        </h2>
+                                    <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
 
-                        <p className="mt-2 text-sm text-[#5A6469]">
-                            Ou está tudo acima do mínimo, ou nenhum produto tem prateleira de venda
-                            definida ainda — sem dizer onde o produto deve ficar e quanto tem de ter
-                            ali, &ldquo;abaixo do mínimo&rdquo; não quer dizer nada.
-                        </p>
+                                        {reposicao.origem ? (
+                                            <>
+                                                <span className="num font-medium text-[#303030]">{reposicao.origem}</span>
+                                                <FiArrowDown className="w-3.5 text-[#616161]" aria-hidden />
+                                            </>
+                                        ) : null}
 
-                    </div>
+                                        <span className="num font-medium text-[#303030]">{reposicao.destino}</span>
 
-                ) : (
+                                        <span className="text-[#616161]">{reposicao.destino_nome}</span>
 
-                    <ul className="space-y-3">
+                                    </p>
 
-                        {reposicoes.map((reposicao) => (
+                                    <p className="mt-2 flex flex-wrap items-center gap-2">
 
-                            <li
-                                key={`${reposicao.produto_id}-${reposicao.destino_id}`}
-                                className={`card border-l-4 p-5 ${reposicao.urgente ? "border-l-[#D4351C]" : "border-l-[#FFB800]"}`}
-                            >
-
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-
-                                    <div className="min-w-0">
-
-                                        <p className="font-display text-base text-[#1E2428]">
-                                            {reposicao.produto_nome}
-                                            {reposicao.variacao ? ` · ${reposicao.variacao}` : ""}
-                                        </p>
-
-                                        <p className="font-mono text-xs text-[#5A6469]">
-                                            {reposicao.produto_codigo}
-                                        </p>
-
-                                        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-
-                                            {reposicao.origem ? (
-                                                <>
-                                                    <span className="num font-medium text-[#1E2428]">{reposicao.origem}</span>
-                                                    <FiArrowDown className="w-3.5 text-[#5A6469]" aria-hidden />
-                                                </>
-                                            ) : null}
-
-                                            <span className="num font-medium text-[#1E2428]">{reposicao.destino}</span>
-
-                                            <span className="text-[#5A6469]">{reposicao.destino_nome}</span>
-
-                                        </p>
-
-                                        <p className="mt-2 flex flex-wrap items-center gap-2">
-
-                                            {reposicao.urgente && (
-                                                <span className="tag tag-danger">prateleira vazia</span>
-                                            )}
-
-                                            <span className="tag tag-neutral num">
-                                                tem {reposicao.no_picking} de {reposicao.minimo}
-                                            </span>
-
-                                            <span className="tag tag-neutral num">
-                                                pulmão: {reposicao.no_pulmao}
-                                            </span>
-
-                                        </p>
-
-                                        {!reposicao.origem && (
-                                            <p className="mt-2 text-sm text-[#D4351C]">
-                                                Não há de onde tirar: o produto acabou na loja inteira. O
-                                                problema aqui não é de reposição, é de compra.
-                                            </p>
+                                        {reposicao.urgente && (
+                                            <span className="tag tag-danger">prateleira vazia</span>
                                         )}
 
-                                    </div>
+                                        <span className="tag tag-neutral num">
+                                            tem {reposicao.no_picking} de {reposicao.minimo}
+                                        </span>
 
-                                    <div className="shrink-0 text-right">
-                                        <p className="text-xs text-[#5A6469]">Repor</p>
-                                        <p className="num text-3xl font-bold text-[#1E2428]">
-                                            {reposicao.quantidade}
+                                        <span className="tag tag-neutral num">
+                                            pulmão: {reposicao.no_pulmao}
+                                        </span>
+
+                                    </p>
+
+                                    {!reposicao.origem && (
+                                        <p className="mt-2 text-sm text-[#8E1F0B]">
+                                            Não há de onde tirar: o produto acabou na loja inteira. O
+                                            problema aqui não é de reposição, é de compra.
                                         </p>
-                                        <p className="num text-xs text-[#5A6469]">
-                                            até {reposicao.maximo}
-                                        </p>
-                                    </div>
+                                    )}
 
                                 </div>
 
-                            </li>
-
-                        ))}
-
-                    </ul>
-
-                )}
-
-                {/* ==========================
-                    PICKING FIXO
-                ========================== */}
-
-                <section className="card space-y-4 p-5 sm:p-7">
-
-                    <div>
-                        <h2 className="font-display flex items-center gap-2 text-base text-[#1E2428]">
-                            <FiMapPin className="w-4 text-[#0086FF]" aria-hidden />
-                            Prateleira de venda de um produto
-                        </h2>
-                        <p className="mt-1 text-sm text-[#5A6469]">
-                            Onde o produto mora e quanto ele tem de ter ali. É o par sem o qual não
-                            existe reposição — e sem o qual a loja descobre a prateleira vazia pela
-                            boca do cliente, com o estoque cheio no fundo.
-                        </p>
-                    </div>
-
-                    {enderecos.length === 0 ? (
-
-                        <p className="rounded-lg bg-[#FFF6E0] px-4 py-3 text-sm text-[#8A6C1B]">
-                            Nenhuma prateleira de venda cadastrada.{" "}
-                            <Link href="/page/estoque/enderecos" className="font-bold underline">
-                                Cadastre um endereço do tipo &ldquo;prateleira de venda&rdquo;
-                            </Link>{" "}
-                            para poder dizer onde cada produto fica.
-                        </p>
-
-                    ) : (
-
-                        <form onSubmit={salvarPicking} className="space-y-4">
-
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="produto">Produto</label>
-                                    <select
-                                        id="produto"
-                                        value={produtoId}
-                                        onChange={(e) => setProdutoId(e.target.value)}
-                                        className="field cursor-pointer"
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {produtos.map((produto) => (
-                                            <option key={produto.id} value={produto.id}>
-                                                {produto.nome}
-                                                {produto.variacao ? ` · ${produto.variacao}` : ""}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="endereco">Prateleira</label>
-                                    <select
-                                        id="endereco"
-                                        value={endereco}
-                                        onChange={(e) => setEndereco(e.target.value)}
-                                        className="field cursor-pointer"
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {enderecos.map((item) => (
-                                            <option key={item.id} value={item.codigo}>
-                                                {item.codigo} · {item.nome}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="minimo">Mínimo</label>
-                                    <input
-                                        id="minimo"
-                                        type="number"
-                                        min="1"
-                                        value={minimo}
-                                        onChange={(e) => setMinimo(e.target.value)}
-                                        placeholder="Repõe abaixo disto"
-                                        className="field num"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="rotulo" htmlFor="maximo">Máximo</label>
-                                    <input
-                                        id="maximo"
-                                        type="number"
-                                        min="0"
-                                        value={maximo}
-                                        onChange={(e) => setMaximo(e.target.value)}
-                                        placeholder="0 = a capacidade da prateleira"
-                                        className="field num"
-                                    />
+                                <div className="shrink-0 text-right">
+                                    <p className="text-xs text-[#616161]">Repor</p>
+                                    <p className="num text-3xl font-bold text-[#303030]">
+                                        {reposicao.quantidade}
+                                    </p>
+                                    <p className="num text-xs text-[#616161]">
+                                        até {reposicao.maximo}
+                                    </p>
                                 </div>
 
                             </div>
 
-                            <button type="submit" disabled={salvando} className="btn btn-primario">
-                                {salvando ? "Salvando..." : "Definir prateleira"}
-                            </button>
+                        </li>
 
-                        </form>
+                    ))}
 
-                    )}
+                </ul>
 
-                </section>
+            )}
 
-            </div>
-        </main>
+            {/* ==========================
+                PICKING FIXO
+            ========================== */}
+
+            <section className="card space-y-4 p-5 sm:p-7">
+
+                <div>
+                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
+                        <FiMapPin className="w-4 text-[#005BD3]" aria-hidden />
+                        Prateleira de venda de um produto
+                    </h2>
+                    <p className="mt-1 text-sm text-[#616161]">
+                        Onde o produto mora e quanto ele tem de ter ali. É o par sem o qual não
+                        existe reposição — e sem o qual a loja descobre a prateleira vazia pela
+                        boca do cliente, com o estoque cheio no fundo.
+                    </p>
+                </div>
+
+                {enderecos.length === 0 ? (
+
+                    <p className="rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                        Nenhuma prateleira de venda cadastrada.{" "}
+                        <Link href="/page/estoque/enderecos" className="font-bold underline">
+                            Cadastre um endereço do tipo &ldquo;prateleira de venda&rdquo;
+                        </Link>{" "}
+                        para poder dizer onde cada produto fica.
+                    </p>
+
+                ) : (
+
+                    <form onSubmit={salvarPicking} className="space-y-4">
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                            <div className="space-y-1.5">
+                                <label className="rotulo" htmlFor="produto">Produto</label>
+                                <select
+                                    id="produto"
+                                    value={produtoId}
+                                    onChange={(e) => setProdutoId(e.target.value)}
+                                    className="field cursor-pointer"
+                                >
+                                    <option value="">Selecione...</option>
+                                    {produtos.map((produto) => (
+                                        <option key={produto.id} value={produto.id}>
+                                            {produto.nome}
+                                            {produto.variacao ? ` · ${produto.variacao}` : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="rotulo" htmlFor="endereco">Prateleira</label>
+                                <select
+                                    id="endereco"
+                                    value={endereco}
+                                    onChange={(e) => setEndereco(e.target.value)}
+                                    className="field cursor-pointer"
+                                >
+                                    <option value="">Selecione...</option>
+                                    {enderecos.map((item) => (
+                                        <option key={item.id} value={item.codigo}>
+                                            {item.codigo} · {item.nome}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="rotulo" htmlFor="minimo">Mínimo</label>
+                                <input
+                                    id="minimo"
+                                    type="number"
+                                    min="1"
+                                    value={minimo}
+                                    onChange={(e) => setMinimo(e.target.value)}
+                                    placeholder="Repõe abaixo disto"
+                                    className="field num"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="rotulo" htmlFor="maximo">Máximo</label>
+                                <input
+                                    id="maximo"
+                                    type="number"
+                                    min="0"
+                                    value={maximo}
+                                    onChange={(e) => setMaximo(e.target.value)}
+                                    placeholder="0 = a capacidade da prateleira"
+                                    className="field num"
+                                />
+                            </div>
+
+                        </div>
+
+                        <button type="submit" disabled={salvando} className="btn btn-primario">
+                            {salvando ? "Salvando..." : "Definir prateleira"}
+                        </button>
+
+                    </form>
+
+                )}
+
+            </section>
+
+        </Pagina>
     )
 }

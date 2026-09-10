@@ -7,6 +7,7 @@ import { concluirCadastro } from "@/middleware/auth"
 import { consultarAssinatura } from "@/middleware/assinatura"
 import { ApiError } from "@/middleware/client"
 import { FiCheckCircle, FiClock, FiAlertCircle } from "react-icons/fi"
+import { PaginaCentrada } from "@/app/components/pagina/pagina"
 
 // O Stripe traz o lojista de volta assim que ele paga, mas a confirmação do
 // pagamento pode levar alguns segundos. Por isso esta tela insiste algumas
@@ -122,21 +123,21 @@ export default function AssinaturaSucessoPage() {
     }, [router])
 
     return (
-        <main className="mx-auto flex max-w-md flex-col justify-center px-4 py-16">
+        <PaginaCentrada>
 
             <div className="card p-7 text-center sm:p-8">
 
                 {estado === "liberada" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F8EE] text-[#1E9E5A]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EAFBF1] text-[#0C5132]">
                             <FiCheckCircle className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
+                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
                             Pagamento confirmado
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#5A6469]">
+                        <p className="mt-2 text-sm text-[#616161]">
                             Sua assinatura está ativa e o painel foi liberado.
                         </p>
 
@@ -146,29 +147,29 @@ export default function AssinaturaSucessoPage() {
                     </>
                 ) : estado === "entrando" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F8EE] text-[#1E9E5A]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EAFBF1] text-[#0C5132]">
                             <FiCheckCircle className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
+                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
                             Conta criada
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#5A6469]">
+                        <p className="mt-2 text-sm text-[#616161]">
                             Tudo certo. Abrindo o seu painel...
                         </p>
                     </>
                 ) : estado === "erro" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FDECEA] text-[#D4351C]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE9E8] text-[#8E1F0B]">
                             <FiAlertCircle className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
+                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
                             Não conseguimos concluir aqui
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#5A6469]">
+                        <p className="mt-2 text-sm text-[#616161]">
                             {erro} Se o pagamento foi aprovado, sua conta existe: entre
                             com o e-mail e a senha que você acabou de cadastrar.
                         </p>
@@ -179,15 +180,15 @@ export default function AssinaturaSucessoPage() {
                     </>
                 ) : estado === "demorou" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F3F4] text-[#5A6469]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1F1F1] text-[#616161]">
                             <FiClock className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
+                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
                             Ainda confirmando
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#5A6469]">
+                        <p className="mt-2 text-sm text-[#616161]">
                             Recebemos seu pagamento, mas a confirmação do banco está
                             demorando mais que o normal. Isso costuma se resolver em
                             alguns minutos, e nada precisa ser pago de novo.
@@ -199,15 +200,15 @@ export default function AssinaturaSucessoPage() {
                     </>
                 ) : (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F3F4] text-[#5A6469]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1F1F1] text-[#616161]">
                             <FiClock className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#1E2428]">
+                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
                             Confirmando pagamento
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#5A6469]">
+                        <p className="mt-2 text-sm text-[#616161]">
                             Só um instante — estamos aguardando a confirmação.
                         </p>
                     </>
@@ -215,6 +216,6 @@ export default function AssinaturaSucessoPage() {
 
             </div>
 
-        </main>
+        </PaginaCentrada>
     )
 }

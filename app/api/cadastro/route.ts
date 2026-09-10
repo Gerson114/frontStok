@@ -63,12 +63,18 @@ export async function POST(request: Request) {
         // não precisa de outra ida ao servidor. Esta rota ainda respondia
         // "escolher_plano" com uma lista de `planos`, formato dos dois planos
         // que deixaram de existir — ninguém lia, e a oferta se perdia aqui.
+        // Quem decide o passo seguinte é o backend: "confirmar" quando ele
+        // sabe enviar e-mail (e acabou de mandar o código de 6 dígitos), ou
+        // "pagar" quando não há confirmação a fazer. Fixar "pagar" aqui, como
+        // já se fez, mandava o visitante para o pagamento antes de confirmar
+        // o e-mail — e o pagamento seria recusado do outro lado.
         const saida = Response.json(
             {
-                proximo_passo: "pagar",
+                proximo_passo: dados?.proximo_passo === "confirmar" ? "confirmar" : "pagar",
                 email,
                 cobranca_ativa: true,
                 oferta: dados?.oferta,
+                mensagem: dados?.mensagem,
             },
             { status: 200, headers: { "Cache-Control": "no-store" } }
         )

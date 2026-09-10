@@ -60,6 +60,55 @@ export async function cadastro(email: string, password: string): Promise<InicioC
 }
 
 /**
+ * O passo do meio: confirma o e-mail com os seis dígitos que chegaram na
+ * caixa de entrada.
+ *
+ * O código não é conferido aqui — quem sabe se ele está certo, se venceu e
+ * quantas tentativas restam é o servidor. Esta função só entrega o que foi
+ * digitado e devolve a resposta, inclusive as tentativas restantes, que a
+ * tela mostra.
+ */
+export async function confirmarCadastro(codigo: string): Promise<InicioCadastro> {
+    const response = await fetch("/api/cadastro/confirmar", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ codigo: codigo.trim() }),
+    })
+
+    const texto = await response.text().catch(() => "")
+    const dados = texto ? safeParse(texto) : null
+
+    if (!response.ok) {
+        throw new ApiError(extrairMensagemErro(dados), response.status)
+    }
+
+    return dados as InicioCadastro
+}
+
+/** Pede outro código de confirmação para o mesmo cadastro. */
+export async function reenviarCodigo(): Promise<string> {
+    const response = await fetch("/api/cadastro/reenviar", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+    })
+
+    const texto = await response.text().catch(() => "")
+    const dados = texto ? safeParse(texto) : null
+
+    if (!response.ok) {
+        throw new ApiError(extrairMensagemErro(dados), response.status)
+    }
+
+    return String((dados as { mensagem?: string } | null)?.mensagem ?? "Código novo enviado")
+}
+
+/**
  * Segundo passo: abre o pagamento e devolve a URL do provedor de cobrança.
  * Quem chama leva o navegador até lá com `window.location.assign`.
  *

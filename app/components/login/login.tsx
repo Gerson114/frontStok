@@ -1,7 +1,7 @@
 "use client"
 
 import { login } from "@/middleware/auth"
-import { consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
+import { consultarMenu, consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
 import type { Oferta } from "@/app/type/type"
 import { isValidEmail } from "@/security/validate"
 import Link from "next/link"
@@ -100,8 +100,30 @@ export default function Login() {
 
             await login(email, pass)
 
-            // Login realizado
-            router.push("/page/produtos")
+            // Para onde ir depois de entrar não é mais uma resposta fixa.
+            //
+            // Produtos era o destino de todo mundo enquanto a loja tinha uma
+            // conta só. Com funcionário isso deixou de valer: quem entra pode
+            // não ter Produtos na lista dele, e cairia numa tela que a API
+            // recusa — a primeira coisa que veria do sistema seria um erro.
+            //
+            // O menu é a resposta certa porque é a mesma lista que decide o
+            // que a pessoa pode abrir: o primeiro item dele é, por
+            // construção, uma tela que ela tem. Se o menu não vier, Produtos
+            // continua sendo o palpite — para o dono ele está sempre certo.
+            let destino = "/page/produtos"
+
+            try {
+                const menu = await consultarMenu()
+                const primeiro = menu.find((item) => item.liberado) ?? menu[0]
+
+                if (primeiro) destino = primeiro.rota
+            } catch {
+                // Sem menu, segue o palpite. Prender o login numa consulta
+                // que falhou seria pior do que abrir na tela errada.
+            }
+
+            router.push(destino)
 
         } catch (error) {
             console.error("Erro:", error)
@@ -127,11 +149,11 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} noValidate>
 
-                <h1 className="font-display text-[1.75rem] leading-tight text-[#1E2428]">
+                <h1 className="font-display text-[1.75rem] leading-tight text-[#303030]">
                     Entrar na sua conta
                 </h1>
 
-                <p className="mt-2 text-sm text-[#5A6469]">
+                <p className="mt-2 text-sm text-[#616161]">
                     Use o e-mail e a senha cadastrados para abrir o painel da loja.
                 </p>
 
@@ -186,7 +208,7 @@ export default function Login() {
                                 type="button"
                                 onClick={() => setMostrarSenha((v) => !v)}
                                 aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#5A6469] transition-colors hover:bg-[#F0F3F4]"
+                                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
                             >
                                 {mostrarSenha
                                     ? <FiEyeOff className="w-[1.05rem]" aria-hidden />
@@ -201,7 +223,7 @@ export default function Login() {
                 {error && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#F5C6C0] bg-[#FDECEA] px-4 py-3 text-sm font-semibold text-[#D4351C]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{error}</span>
@@ -216,9 +238,9 @@ export default function Login() {
                     {loading ? "Entrando..." : "Entrar"}
                 </button>
 
-                <p className="mt-6 border-t border-[#E4E9EB] pt-6 text-center text-sm text-[#5A6469]">
+                <p className="mt-6 border-t border-[#EBEBEB] pt-6 text-center text-sm text-[#616161]">
                     Ainda não tem uma conta?{" "}
-                    <Link href="/cadastro" className="font-semibold text-[#0086FF] hover:underline">
+                    <Link href="/cadastro" className="font-semibold text-[#005BD3] hover:underline">
                         Criar conta
                     </Link>
                 </p>
