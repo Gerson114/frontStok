@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { atendimentos } from "@/app/api/rotas"
 
 /**
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
         const encerrados = new URL(request.url).searchParams.get("encerrados") === "1"
 
         const resposta = await fetch(url(atendimentos.lista(encerrados)), {
-            headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+            headers: { Authorization: `Bearer ${token}`, Accept: "application/json", ...(await cabecalhoDaLojaAberta()) },
             cache: "no-store",
         })
 

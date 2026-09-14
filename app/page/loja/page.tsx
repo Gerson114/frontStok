@@ -20,6 +20,25 @@ import {
     FiLock,
 } from "react-icons/fi"
 
+/**
+ * Lê a coordenada digitada.
+ *
+ * Aceita vírgula decimal, que é como o teclado brasileiro escreve número — e
+ * como o lojista vai digitar se não colar do mapa. Campo vazio ou ilegível
+ * vira nulo: a loja fica de fora da ordenação por distância em vez de ser
+ * posta num ponto qualquer.
+ */
+function coordenada(texto: string): number | null {
+
+    const limpo = texto.trim().replace(",", ".")
+
+    if (limpo === "") return null
+
+    const numero = Number(limpo)
+
+    return Number.isFinite(numero) ? numero : null
+}
+
 export default function LojaPage() {
     const [loja, setLoja] = useState<Loja | null>(null)
     const [nome, setNome] = useState("")
@@ -32,6 +51,12 @@ export default function LojaPage() {
     const [telefone, setTelefone] = useState("")
     const [endereco, setEndereco] = useState("")
     const [horario, setHorario] = useState("")
+
+    // A coordenada da loja, como texto: o campo aceita o que a pessoa colou
+    // do mapa, e a conversão para número acontece na hora de salvar. Guardar
+    // número aqui apagaria o "-8," enquanto ela ainda está digitando.
+    const [latitude, setLatitude] = useState("")
+    const [longitude, setLongitude] = useState("")
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
     const [erro, setErro] = useState("")
@@ -54,6 +79,8 @@ export default function LojaPage() {
                 setTelefone(dados.telefone ?? "")
                 setEndereco(dados.endereco ?? "")
                 setHorario(dados.horario ?? "")
+                setLatitude(dados.latitude != null ? String(dados.latitude) : "")
+                setLongitude(dados.longitude != null ? String(dados.longitude) : "")
                 setErro("")
             } catch (e) {
                 if (cancelado) return
@@ -98,6 +125,8 @@ export default function LojaPage() {
                 telefone,
                 endereco,
                 horario,
+                latitude: coordenada(latitude),
+                longitude: coordenada(longitude),
             })
 
             setLoja(dados)
@@ -112,6 +141,8 @@ export default function LojaPage() {
             setTelefone(dados.telefone ?? "")
             setEndereco(dados.endereco ?? "")
             setHorario(dados.horario ?? "")
+            setLatitude(dados.latitude != null ? String(dados.latitude) : "")
+            setLongitude(dados.longitude != null ? String(dados.longitude) : "")
 
             setSalvo(true)
 
@@ -399,6 +430,50 @@ export default function LojaPage() {
 
                         <p className="mt-1.5 text-xs text-[#8A8A8A]">
                             Escreva como você diria ao telefone.
+                        </p>
+                    </div>
+
+                    {/* A coordenada, para a vitrine saber oferecer esta
+                        unidade a quem está perto dela. Fica junto do endereço
+                        porque é a mesma pergunta — onde a loja fica —, só que
+                        na forma que o mapa entende. */}
+                    <div className="sm:col-span-2">
+                        <p className="rotulo">Ponto no mapa</p>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Latitude — ex: -8.0476"
+                                aria-label="Latitude"
+                                className="field"
+                                value={latitude}
+                                onChange={(e) => {
+                                    setLatitude(e.target.value)
+                                    setSalvo(false)
+                                }}
+                            />
+
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Longitude — ex: -34.8770"
+                                aria-label="Longitude"
+                                className="field"
+                                value={longitude}
+                                onChange={(e) => {
+                                    setLongitude(e.target.value)
+                                    setSalvo(false)
+                                }}
+                            />
+                        </div>
+
+                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                            Só é usado quando você tem mais de uma loja: é o que faz o site
+                            oferecer a unidade mais perto de quem está olhando. Para achar os
+                            números, abra o endereço no Google Maps, clique com o botão direito
+                            sobre o ponto e copie o par que aparece. Deixe em branco para não
+                            entrar nessa ordenação.
                         </p>
                     </div>
 

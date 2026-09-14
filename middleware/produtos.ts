@@ -1,4 +1,4 @@
-import { apiFetch } from "./client"
+import { apiFetch, ApiError, extrairMensagemErro, safeParse } from "./client"
 import type { Produto, Unidade } from "@/app/type/type"
 import type { NovoProduto, NovoProdutoVariantes, ProdutoEditavel, NovaTransferencia } from "@/security/validate"
 
@@ -155,4 +155,72 @@ export async function excluirUnidade(unidadeId: number): Promise<void> {
     await apiFetch<{ mensagem: string }>(`/api/unidades/${unidadeId}`, {
         method: "DELETE",
     })
+}
+
+/* ==========================================================================
+   Importação por planilha
+   ========================================================================== */
+
+/** Uma linha da planilha, já entendida pelo servidor. */
+export interface LinhaDaPlanilha {
+    linha: number
+    nome: string
+    variacao: string
+    categoria: string
+    preco: number
+    custo: number
+    estoque: number
+    situacao: "novo" | "atualiza" | "erro"
+    erro?: string
+    produto_id?: number
+}
+
+export interface ConferenciaDaPlanilha {
+    /** O que o servidor entendeu de cada coluna do cabeçalho. */
+    colunas: { campo: string; coluna: string }[]
+    resumo: { linhas: number; novos: number; atualiza: number; erros: number; pecas: number }
+    linhas: LinhaDaPlanilha[]
+}
+
+export interface ResultadoDaImportacao {
+    criados: number
+    atualizados: number
+    pecas: number
+}
+
+/**
+ * Manda a planilha e recebe o que VAI acontecer, sem gravar nada.
+ *
+ * Não usa apiFetch porque ele serializa o corpo em JSON, e o que sobe aqui é
+ * arquivo: o navegador precisa montar um multipart e escolher a fronteira
+ * entre as partes. Declarar Content-Type à mão quebraria exatamente isso.
+ */
+export async function conferirPlanilha(arquivo: File): Promise<ConferenciaDaPlanilha> {
+    return enviarPlanilha<ConferenciaDaPlanilha>("/api/produtos/importar/conferir", arquivo)
+}
+
+/** Grava o que a conferência mostrou. */
+export async function importarPlanilha(arquivo: File): Promise<ResultadoDaImportacao> {
+    return enviarPlanilha<ResultadoDaImportacao>("/api/produtos/importar", arquivo)
+}
+
+async function enviarPlanilha<T>(caminho: string, arquivo: File): Promise<T> {
+    const corpo = new FormData()
+    corpo.append("arquivo", arquivo)
+
+    const response = await fetch(caminho, {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        body: corpo,
+    })
+
+    const texto = await response.text()
+    const dados = texto ? safeParse(texto) : null
+
+    if (!response.ok) {
+        throw new ApiError(extrairMensagemErro(dados), response.status, dados)
+    }
+
+    return dados as T
 }

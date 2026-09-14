@@ -15,7 +15,11 @@ import {
     FiArrowDown,
     FiBox,
     FiChevronDown,
+    FiChevronsLeft,
+    FiChevronsRight,
     FiClipboard,
+    FiGrid,
+    FiLayers,
     FiRepeat,
     FiHome,
     FiPlus,
@@ -23,6 +27,7 @@ import {
     FiAlertTriangle,
     FiImage,
     FiSearch,
+    FiSettings,
     FiShoppingBag,
     FiShoppingCart,
     FiTruck,
@@ -50,6 +55,7 @@ import {
     FiSmartphone,
     FiMessageSquare,
 } from "react-icons/fi"
+import { MARCA } from "@/app/marca"
 import type { IconType } from "react-icons"
 
 // Ícone de cada tela, pela chave que o backend manda. Só isto fica aqui: o
@@ -58,6 +64,10 @@ import type { IconType } from "react-icons"
 // plano da loja. Chave nova sem ícone cai no genérico e ainda aparece.
 const ICONES: Record<string, IconType> = {
     inicio: FiHome,
+    "painel-produtos": FiBarChart2,
+    "painel-equipe": FiUsers,
+    "painel-entregas": FiTruck,
+    config: FiSettings,
     produtos: FiBox,
     produto: FiPlus,
     estoque: FiPackage,
@@ -85,6 +95,86 @@ const ICONES: Record<string, IconType> = {
     frete: FiTruck,
     entregas: FiCalendar,
     pagamento: FiDollarSign,
+}
+
+/* ==========================================================================
+   As ÁREAS, no trilho escuro
+   ==========================================================================
+
+   O trilho tem uma entrada por seção do menu, e as seções são as que o
+   servidor manda (ver recursos.go): Painel, Vendas, Produtos e estoque,
+   Conta. Só o ícone e o rótulo curto moram aqui — o que existe em cada área
+   continua sendo resposta do servidor, porque é lá que se sabe o plano da
+   loja.
+
+   O rótulo é curto porque o trilho tem 64px: "Produtos e estoque" não cabe,
+   e cortado no meio não se lê. Seção nova sem entrada aqui aparece com o
+   ícone genérico e o título inteiro — some do trilho é o que ela não pode
+   fazer. */
+const ICONE_DA_AREA: Record<string, IconType> = {
+    painel: FiHome,
+    vendas: FiShoppingCart,
+    "produtos e estoque": FiPackage,
+    conta: FiUsers,
+}
+
+const ROTULO_DA_AREA: Record<string, string> = {
+    painel: "Início",
+    vendas: "Vendas",
+    "produtos e estoque": "Estoque",
+    conta: "Conta",
+}
+
+/* ==========================================================================
+   Os ATALHOS do trilho: a conversa da equipe e as lojas
+   ==========================================================================
+
+   Duas telas que não são "área da loja" e mesmo assim se usa o dia inteiro.
+   No catálogo do servidor as duas moram em Conta — a conversa como filha de
+   Funcionários, as lojas soltas —, e é lá que elas ficavam: três cliques
+   (abrir Conta, abrir Funcionários, achar a conversa) para uma tela que se
+   abre vinte vezes por dia.
+
+   No trilho elas ganham a mesma altura das áreas, separadas por um fio: em
+   cima os lugares de trabalho, embaixo com quem falar e onde trabalhar.
+
+   E SAEM da lista do painel, no desktop, em vez de aparecer nos dois lugares
+   — a mesma tela com duas portas é o que o painel não deve ter. No celular
+   não há trilho, então lá elas continuam na lista, que é a única porta que
+   existe.
+
+   Sair da lista leva junto o que está pendurado nelas, e isso é deliberado:
+   a Assinatura mora dentro de Configurações, some do painel enquanto
+   Configurações está no trilho, e VOLTA no dia em que a assinatura vence —
+   porque aí Configurações fica bloqueada, deixa de virar atalho, e a lista
+   do painel a mostra de novo com a Assinatura aberta embaixo. É onde o
+   lojista precisa dela, no único dia em que ela importa. */
+const ATALHOS_DO_TRILHO: { chave: string; rotulo: string; Icone: IconType }[] = [
+    { chave: "equipe-chat", rotulo: "Equipe", Icone: FiMessageSquare },
+    { chave: "lojas", rotulo: "Lojas", Icone: FiLayers },
+    { chave: "config", rotulo: "Config", Icone: FiSettings },
+]
+
+/**
+ * A lista da área sem o que o trilho ESTÁ mostrando.
+ *
+ * `noTrilho` traz só os atalhos que de fato nasceram lá — e isso importa para
+ * a tela que existe mas está trancada. As lojas da rede e a conversa da
+ * equipe são do plano Pro: para quem não assinou, elas chegam do servidor
+ * como bloqueadas, e é DELIBERADO que apareçam assim, com cadeado — é como o
+ * lojista descobre que existem. O trilho não as carrega (ele só leva a tela
+ * que abre), então elas precisam continuar na lista do painel.
+ *
+ * Escondê-las dos dois lugares, que foi o que esta função fazia primeiro,
+ * vendia o Pro só para quem já tinha ido procurar a tela de assinatura.
+ */
+function semAtalhos(nos: No[], noTrilho: Set<string>): No[] {
+    return nos
+        .filter((no) => !noTrilho.has(no.item.chave))
+        .map((no) => ({
+            item: no.item,
+            filhos: no.filhos.filter((filho) => !noTrilho.has(filho.chave)),
+        }))
 }
 
 // Enquanto o menu não chega — e se ele não chegar —, o lojista fica ao menos
@@ -217,6 +307,22 @@ export default function Sidebar() {
     // aberto, senão quem entra em Banners não vê onde está.
     const [acordeoes, setAcordeoes] = useState<Record<string, boolean>>({})
 
+    // A área que o lojista abriu no trilho, e a tela em que ele estava ao
+    // abri-la.
+    //
+    // A rota vai junto de propósito: é ela que faz a escolha valer só
+    // enquanto ele não sai do lugar. Quem espia "Conta" e depois abre um
+    // pedido pela busca do topo volta a ver o painel de Vendas, sem que
+    // ninguém precise limpar nada. A alternativa seria um efeito zerando a
+    // escolha a cada troca de tela — um render a mais para dizer o que já dá
+    // para descobrir olhando.
+    //
+    // Nula é "a área da tela em que estou", que é como o painel nasce.
+    const [area, setArea] = useState<{ titulo: string; rota: string } | null>(null)
+
+    // Painel recolhido deixa só o trilho — e 224px a mais para a tabela.
+    const [painelRecolhido, setPainelRecolhido] = useState(false)
+
     // Busca de tela e menu da conta, os dois controles da barra superior.
     const [busca, setBusca] = useState("")
     const [buscaFocada, setBuscaFocada] = useState(false)
@@ -309,6 +415,178 @@ export default function Sidebar() {
 
     }, [menu, pathname])
 
+    /* ==================================================================
+       As áreas e qual delas está na tela
+       ================================================================== */
+
+    const secoes = useMemo(() => montarSecoes(menu), [menu])
+
+    // A área da tela em que o lojista está. É o padrão do painel: quem abre
+    // /page/estoque/enderecos por um link vê o painel de Estoque, sem ter
+    // clicado no trilho.
+    const areaDaRota = useMemo(() => {
+
+        if (!rotaAtiva) return undefined
+
+        return secoes.find((secao) =>
+            secao.nos.some(
+                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
+            ),
+        )?.titulo
+
+    }, [secoes, rotaAtiva])
+
+    /* Os atalhos que ESTA loja tem.
+     *
+     * Saem do mesmo menu que o servidor respondeu — e não de uma lista fixa
+     * aqui — porque quem decide o que existe é ele: a conversa da equipe e as
+     * várias lojas são do plano Pro, e um ícone fixo no trilho ofereceria a
+     * quem não tem uma tela que a API recusaria abrir. Sem o item no menu, o
+     * atalho simplesmente não nasce. */
+    const atalhos = useMemo(() => {
+
+        return ATALHOS_DO_TRILHO.flatMap((atalho) => {
+
+            const item = menu.find((umItem) => umItem.chave === atalho.chave && umItem.liberado)
+
+            return item ? [{ ...atalho, rota: item.rota }] : []
+        })
+
+    }, [menu])
+
+    /* O que o painel mostra.
+     *
+     * Três respostas, nesta ordem:
+     *
+     *   1. A ÁREA QUE O LOJISTA ABRIU no trilho — e ela só vale enquanto ele
+     *      não trocou de tela, por isso a escolha guarda a rota em que foi
+     *      feita. É o que dispensa um efeito zerando a escolha a cada
+     *      navegação.
+     *
+     *   2. O ATALHO em que ele está. Esta é a resposta que faltava: Lojas e
+     *      Configurações moram na seção "Conta" do catálogo, então, estando
+     *      numa delas, o painel mostrava a lista de Conta — e os três botões
+     *      do trilho levavam à mesma lista, como se fossem a mesma coisa.
+     *      Agora o painel é do atalho: Configurações mostra o que abre dentro
+     *      dela (a Assinatura), e Lojas, que não abre nada, não mostra painel
+     *      nenhum — a tela fica com a largura inteira, como na conversa da
+     *      equipe.
+     *
+     *   3. A área da tela atual, que é o caso comum.
+     */
+    const areaVisivel = useMemo(() => {
+
+        const escolhida = area && area.rota === rotaAtiva ? area.titulo : undefined
+
+        if (!escolhida) {
+
+            const atalhoAberto = atalhos.find((atalho) => atalho.rota === rotaAtiva)
+
+            if (atalhoAberto) {
+
+                const no = secoes
+                    .flatMap((secao) => secao.nos)
+                    .find((umNo) => umNo.item.chave === atalhoAberto.chave)
+
+                // Atalho sem nada dentro não desenha painel: uma coluna de
+                // 240px com um item só, que é justamente o que já está aceso
+                // no trilho ao lado, é espaço tirado da tela de trabalho.
+                if (!no || no.filhos.length === 0) return null
+
+                return {
+                    titulo: no.item.nome,
+                    nos: no.filhos.map((filho) => ({ item: filho, filhos: [] })),
+                }
+            }
+        }
+
+        return secoes.find((secao) => secao.titulo === (escolhida ?? areaDaRota)) ?? secoes[0]
+
+    }, [secoes, atalhos, area, areaDaRota, rotaAtiva])
+
+    /* A largura que o menu ocupa, anunciada às telas.
+     *
+     * Elas leem --menu pela classe .com-menu (ver globals.css) em vez de cada
+     * uma saber quanto mede o menu. Por isso o valor é escrito aqui, que é o
+     * único lugar que sabe se o painel está aberto: sem isso, recolher o
+     * painel deixaria 224px de cinza vazio em toda tela do painel.
+     *
+     * Na conversa da equipe o painel do menu não existe, mas a coluna da
+     * conversa ocupa a mesma faixa — e é por isso que a largura cheia vale
+     * ali também. */
+    useEffect(() => {
+
+        if (!noPainel) return
+
+        const recolhido = painelRecolhido && !noChat
+
+        document.documentElement.style.setProperty("--menu", recolhido ? "4rem" : "19rem")
+
+        return () => {
+            document.documentElement.style.removeProperty("--menu")
+        }
+
+    }, [painelRecolhido, noPainel, noChat])
+
+
+    // A tela aberta é um dos atalhos? Então a área dela não acende.
+    const numAtalho = atalhos.some((atalho) => atalho.rota === rotaAtiva)
+
+    // O que o trilho está de fato carregando. Tela do Pro que esta loja não
+    // assinou não entra aqui — ela não vira atalho, e por isso continua na
+    // lista do painel, com o cadeado que a anuncia.
+    const chavesNoTrilho = useMemo(
+        () => new Set(atalhos.map((atalho) => atalho.chave)),
+        [atalhos],
+    )
+
+    /* Quantas coisas esperam NESTA tela.
+     *
+     * O número é o mesmo do sino — ele não conta nada por conta própria, só
+     * mostra ao lado do nome o que já estava contado lá em cima. Antes, para
+     * descobrir que eram três no chat do site e não no WhatsApp, era preciso
+     * abrir o sino e ler a lista; agora está escrito na porta de cada uma.
+     *
+     * Tela sem contagem devolve zero e não desenha nada: contador que mostra
+     * "0" é ruído, e vinte deles numa lista de menu é uma lista ilegível. */
+    function contagemDoItem(chave: string): number {
+
+        switch (chave) {
+            case "pedidos":
+                return novidades.pedidos
+            case "conversas":
+                return novidades.whatsapp
+            case "atendimento":
+                return novidades.site
+            case "equipe-chat":
+                return naoLidas
+            default:
+                return 0
+        }
+    }
+
+    /* Tem coisa esperando nesta área?
+     *
+     * Só o que o sino já conta, e nada de novo: pedido que chegou e WhatsApp
+     * ou chat sem resposta são de Vendas. A bolinha existe para o lojista não
+     * precisar abrir a área para descobrir que havia algo lá — é o preço de
+     * ter fechado as outras áreas. */
+    function contagemDaArea(secao: { nos: No[] }): number {
+
+        let total = 0
+
+        for (const no of secao.nos) {
+
+            total += contagemDoItem(no.item.chave)
+
+            for (const filho of no.filhos) {
+                total += contagemDoItem(filho.chave)
+            }
+        }
+
+        return total
+    }
+
     // O que a busca do topo acha. Ela procura entre as telas que ESTE lojista
     // tem — é o mesmo menu, e por isso nunca oferece uma porta que a API
     // recusaria abrir. O nome da seção também entra na comparação: quem
@@ -373,10 +651,28 @@ export default function Sidebar() {
             }
         })
 
+        /* A rede de segurança: uma recontagem por minuto, aconteça o que
+         * acontecer.
+         *
+         * O socket é quem faz o número aparecer na hora, e ele se reconecta
+         * sozinho — menos num caso: endereço de socket mal configurado, em que
+         * ele desiste de vez de propósito (ver escutarLoja) para não bater no
+         * servidor a cada trinta segundos para sempre. Nesse caso o contador
+         * congelava até alguém trocar de tela, e ninguém tinha como desconfiar:
+         * um número parado parece um número certo.
+         *
+         * Um minuto é devagar de propósito. Não é por aqui que a venda nova
+         * aparece — isso continua sendo o socket, em menos de um segundo. Isto
+         * aqui é só o conserto de quem ficou sem ele.
+         */
+        const varredura = setInterval(contar, 60000)
+
         return () => {
             cancelado = true
 
             if (agendado) clearTimeout(agendado)
+
+            clearInterval(varredura)
 
             fechar()
         }
@@ -514,9 +810,18 @@ export default function Sidebar() {
         return href !== "" && href === rotaAtiva
     }
 
-    /** Para onde este item leva de fato — tela suspensa manda para a assinatura. */
+    /**
+     * Para onde este item leva de fato.
+     *
+     * Tela suspensa manda para onde se resolve o motivo — e o motivo decide
+     * qual é esse lugar: pagamento e plano se resolvem na assinatura, mas o
+     * layout se resolve trocando de loja, então o caminho é a tela das lojas.
+     */
     function destinoDe(item: ItemMenu) {
-        return item.liberado ? item.rota : "/page/assinatura"
+
+        if (item.liberado) return item.rota
+
+        return item.motivo === "so_matriz" ? "/page/lojas" : "/page/assinatura"
     }
 
     // Um item do menu, seja de primeiro nível ou dentro de um acordeão.
@@ -526,20 +831,42 @@ export default function Sidebar() {
     // à frente. É assim que o painel do Shopify diz "você está aqui" sem
     // gastar a cor de marca — que fica reservada para o que é clicável dentro
     // da tela de trabalho.
-    function linkDoItem(item: ItemMenu) {
+    /**
+     * Uma tela do menu.
+     *
+     * `somar` é o que está pendurado nos filhos dela e não está à vista —
+     * acordeão fechado esconde o número do filho, e um pai sem essa soma
+     * mostraria menos do que há. Com ele aberto vale zero: o número já está
+     * escrito na linha de baixo, e repeti-lo no pai faria a mesma coisa ser
+     * contada duas vezes pelo olho de quem lê.
+     */
+    function linkDoItem(item: ItemMenu, somar = 0) {
 
         const Icone = ICONES[item.chave] ?? FiHome
         const ativo = itemAtivo(item.rota)
+        const esperando = contagemDoItem(item.chave) + somar
 
-        // Tela do plano da loja, mas suspensa por assinatura atrasada:
-        // continua à vista, com cadeado, e leva para onde se resolve isso.
+        // Tela que não abre agora: continua à vista, em cinza e com cadeado, e
+        // leva para onde se resolve isso — que é a mesma tela nos dois casos,
+        // ainda que por motivos diferentes.
+        //
+        // Ficar à vista é deliberado no caso do Pro: é assim que o lojista
+        // descobre que a conversa da equipe e as várias lojas existem. Um menu
+        // que esconde o que ele não assinou vende o Pro só para quem já foi
+        // procurar a tela de assinatura.
         if (!item.liberado) {
             return (
                 <Link
                     href="/page/assinatura"
                     onClick={() => setAberto(false)}
-                    title="Assinatura pendente — regularize para liberar esta tela"
-                    className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-[0.8125rem] font-medium text-[#B5B5B5] transition-colors hover:bg-black/5"
+                    title={
+                        item.motivo === "plano_pro"
+                            ? `${item.nome} faz parte do plano Pro — veja o que ele inclui`
+                            : item.motivo === "so_matriz"
+                                ? `${item.nome} é do dono, na loja principal: a cara do site é da rede e cada loja a herda`
+                                : "Assinatura pendente — regularize para liberar esta tela"
+                    }
+                    className="flex items-center gap-3 border-l-2 border-transparent py-2 pl-2.5 pr-3 text-[0.8125rem] font-medium text-[#B5B5B5] transition-colors hover:bg-[#F1F1F1]"
                 >
                     <Icone className="w-4 shrink-0" aria-hidden />
                     <span className="flex-1 truncate">{item.nome}</span>
@@ -553,22 +880,178 @@ export default function Sidebar() {
                 href={item.rota}
                 onClick={() => setAberto(false)}
                 aria-current={ativo ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-[0.8125rem] transition-colors ${
+                /* Como se marca "onde estou": fio azul na borda esquerda e
+                   fundo azul fraco, com o canto reto do resto do sistema.
+                   
+                   Aqui havia uma pílula de canto totalmente arredondado. Ela
+                   saiu por dois motivos que são o mesmo: o painel zerou a
+                   escala de raio inteira (ver --radius-* em globals.css, onde
+                   `rounded-full` fica reservado ao que é círculo por natureza
+                   — a bolinha de não lidas, a foto da conta), e cápsula
+                   colorida em item de menu é a assinatura visual de painel
+                   gerado por template. O fio faz o mesmo trabalho sem inventar
+                   forma nova: ele começa na margem da lista, marca a linha
+                   inteira e sai do caminho — em vez de uma cápsula colorida
+                   flutuando no meio do menu.
+                   
+                   O fio é transparente no item inativo, e não ausente: assim
+                   o texto de todos os itens começa na mesma coluna, e a linha
+                   não pula para o lado quando a tela muda. Cor de fundo fraca
+                   e texto forte, e não o contrário — o item ativo não precisa
+                   gritar, precisa ser o único colorido. */
+                className={`flex items-center gap-3 border-l-2 py-2 pl-2.5 pr-3 text-[0.8125rem] transition-colors ${
                     ativo
-                        ? "bg-white font-semibold text-[#303030] shadow-[0_1px_0_rgba(0,0,0,0.05),inset_0_0_0_1px_#E1E1E1]"
-                        : "font-medium text-[#616161] hover:bg-black/5 hover:text-[#303030]"
+                        ? "border-[#005BD3] bg-[#EAF4FF] font-semibold text-[#005BD3]"
+                        : "border-transparent font-medium text-[#303030] hover:bg-[#F1F1F1]"
                 }`}
             >
                 <Icone
-                    className={`w-4 shrink-0 ${ativo ? "text-[#303030]" : "text-[#8A8A8A]"}`}
+                    className={`w-4 shrink-0 ${ativo ? "text-[#005BD3]" : "text-[#616161]"}`}
                     aria-hidden
                 />
+
                 <span className="truncate">{item.nome}</span>
+
+                {/* O número do que espera nesta tela. Encostado à direita, e
+                    não colado no nome: assim os contadores de todas as linhas
+                    ficam na mesma coluna e se leem de cima a baixo, em vez de
+                    dançar conforme o tamanho de cada palavra. */}
+                {esperando > 0 && (
+                    <span
+                        className="num ml-auto shrink-0 rounded-full bg-[#E51C00] px-1.5 text-[0.6875rem] font-bold leading-[1.05rem] text-white"
+                        aria-label={`${esperando} esperando`}
+                    >
+                        {esperando > 99 ? "99+" : esperando}
+                    </span>
+                )}
             </Link>
         )
     }
 
-    const conteudoMenu = (
+    /* A lista de telas de UMA área, com os acordeões de quem tem filhos.
+       Serve o painel do desktop e a gaveta do celular. */
+    function listaDeNos(nos: No[]) {
+        return nos.map((no) => {
+
+            // Sem filhos é um link e pronto — o acordeão só existe onde há o
+            // que abrir.
+            if (no.filhos.length === 0) {
+                return <div key={no.item.chave}>{linkDoItem(no.item)}</div>
+            }
+
+            const naArvore =
+                itemAtivo(no.item.rota) ||
+                no.filhos.some((filho) => itemAtivo(filho.rota))
+
+            const grupoAberto = acordeoes[no.item.chave] ?? naArvore
+
+            return (
+                <div key={no.item.chave}>
+
+                    <div className="flex items-center gap-0.5">
+
+                        <div className="min-w-0 flex-1">
+                            {linkDoItem(
+                                no.item,
+                                grupoAberto
+                                    ? 0
+                                    : no.filhos.reduce((soma, filho) => soma + contagemDoItem(filho.chave), 0),
+                            )}
+                        </div>
+
+                        {/* A seta abre e fecha; o nome ao lado continua
+                            levando para a tela. Juntar as duas coisas no
+                            mesmo clique faria o lojista navegar sem querer
+                            toda vez que quisesse só espiar o que tem
+                            dentro. */}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setAcordeoes((atual) => ({
+                                    ...atual,
+                                    [no.item.chave]: !grupoAberto,
+                                }))
+                            }
+                            aria-expanded={grupoAberto}
+                            aria-label={`${grupoAberto ? "Fechar" : "Abrir"} ${no.item.nome}`}
+                            className="shrink-0 p-1.5 text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
+                        >
+                            <FiChevronDown
+                                className={`w-3.5 transition-transform ${grupoAberto ? "" : "-rotate-90"}`}
+                                aria-hidden
+                            />
+                        </button>
+
+                    </div>
+
+                    {grupoAberto && (
+                        <div className="ml-[1.35rem] space-y-0.5 border-l border-[#E1E1E1] pl-2">
+                            {no.filhos.map((filho) => (
+                                <div key={filho.chave}>{linkDoItem(filho)}</div>
+                            ))}
+                        </div>
+                    )}
+
+                </div>
+            )
+        })
+    }
+
+    /* ==================================================================
+       O PAINEL — as telas da área aberta
+
+       Uma área por vez, e não as quatro empilhadas. O que estava aqui
+       era a lista inteira com sete seções: vinte linhas para rolar, e o
+       olho perdendo onde "Vendas" acabava e "Estoque" começava. Agora a
+       área escolhida é a única na tela, e a troca de área é o trilho ao
+       lado.
+       ================================================================== */
+    const painelDaArea = (
+        <>
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#EBEBEB] px-3 py-2.5">
+                <p className="truncate text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                    {areaVisivel?.titulo ?? "Painel"}
+                </p>
+
+                {/* Recolher some com o painel e deixa só o trilho. É o que
+                    dá 224px à tabela nas telas de estoque, que são as que de
+                    fato ficam sem largura.
+
+                    A escolha vale enquanto a janela estiver aberta: o menu é
+                    montado uma vez pela moldura e sobrevive à troca de tela,
+                    então recolher uma vez basta para a sessão inteira.
+                    Guardá-la no navegador exigiria ler o disco antes do
+                    primeiro desenho, senão o painel abriria e fecharia na
+                    cara de quem recarrega — máquina demais para uma
+                    preferência que se refaz num clique. */}
+                <button
+                    type="button"
+                    onClick={() => setPainelRecolhido(true)}
+                    aria-label="Recolher o menu"
+                    title="Recolher o menu"
+                    className="hidden shrink-0 p-1 text-[#8A8A8A] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030] md:block"
+                >
+                    <FiChevronsLeft className="w-4" aria-hidden />
+                </button>
+            </div>
+
+            <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+                {carregando && (
+                    <p className="px-2.5 py-1.5 text-[0.8125rem] text-[#8A8A8A]">
+                        Carregando menu...
+                    </p>
+                )}
+
+                {areaVisivel && listaDeNos(semAtalhos(areaVisivel.nos, chavesNoTrilho))}
+            </nav>
+        </>
+    )
+
+    /* No celular não há trilho: a gaveta mostra tudo de uma vez, com o
+       título de cada área como separador. Tela pequena não comporta duas
+       colunas de navegação, e esconder área atrás de ícone de 64px seria
+       pior do que a lista. */
+    const gavetaDoCelular = (
         <nav className="flex-1 overflow-y-auto px-3 py-4">
             {carregando && (
                 <p className="px-2.5 py-1.5 text-[0.8125rem] text-[#8A8A8A]">
@@ -576,77 +1059,21 @@ export default function Sidebar() {
                 </p>
             )}
 
-            {montarSecoes(menu).map((secao) => (
-                <div key={secao.titulo} className="mb-5 space-y-0.5 last:mb-0">
-                    <p className="mb-1.5 px-2.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            {secoes.map((secao) => (
+                <div
+                    key={secao.titulo}
+                    className="mb-4 space-y-0.5 border-t border-[#EBEBEB] pt-4 first:border-t-0 first:pt-0 last:mb-0"
+                >
+                    <p className="mb-1.5 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
                         {secao.titulo}
                     </p>
 
-                    {secao.nos.map((no) => {
-
-                        // Sem filhos é um link e pronto — o acordeão só
-                        // existe onde há o que abrir.
-                        if (no.filhos.length === 0) {
-                            return <div key={no.item.chave}>{linkDoItem(no.item)}</div>
-                        }
-
-                        const naArvore =
-                            itemAtivo(no.item.rota) ||
-                            no.filhos.some((filho) => itemAtivo(filho.rota))
-
-                        const grupoAberto = acordeoes[no.item.chave] ?? naArvore
-
-                        return (
-                            <div key={no.item.chave}>
-
-                                <div className="flex items-center gap-0.5">
-
-                                    <div className="min-w-0 flex-1">
-                                        {linkDoItem(no.item)}
-                                    </div>
-
-                                    {/* A seta abre e fecha; o nome ao lado
-                                        continua levando para a tela. Juntar
-                                        as duas coisas no mesmo clique faria
-                                        o lojista navegar sem querer toda vez
-                                        que quisesse só espiar o que tem
-                                        dentro. */}
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setAcordeoes((atual) => ({
-                                                ...atual,
-                                                [no.item.chave]: !grupoAberto,
-                                            }))
-                                        }
-                                        aria-expanded={grupoAberto}
-                                        aria-label={`${grupoAberto ? "Fechar" : "Abrir"} ${no.item.nome}`}
-                                        className="shrink-0 rounded-md p-1.5 text-[#8A8A8A] transition-colors hover:bg-black/5 hover:text-[#303030]"
-                                    >
-                                        <FiChevronDown
-                                            className={`w-3.5 transition-transform ${grupoAberto ? "" : "-rotate-90"}`}
-                                            aria-hidden
-                                        />
-                                    </button>
-
-                                </div>
-
-                                {grupoAberto && (
-                                    <div className="ml-[1.35rem] space-y-0.5 border-l border-[#E1E1E1] pl-2">
-                                        {no.filhos.map((filho) => (
-                                            <div key={filho.chave}>{linkDoItem(filho)}</div>
-                                        ))}
-                                    </div>
-                                )}
-
-                            </div>
-                        )
-                    })}
+                    {listaDeNos(secao.nos)}
                 </div>
             ))}
-
         </nav>
     )
+
 
     return (
         <>
@@ -657,26 +1084,26 @@ export default function Sidebar() {
                 começa embaixo dela, e a tela do lojista fica só com o que é
                 daquela tela.
                 ============================================================== */}
-            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-[#1A1A1A] px-3 print:hidden">
+            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-[#E1E1E1] bg-white px-3 print:hidden">
 
                 {/* Marca. No desktop ela ocupa a largura da barra lateral, de
                     modo que o começo da busca cai exatamente onde começa o
                     conteúdo da tela. */}
-                <div className="flex items-center gap-2 md:w-64 md:shrink-0 md:pl-2">
+                <div className="flex items-center gap-2 md:w-[var(--menu)] md:shrink-0 md:pl-2">
                     <button
                         type="button"
                         onClick={() => setAberto((v) => !v)}
                         aria-label={aberto ? "Fechar menu" : "Abrir menu"}
                         aria-expanded={aberto}
-                        className="-ml-1 rounded-lg p-2 text-white transition-colors hover:bg-white/10 md:hidden"
+                        className="-ml-1 p-2 text-[#616161] transition-colors hover:bg-[#F1F1F1] md:hidden"
                     >
                         {aberto ? <FiX className="w-5" aria-hidden /> : <FiMenu className="w-5" aria-hidden />}
                     </button>
 
-                    <Link href="/page/produtos" className="flex items-center gap-2 text-white">
+                    <Link href="/page/produtos" className="flex items-center gap-2 text-[#303030]">
                         <Simbolo className="w-5 shrink-0" />
                         <span className="font-display text-[0.9375rem] tracking-normal">
-                            Arara
+                            {MARCA}
                         </span>
                     </Link>
                 </div>
@@ -700,7 +1127,7 @@ export default function Sidebar() {
                     className="relative mx-auto hidden w-full max-w-md sm:block"
                 >
                     <FiSearch
-                        className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#B5B5B5]"
+                        className="pointer-events-none absolute left-4 top-1/2 w-4 -translate-y-1/2 text-[#616161]"
                         aria-hidden
                     />
 
@@ -715,11 +1142,11 @@ export default function Sidebar() {
                         onBlur={() => setTimeout(() => setBuscaFocada(false), 120)}
                         placeholder="Buscar tela do painel"
                         aria-label="Buscar tela do painel"
-                        className="w-full rounded-lg border border-white/15 bg-white/10 py-1.5 pl-9 pr-3 text-[0.8125rem] text-white placeholder:text-[#B5B5B5] focus:border-white/40 focus:bg-white/15 focus:outline-none"
+                        className="w-full border border-transparent bg-[#F1F1F1] py-2 pl-11 pr-4 text-[0.8125rem] text-[#303030] placeholder:text-[#616161] focus:border-[#005BD3] focus:bg-white focus:outline-none"
                     />
 
                     {buscaFocada && busca.trim().length > 0 && (
-                        <div className="absolute left-0 right-0 top-full mt-1.5 overflow-hidden rounded-xl border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+                        <div className="absolute left-0 right-0 top-full mt-1.5 overflow-hidden border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
 
                             {achados.length === 0 && (
                                 <p className="px-3 py-3 text-[0.8125rem] text-[#616161]">
@@ -770,7 +1197,7 @@ export default function Sidebar() {
                                 onClick={() => setLojasAberto((v) => !v)}
                                 aria-expanded={lojasAberto}
                                 aria-haspopup="menu"
-                                className="flex max-w-[11rem] items-center gap-1.5 rounded-lg px-2 py-1.5 text-white transition-colors hover:bg-white/10"
+                                className="flex max-w-[11rem] items-center gap-1.5 px-3 py-1.5 text-[0.8125rem] text-[#303030] transition-colors hover:bg-[#F1F1F1]"
                             >
                                 <FiHome className="w-4 shrink-0" aria-hidden />
 
@@ -787,7 +1214,7 @@ export default function Sidebar() {
 
                                     <div
                                         role="menu"
-                                        className="anim-surgir absolute right-0 top-full z-50 mt-1.5 w-64 overflow-hidden rounded-xl border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                                        className="anim-surgir absolute right-0 top-full z-50 mt-1.5 w-64 overflow-hidden border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
                                     >
                                         <p className="border-b border-[#EBEBEB] px-3 py-2.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
                                             Trocar de loja
@@ -849,7 +1276,7 @@ export default function Sidebar() {
                             href="/page/inicio"
                             aria-label="Voltar ao painel"
                             title="Voltar ao painel"
-                            className="rounded-lg p-2 text-white transition-colors hover:bg-white/10"
+                            className="p-2 text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
                         >
                             <FiArrowLeft className="w-5" aria-hidden />
                         </Link>
@@ -871,7 +1298,7 @@ export default function Sidebar() {
                                     ? `Novidades, ${novidades.total} esperando`
                                     : "Novidades"
                             }
-                            className="relative rounded-lg p-2 text-white transition-colors hover:bg-white/10"
+                            className="relative p-2 text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
                         >
                             <FiBell className="w-5" aria-hidden />
 
@@ -888,7 +1315,7 @@ export default function Sidebar() {
 
                                 <div
                                     role="menu"
-                                    className="anim-surgir absolute right-0 top-full z-50 mt-1.5 w-72 overflow-hidden rounded-xl border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                                    className="anim-surgir absolute right-0 top-full z-50 mt-1.5 w-72 overflow-hidden border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
                                 >
                                     <p className="border-b border-[#EBEBEB] px-3 py-2.5 text-[0.8125rem] font-semibold text-[#303030]">
                                         {novidades.total > 0 ? "Esperando você" : "Nada esperando"}
@@ -933,35 +1360,24 @@ export default function Sidebar() {
                 {temChat && (
                     <>
 
-                        <Link
-                            href="/page/equipe"
-                            aria-label={
-                                naoLidas > 0
-                                    ? `Conversa da equipe, ${naoLidas} não lidas`
-                                    : "Conversa da equipe"
-                            }
-                            aria-current={noChat ? "page" : undefined}
-                            className={`relative rounded-lg p-2 text-white transition-colors hover:bg-white/10 ${
-                                noChat ? "bg-white/15" : ""
-                            }`}
-                        >
-                            <FiMessageCircle className="w-5" aria-hidden />
+                        {/* A porta da conversa saiu daqui e foi para o pé do
+                            trilho, junto do resto da navegação. Ela ficava
+                            nesta barra quando o menu lateral era uma lista só
+                            de telas; agora que o trilho é o lugar de "para
+                            onde eu vou", ter as duas seria a mesma tela com
+                            dois botões — e o ícone da barra era o que menos
+                            dizia onde a conversa ia abrir.
 
-                            {naoLidas > 0 && (
-                                <span className="num absolute -right-0.5 -top-0.5 min-w-[1.05rem] rounded-full bg-[#005BD3] px-1 text-center text-[0.625rem] font-bold leading-[1.05rem] text-white">
-                                    {naoLidas > 99 ? "99+" : naoLidas}
-                                </span>
-                            )}
-                        </Link>
-
-                        {/* A chamada abre na conversa, e não aqui: para chamar
-                            é preciso dizer QUEM, e quem é a lista de lá. Um
-                            botão de chamada na barra que abrisse uma chamada
-                            com ninguém seria um botão que não faz nada. */}
+                            O da chamada fica: chamar não é ir para a tela, é
+                            começar uma coisa. Ele abre na conversa porque
+                            para chamar é preciso dizer QUEM, e quem é a lista
+                            de lá — um botão de chamada que abrisse uma
+                            chamada com ninguém seria um botão que não faz
+                            nada. */}
                         <Link
                             href="/page/equipe?chamada=1"
                             aria-label="Chamada de vídeo com a equipe"
-                            className="rounded-lg p-2 text-white transition-colors hover:bg-white/10"
+                            className="p-2 text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
                         >
                             <FiVideo className="w-5" aria-hidden />
                         </Link>
@@ -977,15 +1393,15 @@ export default function Sidebar() {
                         onClick={() => setContaAberta((v) => !v)}
                         aria-expanded={contaAberta}
                         aria-haspopup="menu"
-                        className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 text-white transition-colors hover:bg-white/10"
+                        className="flex items-center gap-2 py-1 pl-1 pr-2 text-[#303030] transition-colors hover:bg-[#F1F1F1]"
                     >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/15 text-[0.6875rem] font-semibold">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#303030] text-[0.6875rem] font-semibold text-white">
                             AD
                         </span>
                         <span className="hidden text-[0.8125rem] font-medium lg:inline">
                             Administrador
                         </span>
-                        <FiChevronDown className="hidden w-3.5 text-[#B5B5B5] lg:inline" aria-hidden />
+                        <FiChevronDown className="hidden w-3.5 text-[#616161] lg:inline" aria-hidden />
                     </button>
 
                     {contaAberta && (
@@ -998,7 +1414,7 @@ export default function Sidebar() {
 
                             <div
                                 role="menu"
-                                className="absolute right-0 top-full z-50 mt-1.5 w-60 overflow-hidden rounded-xl border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                                className="absolute right-0 top-full z-50 mt-1.5 w-60 overflow-hidden border border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
                             >
                                 <div className="border-b border-[#EBEBEB] px-3 py-2.5">
                                     <p className="text-[0.8125rem] font-semibold text-[#303030]">
@@ -1043,16 +1459,190 @@ export default function Sidebar() {
             </header>
 
             {/* ==============================================================
-                NAVEGAÇÃO — desktop
-                Sobre o mesmo cinza da moldura, sem cor de fundo própria: o
-                que se destaca ali é a pastilha branca da tela atual.
+                NAVEGAÇÃO — desktop: TRILHO + PAINEL
+
+                Duas peças, e não uma barra só. O trilho escuro de 64px
+                guarda as ÁREAS da loja e nunca sai da tela; o painel claro
+                ao lado mostra só as telas da área aberta.
+
+                É a anatomia do Slack e do Teams, e ela entrou no lugar da
+                barra branca de 256px com quatro seções empilhadas — que é,
+                letra por letra, o mesmo menu de Linear, Stripe, Vercel e
+                Shopify. Um painel de loja não precisa ser reconhecível como
+                "mais um SaaS"; precisa ser reconhecível como o seu.
+
+                O que a troca resolve, além da cara: a lista deixou de rolar.
+                Eram vinte linhas e quatro títulos numa coluna só; agora a
+                área escolhida é a única na tela, e trocar de área é um
+                clique no trilho — que mostra, de relance, onde há coisa
+                esperando (a bolinha).
                 ============================================================== */}
-            {!noChat && (
+            <aside
+                    style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
+                    className="fixed left-0 z-30 hidden w-[var(--trilho)] flex-col border-r border-[#333333] bg-[#1A1A1A] py-2 md:flex print:hidden"
+                >
+                    {secoes.map((secao) => {
+
+                        const Icone = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
+                        // Numa tela de atalho nenhuma área fica acesa: quem
+                        // marca onde a pessoa está é o próprio atalho. Sem
+                        // isto, "Conta" acendia junto — é lá que a conversa e
+                        // as lojas moram no catálogo do servidor — e o trilho
+                        // apontava dois lugares ao mesmo tempo.
+                        const ativa = !numAtalho && secao.titulo === (areaVisivel?.titulo ?? "")
+                        const esperando = contagemDaArea(secao)
+
+                        // A primeira tela liberada da área. É para onde o
+                        // clique leva — abrir o painel sem sair do lugar
+                        // faria o caminho ter dois cliques onde tinha um.
+                        const porta = secao.nos.find((no) => no.item.liberado)?.item
+
+                        return (
+                            <button
+                                key={secao.titulo}
+                                type="button"
+                                onClick={() => {
+                                    setArea({ titulo: secao.titulo, rota: porta?.rota ?? rotaAtiva })
+                                    setPainelRecolhido(false)
+
+                                    if (porta && porta.rota !== rotaAtiva) router.push(porta.rota)
+                                }}
+                                aria-current={ativa ? "true" : undefined}
+                                title={secao.titulo}
+                                aria-label={
+                                    esperando > 0
+                                        ? `${secao.titulo}, ${esperando} esperando`
+                                        : secao.titulo
+                                }
+                                className={`relative flex w-full flex-col items-center gap-1 px-1 py-2.5 transition-colors ${
+                                    ativa ? "bg-[#303030] text-white" : "text-[#B5B5B5] hover:bg-[#242424] hover:text-white"
+                                }`}
+                            >
+                                {/* O fio branco na borda marca a área aberta.
+                                    Mesma gramática do fio azul do painel: a
+                                    marca começa na margem e não inventa forma
+                                    nova no meio do menu. */}
+                                {ativa && (
+                                    <span className="absolute left-0 top-1/2 h-8 w-0.5 -translate-y-1/2 bg-white" aria-hidden />
+                                )}
+
+                                <span className="relative">
+                                    <Icone className="w-5" aria-hidden />
+
+                                    {/* Quanta coisa espera aqui dentro.
+                                        
+                                        Era uma bolinha vermelha sem número:
+                                        dizia que havia algo, e obrigava a
+                                        entrar na área para descobrir o quê e
+                                        quanto. Agora é o número — a mesma
+                                        conta do sino, somada por área —, que é
+                                        o que faz o lojista decidir se abre
+                                        agora ou depois do café.
+                                        
+                                        Fica no trilho, e não só no painel,
+                                        porque o painel daquela área pode estar
+                                        fechado — e é justamente aí que o aviso
+                                        precisa aparecer. */}
+                                    {esperando > 0 && (
+                                        <span className="num absolute -right-2 -top-1 min-w-[1rem] rounded-full border border-[#1A1A1A] bg-[#E51C00] px-1 text-center text-[0.5625rem] font-bold leading-[0.95rem] text-white">
+                                            {esperando > 99 ? "99+" : esperando}
+                                        </span>
+                                    )}
+                                </span>
+
+                                <span className="w-full truncate px-0.5 text-center text-[0.625rem] font-semibold leading-tight">
+                                    {ROTULO_DA_AREA[comparavel(secao.titulo)] ?? secao.titulo}
+                                </span>
+                            </button>
+                        )
+                    })}
+
+                    {/* ------------------------------------------------------
+                        OS ATALHOS
+
+                        Abaixo do fio, o que não é área da loja: a conversa da
+                        equipe e as lojas da rede. Ficam logo depois das
+                        áreas, e não grudados no rodapé da janela, por dois
+                        motivos — são tão usados quanto qualquer área, e
+                        canto de tela é onde o olho não procura (e onde a
+                        barra de ferramentas do navegador costuma cobrir).
+                        ------------------------------------------------------ */}
+                    {atalhos.length > 0 && (
+                        <div className="mt-1 w-full border-t border-[#333333] pt-1">
+                            {atalhos.map(({ chave, rotulo, Icone, rota }) => {
+
+                                const aqui = itemAtivo(rota)
+
+                                return (
+                                    <Link
+                                        key={chave}
+                                        href={rota}
+                                        aria-current={aqui ? "page" : undefined}
+                                        title={rotulo}
+                                        aria-label={
+                                            chave === "equipe-chat" && naoLidas > 0
+                                                ? `Conversa da equipe, ${naoLidas} não lidas`
+                                                : rotulo
+                                        }
+                                        className={`relative flex w-full flex-col items-center gap-1 px-1 py-2.5 transition-colors ${
+                                            aqui ? "bg-[#303030] text-white" : "text-[#B5B5B5] hover:bg-[#242424] hover:text-white"
+                                        }`}
+                                    >
+                                        {aqui && (
+                                            <span className="absolute left-0 top-1/2 h-8 w-0.5 -translate-y-1/2 bg-white" aria-hidden />
+                                        )}
+
+                                        <span className="relative">
+                                            <Icone className="w-5" aria-hidden />
+
+                                            {/* Na conversa, o NÚMERO, e não a
+                                                bolinha das áreas: mensagem de
+                                                gente tem quantidade, e "três"
+                                                é uma decisão diferente de
+                                                "trinta" para quem está no meio
+                                                da conferência. */}
+                                            {chave === "equipe-chat" && naoLidas > 0 && (
+                                                <span className="num absolute -right-2 -top-1 min-w-[1rem] rounded-full border border-[#1A1A1A] bg-[#E51C00] px-1 text-center text-[0.5625rem] font-bold leading-[0.95rem] text-white">
+                                                    {naoLidas > 99 ? "99+" : naoLidas}
+                                                </span>
+                                            )}
+                                        </span>
+
+                                        <span className="w-full truncate px-0.5 text-center text-[0.625rem] font-semibold leading-tight">
+                                            {rotulo}
+                                        </span>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {/* Reabrir o painel recolhido. É controle da moldura, não
+                        um lugar para onde ir — por isso fica no pé, sem
+                        rótulo e longe dos atalhos. */}
+                    {painelRecolhido && (
+                        <button
+                            type="button"
+                            onClick={() => setPainelRecolhido(false)}
+                            aria-label="Abrir o menu"
+                            title="Abrir o menu"
+                            className="mt-auto flex w-full justify-center border-t border-[#333333] py-3 text-[#B5B5B5] transition-colors hover:bg-[#242424] hover:text-white"
+                        >
+                            <FiChevronsRight className="w-4" aria-hidden />
+                        </button>
+                    )}
+            </aside>
+
+            {/* O painel. Sai de cena na conversa da equipe, que desenha a
+                própria coluna no mesmo lugar (ver page/equipe) — o trilho,
+                esse, fica: é a navegação global, e sem ele a conversa vira um
+                beco. */}
+            {!noChat && !painelRecolhido && areaVisivel && (
                 <aside
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-0 z-30 hidden w-64 flex-col border-r border-[#E1E1E1] bg-[#F1F1F1] md:flex print:hidden"
+                    className="fixed left-[var(--trilho)] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[#E1E1E1] bg-white md:flex print:hidden"
                 >
-                    {conteudoMenu}
+                    {painelDaArea}
                 </aside>
             )}
 
@@ -1069,8 +1659,8 @@ export default function Sidebar() {
                         onClick={() => setAberto(false)}
                     />
 
-                    <aside className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[#E1E1E1] bg-[#F1F1F1] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
-                        {conteudoMenu}
+                    <aside className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[#E1E1E1] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+                        {gavetaDoCelular}
                     </aside>
                 </div>
             )}

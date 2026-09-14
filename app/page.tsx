@@ -9,39 +9,46 @@ import {
   MockupAgenda,
   MockupAtendimento,
   MockupComprovante,
+  MockupEquipe,
   MockupEtiqueta,
   MockupPainel,
+  MockupRede,
   MockupVitrine,
 } from "./components/apresentacao/mockups"
 import {
   FiArrowRight,
+  FiBarChart2,
   FiBox,
   FiCalendar,
   FiCheck,
   FiCreditCard,
-  FiLayout,
+  FiLock,
   FiMapPin,
   FiMessageSquare,
+  FiPackage,
+  FiPlus,
   FiPrinter,
+  FiRefreshCw,
   FiShoppingCart,
   FiStar,
-  FiTrendingUp,
+  FiTag,
   FiUsers,
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
+import { MARCA, MARCA_PRO } from "@/app/marca"
 
 export const metadata: Metadata = {
-  title: "Arara | Estoque, vitrine e vendas para lojas de qualquer ramo",
+  title: `${MARCA} | Estoque, vitrine e vendas para lojas de qualquer ramo`,
   description:
-    "Controle cada item com código próprio, venda no balcão e pela sua vitrine na internet, organize entregas, atenda os clientes e saiba quanto cada pessoa da equipe vendeu — tudo no mesmo sistema, por uma assinatura só. Serve loja de eletro, casa, mercearia, vestuário e o que mais você vender.",
+    "Controle cada item com código próprio, venda no balcão e pela sua vitrine na internet, organize entregas, atenda os clientes e saiba quanto cada pessoa da equipe vendeu — tudo no mesmo sistema. Dois planos: um para quem toca a loja sozinho e outro para quem tem equipe ou mais de uma unidade. Serve loja de eletro, casa, mercearia, vestuário e o que mais você vender.",
 }
 
 /**
  * A porta de entrada: a página que quem ainda não é cliente encontra.
  *
- * Ela responde três perguntas, nesta ordem, porque é nesta ordem que quem
- * está decidindo as faz: **o que este sistema faz**, **como ele funciona na
- * minha loja** e **quanto custa**.
+ * Ela responde, nesta ordem, porque é nesta ordem que quem está decidindo
+ * pergunta: **o que este sistema faz**, **como ele funciona na minha loja**,
+ * **quanto custa** e **o que acontece depois que eu clicar**.
  *
  * O que ela NÃO faz: número inventado, depoimento de cliente que não existe e
  * selo que não corresponde a nada. Numa página de vendas, isso é a coisa mais
@@ -51,8 +58,15 @@ export const metadata: Metadata = {
  * As telas são desenhadas em HTML (ver components/apresentacao/mockups), e
  * não fotografadas: quem decide assinar quer ver o sistema, e é a tela dele
  * que convence. Fora que a CSP do painel fecha `img-src` em 'self' — figura
- * de servidor de terceiro não carrega aqui, e afrouxar isso para enfeitar
- * esta página seria trocar proteção real por imagem.
+ * de servidor de terceiro não carrega, e afrouxar isso para enfeitar esta
+ * página seria trocar proteção real por imagem.
+ *
+ * O MOVIMENTO mora em globals.css, na seção "movimento da página de vendas",
+ * e não em classes soltas aqui: a entrada do herói acontece uma vez, por
+ * tempo, e todo o resto acompanha a rolagem (`animation-timeline: view()`).
+ * Nada aqui esconde conteúdo — onde o navegador não sabe animar pela rolagem,
+ * a página aparece inteira, que é o contrário do revelador em JavaScript que
+ * deixa a tela em branco quando não roda.
  */
 
 /* ==========================================================================
@@ -77,7 +91,7 @@ const fundamentos: { titulo: string; texto: string; Icone: IconType }[] = [
     titulo: "Tudo o que aconteceu fica escrito",
     texto:
       "Quem vendeu, quem atendeu, quando o pagamento entrou, que dia o pedido saiu, o que voltou e por quê. Não é burocracia: é o que permite responder ao cliente que liga e fechar o mês sabendo o que de fato aconteceu.",
-    Icone: FiTrendingUp,
+    Icone: FiBarChart2,
   },
 ]
 
@@ -118,10 +132,28 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
     Icone: FiPrinter,
   },
   {
+    titulo: "Entrada de mercadoria",
+    texto:
+      "O que chegou do fornecedor entra com custo e origem. É isso que faz a margem do fim do mês ser a de verdade, e não a estimada.",
+    Icone: FiPackage,
+  },
+  {
     titulo: "Endereços e separação",
     texto:
-      "Diga onde cada peça está guardada. Na separação de vários pedidos, o sistema monta uma volta só pelo corredor, na ordem das prateleiras.",
+      "Diga onde cada peça está guardada, com capacidade e bloqueio, um endereço a um. As placas das prateleiras saem prontas para imprimir.",
     Icone: FiMapPin,
+  },
+  {
+    titulo: "Reposição e contagem",
+    texto:
+      "Aviso de prateleira vazia antes de o cliente reclamar, contagem rotativa pelo giro de cada produto e uma fila de tarefas do estoque na ordem certa.",
+    Icone: FiRefreshCw,
+  },
+  {
+    titulo: "Venda no balcão",
+    texto:
+      "Bipe a etiqueta e pronto: a peça sai do estoque, some da vitrine e entra no fechamento do dia com o nome de quem vendeu.",
+    Icone: FiShoppingCart,
   },
   {
     titulo: "Agenda de entregas",
@@ -130,16 +162,22 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
     Icone: FiCalendar,
   },
   {
-    titulo: "Atendimento no painel",
+    titulo: "Frete que você define",
     texto:
-      "O chat da sua vitrine e o WhatsApp da loja na mesma tela. Conversa nova entra numa fila que a equipe inteira vê; quem pega, atende.",
-    Icone: FiMessageSquare,
+      "Tabela por estado, com prazo e frete grátis acima de um valor. Quem vem buscar na loja não paga nada, e o pedido já nasce sabendo disso.",
+    Icone: FiTag,
   },
   {
-    titulo: "Sua equipe, cada um com o seu nome",
+    titulo: "Promoções, devoluções e avarias",
     texto:
-      "Cinco pessoas atendendo sem pisar no pé uma da outra: cada cliente tem dono, e o início mostra quanto cada um vendeu e quantos atendeu.",
-    Icone: FiUsers,
+      "Preço promocional com começo e fim, o que voltou isolado até a tratativa e a peça quebrada fora do estoque vendável — sem sumir do histórico.",
+    Icone: FiRefreshCw,
+  },
+  {
+    titulo: "Atendimento no painel",
+    texto:
+      "O chat da sua vitrine e o WhatsApp da loja na mesma tela, conversa por conversa, sem abrir o celular no meio do expediente.",
+    Icone: FiMessageSquare,
   },
   {
     titulo: "Clientes com histórico",
@@ -148,80 +186,173 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
     Icone: FiUsers,
   },
   {
-    titulo: "Pagamento pela vitrine",
+    titulo: "O fechamento do dia",
     texto:
-      "O cliente paga no site por Pix ou cartão, na página do provedor. O pedido só entra na sua fila quando o dinheiro entra de verdade.",
-    Icone: FiCreditCard,
+      "Quanto saiu no balcão, quanto saiu por pedido, quanto entrou de verdade e o que está parado. É a primeira tela ao entrar, e não um relatório a pedir.",
+    Icone: FiBarChart2,
+  },
+]
+
+/** O que o plano Pro acrescenta — as telas de equipe e de rede. */
+const recursosPro: { titulo: string; texto: string; Icone: IconType }[] = [
+  {
+    titulo: "Funcionários, um acesso por pessoa",
+    texto:
+      "Cada um entra com o próprio login e abre só o que você marcou. Quem respondeu fica gravado na mensagem, e quem vendeu, na peça.",
+    Icone: FiUsers,
   },
   {
-    titulo: "A cara da loja é sua",
+    titulo: "A conversa da equipe",
     texto:
-      "Cores, logo e a página inicial montada por você, arrastando as seções — banners, prateleiras, textos e faixas de destaque.",
-    Icone: FiLayout,
+      "O grupo de trabalho dentro do painel, com as tarefas do dia e o mural de recados — em vez de combinar a operação da loja num grupo de celular que ninguém acha depois.",
+    Icone: FiMessageSquare,
+  },
+  {
+    titulo: "Código da conversa",
+    texto:
+      "Um código de entrada que você dá a quem chega e tira de quem saiu. O acesso à conversa da equipe se concede e se revoga em um passo.",
+    Icone: FiLock,
+  },
+  {
+    titulo: "Várias lojas na mesma conta",
+    texto:
+      "Cada unidade com o seu estoque, o seu caixa e a sua equipe, e um gerente por filial que administra a loja dele sem alcançar a assinatura nem a rede.",
+    Icone: FiMapPin,
   },
 ]
 
-/**
- * O que a assinatura entrega.
- *
- * A lista que vale é a do servidor (ver RecursosDoSistema, em
- * internal/services/assinatura/recursos.go), que é a mesma que a tela de
- * assinatura mostra. Quem mudar o que o sistema inclui mexe lá, e passa aqui
- * para esta página não desmentir aquela.
- */
-const inclui: string[] = [
-  "Cadastro de produtos, com as variações do seu ramo",
-  "Controle unidade a unidade, cada uma com código próprio",
-  "Etiqueta com código de barras para imprimir",
-  "Entrada de mercadoria, com custo e fornecedor",
-  "Endereços das prateleiras, com placas para imprimir",
-  "Venda no balcão, bipando a etiqueta",
-  "Vitrine pública alimentada pelo seu próprio estoque",
-  "Editor da home da vitrine, arrastando as seções",
-  "Pagamento online, com o pedido liberado só depois de pago",
-  "Pedidos de WhatsApp e telefone na mesma separação",
-  "Agenda de entregas, com o que sai em cada dia",
-  "Separação com o endereço de cada peça, uma volta só",
-  "Etiquetas de pedido e comprovante para o cliente",
-  "Chat da vitrine e WhatsApp da loja dentro do painel",
-  "Fila de atendimento com um responsável por cliente",
-  "Clientes com histórico de compras e avaliações",
-  "Equipe com permissões e desempenho por pessoa",
-  "Fechamento de caixa e margem, dia a dia",
-  "Devoluções, avarias e cancelamentos separados",
-  "Tarefas, contagem e reposição de prateleira",
+/** As perguntas que decidem o clique — e que, sem resposta, o impedem. */
+const perguntas: { pergunta: string; resposta: string }[] = [
+  {
+    pergunta: "Preciso de cartão para começar o teste?",
+    resposta:
+      "Precisa, e nada é cobrado no dia. O cartão fica guardado para a primeira cobrança acontecer sozinha no fim do teste — sem ele, a assinatura seria encerrada naquele dia e você teria de voltar e assinar de novo. Cancelando antes do fim do teste, não há cobrança nenhuma.",
+  },
+  {
+    pergunta: "Como faço para cancelar?",
+    resposta:
+      "Pela tela de assinatura do seu painel, você mesmo, sem ligar para ninguém e sem prazo de fidelidade. O acesso continua até o fim do período que você já pagou.",
+  },
+  {
+    pergunta: "Serve para o que eu vendo?",
+    resposta:
+      "As variações são suas: voltagem, tamanho, peso, sabor, cor, o que for. O sistema não traz uma lista pronta de campos de vestuário nem de eletro — ele guarda o que descreve o seu produto. O controle peça a peça funciona igual num ventilador e numa camisa.",
+  },
+  {
+    pergunta: "Tenho de comprar equipamento?",
+    resposta:
+      "O sistema roda no navegador do computador, do tablet ou do celular. Para bipar no balcão serve qualquer leitor de código de barras comum, e as etiquetas saem na impressora que você já tem.",
+  },
+  {
+    pergunta: "Posso trocar de plano depois?",
+    resposta:
+      "A qualquer momento, pelo painel, nos dois sentidos. As telas do plano que você não assinou continuam à vista no menu, em cinza — você vê o que existe antes de decidir pagar por isso.",
+  },
+  {
+    pergunta: "Os dados do meu cartão ficam com vocês?",
+    resposta:
+      "Não. O cartão é digitado numa página do processador de cobrança, fora daqui, e nenhum dígito dele passa por este sistema — nem na assinatura, nem no pagamento que o seu cliente faz na vitrine.",
+  },
+  {
+    pergunta: "E se eu já tiver um site?",
+    resposta:
+      "A vitrine vem junto e é opcional: dá para usar só o painel, com os pedidos entrando por WhatsApp e telefone. Quem quiser a loja na internet escolhe o endereço dela e monta a página inicial arrastando as seções.",
+  },
 ]
 
-/**
- * O que a página promete: quanto custa e quantos dias de teste vêm antes da
- * primeira cobrança.
- *
- * Os dois saem do servidor (`/public/oferta`), que por sua vez lê o preço no
- * provedor de cobrança e o teste da configuração — assim a página nunca
- * promete um número diferente do que a fatura vai dizer. Trocar o preço é
- * trocar lá, e esta página acompanha sozinha.
- *
- * Os valores abaixo são a rede de segurança para quando o servidor não
- * responder. Esta é a página de vendas: ela sai no ar de qualquer jeito, com
- * o número escrito à mão, em vez de dar erro para quem estava decidindo
- * assinar. Se um dia divergirem, quem manda é o servidor — e é por isso que a
- * página tenta ele primeiro.
- */
+/* ==========================================================================
+   A oferta
+
+   Preço, teste e a lista do que se leva saem do SERVIDOR (`/public/oferta`),
+   que lê o preço no provedor de cobrança. É o que impede esta página de
+   prometer um número diferente do que a fatura vai dizer — e é por isso que a
+   lista de recursos aqui é a mesma que a tela de assinatura mostra ao lojista
+   que já é cliente (ver RecursosDoSistema, em
+   internal/services/assinatura/recursos.go).
+
+   Os valores de reserva abaixo são a rede de segurança para quando o servidor
+   não responder: esta é a página de vendas, ela sai no ar de qualquer jeito,
+   com o número escrito à mão, em vez de dar erro para quem estava decidindo
+   assinar. Se um dia divergirem, quem manda é o servidor.
+   ========================================================================== */
+
 const MENSALIDADE_RESERVA = 99.9
-const TESTE_DIAS_RESERVA = 7
+const MENSALIDADE_PRO_RESERVA = 160
+const TESTE_DIAS_RESERVA = 15
+const LOJAS_NO_PRO_RESERVA = 20
+
+interface PlanoPro {
+  mensalidade: number
+  recursos: string[]
+  lojas: number
+}
 
 interface OfertaDaPagina {
   mensalidade: number
+  recursos: string[]
   testeDias: number
   pedeCartao: boolean
+
+  /** A primeira cobrança, no fim do teste: meio mês por meio preço. */
+  entrada: { valor: number; dias: number } | null
+
+  /** Nulo quando o servidor responde SEM o Pro — ver ofertaDaPagina. */
+  pro: PlanoPro | null
+}
+
+/** Os recursos escritos à mão, para quando o servidor não responder. */
+const RECURSOS_RESERVA: string[] = [
+  "O resumo do dia e do mês: o que saiu, quanto entrou e o que está parado",
+  "Sua loja na internet, com pedidos online",
+  "Pedidos de WhatsApp e telefone na mesma separação",
+  "Calendário das entregas, com o que chega em cada dia e o que atrasou",
+  "Etiquetas dos pedidos prontas para imprimir",
+  "Devoluções isoladas até a tratativa",
+  "Histórico de cada cliente: o que comprou, quanto gastou e o que achou",
+  "WhatsApp da loja dentro do painel, conversa por conversa",
+  "Chat ao vivo com o cliente dentro da sua vitrine",
+  "Histórico de vendas da loja",
+  "Lista de produtos com preços e promoções",
+  "Estoque controlado peça por peça",
+  "Entrada de mercadoria com custo e fornecedor",
+  "Aviso de prateleira vazia antes do cliente reclamar",
+  "Inventário rotativo pelo giro de cada produto",
+  "Fila de trabalho do estoque, na ordem certa",
+  "Endereços com capacidade e bloqueio, um a um",
+  "Placas de prateleira prontas para imprimir",
+  "Identidade e endereço da sua loja",
+  "Monte a página inicial da loja arrastando os blocos",
+  "Banners e destaques da vitrine",
+  "A conta que recebe o dinheiro das vendas do site",
+  "Tabela de frete por estado, com prazo e frete grátis acima de um valor",
+  "Peças cadastradas sem limite",
+]
+
+const RECURSOS_PRO_RESERVA: string[] = [
+  "Várias lojas na mesma conta, cada uma com o seu estoque, caixa e equipe",
+  "Contas para a sua equipe, cada uma com as telas que pode abrir",
+  "Conversa da equipe dentro do painel, com tarefas e mural de recados",
+  "Código de entrada da conversa, para dar e tirar acesso da equipe",
+]
+
+/** Centavos do servidor viram reais, com o valor escrito à mão como reserva. */
+function reais(centavos: unknown, padrao: number): number {
+  return typeof centavos === "number" && centavos > 0 ? centavos / 100 : padrao
 }
 
 async function ofertaDaPagina(): Promise<OfertaDaPagina> {
 
   const reserva: OfertaDaPagina = {
     mensalidade: MENSALIDADE_RESERVA,
+    recursos: RECURSOS_RESERVA,
     testeDias: TESTE_DIAS_RESERVA,
-    pedeCartao: false,
+    pedeCartao: true,
+    entrada: { valor: MENSALIDADE_RESERVA / 2, dias: TESTE_DIAS_RESERVA },
+    pro: {
+      mensalidade: MENSALIDADE_PRO_RESERVA,
+      recursos: RECURSOS_PRO_RESERVA,
+      lojas: LOJAS_NO_PRO_RESERVA,
+    },
   }
 
   try {
@@ -233,12 +364,46 @@ async function ofertaDaPagina(): Promise<OfertaDaPagina> {
 
     const dados = await resposta.json()
     const oferta = dados?.oferta ?? {}
-    const centavos = oferta?.preco?.centavos
+
+    const recursos: string[] =
+      Array.isArray(oferta?.recursos) && oferta.recursos.length > 0
+        ? oferta.recursos
+        : reserva.recursos
+
+    const testeDias = typeof oferta?.teste_dias === "number" ? oferta.teste_dias : reserva.testeDias
+
+    // O Pro só vai para a tela quando o servidor o devolve. Sem preço criado
+    // no provedor de cobrança a chave não vem, e anunciá-lo assim mesmo
+    // levaria o lojista a um checkout que falha — a mesma regra que a tela de
+    // assinatura segue para quem já é cliente.
+    const pro: PlanoPro | null = oferta?.pro
+      ? {
+        mensalidade: reais(oferta.pro?.preco?.centavos, MENSALIDADE_PRO_RESERVA),
+        recursos:
+          Array.isArray(oferta.pro?.recursos) && oferta.pro.recursos.length > 0
+            ? oferta.pro.recursos
+            : RECURSOS_PRO_RESERVA,
+        lojas: typeof oferta.pro?.lojas === "number" ? oferta.pro.lojas : LOJAS_NO_PRO_RESERVA,
+      }
+      : null
+
+    // A escada de entrada existe só quando há teste: quem já gastou a
+    // cortesia entra pagando a mensalidade cheia, sem degrau no meio.
+    const entrada =
+      oferta?.entrada && testeDias > 0
+        ? {
+          valor: reais(oferta.entrada?.centavos, MENSALIDADE_RESERVA / 2),
+          dias: typeof oferta.entrada?.dias === "number" ? oferta.entrada.dias : TESTE_DIAS_RESERVA,
+        }
+        : null
 
     return {
-      mensalidade: typeof centavos === "number" && centavos > 0 ? centavos / 100 : reserva.mensalidade,
-      testeDias: typeof oferta?.teste_dias === "number" ? oferta.teste_dias : reserva.testeDias,
+      mensalidade: reais(oferta?.preco?.centavos, reserva.mensalidade),
+      recursos,
+      testeDias,
       pedeCartao: oferta?.teste_pede_cartao === true,
+      entrada,
+      pro,
     }
 
   } catch {
@@ -252,13 +417,42 @@ async function ofertaDaPagina(): Promise<OfertaDaPagina> {
 
 export default async function Home() {
 
-  const { mensalidade, testeDias, pedeCartao } = await ofertaDaPagina()
+  const { mensalidade, recursos: inclui, testeDias, pedeCartao, entrada, pro } = await ofertaDaPagina()
 
   // Sem teste configurado a página volta a falar como falava: assine e pague.
   // É o mesmo texto de antes, e não um "0 dias grátis" sem sentido.
   const temTeste = testeDias > 0
 
   const chamada = temTeste ? `Testar ${testeDias} dias grátis` : "Criar conta"
+
+  /**
+   * A escada de entrada, escrita como três degraus.
+   *
+   * Ela não é enfeite de página: é o que o servidor de fato monta na
+   * assinatura (ver internal/services/assinatura/entrada.go). Dizer só
+   * "quinze dias grátis e depois a mensalidade" esconderia o degrau do meio —
+   * e degrau escondido, quando aparece na fatura, custa o cliente.
+   */
+  const degraus = entrada
+    ? [
+      {
+        quando: "Hoje",
+        valor: "R$ 0,00",
+        texto: `Você cadastra o cartão e não é cobrado nada. O sistema abre inteiro, com os ${testeDias} dias para usar de verdade.`,
+      },
+      {
+        quando: `Dia ${testeDias}`,
+        valor: formatarMoeda(entrada.valor),
+        texto: `Acaba o teste e sai a primeira cobrança: meio mês por meio preço, que compra os ${entrada.dias} dias seguintes.`,
+      },
+      {
+        quando: `Dia ${testeDias + entrada.dias}`,
+        valor: `${formatarMoeda(mensalidade)}/mês`,
+        texto:
+          "Começa a mensalidade cheia, e ela se repete todo mês enquanto você quiser. Cancela no painel, quando decidir.",
+      },
+    ]
+    : []
 
   return (
     <div className="min-h-screen bg-white">
@@ -272,13 +466,15 @@ export default async function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
 
           <div>
-            <span className="tag tag-info">Para lojas de qualquer ramo, no balcão e na internet</span>
+            <span className="tag tag-info lp-entrada">
+              Para lojas de qualquer ramo, no balcão e na internet
+            </span>
 
-            <h1 className="font-display mt-4 text-3xl leading-tight text-[#303030] sm:text-[2.6rem]">
+            <h1 className="font-display lp-entrada lp-atraso-1 mt-4 text-3xl leading-tight text-[#303030] sm:text-[2.6rem]">
               A sua loja inteira, da prateleira ao caixa.
             </h1>
 
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-[#616161]">
+            <p className="lp-entrada lp-atraso-2 mt-4 max-w-xl text-base leading-relaxed text-[#616161]">
               Cada item com código próprio, a vitrine na internet vivendo do
               mesmo estoque, os pedidos organizados por dia de entrega, o
               atendimento no painel e o fechamento do caixa no fim do dia — sem
@@ -289,10 +485,10 @@ export default async function Home() {
               </span>
             </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="lp-entrada lp-atraso-3 mt-7 flex flex-wrap items-center gap-3">
               <Link href="/cadastro" className="btn btn-primario px-6 py-3 text-base">
                 {chamada}
-                <FiArrowRight className="w-[1.05rem]" aria-hidden />
+                <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
               </Link>
 
               <Link href="/login" className="btn btn-secundario px-6 py-3 text-base">
@@ -301,38 +497,38 @@ export default async function Home() {
             </div>
 
             {/* O que vem depois do clique, dito antes do clique: quanto custa,
-                quando começa a custar e se o cartão vai ser pedido agora. É a
+                quando começa a custar e que o cartão vai ser pedido agora. É a
                 dúvida que faz a pessoa não clicar. */}
-            <p className="mt-5 text-sm text-[#8A8A8A]">
+            <p className="lp-entrada lp-atraso-4 mt-5 text-sm text-[#8A8A8A]">
               {temTeste ? (
                 <>
-                  {testeDias} dias para usar o sistema inteiro
-                  {pedeCartao ? "" : ", sem cartão de crédito"}. Depois,{" "}
-                  {formatarMoeda(mensalidade)} por mês, com tudo incluído.
+                  {testeDias} dias para usar o sistema inteiro.
+                  {pedeCartao ? " O cartão é cadastrado na entrada e nada é cobrado hoje." : ""}{" "}
+                  Depois, {entrada ? "meio mês por meio preço e então " : ""}
+                  {formatarMoeda(mensalidade)} por mês.
                 </>
               ) : (
-                <>
-                  Uma assinatura de {formatarMoeda(mensalidade)} por mês, com tudo
-                  incluído.
-                </>
+                <>Uma assinatura de {formatarMoeda(mensalidade)} por mês.</>
               )}{" "}
               Sem fidelidade: o cancelamento é feito por você mesmo, no painel.
             </p>
           </div>
 
-          <MockupPainel />
+          <div className="lp-entrada-lado">
+            <MockupPainel />
+          </div>
 
         </div>
       </section>
 
       {/* Faixa de capacidades — sem números inventados, só o que o sistema faz. */}
       <div className="border-b border-[#EBEBEB] bg-white">
-        <ul className="mx-auto grid max-w-6xl gap-x-8 gap-y-3 px-4 py-5 text-sm font-semibold text-[#616161] sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="lp-cascata mx-auto grid max-w-6xl gap-x-8 gap-y-3 px-4 py-5 text-sm font-semibold text-[#616161] sm:grid-cols-2 lg:grid-cols-4">
           {[
             { texto: "Código de barras por peça", Icone: FiPrinter },
             { texto: "Vitrine com pagamento online", Icone: FiCreditCard },
-            { texto: "Agenda de entregas", Icone: FiCalendar },
-            { texto: "Atendimento e equipe", Icone: FiUsers },
+            { texto: "Agenda de entregas e frete", Icone: FiCalendar },
+            { texto: "Atendimento, equipe e rede de lojas", Icone: FiUsers },
           ].map(({ texto, Icone }) => (
             <li key={texto} className="flex items-center gap-2.5">
               <Icone className="w-[1.05rem] shrink-0 text-[#005BD3]" aria-hidden />
@@ -349,7 +545,7 @@ export default async function Home() {
           ================================================================== */}
       <section id="fundamento" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
 
-        <div className="max-w-2xl">
+        <div className="lp-revelar max-w-2xl">
           <span className="tag tag-info">O fundamento</span>
 
           <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
@@ -364,7 +560,7 @@ export default async function Home() {
 
         <div className="mt-10 grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
 
-          <ol className="space-y-5">
+          <ol className="lp-cascata space-y-5">
             {fundamentos.map(({ titulo, texto, Icone }, i) => (
               <li key={titulo} className="card p-6">
                 <div className="flex items-center gap-3">
@@ -402,16 +598,16 @@ export default async function Home() {
       <section id="como-funciona" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
 
-          <h2 className="font-display text-2xl text-[#303030] sm:text-3xl">
+          <h2 className="font-display lp-revelar text-2xl text-[#303030] sm:text-3xl">
             Do cabide ao caixa, em quatro passos
           </h2>
 
-          <p className="mt-3 max-w-2xl text-base text-[#616161]">
+          <p className="lp-revelar mt-3 max-w-2xl text-base text-[#616161]">
             O caminho é o mesmo que a peça já faz na sua loja hoje — a
             diferença é que agora cada etapa fica registrada.
           </p>
 
-          <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <ol className="lp-cascata mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {passos.map((passo, i) => (
               <li key={passo.titulo} className="card card-hover p-6">
                 <span className="num flex h-9 w-9 items-center justify-center rounded-lg bg-[#EAF4FF] text-sm font-extrabold text-[#00369B]">
@@ -437,7 +633,7 @@ export default async function Home() {
       <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
 
-          <div>
+          <div className="lp-revelar">
             <span className="tag tag-info">O trabalho do dia</span>
 
             <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
@@ -467,7 +663,9 @@ export default async function Home() {
             </ul>
           </div>
 
-          <MockupAgenda />
+          <div className="lp-revelar">
+            <MockupAgenda />
+          </div>
 
         </div>
       </section>
@@ -478,17 +676,17 @@ export default async function Home() {
       <section id="recursos" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
 
-          <h2 className="font-display text-2xl text-[#303030] sm:text-3xl">
+          <h2 className="font-display lp-revelar text-2xl text-[#303030] sm:text-3xl">
             O que vem no painel
           </h2>
 
-          <p className="mt-3 max-w-2xl text-base text-[#616161]">
+          <p className="lp-revelar mt-3 max-w-2xl text-base text-[#616161]">
             Tudo dividido por tela, do jeito que a loja funciona: catálogo,
-            estoque, vendas, atendimento e conta. Nenhuma delas é vendida à
-            parte.
+            estoque, vendas, atendimento e conta. Tudo o que está aqui embaixo
+            vem no plano de entrada — nada nesta lista é vendido à parte.
           </p>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lp-cascata mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {recursos.map(({ titulo, texto, Icone }) => (
               <article key={titulo} className="card card-hover p-6">
                 <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EAF4FF]">
@@ -509,24 +707,26 @@ export default async function Home() {
       </section>
 
       {/* ==================================================================
-          ATENDIMENTO E EQUIPE
+          ATENDIMENTO
           ================================================================== */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
 
-          <MockupAtendimento />
+          <div className="lp-revelar">
+            <MockupAtendimento />
+          </div>
 
-          <div>
+          <div className="lp-revelar">
             <span className="tag tag-info">Atendimento</span>
 
             <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
-              Cinco pessoas atendendo sem pisar no pé uma da outra
+              O WhatsApp da loja e o chat do site na mesma tela
             </h2>
 
             <p className="mt-4 text-base leading-relaxed text-[#616161]">
               O cliente escreve pelo chat da sua vitrine ou pelo WhatsApp da
-              loja, e a conversa entra numa fila que a equipe inteira vê. Quem
-              pega, atende — e a conversa sai da tela dos outros, para dois
+              loja, e a conversa entra numa fila dentro do painel. Quem pega,
+              atende — e a conversa sai da tela dos outros, para dois
               atendentes não responderem coisas diferentes ao mesmo cliente.
               Terminou, encerra. Se o cliente voltar a escrever, ela volta para
               a fila.
@@ -534,10 +734,10 @@ export default async function Home() {
 
             <ul className="mt-6 space-y-2.5">
               {[
-                "Cada funcionário com o próprio acesso e as próprias permissões",
+                "Cada conversa com um responsável, e o histórico junto do cliente",
                 "Quem respondeu fica gravado na mensagem, e quem vendeu, na peça",
-                "Só o dono vê o desempenho de cada um",
-                "Passar um cliente para outra pessoa é decisão do dono",
+                "O catálogo do seu estoque à mão, para mandar a peça dentro da conversa",
+                "Sem abrir o celular no meio do expediente",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-[#303030]">
                   <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
@@ -558,8 +758,8 @@ export default async function Home() {
 
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
 
-            <div>
-              <span className="tag bg-white/15 text-white">Incluído na assinatura</span>
+            <div className="lp-revelar">
+              <span className="tag bg-white/15 text-white">Já vem no plano de entrada</span>
 
               <h2 className="font-display mt-4 text-2xl text-white sm:text-3xl">
                 A sua loja também fica de pé na internet
@@ -569,15 +769,17 @@ export default async function Home() {
                 A vitrine mostra o mesmo estoque do painel: a peça vendida no
                 balcão deixa de aparecer para o cliente na mesma hora. Ele paga
                 por Pix ou cartão, acompanha o pedido por uma tela própria,
-                imprime o comprovante e avalia o que recebeu — e você monta a
-                página inicial dela arrastando as seções, sem mexer em código.
+                imprime o comprovante e avalia o que recebeu — e você escolhe o
+                endereço dela e monta a página inicial arrastando as seções,
+                sem mexer em código.
               </p>
 
               <ul className="mt-6 space-y-2.5">
                 {[
                   "Catálogo alimentado pelo próprio estoque",
                   "Editor da home: banners, prateleiras, textos e colunas",
-                  "Pagamento na página do provedor — nenhum dado de cartão passa por aqui",
+                  "Frete por estado, com prazo e frete grátis acima de um valor",
+                  "Pagamento numa página segura — nenhum dado de cartão passa por aqui",
                   "Tela de acompanhamento, comprovante e avaliação do produto",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-white">
@@ -588,7 +790,7 @@ export default async function Home() {
               </ul>
             </div>
 
-            <div className="space-y-4">
+            <div className="lp-cascata space-y-4">
               <MockupVitrine />
               <MockupComprovante />
             </div>
@@ -598,32 +800,179 @@ export default async function Home() {
       </section>
 
       {/* ==================================================================
-          ASSINATURA
-          Um cartão só, no meio da página: não há o que comparar, e uma
-          tabela de comparação com uma coluna seria uma pergunta sem escolha.
-          ================================================================== */}
-      <section id="assinatura" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
+          EQUIPE E REDE — o que o Pro acrescenta
 
-        <div className="mx-auto max-w-2xl text-center">
+          Fica DEPOIS do que todo mundo leva, e não antes: quem chegou agora
+          precisa entender o sistema antes de ser convidado a pagar mais por
+          ele. E só aparece quando o servidor devolve o Pro — anunciar um
+          plano que o checkout não sabe cobrar é mandar o lojista a um erro.
+          ================================================================== */}
+      {pro && (
+        <section id="equipe" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
+
+          <div className="lp-revelar max-w-2xl">
+            <span className="tag tag-info">
+              <FiLock className="w-3" aria-hidden />
+              Plano Pro
+            </span>
+
+            <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
+              Quando a loja deixa de ser de uma pessoa só
+            </h2>
+
+            <p className="mt-3 text-base leading-relaxed text-[#616161]">
+              Quem toca a loja sozinho não tem equipe a cadastrar nem segunda
+              unidade a abrir — e não deve pagar por telas que nunca vai abrir.
+              É essa a linha entre os dois planos: o Pro é o que só existe
+              quando há mais gente, ou mais de um endereço.
+            </p>
+          </div>
+
+          <div className="mt-10 grid items-start gap-8 lg:grid-cols-2 lg:gap-12">
+
+            <div className="lp-cascata space-y-4">
+              <MockupEquipe />
+              <MockupRede />
+            </div>
+
+            <div className="lp-cascata space-y-5">
+              {recursosPro.map(({ titulo, texto, Icone }) => (
+                <article key={titulo} className="card p-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF]">
+                      <Icone className="w-[1.05rem] text-[#00369B]" aria-hidden />
+                    </span>
+
+                    <h3 className="font-display text-lg text-[#303030]">{titulo}</h3>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-relaxed text-[#616161]">{texto}</p>
+                </article>
+              ))}
+
+              <p className="text-sm leading-relaxed text-[#8A8A8A]">
+                Até {pro.lojas} lojas na mesma conta e no mesmo login. A filial
+                não é um cadastro novo: ela nasce dentro da sua conta, herda a
+                cara do site da matriz e leva o próprio estoque, preço, caixa e
+                equipe. O cliente troca de unidade na própria vitrine.
+              </p>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* ==================================================================
+          A ESCADA DE COBRANÇA
+
+          Os três degraus que o servidor monta de verdade na assinatura. Vêm
+          ANTES dos preços porque é a pergunta que antecede o preço: não
+          "quanto custa", mas "quando começa a custar".
+          ================================================================== */}
+      {degraus.length > 0 && (
+        <section className="border-y border-[#EBEBEB] bg-[#F1F1F1]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+
+            <div className="lp-revelar max-w-2xl">
+              <span className="tag tag-info">Como começa a cobrança</span>
+
+              <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
+                Do primeiro dia até a primeira mensalidade
+              </h2>
+
+              <p className="mt-3 text-base leading-relaxed text-[#616161]">
+                Ninguém vai de “não conheço” a mensalidade cheia num passo só.
+                São três, e cada um pede um pouco mais depois de ter entregado
+                um pouco mais — está escrito aqui porque é exatamente isto que
+                a sua fatura vai dizer.
+              </p>
+            </div>
+
+            {/* A linha é o tempo passando, e ela se desenha conforme a seção
+                sobe na tela (.lp-linha, em globals.css). Fica atrás dos três
+                cartões e escondida do leitor de tela: é desenho, e o que ela
+                diz já está escrito nos degraus. */}
+            <div className="relative mt-10">
+              <span
+                className="lp-linha absolute left-0 right-0 top-6 hidden h-px bg-[#B5B5B5] md:block"
+                aria-hidden
+              />
+
+              <ol className="lp-cascata relative grid gap-5 md:grid-cols-3">
+                {degraus.map(({ quando, valor, texto }, i) => (
+                  <li key={quando} className="card p-6">
+                    <div className="flex items-center gap-3">
+                      <span className="num flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-sm font-extrabold text-[#00369B]">
+                        {i + 1}
+                      </span>
+
+                      <span className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+                        {quando}
+                      </span>
+                    </div>
+
+                    <p className="num font-display mt-4 text-2xl text-[#303030]">{valor}</p>
+
+                    <p className="mt-2 text-sm leading-relaxed text-[#616161]">{texto}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <p className="mt-6 max-w-3xl text-sm leading-relaxed text-[#8A8A8A]">
+              O cartão é cadastrado no primeiro dia e não é cobrado nele — é ele
+              que faz a cobrança do dia {testeDias} acontecer sozinha, sem você
+              ter de voltar e assinar de novo. Cancelando antes disso, não há
+              cobrança nenhuma.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ==================================================================
+          PLANOS
+          ================================================================== */}
+      <section id="planos" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
+
+        <div className="lp-revelar mx-auto max-w-2xl text-center">
           <h2 className="font-display text-2xl text-[#303030] sm:text-3xl">
-            Um preço, sem pegadinha
+            {pro ? "Dois planos, e a diferença é uma linha só" : "Um preço, sem pegadinha"}
           </h2>
 
           <p className="mt-3 text-base text-[#616161]">
-            Não há plano básico nem versão capada: quem assina recebe o sistema
-            inteiro, do cadastro da primeira peça à loja no ar com pagamento.
-            Sem fidelidade, e o cancelamento é feito por você mesmo.
+            {pro ? (
+              <>
+                O de entrada é o sistema inteiro para quem toca uma loja:
+                estoque, balcão, vitrine, pedidos e clientes. O Pro acrescenta
+                o que só existe quando há equipe ou mais de um endereço. Sem
+                fidelidade nos dois, e a troca é feita por você mesmo, no
+                painel.
+              </>
+            ) : (
+              <>
+                Quem assina recebe o sistema inteiro, do cadastro da primeira
+                peça à loja no ar com pagamento. Sem fidelidade, e o
+                cancelamento é feito por você mesmo.
+              </>
+            )}
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-3xl">
-          <article className="card flex flex-col border-[#005BD3] p-7 shadow-[0_2px_12px_rgba(0,0,0,0.08)] sm:p-8">
+        {/* Sem `items-start`: os dois cartões têm a MESMA altura. O Pro tem
+            quatro linhas e o de entrada tem vinte e quatro, e deixar cada um
+            com a sua altura fazia o Pro parecer um cartão que faltou
+            terminar — que é o contrário do que ele é. O botão de cada um
+            desce para o rodapé do cartão pelo `mt-auto`. */}
+        <div className={`mx-auto mt-10 grid gap-5 ${pro ? "max-w-5xl lg:grid-cols-2" : "max-w-3xl"}`}>
+
+          {/* ---------------- O plano de entrada ---------------- */}
+          <article className="card lp-plano lp-revelar flex flex-col border-[#005BD3] p-7 sm:p-8">
 
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-display text-lg text-[#303030]">Arara</p>
+                <p className="font-display text-lg text-[#303030]">{MARCA}</p>
                 <p className="mt-1 text-sm text-[#616161]">
-                  A loja física e a loja na internet, no mesmo estoque.
+                  Para quem toca a loja — no balcão, na internet, ou nos dois.
                 </p>
               </div>
 
@@ -638,10 +987,15 @@ export default async function Home() {
                 <span className="text-sm font-bold text-[#616161]">/mês</span>
               </div>
 
-              {temTeste ? (
+              {entrada ? (
                 <p className="mt-2 text-sm text-[#616161]">
-                  A cobrar só depois dos {testeDias} dias de teste
-                  {pedeCartao ? "" : ", e o cartão só é pedido quando você decidir ficar"}.
+                  Nada hoje. No dia {testeDias}, {formatarMoeda(entrada.valor)} pelo
+                  meio mês seguinte; a mensalidade cheia começa no dia{" "}
+                  {testeDias + entrada.dias}.
+                </p>
+              ) : temTeste ? (
+                <p className="mt-2 text-sm text-[#616161]">
+                  A cobrar só depois dos {testeDias} dias de teste.
                 </p>
               ) : null}
             </div>
@@ -657,18 +1011,80 @@ export default async function Home() {
 
             <Link href="/cadastro" className="btn btn-primario mt-auto w-full py-3 text-base">
               {temTeste ? chamada : "Criar a minha conta"}
-              <FiArrowRight className="w-[1.05rem]" aria-hidden />
+              <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
             </Link>
           </article>
+
+          {/* ---------------- O Pro ---------------- */}
+          {pro && (
+            <article className="card lp-plano lp-revelar flex flex-col p-7 sm:p-8">
+
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-display text-lg text-[#303030]">{MARCA_PRO}</p>
+                  <p className="mt-1 text-sm text-[#616161]">
+                    Para quem tem equipe, ou mais de uma loja.
+                  </p>
+                </div>
+
+                <span className="tag tag-neutral shrink-0">até {pro.lojas} lojas</span>
+              </div>
+
+              <div className="mt-6 border-b border-[#EBEBEB] pb-6">
+                <div className="flex items-baseline gap-1.5">
+                  <Preco valor={pro.mensalidade} className="text-4xl" />
+                  <span className="text-sm font-bold text-[#616161]">/mês</span>
+                </div>
+
+                <p className="mt-2 text-sm text-[#616161]">
+                  {temTeste ? `O mesmo teste de ${testeDias} dias. ` : ""}
+                  O Pro se liga na tela de assinatura do painel, quando você
+                  quiser — e se desliga do mesmo jeito.
+                </p>
+              </div>
+
+              <p className="mt-6 text-sm font-semibold text-[#303030]">
+                Tudo do plano de entrada, mais:
+              </p>
+
+              <ul className="mt-3 mb-8 grid gap-2.5">
+                {pro.recursos.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#303030]">
+                    <FiPlus className="mt-0.5 w-4 shrink-0 text-[#005BD3]" aria-hidden />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-auto border-t border-[#EBEBEB] pt-6 text-sm leading-relaxed text-[#616161]">
+                Inclui tudo o que está ao lado: estoque peça a peça, etiquetas,
+                balcão, vitrine com pagamento, pedidos, entregas, clientes e
+                atendimento. O Pro não troca o sistema por outro — ele abre as
+                telas que só fazem sentido com mais gente, ou mais de um
+                endereço.
+              </p>
+
+              <Link href="/cadastro" className="btn btn-secundario mt-8 w-full py-3 text-base">
+                {temTeste ? chamada : "Criar a minha conta"}
+                <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
+              </Link>
+            </article>
+          )}
         </div>
 
-        <div className="mx-auto mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
+        <div className="lp-cascata mx-auto mt-8 grid max-w-5xl gap-3 sm:grid-cols-3">
           {[
             { titulo: "Sem fidelidade", texto: "Cancela no painel, quando quiser.", Icone: FiCheck },
-            temTeste && !pedeCartao
-              ? { titulo: "Sem cartão para testar", texto: `Os ${testeDias} dias começam com o cadastro, e nada é cobrado.`, Icone: FiCreditCard }
-              : { titulo: "Cartão seguro", texto: "Nenhum dado de cartão passa por este sistema.", Icone: FiCreditCard },
-            { titulo: "Suporte a quem usa", texto: "As dúvidas chegam pelo mesmo canal do sistema.", Icone: FiStar },
+            {
+              titulo: "Cartão fora daqui",
+              texto: "Nenhum dígito do seu cartão passa por este sistema.",
+              Icone: FiCreditCard,
+            },
+            {
+              titulo: "Suporte a quem usa",
+              texto: "As dúvidas chegam pelo mesmo canal do sistema.",
+              Icone: FiStar,
+            },
           ].map(({ titulo, texto, Icone }) => (
             <div key={titulo} className="flex items-start gap-2.5 rounded-lg bg-[#F7F7F7] p-4">
               <Icone className="mt-0.5 w-4 shrink-0 text-[#005BD3]" aria-hidden />
@@ -681,17 +1097,78 @@ export default async function Home() {
         </div>
 
         <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-[#8A8A8A]">
-          {temTeste ? (
-            <>
-              O teste começa no cadastro e dura {testeDias} dias
-              {pedeCartao ? " — o cartão fica guardado e a primeira cobrança acontece no fim dele" : ", sem cobrança nenhuma. Para continuar depois, é só cadastrar o cartão no painel"}
-              .{" "}
-            </>
-          ) : null}
           A assinatura é cobrada todo mês no cartão. O pagamento acontece numa
           página segura do processador de cobrança, e o cancelamento fica na
           tela de assinatura do seu painel.
+          {pro
+            ? " Trocar de plano não recomeça nada: a assinatura é a mesma, e a diferença é acertada na fatura seguinte."
+            : ""}
         </p>
+      </section>
+
+      {/* ==================================================================
+          PERGUNTAS
+
+          `<details>` nativo: abre sem JavaScript, e o buscador lê a resposta
+          mesmo com a pergunta fechada.
+          ================================================================== */}
+      <section id="perguntas" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:py-20">
+
+          <h2 className="font-display lp-revelar text-2xl text-[#303030] sm:text-3xl">
+            O que costumam perguntar antes de assinar
+          </h2>
+
+          <div className="lp-cascata mt-8 space-y-3">
+            {perguntas.map(({ pergunta, resposta }) => (
+              <details key={pergunta} className="lp-pergunta card p-0">
+                <summary className="flex items-center justify-between gap-4 p-5">
+                  <span className="font-display text-base text-[#303030]">{pergunta}</span>
+
+                  <FiPlus className="lp-cruz w-[1.05rem] shrink-0 text-[#005BD3]" aria-hidden />
+                </summary>
+
+                <p className="border-t border-[#EBEBEB] p-5 text-sm leading-relaxed text-[#616161]">
+                  {resposta}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          O ÚLTIMO CONVITE
+          ================================================================== */}
+      <section className="bg-[#1A1A1A]">
+        <div className="lp-revelar mx-auto max-w-3xl px-4 py-16 text-center sm:py-20">
+
+          <h2 className="font-display text-2xl text-white sm:text-3xl">
+            Comece pela primeira peça
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-white/70">
+            Cadastre um produto, imprima a etiqueta e bipe a primeira venda
+            ainda hoje.{temTeste ? ` São ${testeDias} dias com o sistema inteiro aberto.` : ""}
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/cadastro"
+              className="btn btn-primario border-white bg-white px-6 py-3 text-base text-[#1A1A1A]"
+            >
+              {temTeste ? chamada : "Criar a minha conta"}
+              <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
+            </Link>
+
+            <Link
+              href="/login"
+              className="btn btn-secundario border-white/30 bg-transparent px-6 py-3 text-base text-white"
+            >
+              Já tenho conta
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* ==================================================================
@@ -705,10 +1182,24 @@ export default async function Home() {
             <div className="flex items-center gap-2.5">
               <Marca />
               <div className="leading-tight">
-                <p className="font-display text-[1.05rem] text-[#303030]">Arara</p>
+                <p className="font-display text-[1.05rem] text-[#303030]">{MARCA}</p>
                 <p className="text-xs text-[#8A8A8A]">Gestão de estoque e vendas</p>
               </div>
             </div>
+
+            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#616161]">
+              {[
+                { nome: "O fundamento", hash: "#fundamento" },
+                { nome: "Recursos", hash: "#recursos" },
+                { nome: "Vitrine", hash: "#vitrine" },
+                { nome: "Planos", hash: "#planos" },
+                { nome: "Perguntas", hash: "#perguntas" },
+              ].map(({ nome, hash }) => (
+                <Link key={hash} href={hash} className="hover:text-[#005BD3]">
+                  {nome}
+                </Link>
+              ))}
+            </nav>
 
             <div className="flex items-center gap-2">
               <Link href="/login" className="btn btn-neutro px-4 py-2 text-sm">
@@ -722,7 +1213,7 @@ export default async function Home() {
           </div>
 
           <p className="mt-8 border-t border-[#E1E1E1] pt-6 text-xs text-[#8A8A8A]">
-            © {new Date().getFullYear()} Arara. Todos os direitos reservados.
+            © {new Date().getFullYear()} {MARCA}. Todos os direitos reservados.
           </p>
         </div>
       </footer>

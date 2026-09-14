@@ -9,17 +9,20 @@ import {
     formatarData,
     formatarPreco,
     iniciarPagamento,
+    trocarDePlano,
 } from "@/middleware/assinatura"
 import type { Assinatura, Oferta } from "@/app/type/type"
 import { Pagina } from "@/app/components/pagina/pagina"
 import { irParaPaginaExterna } from "@/security/navegacao"
 import {
     FiAlertCircle,
+    FiArrowUpRight,
     FiCheck,
     FiCheckCircle,
     FiCreditCard,
     FiExternalLink,
     FiLock,
+    FiPlus,
     FiRefreshCw,
 } from "react-icons/fi"
 
@@ -28,8 +31,11 @@ export default function AssinaturaPage() {
     // Preço e o que a assinatura inclui vêm do backend — nada disso é escrito
     // aqui, para a tela não discordar do que a fatura cobra.
     const [oferta, setOferta] = useState<Oferta | null>(null)
+    // Esta loja já está no Pro? Quem responde é o backend, a partir do preço
+    // gravado na assinatura — a tela não deduz isso de ter mais de uma loja.
+    const [noPro, setNoPro] = useState(false)
     const [carregando, setCarregando] = useState(true)
-    const [enviando, setEnviando] = useState<"" | "portal" | "assinar">("")
+    const [enviando, setEnviando] = useState<"" | "portal" | "assinar" | "pro">("")
     const [erro, setErro] = useState("")
 
     // Contador de recargas: mexer nele é o que dispara o efeito de novo,
@@ -54,7 +60,11 @@ export default function AssinaturaPage() {
                 // situação da assinatura, que é o que mais importa aqui.
                 try {
                     const catalogo = await consultarOferta()
-                    if (!cancelado) setOferta(catalogo.oferta ?? null)
+
+                    if (!cancelado) {
+                        setOferta(catalogo.oferta ?? null)
+                        setNoPro(catalogo.plano_pro ?? false)
+                    }
                 } catch {
                     // segue sem a descrição da oferta
                 }
@@ -79,14 +89,35 @@ export default function AssinaturaPage() {
     // O pagamento acontece fora daqui, na página do provedor de cobrança. Por
     // isso a navegação é uma troca de endereço de verdade (location.assign) e
     // não router.push: o destino é outro domínio.
-    async function irParaPagamento() {
+    async function irParaPagamento(plano: "base" | "pro" = "base") {
         setErro("")
-        setEnviando("assinar")
+        setEnviando(plano === "pro" ? "pro" : "assinar")
 
         try {
-            irParaPaginaExterna(await iniciarPagamento())
+            irParaPaginaExterna(await iniciarPagamento(plano))
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível iniciar o pagamento")
+            setEnviando("")
+        }
+    }
+
+    /**
+     * Troca o plano de quem já assina, e recarrega a página inteira.
+     *
+     * O reload é de verdade (location.reload) e não um re-render: o menu do
+     * painel vem do servidor já resolvido para o plano contratado, e sem
+     * recarregar o lojista pagaria o Pro e continuaria vendo "Minhas lojas"
+     * em cinza.
+     */
+    async function mudarDePlano(plano: "base" | "pro") {
+        setErro("")
+        setEnviando(plano === "pro" ? "pro" : "assinar")
+
+        try {
+            await trocarDePlano(plano)
+            window.location.reload()
+        } catch (e) {
+            setErro(e instanceof Error ? e.message : "Não foi possível trocar de plano")
             setEnviando("")
         }
     }
@@ -251,9 +282,13 @@ export default function AssinaturaPage() {
             </section>
 
             {/* A ASSINATURA
-                Uma só, com tudo dentro. Quem ainda não assina contrata aqui;
-                quem já assina vê o que está pagando — o que muda entre os dois
-                casos é só o botão no fim do cartão. */}
+                Quem ainda não assina contrata aqui; quem já assina vê o que
+                está pagando — o que muda entre os dois casos é só o botão no
+                fim do cartão.
+                O Pro vem logo abaixo, e só quando este servidor o tem à
+                venda. Embaixo e não ao lado porque os dois cartões não são
+                comparáveis em tamanho: o base lista o sistema inteiro, e o
+                Pro lista o punhado de telas que ele acrescenta. */}
             {cobrancaAtiva && oferta && (
                 <section>
 
@@ -315,7 +350,7 @@ export default function AssinaturaPage() {
                                lojista só acrescenta o cartão que faltava. */
                             <button
                                 type="button"
-                                onClick={emTeste ? irParaPortal : irParaPagamento}
+                                onClick={() => (emTeste ? irParaPortal() : irParaPagamento("base"))}
                                 disabled={enviando !== ""}
                                 className="btn btn-primario mt-auto w-full items-center justify-center gap-2"
                             >
@@ -329,6 +364,85 @@ export default function AssinaturaPage() {
                         )}
 
                     </article>
+
+                    {/* O PRO
+                        Só existe quando o servidor tem o preço dele
+                        configurado — sem isso o cartão não apareceria com
+                        valor nenhum, e anunciar um plano que o checkout não
+                        consegue cobrar é pior do que não anunciar. */}
+                    {oferta.pro && (
+                        <article className="card mt-4 flex flex-col p-6">
+
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="font-display text-lg text-[#303030]">
+                                    {oferta.nome} Pro
+                                </p>
+
+                                {noPro && (
+                                    <span className="shrink-0 tag tag-success">seu plano</span>
+                                )}
+                            </div>
+
+                            <p className="mt-1 text-sm text-[#616161]">
+                                Tudo do {oferta.nome}, mais a sua equipe dentro do painel
+                                e até {oferta.pro.lojas} lojas na mesma conta.
+                            </p>
+
+                            <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#EBEBEB] pb-5">
+                                <span className="font-display text-3xl text-[#303030]">
+                                    {formatarPreco(oferta.pro.preco)}
+                                </span>
+                                <span className="text-sm font-bold text-[#616161]">/mês</span>
+                            </div>
+
+                            <ul className="mt-5 mb-6 grid gap-2 sm:grid-cols-2">
+                                {oferta.pro.recursos.map((item) => (
+                                    <li
+                                        key={item}
+                                        className="flex items-start gap-2 text-sm text-[#303030]"
+                                    >
+                                        <FiPlus className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            {noPro ? (
+                                <p className="mt-auto rounded-lg bg-[#F1F1F1] px-4 py-3 text-center text-sm font-semibold text-[#616161]">
+                                    Você já está no Pro
+                                </p>
+                            ) : (
+                                /* Dois caminhos, e a diferença é ter ou não
+                                   assinatura correndo.
+
+                                   Quem já tem TROCA o plano da que existe: um
+                                   checkout novo criaria uma segunda cobrança
+                                   mensal na mesma loja, e o servidor o recusa.
+                                   A troca acontece aqui e não no portal de
+                                   cobrança porque só aqui a subida é faturada
+                                   na hora — no portal ela ficaria para a
+                                   fatura seguinte, que o lojista evita
+                                   descendo de plano antes de ela fechar.
+
+                                   Quem ainda não assina vai para o checkout,
+                                   já no preço do Pro. */
+                                <button
+                                    type="button"
+                                    onClick={() => (liberada ? mudarDePlano("pro") : irParaPagamento("pro"))}
+                                    disabled={enviando !== ""}
+                                    className="btn btn-neutro mt-auto w-full items-center justify-center gap-2"
+                                >
+                                    <FiArrowUpRight className="w-4" aria-hidden />
+                                    {enviando !== ""
+                                        ? liberada ? "Trocando de plano..." : "Abrindo pagamento..."
+                                        : liberada
+                                            ? "Mudar para o Pro"
+                                            : "Assinar o Pro"}
+                                </button>
+                            )}
+
+                        </article>
+                    )}
 
                 </section>
             )}

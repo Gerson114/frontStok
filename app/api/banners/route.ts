@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao } from "@/security/sanitize"
 import { validarBanner, type NovoBanner } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { produtos } from "@/app/api/rotas"
 
 
@@ -19,6 +19,7 @@ export async function GET() {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
             },
             cache: "no-store",
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },

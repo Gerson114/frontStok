@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url, API_BASE } from "@/app/api/backend"
+import { API_BASE, cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { pedidos } from "@/app/api/rotas"
 
 
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
             },
             cache: "no-store",
@@ -64,6 +65,7 @@ export async function repassarPedido(caminho: string, corpo: unknown) {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },

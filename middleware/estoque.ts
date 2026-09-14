@@ -419,3 +419,115 @@ export const TIPOS_ENDERECO: { chave: TipoEndereco; nome: string; descricao: str
         descricao: "Peças com defeito, separadas do estoque vendável.",
     },
 ]
+
+/* ==========================================================================
+   A devolução PEDIDA pelo cliente, antes de a peça voltar
+
+   É o outro momento do mesmo assunto: aqui se decide se o dinheiro volta;
+   nas funções acima, o que fazer com a peça quando ela chegar. As duas
+   moram na mesma tela do painel de propósito — quem responde ao cliente é
+   quem vai receber a mercadoria.
+   ========================================================================== */
+
+export type SituacaoPedidoDevolucao = "pedida" | "aceita" | "recusada"
+
+/**
+ * Por que a devolução pôde ser pedida.
+ *
+ * São as duas ÚNICAS causas que a vitrine oferece, e o servidor confere cada
+ * uma contra o estado do pedido antes de aceitar:
+ *
+ *   "atraso"     — passou do prazo prometido e o pedido não foi entregue.
+ *   "danificado" — foi entregue há poucos dias e veio quebrado ou rasgado.
+ *
+ * Devolução de motivo livre não existe de propósito: ela automatizaria o
+ * caminho de quem recebe a mercadoria inteira e pede o dinheiro de volta
+ * assim mesmo. Qualquer outro motivo chega pela conversa com a loja.
+ */
+export type CausaDevolucao = "atraso" | "danificado"
+
+/** Uma peça dentro do pedido de devolução. */
+export interface PecaDevolvida {
+    item_pedido_id: number
+    produto_id: number
+    produto_nome: string
+    produto_codigo: string
+    quantidade: number
+    preco_unitario: number
+}
+
+export interface DevolucaoPedida {
+    id: number
+
+    /** O código de seis dígitos do pedido — é por ele que o cliente liga. */
+    codigo: string
+
+    cliente_id: number
+    cliente_nome: string
+    cliente_contato: string
+
+    situacao: SituacaoPedidoDevolucao
+
+    /**
+     * O que o cliente escreveu. Obrigatório na avaria — é onde ele diz o que
+     * veio danificado —, opcional no atraso, onde o fato já está no sistema.
+     */
+    motivo: string
+
+    /** Por que ela pôde ser pedida: atraso na entrega ou avaria. */
+    causa: CausaDevolucao
+
+    /** Quanto a loja devolve, e quanto disso é frete. */
+    valor: number
+    frete: number
+
+    itens: PecaDevolvida[]
+
+    /** O que a loja respondeu, e quem respondeu. */
+    resposta?: string
+    decidida_em?: string | null
+    decidida_por?: string
+
+    /** Quando o dinheiro saiu, e o número do estorno no provedor. */
+    estornado_em?: string | null
+    estorno_id?: string
+
+    /**
+     * Aceita sem o sistema conseguir estornar: provedor que não devolve
+     * dinheiro por API, ou pedido que nunca passou por gateway. O dinheiro
+     * precisa ser devolvido no painel do provedor, e esta marca é o que
+     * impede a promessa de sumir da vista.
+     */
+    estorno_manual: boolean
+
+    created_at: string
+}
+
+/** A fila de pedidos de devolução. Sem argumento, só os que esperam resposta. */
+export async function listarDevolucoesPedidas(
+    situacao: SituacaoPedidoDevolucao | "todas" = "pedida",
+): Promise<DevolucaoPedida[]> {
+
+    const dados = await apiFetch<{ devolucoes?: DevolucaoPedida[] }>(
+        `/api/devolucoes/pedidas?situacao=${situacao}`,
+    )
+
+    return Array.isArray(dados.devolucoes) ? dados.devolucoes : []
+}
+
+/**
+ * Aceita ou recusa o pedido de devolução.
+ *
+ * Aceitar estorna o dinheiro na hora, pela conta da loja no provedor. A
+ * resposta escrita é obrigatória na recusa — é o que o cliente lê.
+ */
+export async function decidirDevolucaoPedida(
+    id: number,
+    aceitar: boolean,
+    resposta = "",
+): Promise<{ mensagem?: string }> {
+    return apiFetch<{ mensagem?: string }>(`/api/devolucoes/pedidas/${id}`, {
+        method: "POST",
+        body: { aceitar, resposta },
+    })
+}

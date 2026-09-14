@@ -3,15 +3,54 @@ import type { Etiqueta, Pedido, StatusPedido } from "@/app/type/type"
 
 interface RespostaPedidos {
     pedidos: Pedido[]
+    contagens?: ContagensDePedidos
+}
+
+/**
+ * Quantos pedidos há em cada aba, contados no banco.
+ *
+ * Vêm do servidor porque a tela não tem como contá-los: ela carrega uma aba
+ * por vez, e "aguardando pagamento" vem de outra consulta. Contar sobre a
+ * lista em memória fazia "Todos" aparecer menor que "Aguardando" — dois
+ * números de cargas diferentes, lado a lado.
+ *
+ * `todos` NÃO inclui os que esperam pagamento, pelo mesmo motivo que a lista
+ * normal os exclui: carrinho abandonado no meio do checkout não é venda.
+ */
+export interface ContagensDePedidos {
+    andamento: number
+    aguardando: number
+    entregues: number
+    cancelados: number
+    todos: number
+}
+
+/** Zeros, para a tela ter o que desenhar antes da primeira resposta. */
+export const SEM_CONTAGENS: ContagensDePedidos = {
+    andamento: 0,
+    aguardando: 0,
+    entregues: 0,
+    cancelados: 0,
+    todos: 0,
 }
 
 interface RespostaEtiquetas {
     etiquetas: Etiqueta[]
 }
 
-export async function listarPedidos(): Promise<Pedido[]> {
+/** A lista de uma aba, com as contagens de TODAS elas. */
+export interface PedidosDaLoja {
+    pedidos: Pedido[]
+    contagens: ContagensDePedidos
+}
+
+export async function listarPedidos(): Promise<PedidosDaLoja> {
     const dados = await apiFetch<RespostaPedidos>("/api/pedidos")
-    return Array.isArray(dados.pedidos) ? dados.pedidos : []
+
+    return {
+        pedidos: Array.isArray(dados.pedidos) ? dados.pedidos : [],
+        contagens: dados.contagens ?? SEM_CONTAGENS,
+    }
 }
 
 /**
@@ -21,9 +60,13 @@ export async function listarPedidos(): Promise<Pedido[]> {
  * pedido não pago não é venda, e misturá-lo com o trabalho do dia faria
  * separar mercadoria de quem nunca pagou.
  */
-export async function listarPedidosAguardando(): Promise<Pedido[]> {
+export async function listarPedidosAguardando(): Promise<PedidosDaLoja> {
     const dados = await apiFetch<RespostaPedidos>("/api/pedidos?pagamento=aguardando")
-    return Array.isArray(dados.pedidos) ? dados.pedidos : []
+
+    return {
+        pedidos: Array.isArray(dados.pedidos) ? dados.pedidos : [],
+        contagens: dados.contagens ?? SEM_CONTAGENS,
+    }
 }
 
 interface RespostaVerificacao {

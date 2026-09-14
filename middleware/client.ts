@@ -77,7 +77,10 @@ function redirecionarParaAssinatura(): void {
     window.location.href = ROTA_ASSINATURA
 }
 
-function safeParse(texto: string): unknown {
+// Exportada porque o envio de arquivo (ver produtos.ts) não passa por
+// apiFetch: ele monta o próprio multipart e precisa ler a resposta do mesmo
+// jeito que todo o resto do painel lê.
+export function safeParse(texto: string): unknown {
     try {
         return JSON.parse(texto)
     } catch {

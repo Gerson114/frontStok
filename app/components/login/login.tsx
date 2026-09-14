@@ -1,6 +1,6 @@
 "use client"
 
-import { login } from "@/middleware/auth"
+import { login, pedirCodigoDeSenha, redefinirSenha } from "@/middleware/auth"
 import { consultarMenu, consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
 import type { Oferta } from "@/app/type/type"
 import { isValidEmail } from "@/security/validate"
@@ -11,7 +11,9 @@ import {
     FiEye,
     FiEyeOff,
     FiAlertCircle,
+    FiArrowLeft,
     FiBox,
+    FiCheckCircle,
     FiMapPin,
     FiShoppingCart,
 } from "react-icons/fi"
@@ -25,7 +27,24 @@ const ITENS: ItemMoldura[] = [
 
 type Campo = "" | "email" | "senha"
 
+/**
+ * As três telas que cabem neste formulário.
+ *
+ * Uma só porta para "entrar", e não uma página à parte para a recuperação:
+ * quem esqueceu a senha já está aqui, e mandá-lo para outro endereço é a
+ * chance de ele não voltar. O e-mail digitado acompanha os três passos, então
+ * ninguém redigita nada.
+ */
+type Modo = "entrar" | "pedir" | "trocar"
+
 export default function Login() {
+
+    const [modo, setModo] = useState<Modo>("entrar")
+
+    // O código de seis dígitos e a senha nova, do passo da recuperação.
+    const [codigo, setCodigo] = useState("")
+    const [senhaNova, setSenhaNova] = useState("")
+    const [recado, setRecado] = useState("")
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
     const [mostrarSenha, setMostrarSenha] = useState(false)
@@ -139,6 +158,66 @@ export default function Login() {
         }
     }
 
+    /** Pede o código de seis dígitos para o e-mail digitado. */
+    async function pedirCodigo(e: React.FormEvent) {
+
+        e.preventDefault()
+        setError("")
+        setRecado("")
+
+        if (!isValidEmail(email)) {
+            setCampoErro("email")
+            setError("Digite um e-mail válido")
+            return
+        }
+
+        setLoading(true)
+
+        try {
+            // A frase vem do servidor de propósito: é a mesma exista ou não
+            // conta com este e-mail, e escrevê-la aqui seria a chance de o
+            // painel dizer mais do que o servidor quis dizer.
+            setRecado(await pedirCodigoDeSenha(email))
+            setModo("trocar")
+
+        } catch (erro) {
+            setError(erro instanceof Error ? erro.message : "Não foi possível pedir o código")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    /** Troca a senha com o código na mão. */
+    async function trocarSenha(e: React.FormEvent) {
+
+        e.preventDefault()
+        setError("")
+
+        if (codigo.trim().length < 6) {
+            setError("O código tem seis dígitos")
+            return
+        }
+
+        setLoading(true)
+
+        try {
+            await redefinirSenha(email, codigo, senhaNova)
+
+            // De volta ao começo, já com o e-mail preenchido: o passo seguinte
+            // é entrar com a senha que ela acabou de escolher.
+            setModo("entrar")
+            setCodigo("")
+            setSenhaNova("")
+            setPass("")
+            setRecado("Senha trocada. Entre com ela agora.")
+
+        } catch (erro) {
+            setError(erro instanceof Error ? erro.message : "Não foi possível trocar a senha")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <MolduraAuth
             etiqueta="Acesso ao painel"
@@ -147,14 +226,25 @@ export default function Login() {
             nota={nota}
         >
 
-            <form onSubmit={handleSubmit} noValidate>
+            <form
+                onSubmit={modo === "entrar" ? handleSubmit : modo === "pedir" ? pedirCodigo : trocarSenha}
+                noValidate
+            >
 
                 <h1 className="font-display text-[1.75rem] leading-tight text-[#303030]">
-                    Entrar na sua conta
+                    {modo === "entrar"
+                        ? "Entrar na sua conta"
+                        : modo === "pedir"
+                            ? "Esqueceu a senha?"
+                            : "Crie uma senha nova"}
                 </h1>
 
                 <p className="mt-2 text-sm text-[#616161]">
-                    Use o e-mail e a senha cadastrados para abrir o painel da loja.
+                    {modo === "entrar"
+                        ? "Use o e-mail e a senha cadastrados para abrir o painel da loja."
+                        : modo === "pedir"
+                            ? "Digite o e-mail da conta. Mandamos um código de seis dígitos para ele."
+                            : "Digite o código que chegou por e-mail e escolha a senha nova. Trocar a senha encerra as sessões abertas desta conta."}
                 </p>
 
                 <div className="mt-8 space-y-5">
@@ -182,10 +272,28 @@ export default function Login() {
                         />
                     </div>
 
+                    {modo === "entrar" && (
                     <div>
-                        <label htmlFor="senha" className="rotulo">
-                            Senha
-                        </label>
+                        <div className="flex items-baseline justify-between gap-3">
+                            <label htmlFor="senha" className="rotulo">
+                                Senha
+                            </label>
+
+                            {/* Fica ao lado do rótulo, e não perdido no rodapé:
+                                quem clica aqui é quem acabou de errar a senha, e
+                                está olhando exatamente para este campo. */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setModo("pedir")
+                                    setError("")
+                                    setRecado("")
+                                }}
+                                className="text-xs font-semibold text-[#005BD3] hover:underline"
+                            >
+                                esqueci minha senha
+                            </button>
+                        </div>
 
                         <div className="relative">
                             <input
@@ -216,6 +324,46 @@ export default function Login() {
                             </button>
                         </div>
                     </div>
+                    )}
+
+                    {modo === "trocar" && (
+                        <>
+                            <div>
+                                <label htmlFor="codigo" className="rotulo">
+                                    Código de seis dígitos
+                                </label>
+
+                                <input
+                                    id="codigo"
+                                    inputMode="numeric"
+                                    autoComplete="one-time-code"
+                                    maxLength={6}
+                                    placeholder="000000"
+                                    className="field font-mono text-lg tracking-[0.35em]"
+                                    disabled={loading}
+                                    value={codigo}
+                                    onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="senha-nova" className="rotulo">
+                                    Senha nova
+                                </label>
+
+                                <input
+                                    id="senha-nova"
+                                    type={mostrarSenha ? "text" : "password"}
+                                    autoComplete="new-password"
+                                    placeholder="A senha que você vai usar daqui em diante"
+                                    className="field"
+                                    disabled={loading}
+                                    value={senhaNova}
+                                    onChange={(e) => setSenhaNova(e.target.value)}
+                                />
+                            </div>
+                        </>
+                    )}
 
                 </div>
 
@@ -230,20 +378,57 @@ export default function Login() {
                     </div>
                 )}
 
+                {recado && !error && (
+                    <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                        <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
+                        <span>{recado}</span>
+                    </div>
+                )}
+
                 <button
                     type="submit"
                     disabled={loading}
                     className="btn btn-primario mt-7 w-full py-3 text-base"
                 >
-                    {loading ? "Entrando..." : "Entrar"}
+                    {loading
+                        ? "Aguarde..."
+                        : modo === "entrar"
+                            ? "Entrar"
+                            : modo === "pedir"
+                                ? "Mandar o código"
+                                : "Trocar a senha"}
                 </button>
 
-                <p className="mt-6 border-t border-[#EBEBEB] pt-6 text-center text-sm text-[#616161]">
-                    Ainda não tem uma conta?{" "}
-                    <Link href="/cadastro" className="font-semibold text-[#005BD3] hover:underline">
-                        Criar conta
-                    </Link>
-                </p>
+                {modo === "entrar" ? (
+                    <p className="mt-6 border-t border-[#EBEBEB] pt-6 text-center text-sm text-[#616161]">
+                        Ainda não tem uma conta?{" "}
+                        <Link href="/cadastro" className="font-semibold text-[#005BD3] hover:underline">
+                            Criar conta
+                        </Link>
+                    </p>
+                ) : (
+                    <div className="mt-6 border-t border-[#EBEBEB] pt-6 text-center">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setModo("entrar")
+                                setError("")
+                                setRecado("")
+                            }}
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#005BD3] hover:underline"
+                        >
+                            <FiArrowLeft className="w-3.5" aria-hidden />
+                            voltar para entrar
+                        </button>
+
+                        {modo === "trocar" && (
+                            <p className="mt-3 text-xs text-[#8A8A8A]">
+                                Não chegou? Volte e peça outro código — há um minuto de espera
+                                entre dois pedidos.
+                            </p>
+                        )}
+                    </div>
+                )}
 
             </form>
 

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { funcionarios } from "@/app/api/rotas"
 
 /**
@@ -35,6 +35,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },

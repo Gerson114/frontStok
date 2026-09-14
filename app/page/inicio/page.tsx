@@ -12,6 +12,11 @@ import {
     FiShoppingBag,
     FiShoppingCart,
     FiClipboard,
+    FiBarChart2,
+    FiDollarSign,
+    FiTrendingDown,
+    FiTrendingUp,
+    FiTruck,
     FiUsers,
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
@@ -20,6 +25,7 @@ import Preco from "@/app/components/preco/preco"
 import GraficoDeVendas from "@/app/components/painel/vendas"
 import { consultarResumo } from "@/app/api/servidor"
 import type { PeriodoDoPainel, ResumoDoPainel } from "@/app/type/type"
+import { tituloDaAba } from "@/app/marca"
 
 /**
  * A tela de início do lojista.
@@ -39,8 +45,30 @@ import type { PeriodoDoPainel, ResumoDoPainel } from "@/app/type/type"
  * nenhum.
  */
 export const metadata = {
-    title: "Início | Arara",
+    title: tituloDaAba("Início"),
 }
+
+/** As três telas que descem do início, com o que cada uma responde. */
+const PAINEIS: { rota: string; titulo: string; descricao: string; Icone: IconType }[] = [
+    {
+        rota: "/page/inicio/produtos",
+        titulo: "Mercadoria",
+        descricao: "O que chegou, o que saiu e o que está parado na prateleira.",
+        Icone: FiBarChart2,
+    },
+    {
+        rota: "/page/inicio/equipe",
+        titulo: "Equipe em números",
+        descricao: "Quem vendeu, quem atendeu e quem fechou tarefa do estoque.",
+        Icone: FiUsers,
+    },
+    {
+        rota: "/page/inicio/entregas",
+        titulo: "Expedição",
+        descricao: "Quantos vieram buscar, quantos foram enviados e o que atrasou.",
+        Icone: FiTruck,
+    },
+]
 
 /** O dinheiro escrito como gente lê. */
 function moeda(valor: number): string {
@@ -67,6 +95,48 @@ function Cartao({ Icone, rotulo, valor, detalhe }: {
     )
 }
 
+/**
+ * Como foi contra o mesmo intervalo de antes.
+ *
+ * O intervalo é o MESMO dos dois lados — hoje até esta hora contra ontem até
+ * a mesma hora, este mês até hoje contra o mês passado até o mesmo dia. É o
+ * que torna o número honesto: treze dias contra um mês inteiro faria toda
+ * loja parecer em queda até o dia 28.
+ *
+ * Sem período anterior não escreve nada. "0% sobre um mês sem venda" é uma
+ * frase que não diz nada, e a loja que abriu semana passada não precisa ler
+ * que caiu 100%.
+ */
+function Comparacao({ periodo, rotulo }: { periodo: PeriodoDoPainel; rotulo: string }) {
+
+    const antes = periodo.faturamento_anterior
+
+    if (antes <= 0) return null
+
+    const variacao = ((periodo.faturamento - antes) / antes) * 100
+    const subiu = variacao >= 0
+
+    const contra = rotulo === "Hoje" ? "ontem até esta hora" : "o mesmo período do mês passado"
+
+    return (
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs">
+            {subiu ? (
+                <FiTrendingUp className="w-3.5 shrink-0 text-[#0C5132]" aria-hidden />
+            ) : (
+                <FiTrendingDown className="w-3.5 shrink-0 text-[#8E1F0B]" aria-hidden />
+            )}
+
+            <span className={`num font-semibold ${subiu ? "text-[#0C5132]" : "text-[#8E1F0B]"}`}>
+                {subiu ? "+" : ""}{Math.round(variacao)}%
+            </span>
+
+            <span className="text-[#8A8A8A]">
+                sobre {contra} ({moeda(antes)})
+            </span>
+        </p>
+    )
+}
+
 /** Um item da lista do que está esperando alguém. */
 interface Pendencia {
     rotulo: string
@@ -89,6 +159,8 @@ function Numero({ periodo, rotulo }: { periodo: PeriodoDoPainel; rotulo: string 
             <div className="mt-2">
                 <Preco valor={periodo.faturamento} className="text-2xl" />
             </div>
+
+            <Comparacao periodo={periodo} rotulo={rotulo} />
 
             <dl className="mt-3 space-y-1 text-sm">
 
@@ -151,6 +223,36 @@ export default async function Inicio() {
     const { dia, mes, caixa, atencao, mais_saem: maisSaem, equipe } = resumo
 
     const pendencias: Pendencia[] = [
+        {
+            // A primeira da lista porque é a única que é DÍVIDA: a loja
+            // aceitou devolver e o dinheiro não saiu. Do outro lado há uma
+            // pessoa com nome e endereço esperando um valor prometido.
+            rotulo: atencao.valor_a_pagar > 0
+                ? `Devoluções aceitas e não pagas — ${moeda(atencao.valor_a_pagar)}`
+                : "Devoluções aceitas e não pagas",
+            quantidade: atencao.devolucoes_a_pagar,
+            rota: "/page/estoque/devolucoes",
+            Icone: FiDollarSign,
+            urgente: true,
+        },
+        {
+            // Cliente esperando é venda indo embora, e era a pendência mais
+            // escondida do painel: só aparecia no sino da barra de cima.
+            rotulo: "Clientes esperando resposta",
+            quantidade: atencao.clientes_esperando,
+            rota: "/page/conversas",
+            Icone: FiMessageSquare,
+            urgente: true,
+        },
+        {
+            // Separado de "em andamento": aquele junta o pedido de cinco
+            // minutos atrás com o que venceu há três dias.
+            rotulo: "Pedidos que passaram do prazo",
+            quantidade: atencao.pedidos_atrasados,
+            rota: "/page/entregas",
+            Icone: FiTruck,
+            urgente: true,
+        },
         {
             rotulo: "Pedidos esperando pagamento",
             quantidade: atencao.pedidos_aguardando_pagamento,
@@ -227,6 +329,40 @@ export default async function Inicio() {
                     </span>
                 </p>
             )}
+
+            {/* ==========================
+                OS PAINÉIS POR ASSUNTO
+
+                Três portas, logo abaixo do dinheiro: esta tela responde "como
+                foi", e cada uma delas responde um "por quê" que não cabe aqui
+                sem virar rolagem infinita. Ficam à vista porque menu lateral
+                não é lugar de descobrir tela nova — é lugar de voltar a ela.
+            ========================== */}
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {PAINEIS.map((painel) => (
+                    <Link
+                        key={painel.rota}
+                        href={painel.rota}
+                        className="card flex items-start gap-3 p-4 transition-colors hover:border-[#B5B5B5]"
+                    >
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#00369B]">
+                            <painel.Icone className="w-4" aria-hidden />
+                        </span>
+
+                        <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-[#303030]">
+                                {painel.titulo}
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-relaxed text-[#616161]">
+                                {painel.descricao}
+                            </span>
+                        </span>
+
+                        <FiArrowRight className="ml-auto mt-1 w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
+                    </Link>
+                ))}
+            </div>
 
             {/* ==========================
                 O FECHAMENTO DO DIA

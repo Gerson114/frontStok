@@ -21,6 +21,14 @@ import {
     FiPlusCircle,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { Selecao } from "@/app/components/campo/selecao"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    RodapeDaLista,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * Ressuprimento: o que está faltando na prateleira de venda agora.
@@ -44,6 +52,10 @@ export default function Reposicao() {
     const [erro, setErro] = useState("")
     const [aviso, setAviso] = useState("")
     const [gerando, setGerando] = useState(false)
+
+    // A aba aberta e o texto que recorta a lista (ver components/lista/lista.tsx).
+    const [visao, setVisao] = useState("todas")
+    const [busca, setBusca] = useState("")
 
     // O formulário do picking fixo vive nesta tela porque é aqui que a falta
     // dele aparece: sem mínimo declarado, o produto simplesmente não entra na
@@ -180,6 +192,30 @@ export default function Reposicao() {
         }
     }
 
+    /*
+     * "Sem de onde tirar" é uma aba, e não um aviso dentro da linha, porque é
+     * outro problema: falta de compra, não de reposição. Quem abre esta tela
+     * para repor prateleira não consegue fazer nada com essas linhas — e quem
+     * compra precisa justamente delas.
+     */
+    const semPulmao = reposicoes.filter((r) => !r.origem).length
+
+    const termo = busca.trim().toLowerCase()
+
+    const filtradas = reposicoes
+        .filter((r) =>
+            visao === "urgentes" ? r.urgente : visao === "sem_pulmao" ? !r.origem : true
+        )
+        .filter((r) =>
+            !termo ||
+            r.produto_nome.toLowerCase().includes(termo) ||
+            (r.produto_codigo ?? "").toLowerCase().includes(termo) ||
+            (r.variacao ?? "").toLowerCase().includes(termo) ||
+            (r.destino ?? "").toLowerCase().includes(termo) ||
+            (r.destino_nome ?? "").toLowerCase().includes(termo) ||
+            (r.origem ?? "").toLowerCase().includes(termo)
+        )
+
     return (
         <Pagina
             titulo="Reposição"
@@ -221,111 +257,164 @@ export default function Reposicao() {
                 </div>
             )}
 
-            {carregando ? (
+            <ListaDeRecursos>
 
-                <p className="text-[#616161]">Carregando o ressuprimento...</p>
+                <Visoes
+                    visoes={[
+                        { chave: "todas", nome: "Tudo que falta", contagem: reposicoes.length },
+                        { chave: "urgentes", nome: "Prateleira vazia", contagem: urgentes },
+                        { chave: "sem_pulmao", nome: "Sem de onde tirar", contagem: semPulmao },
+                    ]}
+                    ativa={visao}
+                    aoTrocar={setVisao}
+                />
 
-            ) : reposicoes.length === 0 ? (
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={setBusca}
+                    placeholder="Buscar por produto, código ou endereço"
+                />
 
-                <div className="rounded-lg border border-dashed border-[#E1E1E1] bg-white p-12 text-center">
+                {carregando ? (
 
-                    <FiCheckCircle className="mx-auto w-9 text-[#8A8A8A]" aria-hidden />
-
-                    <h2 className="font-display mt-4 text-lg text-[#303030]">
-                        Nada faltando na prateleira
-                    </h2>
-
-                    <p className="mt-2 text-sm text-[#616161]">
-                        Ou está tudo acima do mínimo, ou nenhum produto tem prateleira de venda
-                        definida ainda — sem dizer onde o produto deve ficar e quanto tem de ter
-                        ali, &ldquo;abaixo do mínimo&rdquo; não quer dizer nada.
+                    <p className="px-4 py-14 text-center text-sm text-[#616161]">
+                        Carregando o ressuprimento...
                     </p>
 
-                </div>
+                ) : filtradas.length === 0 ? (
 
-            ) : (
+                    <ListaVazia
+                        icone={FiCheckCircle}
+                        titulo={
+                            reposicoes.length === 0
+                                ? "Nada faltando na prateleira"
+                                : "Nada nesta aba"
+                        }
+                    >
+                        {reposicoes.length === 0
+                            ? "Ou está tudo acima do mínimo, ou nenhum produto tem prateleira de venda definida ainda — sem dizer onde o produto deve ficar e quanto tem de ter ali, “abaixo do mínimo” não quer dizer nada."
+                            : "Nenhuma reposição desta aba casa com o filtro."}
+                    </ListaVazia>
 
-                <ul className="space-y-3">
+                ) : (
 
-                    {reposicoes.map((reposicao) => (
+                    <div className="overflow-x-auto">
 
-                        <li
-                            key={`${reposicao.produto_id}-${reposicao.destino_id}`}
-                            className={`card border-l-4 p-5 ${reposicao.urgente ? "border-l-[#8E1F0B]" : "border-l-[#C7920A]"}`}
-                        >
+                        <table className="tabela">
 
-                            <div className="flex flex-wrap items-start justify-between gap-3">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Produto</th>
+                                    <th scope="col">De onde → para onde</th>
+                                    <th scope="col">Situação</th>
+                                    <th scope="col" className="text-right">Na prateleira</th>
+                                    <th scope="col" className="text-right">Pulmão</th>
+                                    <th scope="col" className="text-right">Repor</th>
+                                </tr>
+                            </thead>
 
-                                <div className="min-w-0">
+                            <tbody>
 
-                                    <p className="font-display text-base text-[#303030]">
-                                        {reposicao.produto_nome}
-                                        {reposicao.variacao ? ` · ${reposicao.variacao}` : ""}
-                                    </p>
+                                {filtradas.map((reposicao) => (
 
-                                    <p className="font-mono text-xs text-[#616161]">
-                                        {reposicao.produto_codigo}
-                                    </p>
+                                    <tr key={`${reposicao.produto_id}-${reposicao.destino_id}`}>
 
-                                    <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                                        <td>
+                                            <div className="flex items-start gap-2.5">
 
-                                        {reposicao.origem ? (
-                                            <>
-                                                <span className="num font-medium text-[#303030]">{reposicao.origem}</span>
-                                                <FiArrowDown className="w-3.5 text-[#616161]" aria-hidden />
-                                            </>
-                                        ) : null}
+                                                {/* O traço de urgência era uma borda de 4px no
+                                                    cartão; numa tabela ele vira este risco, que
+                                                    diz a mesma coisa sem engordar a linha. */}
+                                                <span
+                                                    className={`mt-0.5 h-8 w-1 shrink-0 rounded-full ${
+                                                        reposicao.urgente ? "bg-[#8E1F0B]" : "bg-[#C7920A]"
+                                                    }`}
+                                                    aria-hidden
+                                                />
 
-                                        <span className="num font-medium text-[#303030]">{reposicao.destino}</span>
+                                                <div className="min-w-0">
+                                                    <p className="font-medium text-[#303030]">
+                                                        {reposicao.produto_nome}
+                                                        {reposicao.variacao ? ` · ${reposicao.variacao}` : ""}
+                                                    </p>
+                                                    <p className="num text-xs text-[#8A8A8A]">
+                                                        {reposicao.produto_codigo}
+                                                    </p>
+                                                </div>
 
-                                        <span className="text-[#616161]">{reposicao.destino_nome}</span>
+                                            </div>
+                                        </td>
 
-                                    </p>
+                                        <td>
+                                            <span className="flex flex-wrap items-center gap-1.5">
+                                                {reposicao.origem ? (
+                                                    <>
+                                                        <span className="num text-[#303030]">{reposicao.origem}</span>
+                                                        <FiArrowDown className="w-3.5 text-[#8A8A8A]" aria-hidden />
+                                                    </>
+                                                ) : null}
+                                                <span className="num text-[#303030]">{reposicao.destino}</span>
+                                            </span>
+                                            <span className="block text-xs text-[#616161]">
+                                                {reposicao.destino_nome}
+                                            </span>
+                                        </td>
 
-                                    <p className="mt-2 flex flex-wrap items-center gap-2">
+                                        <td>
+                                            {reposicao.urgente && (
+                                                <span className="tag tag-danger">prateleira vazia</span>
+                                            )}
 
-                                        {reposicao.urgente && (
-                                            <span className="tag tag-danger">prateleira vazia</span>
-                                        )}
+                                            {!reposicao.origem && (
+                                                <span className="tag tag-warning mt-1 block w-fit">
+                                                    nada no pulmão
+                                                </span>
+                                            )}
 
-                                        <span className="tag tag-neutral num">
-                                            tem {reposicao.no_picking} de {reposicao.minimo}
-                                        </span>
+                                            {!reposicao.urgente && reposicao.origem && (
+                                                <span className="text-[#8A8A8A]">abaixo do mínimo</span>
+                                            )}
+                                        </td>
 
-                                        <span className="tag tag-neutral num">
-                                            pulmão: {reposicao.no_pulmao}
-                                        </span>
+                                        <td className="num text-right text-[#303030]">
+                                            {reposicao.no_picking}
+                                            <span className="text-[#8A8A8A]"> / {reposicao.minimo}</span>
+                                        </td>
 
-                                    </p>
+                                        <td className="num text-right text-[#616161]">
+                                            {reposicao.no_pulmao}
+                                        </td>
 
-                                    {!reposicao.origem && (
-                                        <p className="mt-2 text-sm text-[#8E1F0B]">
-                                            Não há de onde tirar: o produto acabou na loja inteira. O
-                                            problema aqui não é de reposição, é de compra.
-                                        </p>
-                                    )}
+                                        <td className="text-right">
+                                            <span className="num font-semibold text-[#303030]">
+                                                {reposicao.quantidade}
+                                            </span>
+                                            <span className="num block text-xs text-[#8A8A8A]">
+                                                até {reposicao.maximo}
+                                            </span>
+                                        </td>
 
-                                </div>
+                                    </tr>
 
-                                <div className="shrink-0 text-right">
-                                    <p className="text-xs text-[#616161]">Repor</p>
-                                    <p className="num text-3xl font-bold text-[#303030]">
-                                        {reposicao.quantidade}
-                                    </p>
-                                    <p className="num text-xs text-[#616161]">
-                                        até {reposicao.maximo}
-                                    </p>
-                                </div>
+                                ))}
 
-                            </div>
+                            </tbody>
 
-                        </li>
+                        </table>
 
-                    ))}
+                    </div>
 
-                </ul>
+                )}
 
-            )}
+                <RodapeDaLista
+                    primeiro={1}
+                    ultimo={filtradas.length}
+                    total={filtradas.length}
+                    nome="reposições"
+                />
+
+            </ListaDeRecursos>
+
 
             {/* ==========================
                 PICKING FIXO
@@ -363,11 +452,10 @@ export default function Reposicao() {
 
                             <div className="space-y-1.5">
                                 <label className="rotulo" htmlFor="produto">Produto</label>
-                                <select
+                                <Selecao
                                     id="produto"
                                     value={produtoId}
                                     onChange={(e) => setProdutoId(e.target.value)}
-                                    className="field cursor-pointer"
                                 >
                                     <option value="">Selecione...</option>
                                     {produtos.map((produto) => (
@@ -376,16 +464,15 @@ export default function Reposicao() {
                                             {produto.variacao ? ` · ${produto.variacao}` : ""}
                                         </option>
                                     ))}
-                                </select>
+                                </Selecao>
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className="rotulo" htmlFor="endereco">Prateleira</label>
-                                <select
+                                <Selecao
                                     id="endereco"
                                     value={endereco}
                                     onChange={(e) => setEndereco(e.target.value)}
-                                    className="field cursor-pointer"
                                 >
                                     <option value="">Selecione...</option>
                                     {enderecos.map((item) => (
@@ -393,7 +480,7 @@ export default function Reposicao() {
                                             {item.codigo} · {item.nome}
                                         </option>
                                     ))}
-                                </select>
+                                </Selecao>
                             </div>
 
                             <div className="space-y-1.5">

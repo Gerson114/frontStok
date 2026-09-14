@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { clientes } from "@/app/api/rotas"
 
 /** GET /api/clientes — quem compra na loja, com o que cada um já somou. */
@@ -14,7 +14,7 @@ export async function GET() {
         }
 
         const resposta = await fetch(url(clientes.lista()), {
-            headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+            headers: { Authorization: `Bearer ${token}`, Accept: "application/json", ...(await cabecalhoDaLojaAberta()) },
             cache: "no-store",
         })
 

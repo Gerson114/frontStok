@@ -72,6 +72,27 @@ export async function cabecalhosDaSessao(): Promise<Record<string, string> | nul
 }
 
 /**
+ * Só o cabeçalho da loja escolhida, para as rotas que montam os próprios
+ * cabeçalhos em vez de usar cabecalhosDaSessao.
+ *
+ * Elas existem porque cada uma trata o corpo e os erros à sua maneira, mas
+ * esquecer a loja aqui é o pior erro possível: a requisição continua
+ * funcionando e responde pela loja ERRADA — o backend cai na principal quando
+ * não recebe o cabeçalho (ver auth.lojaAberta). Foi o que aconteceu: o painel
+ * trocava de filial no topo e continuava mostrando a equipe e o estoque da
+ * matriz, sem erro nenhum na tela.
+ *
+ * Vazio quando não há loja escolhida, que é o caso de quem tem uma só.
+ */
+export async function cabecalhoDaLojaAberta(): Promise<Record<string, string>> {
+
+    const cookieStore = await cookies()
+    const loja = cookieStore.get(COOKIE_DA_LOJA)?.value
+
+    return loja ? { [CABECALHO_DA_LOJA]: loja } : {}
+}
+
+/**
  * O endereço completo de um caminho do catálogo (ver app/api/rotas.ts).
  *
  * É o único ponto em que o endereço do servidor encontra o caminho. Quem
@@ -200,4 +221,66 @@ export function cookieDeSessao(recebidos: string[]): string | null {
 /** Id vindo da URL é palpite de quem pediu até ser conferido. */
 export function idValido(id: string): boolean {
     return /^[0-9]+$/.test(id)
+}
+
+/**
+ * Repasse de um ARQUIVO ao backend.
+ *
+ * `repassarAoBackend` serve para JSON e não serve aqui: ele serializa o corpo
+ * e declara `application/json`, o que transformaria a planilha num texto
+ * inválido do outro lado.
+ *
+ * O arquivo é reenviado como veio, num FormData novo. O `Content-Type` NÃO é
+ * declarado de propósito: ele precisa carregar a fronteira ("boundary") que
+ * separa as partes, e quem sabe qual é ela é o próprio fetch ao montar o
+ * corpo. Declarar `multipart/form-data` à mão é o erro clássico aqui — o
+ * servidor recebe um corpo que não consegue separar e responde "campo arquivo
+ * ausente" com o arquivo ali dentro.
+ *
+ * O tamanho não é conferido aqui: quem tem o limite é o backend, que é quem
+ * grava (ver handlers/cadastroProduto/produtos/importar.go). Repetir o número
+ * nos dois lados criaria dois limites para divergir.
+ */
+export async function repassarArquivo(caminho: string, request: Request): Promise<Response> {
+    try {
+        const cabecalhos = await cabecalhosDaSessao()
+
+        if (!cabecalhos) {
+            return Response.json({ erro: "Não autenticado" }, { status: 401 })
+        }
+
+        const recebido = await request.formData().catch(() => null)
+        const arquivo = recebido?.get("arquivo")
+
+        if (!(arquivo instanceof File) || arquivo.size === 0) {
+            return Response.json({ erro: "Escolha uma planilha para enviar." }, { status: 400 })
+        }
+
+        const envio = new FormData()
+        envio.append("arquivo", arquivo, arquivo.name)
+
+        const response = await fetch(`${API_BASE}${caminho}`, {
+            method: "POST",
+            headers: cabecalhos,
+            body: envio,
+            cache: "no-store",
+        })
+
+        const texto = await response.text()
+
+        if (!response.ok) {
+            return Response.json(
+                { erro: extrairMensagemErro(safeParse(texto)) },
+                { status: response.status }
+            )
+        }
+
+        return Response.json(safeParse(texto) ?? {}, {
+            status: response.status,
+            headers: { "Cache-Control": "no-store" },
+        })
+
+    } catch {
+        return Response.json({ erro: "Erro interno do servidor" }, { status: 500 })
+    }
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { FiAlertTriangle, FiCheckCircle, FiCreditCard, FiLock } from "react-icons/fi"
 import { Pagina, Secao } from "@/app/components/pagina/pagina"
+import PagamentoPorWhatsApp from "@/app/components/pagamento/whatsapp"
 
 /**
  * Onde o lojista conecta a conta de pagamento dele.
@@ -245,6 +246,12 @@ export default function PagamentoPage() {
                     </span>
                 </p>
             ) : null}
+
+            {/* A forma de receber que não depende de provedor nenhum: a loja
+                manda a chave Pix na conversa e confirma quando o dinheiro
+                cai. Fica aqui, e não em Configurações, porque é uma forma de
+                RECEBER — e esta é a tela em que o lojista pensa nisso. */}
+            <PagamentoPorWhatsApp />
 
             {situacao?.url_webhook ? (
                 <Secao

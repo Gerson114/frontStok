@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { FiAlertCircle, FiChevronLeft, FiChevronRight, FiTruck } from "react-icons/fi"
-import { Pagina, Secao, Estado } from "@/app/components/pagina/pagina"
+import { Pagina, Estado } from "@/app/components/pagina/pagina"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import type { Pedido } from "@/app/type/type"
 import { consultarAgenda, marcarDiaDeEnvio } from "@/middleware/pedidos"
@@ -220,6 +220,14 @@ export default function Entregas() {
     // Qual pedido está gravando o dia agora, para travar só os botões dele.
     const [marcandoId, setMarcandoId] = useState<number | null>(null)
 
+    // O dia aberto na ficha à direita, e qual das duas listas ela mostra.
+    //
+    // Começa em HOJE porque é o dia que o lojista veio olhar quando abre a
+    // agenda de manhã — abrir num dia vazio custaria um clique para chegar
+    // onde ele já queria estar.
+    const [diaAberto, setDiaAberto] = useState(() => chaveDoDia(new Date()))
+    const [painel, setPainel] = useState<"dia" | "sem-dia">("dia")
+
     // Sobe de um a cada dia marcado. Um pedido que ganha dia muda de lista —
     // sai do preparo e entra num dia do calendário —, e reler o mês do
     // servidor é mais honesto do que remendar as três listas aqui.
@@ -337,18 +345,21 @@ export default function Entregas() {
 
     const totalDoMes = entregas.length
 
+    /**
+     * Os pedidos confirmados que ainda não ocupam dia nenhum.
+     *
+     * Atrasados primeiro: os dois casos pedem a mesma decisão — marcar o dia
+     * de saída —, mas um deles já custou prazo ao cliente.
+     */
+    const semDia = [...atrasados, ...emPreparo]
+
     return (
         <Pagina
             titulo="Agenda de entregas"
             descricao="O que a loja tem de fazer em cada dia. Quem vem buscar cai no dia da compra; quem pediu entrega entra no calendário quando você marcar o dia em que ele sai."
             acoes={
                 <div className="flex items-center gap-1">
-                    <button
-                        type="button"
-                        onClick={() => andar(-1)}
-                        aria-label="Mês anterior"
-                        className="btn btn-neutro"
-                    >
+                    <button type="button" onClick={() => andar(-1)} aria-label="Mês anterior" className="btn btn-neutro">
                         <FiChevronLeft className="w-4" aria-hidden />
                     </button>
 
@@ -356,13 +367,21 @@ export default function Entregas() {
                         {MESES[mes.getMonth()]} de {mes.getFullYear()}
                     </span>
 
+                    <button type="button" onClick={() => andar(1)} aria-label="Mês seguinte" className="btn btn-neutro">
+                        <FiChevronRight className="w-4" aria-hidden />
+                    </button>
+
                     <button
                         type="button"
-                        onClick={() => andar(1)}
-                        aria-label="Mês seguinte"
-                        className="btn btn-neutro"
+                        onClick={() => {
+                            const agora = new Date()
+                            setMes(new Date(agora.getFullYear(), agora.getMonth(), 1))
+                            setDiaAberto(chaveDoDia(agora))
+                            setPainel("dia")
+                        }}
+                        className="btn btn-neutro ml-1"
                     >
-                        <FiChevronRight className="w-4" aria-hidden />
+                        Hoje
                     </button>
                 </div>
             }
@@ -381,174 +400,240 @@ export default function Entregas() {
                 </div>
             )}
 
-            {/* ==========================
-                ATRASADOS
-                Antes do calendário de propósito: é o que precisa de alguém
-                hoje, e vem sempre, mesmo quando o lojista está olhando outro
-                mês.
-            ========================== */}
+            {/* ATRASADOS — uma faixa, e não uma lista aberta.
+                É o que precisa de alguém hoje, então continua vindo antes de
+                tudo e em qualquer mês; mas aberta ela empurrava o calendário
+                para baixo da dobra, que é justamente o que se veio ver. O
+                clique abre a lista no painel da direita. */}
             {atrasados.length > 0 && (
-                <Secao
-                    titulo={`${atrasados.length} pedido(s) passaram do dia de sair`}
-                    descricao="O dia que você marcou já passou e nada foi despachado. Marque o novo dia aqui — é ele que o cliente vai ver como previsão."
-                    plano
+                <button
+                    type="button"
+                    onClick={() => setPainel("sem-dia")}
+                    className="flex w-full items-center gap-2.5 rounded-lg border-l-4 border-[#8E1F0B] bg-[#FEE9E8] px-4 py-3 text-left"
                 >
-                    <ul className="divide-y divide-[#EBEBEB]">
-                        {atrasados.map((pedido) => (
-                            <LinhaSemDia
-                                key={pedido.id}
-                                pedido={pedido}
-                                ocupado={marcandoId === pedido.id}
-                                aoMarcar={marcar}
-                                complemento={
-                                    <span className="text-xs font-semibold text-[#8E1F0B]">
-                                        devia sair em{" "}
-                                        {pedido.envio_previsto_em
-                                            ? new Date(pedido.envio_previsto_em).toLocaleDateString("pt-BR")
-                                            : "—"}
-                                    </span>
-                                }
-                            />
-                        ))}
-                    </ul>
-                </Secao>
+                    <FiAlertCircle className="w-4 shrink-0 text-[#8E1F0B]" aria-hidden />
+
+                    <span className="flex-1 text-sm font-semibold text-[#8E1F0B]">
+                        {atrasados.length} pedido(s) passaram do dia de sair e ninguém despachou
+                    </span>
+
+                    <span className="shrink-0 text-xs font-semibold text-[#8E1F0B] underline underline-offset-2">
+                        remarcar
+                    </span>
+                </button>
             )}
 
-            {/* ==========================
-                EM PREPARO
-                Os pedidos que a loja aceitou e ainda não pôs em nenhum dia.
-                Ficam fora do calendário de propósito: enquanto ninguém disse
-                quando eles saem, eles não são trabalho de dia nenhum — e
-                chutar um dia encheria a agenda de trabalho que não existe.
-            ========================== */}
-            {emPreparo.length > 0 && (
-                <Secao
-                    titulo={`${emPreparo.length} pedido(s) em preparo, sem dia de saída`}
-                    descricao="Você confirmou e está preparando. Marque o dia em que cada um sai: só então ele entra no calendário e o cliente passa a ter uma previsão de chegada."
-                    plano
-                >
-                    <ul className="divide-y divide-[#EBEBEB]">
-                        {emPreparo.map((pedido) => (
-                            <LinhaSemDia
-                                key={pedido.id}
-                                pedido={pedido}
-                                ocupado={marcandoId === pedido.id}
-                                aoMarcar={marcar}
-                                complemento={
-                                    <span className="text-xs text-[#8A8A8A]">
-                                        pedido em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}
-                                    </span>
-                                }
-                            />
-                        ))}
-                    </ul>
-                </Secao>
-            )}
-
-            {/* ==========================
-                O CALENDÁRIO
-            ========================== */}
             {carregando ? (
                 <div className="card p-8 text-center text-sm text-[#616161]">Carregando a agenda...</div>
-            ) : totalDoMes === 0 && atrasados.length === 0 && emPreparo.length === 0 ? (
+            ) : totalDoMes === 0 && semDia.length === 0 ? (
                 <Estado
                     Icone={FiTruck}
                     titulo="Nenhum pedido neste mês"
-                    texto="Aparecem aqui os pedidos do site: os que o cliente vem buscar, no dia da compra, e os que você despacha, no dia que marcar para eles saírem. Venda no balcão não entra — ela sai na hora, e não ocupa dia nenhum."
-                    acao={
-                        <Link href="/page/pedidos" className="btn btn-neutro">
-                            Ver pedidos
-                        </Link>
-                    }
+                    texto="Aparecem aqui os pedidos do site: os que o cliente vem buscar, no dia da compra, e os que você despacha, no dia que marcar para eles saírem."
+                    acao={<Link href="/page/pedidos" className="btn btn-neutro">Ver pedidos</Link>}
                 />
             ) : (
-                <div className="card overflow-hidden">
 
-                    <div className="grid grid-cols-7 border-b border-[#E1E1E1] bg-[#F7F7F7]">
-                        {DIAS.map((dia) => (
-                            <div
-                                key={dia}
-                                className="px-2 py-2 text-center text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]"
-                            >
-                                {dia}
-                            </div>
-                        ))}
-                    </div>
+                /* Calendário à esquerda, ficha do dia à direita — a mesma
+                   anatomia das outras telas do painel. O calendário responde
+                   "como está o mês"; a ficha responde "o que eu faço neste
+                   dia", com o pedido inteiro legível em vez de um cartãozinho
+                   espremido numa casa de 6,5rem. */
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
 
-                    <div className="grid grid-cols-7">
-                        {casas.map((data, indice) => {
+                    {/* ---------------------------------------------------
+                        O CALENDÁRIO
+                        --------------------------------------------------- */}
+                    <div className="card overflow-hidden">
 
-                            // As casas antes do dia 1º existem só para empurrar
-                            // a primeira semana até a coluna certa.
-                            if (!data) {
+                        <div className="grid grid-cols-7 border-b border-[#E1E1E1] bg-[#F7F7F7]">
+                            {DIAS.map((dia) => (
+                                <div key={dia} className="px-2 py-2 text-center text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                    {dia}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-7">
+                            {casas.map((data, indice) => {
+
+                                // As casas antes do dia 1º existem só para
+                                // empurrar a primeira semana até a coluna certa.
+                                if (!data) {
+                                    return <div key={`vazio-${indice}`} className="min-h-[5rem] border-b border-r border-[#EBEBEB] bg-[#F7F7F7]" />
+                                }
+
+                                const dia = chaveDoDia(data)
+                                const doDia = porDia.get(dia) ?? []
+                                const ehHoje = dia === hoje
+                                const aberto = dia === diaAberto && painel === "dia"
+
+                                const retiradas = doDia.filter((p) => p.entrega_tipo !== "entrega").length
+                                const envios = doDia.length - retiradas
+
                                 return (
-                                    <div
-                                        key={`vazio-${indice}`}
-                                        className="min-h-[6.5rem] border-b border-r border-[#EBEBEB] bg-[#F7F7F7]"
-                                    />
-                                )
-                            }
+                                    <button
+                                        key={dia}
+                                        type="button"
+                                        onClick={() => { setDiaAberto(dia); setPainel("dia") }}
+                                        aria-current={aberto ? "true" : undefined}
+                                        className={`min-h-[5rem] border-b border-r border-[#EBEBEB] p-1.5 text-left transition-colors ${
+                                            aberto
+                                                ? "bg-[#303030]/5 ring-1 ring-inset ring-[#303030]"
+                                                : ehHoje ? "bg-[#EAF4FF]" : "hover:bg-[#F7F7F7]"
+                                        }`}
+                                    >
+                                        <span className="flex items-baseline justify-between gap-1">
+                                            <span className={`num text-xs ${
+                                                ehHoje ? "font-bold text-[#005BD3]" : "font-medium text-[#8A8A8A]"
+                                            }`}>
+                                                {data.getDate()}
+                                            </span>
 
-                            const dia = chaveDoDia(data)
-                            const doDia = porDia.get(dia) ?? []
-                            const ehHoje = dia === hoje
-
-                            return (
-                                <div
-                                    key={dia}
-                                    className={`min-h-[6.5rem] border-b border-r border-[#EBEBEB] p-1.5 ${
-                                        ehHoje ? "bg-[#EAF4FF]" : ""
-                                    }`}
-                                >
-                                    <div className="mb-1 flex items-baseline justify-between gap-1">
-                                        <span
-                                            className={`num text-xs ${
-                                                ehHoje
-                                                    ? "font-bold text-[#005BD3]"
-                                                    : "font-medium text-[#8A8A8A]"
-                                            }`}
-                                        >
-                                            {data.getDate()}
+                                            {doDia.length > 0 && (
+                                                <span className="num text-[0.625rem] font-semibold text-[#616161]">
+                                                    {doDia.length}
+                                                </span>
+                                            )}
                                         </span>
 
+                                        {/* Quanto trabalho tem no dia, por tipo.
+                                            A casa não cabe o pedido inteiro — e
+                                            não precisa: quem olha o mês quer
+                                            saber onde está cheio. O detalhe
+                                            está a um clique, na ficha. */}
                                         {doDia.length > 0 && (
-                                            <span className="num text-[0.625rem] font-semibold text-[#616161]">
-                                                {doDia.length}
+                                            <span className="mt-1 block space-y-0.5">
+                                                {envios > 0 && (
+                                                    <span className="block truncate rounded bg-[#FFE4C4] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#5E4200]">
+                                                        {envios} para despachar
+                                                    </span>
+                                                )}
+
+                                                {retiradas > 0 && (
+                                                    <span className="block truncate rounded bg-[#EAF4FF] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#005BD3]">
+                                                        {retiradas} para retirar
+                                                    </span>
+                                                )}
                                             </span>
                                         )}
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        {doDia.map((pedido) => (
-                                            <CartaoEntrega key={pedido.id} pedido={pedido} />
-                                        ))}
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </div>
 
+                    {/* ---------------------------------------------------
+                        A FICHA — o dia escolhido, ou os que não têm dia
+                        --------------------------------------------------- */}
+                    <section className="card flex max-h-[calc(100dvh-16rem)] flex-col overflow-hidden p-0">
+
+                        <div className="flex border-b border-[#EBEBEB]">
+                            <button
+                                type="button"
+                                onClick={() => setPainel("dia")}
+                                className={`flex-1 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                    painel === "dia"
+                                        ? "border-[#005BD3] text-[#005BD3]"
+                                        : "border-transparent text-[#616161] hover:text-[#303030]"
+                                }`}
+                            >
+                                {new Date(`${diaAberto}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setPainel("sem-dia")}
+                                className={`flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                    painel === "sem-dia"
+                                        ? "border-[#005BD3] text-[#005BD3]"
+                                        : "border-transparent text-[#616161] hover:text-[#303030]"
+                                }`}
+                            >
+                                Sem dia
+
+                                {semDia.length > 0 && (
+                                    <span className={`num rounded-full px-2 py-0.5 text-xs font-bold ${
+                                        painel === "sem-dia" ? "bg-[#EAF4FF] text-[#005BD3]" : "bg-[#F1F1F1] text-[#616161]"
+                                    }`}>
+                                        {semDia.length}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto">
+
+                            {painel === "dia" ? (
+                                (porDia.get(diaAberto) ?? []).length === 0 ? (
+                                    <p className="px-4 py-8 text-center text-sm text-[#616161]">
+                                        Nada marcado para este dia.
+                                    </p>
+                                ) : (
+                                    <ul className="divide-y divide-[#EBEBEB]">
+                                        {(porDia.get(diaAberto) ?? []).map((pedido) => (
+                                            <li key={pedido.id} className="p-4">
+                                                <CartaoEntrega pedido={pedido} />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )
+                            ) : semDia.length === 0 ? (
+                                <p className="px-4 py-8 text-center text-sm text-[#616161]">
+                                    Todo pedido confirmado já tem dia de saída.
+                                </p>
+                            ) : (
+                                <ul className="divide-y divide-[#EBEBEB]">
+                                    {semDia.map((pedido) => {
+
+                                        const atrasado = atrasados.some((outro) => outro.id === pedido.id)
+
+                                        return (
+                                            <LinhaSemDia
+                                                key={pedido.id}
+                                                pedido={pedido}
+                                                ocupado={marcandoId === pedido.id}
+                                                aoMarcar={marcar}
+                                                complemento={
+                                                    atrasado ? (
+                                                        <span className="text-xs font-semibold text-[#8E1F0B]">
+                                                            devia sair em{" "}
+                                                            {pedido.envio_previsto_em
+                                                                ? new Date(pedido.envio_previsto_em).toLocaleDateString("pt-BR")
+                                                                : "—"}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-[#8A8A8A]">
+                                                            pedido em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}
+                                                        </span>
+                                                    )
+                                                }
+                                            />
+                                        )
+                                    })}
+                                </ul>
+                            )}
+                        </div>
+                    </section>
                 </div>
             )}
 
             {/* A legenda existe porque a cor está carregando informação: sem
-                ela, três azuis diferentes são só decoração. */}
+                ela, dois tons diferentes são só decoração. */}
             {totalDoMes > 0 && (
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#616161]">
                     <span className="flex items-center gap-1.5">
-                        <span className="h-3 w-3 rounded bg-[#EAF4FF]" aria-hidden />
-                        Retirada no balcão — o cliente vem buscar
-                    </span>
-                    <span className="flex items-center gap-1.5">
                         <span className="h-3 w-3 rounded bg-[#FFE4C4]" aria-hidden />
-                        Entrega — tem de ser despachado neste dia
+                        Para despachar neste dia
                     </span>
+
                     <span className="flex items-center gap-1.5">
-                        <span className="h-3 w-3 rounded bg-[#FFF1E3]" aria-hidden />
-                        Entrega que já saiu
+                        <span className="h-3 w-3 rounded bg-[#EAF4FF]" aria-hidden />
+                        O cliente vem buscar
                     </span>
+
                     <span className="num ml-auto">
-                        {totalDoMes} pedido(s) · {formatarMoeda(entregas.reduce((s, p) => s + (p.total ?? 0), 0))}
+                        {totalDoMes} pedido(s) no mês · {formatarMoeda(entregas.reduce((s, p) => s + (p.total ?? 0), 0))}
                     </span>
                 </div>
             )}

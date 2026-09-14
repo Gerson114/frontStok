@@ -190,6 +190,48 @@ function Desenho({
                 </div>
             )
 
+        // A faixa de selos. Desenhada com os textos de verdade, e não com
+        // barras cinzas: o lojista está justamente escrevendo essas palavras, e
+        // uma prévia que as esconde não serve para conferir o que ele escreveu.
+        case "cartoes": {
+
+            const cartoes = bloco.cartoes ?? []
+
+            if (cartoes.length === 0) {
+                return (
+                    <div
+                        className="flex h-16 items-center justify-center text-xs font-semibold uppercase tracking-[0.12em] opacity-50"
+                        style={{ background: CINZA }}
+                    >
+                        Faixa de cartões (vazia)
+                    </div>
+                )
+            }
+
+            return (
+                <div className="grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-4">
+                    {cartoes.map((cartao, i) => (
+                        <span key={i} className="flex items-start gap-2">
+                            <span
+                                className="h-7 w-7 shrink-0 rounded-full"
+                                style={{ background: "var(--destaque)" }}
+                            />
+                            <span className="min-w-0">
+                                <span className="block truncate text-[0.7rem] font-bold">
+                                    {cartao.titulo || "sem título"}
+                                </span>
+                                {cartao.texto ? (
+                                    <span className="mt-0.5 block text-[0.6rem] leading-snug opacity-70">
+                                        {cartao.texto}
+                                    </span>
+                                ) : null}
+                            </span>
+                        </span>
+                    ))}
+                </div>
+            )
+        }
+
         case "atalhos":
             return (
                 <div className="flex gap-4 overflow-hidden px-5 py-5">

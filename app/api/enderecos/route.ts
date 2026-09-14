@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { API_BASE } from "@/app/api/backend"
+import { API_BASE, cabecalhoDaLojaAberta } from "@/app/api/backend"
 
 
 // GET /api/enderecos — os lugares do estoque, com ocupação de cada um.
@@ -27,6 +27,7 @@ export async function repassarEndereco(metodo: "GET" | "POST", caminho: string, 
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo ? { "Content-Type": "application/json" } : {}),
             },

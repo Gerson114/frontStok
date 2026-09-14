@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import type { Produto } from "@/app/type/type"
 import { listarProdutos } from "@/middleware/produtos"
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/middleware/estoque"
 import { ApiError } from "@/middleware/client"
 import { descreverVariacao } from "@/app/components/produto/campos"
+import DevolucoesPedidas from "@/app/components/devolucao/pedidas"
 import {
     FiAlertCircle,
     FiCalendar,
@@ -21,9 +22,16 @@ import {
     FiClock,
     FiCornerUpLeft,
     FiPackage,
-    FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { Selecao } from "@/app/components/campo/selecao"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    RodapeDaLista,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * Devoluções: o que voltou para a loja e ainda não tem destino.
@@ -70,6 +78,10 @@ export default function DevolucoesPage() {
     const [enviando, setEnviando] = useState(false)
 
     // Qual devolução está com o painel de tratativa aberto.
+    // A aba aberta e o texto que recorta as duas (ver components/lista/lista.tsx).
+    const [visao, setVisao] = useState("aguardando")
+    const [busca, setBusca] = useState("")
+
     const [emTratativa, setEmTratativa] = useState<Devolucao | null>(null)
     const [dataAgendada, setDataAgendada] = useState("")
 
@@ -199,6 +211,20 @@ export default function DevolucoesPage() {
         )
     }
 
+    /*
+     * A lista que está na tela: a aba escolhida, recortada pela busca. O texto
+     * procura no produto e no motivo, que são as duas coisas pelas quais alguém
+     * volta a esta tela ("cadê aquela que voltou furada?").
+     */
+    const termo = busca.trim().toLowerCase()
+
+    const listaVisivel = (visao === "aguardando" ? aguardando : resolvidas).filter((devolucao) =>
+        !termo ||
+        (devolucao.produto_nome ?? "").toLowerCase().includes(termo) ||
+        (devolucao.produto_codigo ?? "").toLowerCase().includes(termo) ||
+        (devolucao.motivo ?? "").toLowerCase().includes(termo)
+    )
+
     return (
         <Pagina
             titulo="Devoluções"
@@ -225,6 +251,15 @@ export default function DevolucoesPage() {
                 </div>
             )}
 
+            {/* O QUE OS CLIENTES PEDIRAM
+
+                Vem antes de tudo porque é o que tem gente esperando: do
+                outro lado há alguém sem a peça e sem o dinheiro. O
+                componente se esconde sozinho quando não há pedido nenhum —
+                loja sem devolução não precisa de uma caixa vazia dizendo
+                isso todo dia. */}
+            <DevolucoesPedidas aoDecidir={atualizar} />
+
             {/* RECEBER UMA DEVOLUÇÃO */}
             <section className="card p-5 sm:p-7">
 
@@ -241,11 +276,10 @@ export default function DevolucoesPage() {
 
                         <div className="space-y-1.5">
                             <label className="rotulo" htmlFor="produto">Produto</label>
-                            <select
+                            <Selecao
                                 id="produto"
                                 value={produtoId}
                                 onChange={(e) => setProdutoId(e.target.value)}
-                                className="field cursor-pointer"
                             >
                                 <option value="">Selecione...</option>
                                 {produtos.map((produto) => {
@@ -259,7 +293,7 @@ export default function DevolucoesPage() {
                                         </option>
                                     )
                                 })}
-                            </select>
+                            </Selecao>
                         </div>
 
                         <div className="space-y-1.5">
@@ -319,195 +353,268 @@ export default function DevolucoesPage() {
             </section>
 
             {/* EM QUARENTENA */}
-            <section className="space-y-3">
+            <ListaDeRecursos>
 
-                <h2 className="font-display text-lg text-[#303030]">
-                    Aguardando tratativa
-                    <span className="num ml-2 text-sm font-bold text-[#616161]">
-                        {aguardando.length}
-                    </span>
-                </h2>
+                <Visoes
+                    visoes={[
+                        { chave: "aguardando", nome: "Aguardando tratativa", contagem: aguardando.length },
+                        { chave: "resolvidas", nome: "Resolvidas", contagem: resolvidas.length },
+                    ]}
+                    ativa={visao}
+                    aoTrocar={(chave) => { setVisao(chave); setEmTratativa(null) }}
+                />
 
-                {aguardando.length === 0 && (
-                    <p className="card p-8 text-center text-sm text-[#616161]">
-                        Nenhuma peça em quarentena. Tudo que voltou já teve destino.
-                    </p>
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={setBusca}
+                    placeholder="Buscar por produto, código ou motivo"
+                />
+
+                {listaVisivel.length === 0 ? (
+
+                    <ListaVazia
+                        icone={visao === "aguardando" ? FiCheckCircle : FiPackage}
+                        titulo={
+                            busca
+                                ? "Nada com esse texto"
+                                : visao === "aguardando"
+                                    ? "Nenhuma peça em quarentena"
+                                    : "Nenhuma peça resolvida ainda"
+                        }
+                    >
+                        {busca
+                            ? "Nenhuma peça casa com o que você digitou."
+                            : visao === "aguardando"
+                                ? "Tudo que voltou já teve destino."
+                                : "O que for tratado aparece aqui, com o destino que recebeu."}
+                    </ListaVazia>
+
+                ) : visao === "aguardando" ? (
+
+                    <div className="overflow-x-auto">
+
+                        <table className="tabela">
+
+                            <thead>
+                                <tr>
+                                    <th scope="col">Produto</th>
+                                    <th scope="col">Motivo</th>
+                                    <th scope="col">Situação</th>
+                                    <th scope="col" className="text-right">Parada há</th>
+                                    <th scope="col"><span className="sr-only">Ações</span></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {listaVisivel.map((devolucao) => {
+
+                                    const variacao = descreverVariacao(
+                                        devolucao.produto_variacao_rotulo,
+                                        devolucao.produto_variacao
+                                    )
+
+                                    const aberta = emTratativa?.id === devolucao.id
+
+                                    return (
+                                        <Fragment key={devolucao.id}>
+
+                                            <tr>
+
+                                                <td>
+                                                    <p className="font-medium text-[#303030]">
+                                                        {devolucao.produto_nome || `Produto #${devolucao.produto_id}`}
+                                                    </p>
+                                                    <p className="num text-xs text-[#8A8A8A]">
+                                                        {devolucao.produto_codigo}
+                                                        {variacao ? ` · ${variacao}` : ""}
+                                                    </p>
+                                                </td>
+
+                                                <td>
+                                                    <span className="text-[#303030]">{devolucao.motivo}</span>
+                                                    {devolucao.observacao && (
+                                                        <span className="block text-xs text-[#616161]">
+                                                            {devolucao.observacao}
+                                                        </span>
+                                                    )}
+                                                </td>
+
+                                                <td>
+                                                    <span
+                                                        className={`tag ${
+                                                            devolucao.situacao === "agendada" ? "tag-info" : "tag-neutral"
+                                                        }`}
+                                                    >
+                                                        {ROTULO_SITUACAO[devolucao.situacao] ?? devolucao.situacao}
+                                                    </span>
+
+                                                    {devolucao.agendada_para && (
+                                                        <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-[#00369B]">
+                                                            <FiCalendar className="w-3.5" aria-hidden />
+                                                            {new Date(devolucao.agendada_para).toLocaleDateString("pt-BR")}
+                                                        </span>
+                                                    )}
+                                                </td>
+
+                                                <td className="text-right">
+                                                    <span className="num inline-flex items-center gap-1.5 text-[#616161]">
+                                                        <FiClock className="w-3.5" aria-hidden />
+                                                        {devolucao.dias_parada === 0
+                                                            ? "hoje"
+                                                            : `${devolucao.dias_parada} dia(s)`}
+                                                    </span>
+                                                </td>
+
+                                                <td className="text-right">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (aberta) {
+                                                                setEmTratativa(null)
+                                                                return
+                                                            }
+                                                            setEmTratativa(devolucao)
+                                                            setDataAgendada(devolucao.agendada_para?.slice(0, 10) ?? "")
+                                                        }}
+                                                        className="btn btn-secundario whitespace-nowrap text-xs"
+                                                    >
+                                                        {aberta ? "Fechar" : "Dar tratativa"}
+                                                    </button>
+                                                </td>
+
+                                            </tr>
+
+                                            {/* A tratativa abre NA LINHA, e não numa janela por
+                                                cima: a decisão depende do motivo e de quantos dias
+                                                a peça está parada, que são as colunas ao lado — e
+                                                um modal esconderia justamente isso. */}
+                                            {aberta && (
+                                                <tr>
+                                                    <td colSpan={5} className="bg-[#FAFAFA]">
+
+                                                        <p className="text-sm font-semibold text-[#303030]">
+                                                            O que fazer com esta peça?
+                                                        </p>
+
+                                                        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                                            {DESTINOS.map((destino) => (
+                                                                <button
+                                                                    key={destino.chave}
+                                                                    type="button"
+                                                                    onClick={() => tratar(devolucao, destino.chave)}
+                                                                    className="rounded-lg border border-[#E1E1E1] bg-white p-3 text-left transition-colors hover:border-[#005BD3]"
+                                                                >
+                                                                    <span className="block text-sm font-bold text-[#303030]">
+                                                                        {destino.rotulo}
+                                                                    </span>
+                                                                    <span className="mt-0.5 block text-xs text-[#616161]">
+                                                                        {destino.descricao}
+                                                                    </span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Agendar não decide nada: só tira a peça da fila de
+                                                            "ninguém olhou" e põe dia para olhar. */}
+                                                        <div className="mt-3 flex flex-wrap items-end gap-3">
+
+                                                            <div className="min-w-[10rem] space-y-1">
+                                                                <label className="rotulo text-xs" htmlFor={`data-${devolucao.id}`}>
+                                                                    Ou agende a tratativa
+                                                                </label>
+                                                                <input
+                                                                    id={`data-${devolucao.id}`}
+                                                                    type="date"
+                                                                    value={dataAgendada}
+                                                                    onChange={(e) => setDataAgendada(e.target.value)}
+                                                                    className="field"
+                                                                />
+                                                            </div>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => agendar(devolucao)}
+                                                                className="btn btn-neutro flex items-center gap-2 text-sm"
+                                                            >
+                                                                <FiCalendar className="w-4" aria-hidden />
+                                                                Agendar
+                                                            </button>
+
+                                                        </div>
+
+                                                    </td>
+                                                </tr>
+                                            )}
+
+                                        </Fragment>
+                                    )
+                                })}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                ) : (
+
+                    <div className="overflow-x-auto">
+
+                        <table className="tabela">
+
+                            <thead>
+                                <tr>
+                                    <th scope="col">Produto</th>
+                                    <th scope="col">Motivo</th>
+                                    <th scope="col">Destino</th>
+                                    <th scope="col" className="text-right">Resolvida em</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {listaVisivel.map((devolucao) => (
+                                    <tr key={devolucao.id}>
+
+                                        <td className="text-[#303030]">
+                                            {devolucao.produto_nome || `Produto #${devolucao.produto_id}`}
+                                        </td>
+
+                                        <td className="text-[#616161]">{devolucao.motivo}</td>
+
+                                        <td>
+                                            <span className="tag tag-neutral">
+                                                {DESTINOS.find((item) => item.chave === devolucao.destino)?.rotulo ??
+                                                    devolucao.destino}
+                                            </span>
+                                        </td>
+
+                                        <td className="num text-right text-[#616161]">
+                                            {devolucao.resolvida_em
+                                                ? new Date(devolucao.resolvida_em).toLocaleDateString("pt-BR")
+                                                : "—"}
+                                        </td>
+
+                                    </tr>
+                                ))}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
                 )}
 
-                {aguardando.map((devolucao) => {
+                <RodapeDaLista
+                    primeiro={1}
+                    ultimo={listaVisivel.length}
+                    total={listaVisivel.length}
+                    nome={visao === "aguardando" ? "peças em quarentena" : "peças resolvidas"}
+                />
 
-                    const variacao = descreverVariacao(
-                        devolucao.produto_variacao_rotulo,
-                        devolucao.produto_variacao
-                    )
-
-                    const aberta = emTratativa?.id === devolucao.id
-
-                    return (
-                        <article key={devolucao.id} className="card p-5">
-
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-
-                                <div className="min-w-0">
-                                    <p className="font-display text-base text-[#303030]">
-                                        {devolucao.produto_nome || `Produto #${devolucao.produto_id}`}
-                                    </p>
-
-                                    <p className="num text-xs text-[#616161]">
-                                        {devolucao.produto_codigo}
-                                        {variacao ? ` · ${variacao}` : ""}
-                                    </p>
-
-                                    <p className="mt-2 text-sm text-[#303030]">
-                                        {devolucao.motivo}
-                                    </p>
-
-                                    {devolucao.observacao && (
-                                        <p className="text-sm text-[#616161]">{devolucao.observacao}</p>
-                                    )}
-                                </div>
-
-                                <div className="shrink-0 text-right">
-                                    <span
-                                        className={`tag ${
-                                            devolucao.situacao === "agendada" ? "tag-info" : "tag-neutral"
-                                        }`}
-                                    >
-                                        {ROTULO_SITUACAO[devolucao.situacao] ?? devolucao.situacao}
-                                    </span>
-
-                                    <p className="mt-2 flex items-center justify-end gap-1.5 text-xs text-[#616161]">
-                                        <FiClock className="w-3.5" aria-hidden />
-                                        {devolucao.dias_parada === 0
-                                            ? "Chegou hoje"
-                                            : `Parada há ${devolucao.dias_parada} dia(s)`}
-                                    </p>
-
-                                    {devolucao.agendada_para && (
-                                        <p className="mt-1 flex items-center justify-end gap-1.5 text-xs font-semibold text-[#00369B]">
-                                            <FiCalendar className="w-3.5" aria-hidden />
-                                            {new Date(devolucao.agendada_para).toLocaleDateString("pt-BR")}
-                                        </p>
-                                    )}
-                                </div>
-
-                            </div>
-
-                            {!aberta ? (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setEmTratativa(devolucao)
-                                        setDataAgendada(devolucao.agendada_para?.slice(0, 10) ?? "")
-                                    }}
-                                    className="btn btn-secundario mt-4 text-sm"
-                                >
-                                    Dar tratativa
-                                </button>
-                            ) : (
-                                <div className="mt-4 space-y-4 border-t border-[#EBEBEB] pt-4">
-
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="text-sm font-semibold text-[#303030]">
-                                            O que fazer com esta peça?
-                                        </p>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => setEmTratativa(null)}
-                                            aria-label="Fechar tratativa"
-                                            className="rounded-lg p-1.5 text-[#8A8A8A] transition-colors hover:bg-[#F1F1F1]"
-                                        >
-                                            <FiX className="w-4" aria-hidden />
-                                        </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                        {DESTINOS.map((destino) => (
-                                            <button
-                                                key={destino.chave}
-                                                type="button"
-                                                onClick={() => tratar(devolucao, destino.chave)}
-                                                className="rounded-lg border border-[#E1E1E1] p-3 text-left transition-colors hover:border-[#005BD3]"
-                                            >
-                                                <span className="block text-sm font-bold text-[#303030]">
-                                                    {destino.rotulo}
-                                                </span>
-                                                <span className="mt-0.5 block text-xs text-[#616161]">
-                                                    {destino.descricao}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {/* Agendar não decide nada: só tira a peça da fila de
-                                        "ninguém olhou" e põe dia para olhar. */}
-                                    <div className="flex flex-wrap items-end gap-3 rounded-lg bg-[#F1F1F1] p-3">
-
-                                        <div className="min-w-[10rem] flex-1 space-y-1">
-                                            <label className="rotulo text-xs" htmlFor={`data-${devolucao.id}`}>
-                                                Ou agende a tratativa
-                                            </label>
-                                            <input
-                                                id={`data-${devolucao.id}`}
-                                                type="date"
-                                                value={dataAgendada}
-                                                onChange={(e) => setDataAgendada(e.target.value)}
-                                                className="field"
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => agendar(devolucao)}
-                                            className="btn btn-neutro flex items-center gap-2 text-sm"
-                                        >
-                                            <FiCalendar className="w-4" aria-hidden />
-                                            Agendar
-                                        </button>
-
-                                    </div>
-
-                                </div>
-                            )}
-
-                        </article>
-                    )
-                })}
-
-            </section>
-
-            {/* JÁ RESOLVIDAS */}
-            {resolvidas.length > 0 && (
-                <section className="space-y-3">
-
-                    <h2 className="font-display text-lg text-[#303030]">Resolvidas</h2>
-
-                    <ul className="card divide-y divide-[#EBEBEB] p-2">
-                        {resolvidas.map((devolucao) => (
-                            <li
-                                key={devolucao.id}
-                                className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm"
-                            >
-                                <span className="min-w-0 truncate text-[#303030]">
-                                    <FiPackage className="mr-2 inline w-3.5 text-[#8A8A8A]" aria-hidden />
-                                    {devolucao.produto_nome || `Produto #${devolucao.produto_id}`}
-                                    <span className="text-[#616161]"> · {devolucao.motivo}</span>
-                                </span>
-
-                                <span className="shrink-0 text-[#616161]">
-                                    {DESTINOS.find((item) => item.chave === devolucao.destino)?.rotulo ??
-                                        devolucao.destino}
-                                    {devolucao.resolvida_em
-                                        ? ` · ${new Date(devolucao.resolvida_em).toLocaleDateString("pt-BR")}`
-                                        : ""}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-
-                </section>
-            )}
+            </ListaDeRecursos>
 
         </Pagina>
     )

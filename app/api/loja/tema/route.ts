@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
 import { isValidUrl } from "@/security/validate"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 
@@ -78,6 +78,7 @@ async function encaminhar(metodo: "GET" | "PUT", corpo?: unknown) {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo !== undefined ? { "Content-Type": "application/json" } : {}),
             },

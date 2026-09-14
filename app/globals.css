@@ -73,6 +73,33 @@
   --ink-3: #8A8A8A;
   --ink-4: #B5B5B5;
 
+  /* ==========================================================================
+     A largura que a navegação ocupa à esquerda.
+     ==========================================================================
+
+     O menu deixou de ser uma barra só. Agora são duas peças: um trilho
+     escuro e estreito com as ÁREAS da loja, sempre visível, e um painel
+     claro ao lado com as telas da área aberta — a anatomia do Slack e do
+     Teams, escolhida para o painel não parecer o mesmo menu de 256px que
+     Linear, Stripe, Vercel e Shopify usam.
+
+     A conta vive aqui, e não repetida em cada tela, porque o painel RECOLHE:
+     quando ele recolhe, seis telas precisariam ser reescritas para o
+     conteúdo ocupar o espaço vago. O header muda esta variável e todas
+     acompanham.
+
+        --menu = 4rem  (64px)   só o trilho, painel recolhido
+        --menu = 19rem (304px)  trilho + painel
+
+     O painel tem 240px porque "Endereços do estoque" precisa caber inteiro:
+     nome de tela cortado no meio obriga a passar o mouse para saber o que
+     é, e o menu deixa de ser lido de relance.
+
+     Quem usa é a classe .com-menu, lá embaixo. */
+  --trilho: 4rem;
+  --painel-menu: 15rem;
+  --menu: 19rem;
+
   --linha: #E1E1E1;
   --linha-suave: #EBEBEB;
   --linha-campo: #B5B5B5;
@@ -250,6 +277,50 @@
 /* Enquanto o formulário está enviando, os campos ficam bloqueados e precisam
    parecer bloqueados. */
 .field:disabled {
+  background: var(--superficie-2);
+  color: var(--ink-3);
+  border-color: var(--linha);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   SELEÇÃO
+   O <select> do sistema operacional é o maior sinal de tela inacabada que
+   existe num painel: ele traz a fonte, a altura, o raio e a setinha do
+   Windows ou do GNOME, e nenhum deles combina com o resto da tela.
+   Aqui ele perde a aparência nativa e ganha a mesma caixa do .field.
+
+   A setinha NÃO é imagem de fundo. A CSP do painel fecha img-src em 'self',
+   e um data: URI seria bloqueado — o que deixaria o campo sem nenhuma
+   indicação de que abre. Quem desenha a seta é um ícone irmão, posicionado
+   por cima (ver components/campo/selecao.tsx), que é também o que mantém a
+   regra de nunca usar emoji como ícone.
+   ========================================================================== */
+.select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--superficie);
+  color: var(--ink);
+  /* O respiro da direita é maior que o da esquerda: é o espaço da seta. */
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--linha-campo);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--azul);
+  box-shadow: 0 0 0 2px var(--azul);
+}
+
+.select:disabled {
   background: var(--superficie-2);
   color: var(--ink-3);
   border-color: var(--linha);
@@ -780,5 +851,213 @@
      diz "este está na mão" sem depender de movimento. */
   .nota-na-mao {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  }
+}
+
+/* ==========================================================================
+   MOVIMENTO DA PÁGINA DE VENDAS
+
+   A régua de cima (nada passa de 260ms) é a do PAINEL, e é curta porque quem
+   trabalha ali vê o mesmo movimento mil vezes por dia. A landing é o
+   contrário: é vista uma vez, por quem ainda não sabe o que o sistema faz, e
+   ali o movimento tem outro trabalho — conduzir o olho pela ordem em que os
+   argumentos foram escritos. Por isso estas durações são maiores, e por isso
+   moram numa seção própria em vez de afrouxar a régua do painel.
+
+   Duas regras que não se negociam:
+
+   1. Nada aqui ESCONDE conteúdo. A revelação por rolagem só é ligada dentro
+      de `@supports (animation-timeline: view())`; onde o navegador não sabe
+      animar pela rolagem, a página simplesmente aparece inteira. É o
+      contrário do padrão com JavaScript, que põe `opacity: 0` no elemento e
+      reza para o observador rodar — quando ele não roda, a página fica em
+      branco e ninguém descobre.
+
+   2. Quem pediu menos movimento não recebe nenhum. Tudo aqui está dentro de
+      `prefers-reduced-motion: no-preference`, e não numa exceção no fim.
+   ========================================================================== */
+
+@keyframes lp-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lp-entrar-da-direita {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lp-crescer {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   A ENTRADA DO HERÓI
+
+   Roda uma vez, no carregamento, e em cascata: título, texto, botões, preço.
+   É a única animação da página por tempo — todo o resto é por rolagem, que é
+   o que o visitante controla.
+
+   A curva é a de saída rápida (0.22, 1, 0.36, 1): o elemento chega quase
+   todo no primeiro terço e assenta no resto. Curva linear em entrada de
+   página parece software de apresentação.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .lp-entrada {
+    animation: lp-entrar 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .lp-atraso-1 { animation-delay: 70ms; }
+  .lp-atraso-2 { animation-delay: 140ms; }
+  .lp-atraso-3 { animation-delay: 210ms; }
+  .lp-atraso-4 { animation-delay: 280ms; }
+
+  .lp-entrada-lado {
+    animation: lp-entrar-da-direita 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 180ms;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   A REVELAÇÃO POR ROLAGEM
+
+   `animation-timeline: view()` amarra o progresso da animação à posição do
+   elemento na janela: ele não "dispara" ao cruzar uma linha, ele acompanha a
+   rolagem. Quem sobe a página de volta vê o movimento desandar, que é o que
+   torna a coisa uma propriedade do elemento e não um efeito que aconteceu.
+
+   `animation-range: entry 5% cover 30%` quer dizer: começa quando 5% do
+   elemento entrou pela borda de baixo e termina quando ele já subiu 30% da
+   tela. Terminar cedo é deliberado — conteúdo que só assenta no meio da tela
+   obriga a rolar para ler.
+   -------------------------------------------------------------------------- */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+
+    .lp-revelar {
+      animation: lp-entrar linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 30%;
+    }
+
+    /* A cascata: os filhos de uma grade entram em diagonal, cada um com a
+       faixa um pouco mais tarde que o anterior. Com linha do tempo de
+       rolagem não existe `animation-delay` que preste — atraso é medido em
+       tempo, e aqui não há tempo passando —, então o degrau é dado na FAIXA.
+
+       Para depois do quarto filho a faixa para de crescer: numa grade de
+       doze cartões, o décimo entraria tarde demais e o visitante veria um
+       buraco embaixo. */
+    .lp-cascata > * {
+      animation: lp-entrar linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 26%;
+    }
+
+    .lp-cascata > *:nth-child(2) { animation-range: entry 8% cover 32%; }
+    .lp-cascata > *:nth-child(3) { animation-range: entry 12% cover 38%; }
+    .lp-cascata > *:nth-child(n+4) { animation-range: entry 16% cover 44%; }
+
+    /* A linha da escada de cobrança, que se desenha da esquerda para a
+       direita conforme os três degraus entram na tela. É o único movimento
+       da página que existe para DIZER alguma coisa: a linha é o tempo
+       passando, do dia 0 ao dia 30. */
+    .lp-linha {
+      transform-origin: left center;
+      animation: lp-crescer linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   O QUE RESPONDE AO CURSOR
+
+   Sem levantar cartão (`hover:-translate-y-1 hover:shadow-lg` é o tique de
+   template que o painel já recusa em `.card-hover`): o que muda é a cor da
+   borda e, no botão de assinar, um empurrãozinho na seta — a seta que anda
+   diz "isto leva adiante" sem mexer no cartão inteiro.
+   -------------------------------------------------------------------------- */
+.lp-plano {
+  transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.lp-plano:hover {
+  border-color: var(--azul);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.lp-seta {
+  transition: transform 160ms ease-out;
+}
+
+.btn:hover .lp-seta {
+  transform: translateX(3px);
+}
+
+/* A pergunta frequente: o triângulo gira ao abrir. `<details>` nativo, sem
+   JavaScript nenhum — a página de vendas é servida sem estado, e uma
+   pergunta que só abre depois do JavaScript carregar é uma pergunta que o
+   visitante de conexão ruim nunca lê. */
+.lp-pergunta > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.lp-pergunta > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp-pergunta .lp-cruz {
+  transition: transform 180ms ease-out;
+}
+
+.lp-pergunta[open] .lp-cruz {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-plano,
+  .lp-seta,
+  .lp-pergunta .lp-cruz {
+    transition: none;
+  }
+}
+
+
+/* A margem que deixa a tela ao lado do menu, e não embaixo dele.
+ *
+ * Substitui o `md:ml-64` que cada tela escrevia à mão — e que seis delas
+ * esqueceram, passando por baixo do menu. Agora a largura é uma variável só
+ * (ver --menu, no topo), então recolher o painel move todas as telas juntas.
+ *
+ * No celular não há menu fixo: ele é uma gaveta que abre por cima, e margem
+ * nenhuma faz sentido. */
+.com-menu {
+  margin-left: 0;
+}
+
+@media (min-width: 768px) {
+  .com-menu {
+    margin-left: var(--menu);
+    transition: margin-left 160ms ease;
   }
 }

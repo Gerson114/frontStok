@@ -29,6 +29,52 @@ export async function login(email: string, password: string): Promise<void> {
 }
 
 /**
+ * Pede o código de seis dígitos para trocar a senha do painel.
+ *
+ * Devolve a frase do servidor, que é a MESMA exista ou não conta com aquele
+ * e-mail — de propósito: uma resposta diferente para e-mail existente
+ * transformaria esta tela numa lista de quem tem conta no sistema. Quem
+ * digitou o próprio endereço errado descobre pela caixa de entrada vazia, e
+ * não por uma mensagem de erro que serve a qualquer um.
+ */
+export async function pedirCodigoDeSenha(email: string): Promise<string> {
+
+    const response = await fetch("/api/senha/recuperar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: sanitizeEmail(email) }),
+    })
+
+    const texto = await response.text().catch(() => "")
+    const dados = texto ? safeParse(texto) : null
+
+    if (!response.ok) {
+        throw new Error(extrairMensagemErro(dados))
+    }
+
+    return (dados as { mensagem?: string } | null)?.mensagem ?? "Código enviado."
+}
+
+/** Troca a senha com o código na mão. Encerra as sessões abertas da conta. */
+export async function redefinirSenha(email: string, codigo: string, senha: string): Promise<string> {
+
+    const response = await fetch("/api/senha/redefinir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: sanitizeEmail(email), codigo: codigo.trim(), senha }),
+    })
+
+    const texto = await response.text().catch(() => "")
+    const dados = texto ? safeParse(texto) : null
+
+    if (!response.ok) {
+        throw new Error(extrairMensagemErro(dados))
+    }
+
+    return (dados as { mensagem?: string } | null)?.mensagem ?? "Senha trocada."
+}
+
+/**
  * Primeiro passo do cadastro: guarda os dados e devolve o que está à venda.
  *
  * A conta ainda NÃO existe aqui — ela só nasce depois do pagamento (ver

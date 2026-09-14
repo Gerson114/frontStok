@@ -28,7 +28,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# ATENÇÃO — estas três são CONGELADAS aqui dentro.
+# ATENÇÃO — estas são CONGELADAS aqui dentro.
 #
 # Variáveis NEXT_PUBLIC_* são substituídas por texto fixo dentro do pacote que
 # vai ao navegador, durante o build. Passá-las na hora de subir o container
@@ -40,8 +40,19 @@ COPY . .
 ARG NEXT_PUBLIC_WS_URL
 ARG NEXT_PUBLIC_VITRINE_URL
 
+# O endereço público do BACKEND, como o mundo o alcança.
+#
+# Ele não serve para o painel falar com a API — isso é API_URL, lida no
+# servidor. Serve para MOSTRAR ao lojista o endereço do webhook que ele vai
+# colar no painel da Meta (ver components/whatsapp/conectar.tsx). Sem esta
+# variável a tela mostra "https://seu-servidor/public/whatsapp/webhook", o
+# lojista cola isso lá, e o WhatsApp da loja nunca recebe mensagem nenhuma —
+# sem erro em lugar nenhum, porque do lado de cá não chega nada para falhar.
+ARG NEXT_PUBLIC_API_PUBLICA
+
 ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_VITRINE_URL=$NEXT_PUBLIC_VITRINE_URL
+ENV NEXT_PUBLIC_API_PUBLICA=$NEXT_PUBLIC_API_PUBLICA
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

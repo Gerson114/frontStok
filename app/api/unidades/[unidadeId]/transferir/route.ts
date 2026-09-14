@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { validarTransferencia, type NovaTransferencia } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { estoque } from "@/app/api/rotas"
 
 
@@ -48,6 +48,7 @@ export async function POST(
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },

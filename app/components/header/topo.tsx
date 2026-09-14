@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Marca } from "@/app/components/marca/marca"
 import { usePathname } from "next/navigation"
+import { MARCA } from "@/app/marca"
 
 // Âncoras das seções da landing. Fora de "/" elas viram links para a página
 // inicial com o hash, para o topo funcionar igual em login e cadastro.
@@ -13,15 +14,19 @@ const SECOES: { nome: string; hash: string }[] = [
     { nome: "Como funciona", hash: "#como-funciona" },
     { nome: "Recursos", hash: "#recursos" },
     { nome: "Vitrine", hash: "#vitrine" },
-    { nome: "Assinatura", hash: "#assinatura" },
+
+    // "Planos", e não "Assinatura": são dois agora — o de entrada e o Pro —, e
+    // a palavra no menu é a pergunta que o visitante está fazendo.
+    { nome: "Planos", hash: "#planos" },
+    { nome: "Perguntas", hash: "#perguntas" },
 ]
 
 /**
  * Topo das páginas públicas (landing, login e cadastro).
  *
  * Barra branca com borda fria — a mesma anatomia de cabeçalho do painel
- * (referência: Magalu). O botão de conta da página em que o visitante já
- * está sai de cena: em /login sobra "Criar conta", em /cadastro sobra
+ * (referência: Shopify Admin/Polaris). O botão de conta da página em que o
+ * visitante já está sai de cena: em /login sobra "Criar conta", em /cadastro sobra
  * "Entrar", e na landing aparecem os dois.
  */
 export default function Topo() {
@@ -36,7 +41,7 @@ export default function Topo() {
                 <Link href="/" className="flex shrink-0 items-center gap-2.5">
                     <Marca />
                     <span className="font-display text-lg text-[#303030]">
-                        Arara
+                        {MARCA}
                     </span>
                 </Link>
 

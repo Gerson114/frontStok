@@ -3,7 +3,7 @@
 // /api/loja, como o resto do painel.
 
 import { apiFetch } from "./client"
-import type { Bloco, Loja } from "@/app/type/type"
+import type { Bloco, Cartao, Loja } from "@/app/type/type"
 
 export async function consultarLoja(): Promise<Loja> {
     return apiFetch<Loja>("/api/loja")
@@ -17,6 +17,10 @@ export interface DadosDaLoja {
     telefone: string
     endereco: string
     horario: string
+
+    /** Onde a loja fica no mapa. Nulo apaga o que estava lá. */
+    latitude: number | null
+    longitude: number | null
 }
 
 /**
@@ -42,15 +46,71 @@ export async function salvarLoja(dados: DadosDaLoja): Promise<Loja> {
  * já limpa. A tela mostra o que voltou, e não o que mandou, justamente para o
  * lojista ver o que de fato ficou gravado.
  */
-export async function consultarPaginaDaLoja(): Promise<Bloco[]> {
-    const dados = await apiFetch<{ blocos?: Bloco[] }>("/api/loja/pagina")
-    return Array.isArray(dados.blocos) ? dados.blocos : []
+/**
+ * Uma palavra editável da vitrine, como o servidor a descreve.
+ *
+ * O catálogo inteiro vem de lá — rótulo, explicação, PADRÃO e limite de cada
+ * chave. O painel não guarda uma segunda cópia desses textos de propósito:
+ * duas listas das mesmas frases é como uma delas passa a mostrar ao lojista um
+ * padrão que a loja dele não usa mais. Palavra nova aparece nesta tela assim
+ * que o servidor a conhece.
+ */
+export interface TextoEditavel {
+    chave: string
+    area: string
+    rotulo: string
+    ajuda?: string
+    padrao: string
+    maximo: number
 }
 
-export async function salvarPaginaDaLoja(blocos: Bloco[]): Promise<Bloco[]> {
+export interface AreaDeTexto {
+    chave: string
+    nome: string
+}
+
+/** A home da loja: os blocos, as palavras reescritas e o catálogo delas. */
+export interface PaginaDaLoja {
+    blocos: Bloco[]
+
+    /** Só o que a loja reescreveu. Chave ausente quer dizer "use o padrão". */
+    textos: Record<string, string>
+
+    catalogo: TextoEditavel[]
+    areas: AreaDeTexto[]
+
+    /** Os cartões de fábrica, para o botão de recomeçar a faixa. */
+    cartoes_padrao: Cartao[]
+}
+
+export async function consultarPaginaDaLoja(): Promise<PaginaDaLoja> {
+
+    const dados = await apiFetch<Partial<PaginaDaLoja>>("/api/loja/pagina")
+
+    return {
+        blocos: Array.isArray(dados.blocos) ? dados.blocos : [],
+        textos: dados.textos && typeof dados.textos === "object" ? dados.textos : {},
+        catalogo: Array.isArray(dados.catalogo) ? dados.catalogo : [],
+        areas: Array.isArray(dados.areas) ? dados.areas : [],
+        cartoes_padrao: Array.isArray(dados.cartoes_padrao) ? dados.cartoes_padrao : [],
+    }
+}
+
+/**
+ * Grava a página inteira: o que ela mostra e com que palavras.
+ *
+ * Os dois juntos, numa requisição só, porque são a mesma página para a loja —
+ * salvar o layout sem os textos poria no ar a faixa nova escrita com as
+ * palavras velhas.
+ */
+export async function salvarPaginaDaLoja(
+    blocos: Bloco[],
+    textos: Record<string, string>,
+): Promise<Bloco[]> {
+
     const dados = await apiFetch<{ blocos?: Bloco[] }>("/api/loja/pagina", {
         method: "PUT",
-        body: { blocos },
+        body: { blocos, textos },
     })
 
     return Array.isArray(dados.blocos) ? dados.blocos : []

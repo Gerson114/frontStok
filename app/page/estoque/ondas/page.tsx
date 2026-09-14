@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { Fragment, useCallback, useEffect, useState } from "react"
 import {
     abrirOnda,
     cancelarOnda,
@@ -18,11 +18,19 @@ import {
     FiCheckCircle,
     FiChevronDown,
     FiChevronUp,
+    FiLayers,
     FiMapPin,
     FiPlusCircle,
     FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    RodapeDaLista,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * Separar pedidos: vários numa volta só pelo estoque — a onda.
@@ -74,6 +82,10 @@ export default function Ondas() {
     // quem separa lê no celular enquanto anda.
     const [paradas, setParadas] = useState<ParadaDaOnda[]>([])
 
+    // A aba aberta e o texto que recorta a lista (ver components/lista/lista.tsx).
+    const [visao, setVisao] = useState("abertas")
+    const [busca, setBusca] = useState("")
+
     const [aberta, setAberta] = useState<OndaDetalhada | null>(null)
     const [carregandoOnda, setCarregandoOnda] = useState<number | null>(null)
 
@@ -83,7 +95,7 @@ export default function Ondas() {
             const [lista, listaPedidos] = await Promise.all([listarOndas(), listarPedidos()])
 
             setOndas(lista)
-            setPedidos(listaPedidos)
+            setPedidos(listaPedidos.pedidos)
             setErro("")
 
         } catch (e) {
@@ -175,6 +187,24 @@ export default function Ondas() {
             setErro(e instanceof ApiError ? e.message : "Não foi possível cancelar a onda.")
         }
     }
+
+    /*
+     * Onda encerrada (concluída ou cancelada) sai da aba padrão: ela não é
+     * trabalho, é histórico — e uma lista que mistura as duas faz procurar a
+     * onda de hoje no meio das de semana passada.
+     */
+    const encerrada = (situacao: string) => situacao === "concluida" || situacao === "cancelada"
+
+    const abertasCount = ondas.filter((o) => !encerrada(o.situacao)).length
+    const encerradasCount = ondas.filter((o) => encerrada(o.situacao)).length
+
+    const termo = busca.trim().toLowerCase()
+
+    const ondasVisiveis = ondas
+        .filter((o) =>
+            visao === "abertas" ? !encerrada(o.situacao) : visao === "encerradas" ? encerrada(o.situacao) : true
+        )
+        .filter((o) => !termo || o.codigo.toLowerCase().includes(termo))
 
     return (
         <Pagina
@@ -339,145 +369,203 @@ export default function Ondas() {
 
             {/* ==========================
                 ONDAS DA LOJA
+                Eram cartões empilhados; agora uma linha por onda, com a onda
+                aberta expandindo NA LINHA — as paradas e as tarefas só fazem
+                sentido ao lado do código e da situação dela.
             ========================== */}
 
-            {!carregando && ondas.length > 0 && (
+            <ListaDeRecursos>
 
-                <ul className="space-y-3">
+                <Visoes
+                    visoes={[
+                        { chave: "abertas", nome: "Em andamento", contagem: abertasCount },
+                        { chave: "encerradas", nome: "Encerradas", contagem: encerradasCount },
+                        { chave: "todas", nome: "Todas", contagem: ondas.length },
+                    ]}
+                    ativa={visao}
+                    aoTrocar={setVisao}
+                />
 
-                    {ondas.map((onda) => {
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={setBusca}
+                    placeholder="Buscar pelo código da onda"
+                />
 
-                        const detalhada = aberta?.onda.id === onda.id ? aberta : null
-                        const encerrada = onda.situacao === "concluida" || onda.situacao === "cancelada"
+                {carregando ? (
 
-                        return (
-                            <li key={onda.id} className="card p-5">
+                    <p className="px-4 py-14 text-center text-sm text-[#616161]">Carregando as ondas...</p>
 
-                                <div className="flex flex-wrap items-start justify-between gap-3">
+                ) : ondasVisiveis.length === 0 ? (
 
-                                    <div className="min-w-0">
+                    <ListaVazia
+                        icone={FiLayers}
+                        titulo={ondas.length === 0 ? "Nenhuma onda aberta ainda" : "Nada nesta aba"}
+                    >
+                        {ondas.length === 0
+                            ? "Escolha os pedidos acima e abra a primeira onda: o sistema monta o caminho pelo estoque uma vez, para todos eles juntos."
+                            : "Nenhuma onda desta aba casa com o filtro."}
+                    </ListaVazia>
 
-                                        <p className="font-display num text-base text-[#303030]">
-                                            {onda.codigo}
-                                        </p>
+                ) : (
 
-                                        <p className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <div className="overflow-x-auto">
 
-                                            <span className={`tag ${COR_DA_SITUACAO[onda.situacao] ?? "tag-neutral"}`}>
-                                                {NOME_DA_SITUACAO[onda.situacao] ?? onda.situacao}
-                                            </span>
+                        <table className="tabela">
 
-                                            <span className="tag tag-neutral num">
-                                                {onda.pedidos} pedido(s)
-                                            </span>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Onda</th>
+                                    <th scope="col">Situação</th>
+                                    <th scope="col" className="text-right">Pedidos</th>
+                                    <th scope="col" className="text-right">Peças</th>
+                                    <th scope="col" className="text-right">Paradas</th>
+                                    <th scope="col"><span className="sr-only">Ações</span></th>
+                                </tr>
+                            </thead>
 
-                                            <span className="tag tag-neutral num">
-                                                {onda.pecas} peça(s)
-                                            </span>
+                            <tbody>
 
-                                            <span className="tag tag-neutral num">
-                                                {onda.paradas} parada(s)
-                                            </span>
+                                {ondasVisiveis.map((onda) => {
 
-                                        </p>
+                                    const detalhada = aberta?.onda.id === onda.id ? aberta : null
+                                    const encerrada = onda.situacao === "concluida" || onda.situacao === "cancelada"
 
-                                    </div>
+                                    return (
+                                        <Fragment key={onda.id}>
 
-                                    <div className="flex shrink-0 gap-2">
+                                            <tr>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => alternarDetalhe(onda)}
-                                            disabled={carregandoOnda === onda.id}
-                                            className="btn btn-neutro text-sm"
-                                        >
-                                            {detalhada ? (
-                                                <FiChevronUp className="w-4" aria-hidden />
-                                            ) : (
-                                                <FiChevronDown className="w-4" aria-hidden />
-                                            )}
-                                            {carregandoOnda === onda.id ? "..." : "Ver"}
-                                        </button>
+                                                <td className="num font-medium text-[#303030]">
+                                                    {onda.codigo}
+                                                </td>
 
-                                        {!encerrada && (
-                                            <button
-                                                type="button"
-                                                onClick={() => cancelar(onda)}
-                                                aria-label="Cancelar onda"
-                                                className="btn btn-neutro text-sm"
-                                            >
-                                                <FiX className="w-4" aria-hidden />
-                                            </button>
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-                                {detalhada && (
-
-                                    <div className="mt-4 border-t border-[#E1E1E1] pt-4">
-
-                                        <p className="text-sm text-[#616161]">
-                                            Pedidos:{" "}
-                                            <span className="num text-[#303030]">
-                                                {detalhada.pedidos.join(", ") || "—"}
-                                            </span>
-                                        </p>
-
-                                        <ul className="mt-3 space-y-2">
-
-                                            {detalhada.tarefas.map((tarefa) => (
-
-                                                <li
-                                                    key={tarefa.id}
-                                                    className="flex flex-wrap items-center justify-between gap-2 text-sm"
-                                                >
-
-                                                    <span className="min-w-0 truncate text-[#303030]">
-                                                        <span className="num text-[#616161]">{tarefa.quantidade}x</span>{" "}
-                                                        {tarefa.produto_nome ?? `Produto #${tarefa.produto_id}`}
+                                                <td>
+                                                    <span className={`tag ${COR_DA_SITUACAO[onda.situacao] ?? "tag-neutral"}`}>
+                                                        {NOME_DA_SITUACAO[onda.situacao] ?? onda.situacao}
                                                     </span>
+                                                </td>
 
-                                                    <span className="flex shrink-0 items-center gap-2">
+                                                <td className="num text-right text-[#303030]">{onda.pedidos}</td>
+                                                <td className="num text-right text-[#303030]">{onda.pecas}</td>
+                                                <td className="num text-right text-[#616161]">{onda.paradas}</td>
 
-                                                        {tarefa.origem && (
-                                                            <span className="num font-medium text-[#00369B]">
-                                                                {tarefa.origem}
-                                                            </span>
+                                                <td>
+                                                    <div className="flex justify-end gap-1.5">
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => alternarDetalhe(onda)}
+                                                            disabled={carregandoOnda === onda.id}
+                                                            className="btn btn-neutro text-xs"
+                                                        >
+                                                            {detalhada ? (
+                                                                <FiChevronUp className="w-3.5" aria-hidden />
+                                                            ) : (
+                                                                <FiChevronDown className="w-3.5" aria-hidden />
+                                                            )}
+                                                            {carregandoOnda === onda.id ? "..." : "Ver"}
+                                                        </button>
+
+                                                        {!encerrada && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => cancelar(onda)}
+                                                                aria-label="Cancelar onda"
+                                                                title="Cancelar onda"
+                                                                className="btn btn-neutro px-2 text-xs"
+                                                            >
+                                                                <FiX className="w-3.5" aria-hidden />
+                                                            </button>
                                                         )}
 
-                                                        <span className="tag tag-neutral">
-                                                            {tarefa.situacao === "em_andamento"
-                                                                ? "em andamento"
-                                                                : tarefa.situacao}
-                                                        </span>
+                                                    </div>
+                                                </td>
 
-                                                    </span>
+                                            </tr>
 
-                                                </li>
+                                            {detalhada && (
+                                                <tr>
+                                                    <td colSpan={6} className="bg-[#FAFAFA]">
 
-                                            ))}
+                                                        <p className="text-sm text-[#616161]">
+                                                            Pedidos:{" "}
+                                                            <span className="num text-[#303030]">
+                                                                {detalhada.pedidos.join(", ") || "—"}
+                                                            </span>
+                                                        </p>
 
-                                        </ul>
+                                                        {detalhada.tarefas.length === 0 ? (
 
-                                        {detalhada.tarefas.length === 0 && (
-                                            <p className="mt-3 text-sm text-[#616161]">
-                                                Esta onda não tem tarefas na fila.
-                                            </p>
-                                        )}
+                                                            <p className="mt-3 text-sm text-[#616161]">
+                                                                Esta onda não tem tarefas na fila.
+                                                            </p>
 
-                                    </div>
+                                                        ) : (
 
-                                )}
+                                                            <ul className="mt-3 space-y-2">
 
-                            </li>
-                        )
-                    })}
+                                                                {detalhada.tarefas.map((tarefa) => (
 
-                </ul>
+                                                                    <li
+                                                                        key={tarefa.id}
+                                                                        className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                                                                    >
 
-            )}
+                                                                        <span className="min-w-0 truncate text-[#303030]">
+                                                                            <span className="num text-[#616161]">{tarefa.quantidade}x</span>{" "}
+                                                                            {tarefa.produto_nome ?? `Produto #${tarefa.produto_id}`}
+                                                                        </span>
+
+                                                                        <span className="flex shrink-0 items-center gap-2">
+
+                                                                            {tarefa.origem && (
+                                                                                <span className="num font-medium text-[#00369B]">
+                                                                                    {tarefa.origem}
+                                                                                </span>
+                                                                            )}
+
+                                                                            <span className="tag tag-neutral">
+                                                                                {tarefa.situacao === "em_andamento"
+                                                                                    ? "em andamento"
+                                                                                    : tarefa.situacao}
+                                                                            </span>
+
+                                                                        </span>
+
+                                                                    </li>
+
+                                                                ))}
+
+                                                            </ul>
+
+                                                        )}
+
+                                                    </td>
+                                                </tr>
+                                            )}
+
+                                        </Fragment>
+                                    )
+                                })}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                )}
+
+                <RodapeDaLista
+                    primeiro={1}
+                    ultimo={ondasVisiveis.length}
+                    total={ondasVisiveis.length}
+                    nome="ondas"
+                />
+
+            </ListaDeRecursos>
+
 
         </Pagina>
     )

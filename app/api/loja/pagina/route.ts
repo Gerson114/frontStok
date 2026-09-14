@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { paginaDaLoja } from "@/app/api/rotas"
 
 /**
@@ -48,6 +48,7 @@ async function encaminhar(metodo: "GET" | "PUT", corpo?: unknown) {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo !== undefined ? { "Content-Type": "application/json" } : {}),
             },

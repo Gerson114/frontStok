@@ -16,6 +16,7 @@ import {
     FiMove,
     FiPlus,
     FiRotateCcw,
+    FiShield,
     FiTrash2,
     FiType,
 } from "react-icons/fi"
@@ -29,8 +30,10 @@ import {
     consultarTema,
     TEMA_DE_FABRICA,
     type TemaLoja,
+    type TextoEditavel,
+    type AreaDeTexto,
 } from "@/middleware/loja"
-import type { Bloco } from "@/app/type/type"
+import type { Bloco, Cartao } from "@/app/type/type"
 import Previa from "./previa"
 import {
     achatar,
@@ -113,6 +116,12 @@ const CATALOGO: TipoDeBloco[] = [
         unico: true,
     },
     {
+        tipo: "cartoes",
+        nome: "Faixa de cartões",
+        descricao: "Os selos de confiança: compra segura, entrega, contato.",
+        Icone: FiShield,
+    },
+    {
         tipo: "texto",
         nome: "Texto",
         descricao: "Um título e um parágrafo seus.",
@@ -142,8 +151,14 @@ function doCatalogo(tipo: string): TipoDeBloco | undefined {
     return CATALOGO.find((item) => item.tipo === tipo)
 }
 
-/** Um bloco novo, já com o padrão de cada tipo preenchido. */
-function novoBloco(tipo: string): Bloco {
+/**
+ * Um bloco novo, já com o padrão de cada tipo preenchido.
+ *
+ * Os cartões de fábrica vêm do SERVIDOR (ver paginas.CartoesDeFabrica) e não
+ * são escritos aqui: são as mesmas palavras que a vitrine mostrava fixas, e
+ * mantê-las em dois lugares é como uma das cópias envelhece.
+ */
+function novoBloco(tipo: string, cartoesPadrao: Cartao[] = []): Bloco {
 
     // Id só precisa ser único dentro da página — e legível, para quem for
     // olhar o JSON gravado entender o que é.
@@ -156,6 +171,10 @@ function novoBloco(tipo: string): Bloco {
             return { id, tipo, colunas: [[], []], fundo: "nenhum", largura: "normal" }
         case "prateleira":
             return { id, tipo, titulo: "Destaques", fonte: "ofertas", quantidade: 8 }
+        case "cartoes":
+            // Nasce com os selos de fábrica: uma faixa vazia não mostraria
+            // nada, e o lojista não teria de onde partir para reescrever.
+            return { id, tipo, cartoes: cartoesPadrao.map((cartao) => ({ ...cartao })) }
         case "texto":
             return { id, tipo, titulo: "Sobre a loja", texto: "", alinhamento: "esquerda" }
         case "faixa":
@@ -172,6 +191,15 @@ function novoBloco(tipo: string): Bloco {
 export default function EditorDaHome() {
 
     const [blocos, setBlocos] = useState<Bloco[]>([])
+
+    // As palavras que esta loja reescreveu, e o catálogo de tudo o que é
+    // editável. O catálogo vem do servidor com rótulo, explicação e PADRÃO de
+    // cada chave — o painel não guarda uma segunda cópia dessas frases.
+    const [textos, setTextos] = useState<Record<string, string>>({})
+    const [catalogo, setCatalogo] = useState<TextoEditavel[]>([])
+    const [areas, setAreas] = useState<AreaDeTexto[]>([])
+    const [cartoesPadrao, setCartoesPadrao] = useState<Cartao[]>([])
+
     const [escolhido, setEscolhido] = useState<string | null>(null)
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
@@ -203,7 +231,11 @@ export default function EditorDaHome() {
 
                 if (!vivo) return
 
-                setBlocos(pagina)
+                setBlocos(pagina.blocos)
+                setTextos(pagina.textos)
+                setCatalogo(pagina.catalogo)
+                setAreas(pagina.areas)
+                setCartoesPadrao(pagina.cartoes_padrao)
                 setSlug(loja.slug)
                 setTema(aparencia)
 
@@ -246,7 +278,7 @@ export default function EditorDaHome() {
             return
         }
 
-        const bloco = novoBloco(tipo)
+        const bloco = novoBloco(tipo, cartoesPadrao)
 
         const lugar: Caminho = destino ?? { secao: null, coluna: 0, indice: blocos.length }
 
@@ -283,6 +315,41 @@ export default function EditorDaHome() {
 
     function editar(id: string, campo: keyof Bloco, valor: string | number) {
         setBlocos((atuais) => editarNaArvore(atuais, id, (bloco) => ({ ...bloco, [campo]: valor })))
+        mexeu()
+    }
+
+    /**
+     * Mexe nos cartões de uma faixa: escrever, acrescentar, tirar, reordenar.
+     *
+     * Uma função só, recebendo a lista inteira já mudada, em vez de quatro
+     * (editar campo, adicionar, remover, mover): a faixa é um campo do bloco
+     * como qualquer outro, e quatro caminhos para escrever no mesmo lugar é
+     * como um deles esquece de marcar a página como alterada.
+     */
+    function mexerNosCartoes(id: string, cartoes: Cartao[]) {
+        setBlocos((atuais) => editarNaArvore(atuais, id, (bloco) => ({ ...bloco, cartoes })))
+        mexeu()
+    }
+
+    /** Escreve uma palavra da loja. Vazio volta ao padrão do sistema. */
+    function escreverTexto(chave: string, valor: string) {
+
+        setTextos((atuais) => {
+
+            const proximos = { ...atuais }
+
+            if (valor.trim() === "") {
+                // Apagar o campo é dizer "volte a falar por mim": a chave sai
+                // do mapa, e o padrão do sistema vale de novo — inclusive os
+                // padrões melhores que vierem depois.
+                delete proximos[chave]
+            } else {
+                proximos[chave] = valor
+            }
+
+            return proximos
+        })
+
         mexeu()
     }
 
@@ -324,7 +391,7 @@ export default function EditorDaHome() {
             // servidor. A tela adota essa versão em vez da que mandou: assim
             // o lojista vê o texto cortado no limite e o link recusado, em
             // vez de continuar vendo na tela algo que o banco não tem.
-            setBlocos(await salvarPaginaDaLoja(blocos))
+            setBlocos(await salvarPaginaDaLoja(blocos, textos))
             setSalvo(true)
 
         } catch (e) {
@@ -625,6 +692,8 @@ export default function EditorDaHome() {
                                 bloco={selecionado}
                                 aoEditar={editar}
                                 aoMudarColunas={mudarColunas}
+                                aoMexerNosCartoes={mexerNosCartoes}
+                                cartoesPadrao={cartoesPadrao}
                             />
                         ) : (
                             <p className="py-6 text-center text-sm text-[#8A8A8A]">
@@ -636,6 +705,62 @@ export default function EditorDaHome() {
                 </section>
 
             </div>
+
+            {/* ==========================
+                AS PALAVRAS DA LOJA
+
+                Fica nesta tela, e não numa própria, porque é a mesma pergunta
+                do editor: como a minha loja se apresenta. Numa tela à parte, o
+                lojista teria de lembrar que existe — e sairia daqui achando
+                que "sacola" é palavra do sistema, imutável.
+            ========================== */}
+            <section className="card overflow-hidden">
+
+                <h2 className="border-b border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#616161]">
+                    As palavras da loja
+                </h2>
+
+                <p className="border-b border-[#EBEBEB] px-4 py-3 text-xs leading-relaxed text-[#616161]">
+                    O que a vitrine escreve sozinha — o botão de fechar o pedido, o aviso de
+                    estoque, os títulos do rodapé. Campo vazio quer dizer &quot;escreva por
+                    mim&quot;: fica o texto sugerido, em cinza, e ele acompanha as melhorias do
+                    sistema. Escreveu, é seu.
+                </p>
+
+                {areas.map((area) => {
+
+                    const doGrupo = catalogo.filter((texto) => texto.area === area.chave)
+
+                    if (doGrupo.length === 0) return null
+
+                    return (
+                        <div key={area.chave} className="border-b border-[#EBEBEB] px-4 py-4 last:border-b-0">
+
+                            <p className="rotulo mb-3 text-[#8A8A8A]">{area.nome}</p>
+
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {doGrupo.map((texto) => (
+                                    <Campo key={texto.chave} rotulo={texto.rotulo} ajuda={texto.ajuda}>
+                                        <input
+                                            className="field"
+                                            maxLength={texto.maximo}
+                                            /* O padrão do sistema vai no placeholder, e não
+                                               no valor: assim o campo vazio MOSTRA o que a
+                                               loja está dizendo hoje sem gravar aquilo como
+                                               escolha dela. */
+                                            placeholder={texto.padrao}
+                                            value={textos[texto.chave] ?? ""}
+                                            onChange={(e) => escreverTexto(texto.chave, e.target.value)}
+                                        />
+                                    </Campo>
+                                ))}
+                            </div>
+
+                        </div>
+                    )
+                })}
+
+            </section>
 
             <div className="flex items-center justify-between gap-4">
                 <p className="text-xs leading-relaxed text-[#8A8A8A]">
@@ -806,6 +931,12 @@ function resumoDoBloco(bloco: Bloco): string {
             return bloco.titulo || bloco.texto || "sem texto"
         case "imagem":
             return bloco.imagem_url ? bloco.alt || bloco.imagem_url : "sem imagem"
+        case "cartoes": {
+            const quantos = bloco.cartoes?.length ?? 0
+            return quantos === 0
+                ? "nenhum cartão"
+                : `${quantos} cartão(ões) · ${bloco.cartoes?.[0]?.titulo ?? ""}`
+        }
         case "espaco":
             return bloco.altura === "grande" ? "grande" : bloco.altura === "pequeno" ? "pequeno" : "médio"
         default:
@@ -826,10 +957,14 @@ function Ajustes({
     bloco,
     aoEditar,
     aoMudarColunas,
+    aoMexerNosCartoes,
+    cartoesPadrao,
 }: {
     bloco: Bloco
     aoEditar: (id: string, campo: keyof Bloco, valor: string | number) => void
     aoMudarColunas: (id: string, quantas: number) => void
+    aoMexerNosCartoes: (id: string, cartoes: Cartao[]) => void
+    cartoesPadrao: Cartao[]
 }) {
 
     const mudar = (campo: keyof Bloco) => (
@@ -989,6 +1124,159 @@ function Ajustes({
                 </div>
             )
 
+        case "cartoes": {
+
+            const cartoes = bloco.cartoes ?? []
+
+            /** Troca um campo de UM cartão, mantendo os outros como estão. */
+            const mudarCartao = (indice: number, campo: keyof Cartao) => (
+                e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+            ) =>
+                aoMexerNosCartoes(
+                    bloco.id,
+                    cartoes.map((cartao, i) => (i === indice ? { ...cartao, [campo]: e.target.value } : cartao)),
+                )
+
+            return (
+                <div className="space-y-4">
+
+                    <Campo rotulo="Nome da faixa" ajuda="Não aparece na loja: é como leitores de tela a anunciam.">
+                        <input className="field" maxLength={80} value={bloco.titulo ?? ""} onChange={mudar("titulo")} />
+                    </Campo>
+
+                    <div className="space-y-3">
+
+                        {cartoes.map((cartao, indice) => (
+
+                            <div key={indice} className="space-y-2.5 rounded-lg border border-[#E1E1E1] bg-[#FAFAFA] p-3">
+
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                        Cartão {indice + 1}
+                                    </span>
+
+                                    <span className="flex items-center">
+                                        <button
+                                            type="button"
+                                            aria-label={`Subir o cartão ${indice + 1}`}
+                                            disabled={indice === 0}
+                                            onClick={() => aoMexerNosCartoes(bloco.id, trocar(cartoes, indice, indice - 1))}
+                                            className="p-1 text-[#616161] hover:text-[#303030] disabled:opacity-30"
+                                        >
+                                            <FiArrowUp className="w-3.5" aria-hidden />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            aria-label={`Descer o cartão ${indice + 1}`}
+                                            disabled={indice === cartoes.length - 1}
+                                            onClick={() => aoMexerNosCartoes(bloco.id, trocar(cartoes, indice, indice + 1))}
+                                            className="p-1 text-[#616161] hover:text-[#303030] disabled:opacity-30"
+                                        >
+                                            <FiArrowDown className="w-3.5" aria-hidden />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            aria-label={`Tirar o cartão ${indice + 1}`}
+                                            onClick={() =>
+                                                aoMexerNosCartoes(bloco.id, cartoes.filter((_, i) => i !== indice))
+                                            }
+                                            className="p-1 text-[#8A8A8A] hover:text-[#8E1F0B]"
+                                        >
+                                            <FiTrash2 className="w-3.5" aria-hidden />
+                                        </button>
+                                    </span>
+                                </div>
+
+                                <Campo rotulo="Ícone">
+                                    <select
+                                        className="field cursor-pointer"
+                                        value={cartao.icone ?? "cadeado"}
+                                        onChange={mudarCartao(indice, "icone")}
+                                    >
+                                        {ICONES.map((icone) => (
+                                            <option key={icone.chave} value={icone.chave}>
+                                                {icone.nome}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Campo>
+
+                                <Campo rotulo="Título">
+                                    <input
+                                        className="field"
+                                        maxLength={44}
+                                        value={cartao.titulo ?? ""}
+                                        onChange={mudarCartao(indice, "titulo")}
+                                    />
+                                </Campo>
+
+                                <Campo rotulo="Explicação" ajuda="Some no celular: o título tem de se sustentar sozinho.">
+                                    <input
+                                        className="field"
+                                        maxLength={120}
+                                        value={cartao.texto ?? ""}
+                                        onChange={mudarCartao(indice, "texto")}
+                                    />
+                                </Campo>
+
+                                <Campo rotulo="Link (opcional)" ajuda="Para onde o cartão leva. Vazio: não é clicável.">
+                                    <input
+                                        className="field"
+                                        maxLength={300}
+                                        placeholder="/privacidade"
+                                        value={cartao.link ?? ""}
+                                        onChange={mudarCartao(indice, "link")}
+                                    />
+                                </Campo>
+
+                            </div>
+                        ))}
+
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            disabled={cartoes.length >= 6}
+                            onClick={() =>
+                                aoMexerNosCartoes(bloco.id, [
+                                    ...cartoes,
+                                    { icone: "estrela", titulo: "", texto: "" },
+                                ])
+                            }
+                            className="btn btn-neutro disabled:opacity-40"
+                        >
+                            <FiPlus className="w-4" aria-hidden />
+                            Mais um cartão
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => aoMexerNosCartoes(bloco.id, cartoesPadrao.map((cartao) => ({ ...cartao })))}
+                            className="btn btn-neutro"
+                        >
+                            <FiRotateCcw className="w-4" aria-hidden />
+                            Voltar aos de fábrica
+                        </button>
+                    </div>
+
+                    <p className="text-xs leading-relaxed text-[#8A8A8A]">
+                        Entre chaves, o sistema troca pelo dado real da loja:{" "}
+                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{pagamentos}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{telefone}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{whatsapp}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{endereco}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{horario}"}</code> e{" "}
+                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{loja}"}</code>. O cartão cujo
+                        título ficar vazio (a loja sem aquele dado) não aparece na vitrine.
+                    </p>
+
+                </div>
+            )
+        }
+
         case "espaco":
             return (
                 <Campo rotulo="Tamanho do respiro">
@@ -1008,6 +1296,40 @@ function Ajustes({
                 </p>
             )
     }
+}
+
+/**
+ * Os ícones que a vitrine sabe desenhar, com o nome que o lojista lê.
+ *
+ * As CHAVES são as mesmas do servidor (ver paginas.icones): o que se grava é a
+ * chave, e quem a transforma em desenho é a vitrine. Nome novo aqui sem chave
+ * nova lá vira um cartão sem ícone.
+ */
+const ICONES = [
+    { chave: "cadeado", nome: "Cadeado (segurança)" },
+    { chave: "cartao", nome: "Cartão (pagamento)" },
+    { chave: "caixa", nome: "Caixa (pedido)" },
+    { chave: "fone", nome: "Fone (atendimento)" },
+    { chave: "caminhao", nome: "Caminhão (entrega)" },
+    { chave: "troca", nome: "Setas (troca)" },
+    { chave: "relogio", nome: "Relógio (prazo)" },
+    { chave: "estrela", nome: "Estrela (destaque)" },
+    { chave: "presente", nome: "Presente (brinde)" },
+    { chave: "mapa", nome: "Mapa (endereço)" },
+    { chave: "escudo", nome: "Escudo (garantia)" },
+    { chave: "etiqueta", nome: "Etiqueta (preço)" },
+]
+
+/** Troca dois itens de lugar numa lista, sem mexer na original. */
+function trocar<T>(lista: T[], de: number, para: number): T[] {
+
+    if (para < 0 || para >= lista.length) return lista
+
+    const copia = [...lista]
+    const [item] = copia.splice(de, 1)
+    copia.splice(para, 0, item)
+
+    return copia
 }
 
 function Campo({ rotulo, ajuda, children }: { rotulo: string; ajuda?: string; children: React.ReactNode }) {

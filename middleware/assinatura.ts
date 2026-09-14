@@ -47,14 +47,35 @@ export function formatarCentavos(centavos: number, moeda?: string): string {
  * cobrança. Quem chama deve levar o navegador até ela com
  * `window.location.href`.
  *
- * Nada é enviado: o preço é resolvido no backend, para o navegador não ter
- * como assinar por um valor que não é o nosso.
+ * Vai só QUAL PLANO, nunca o preço: quem traduz "pro" em id de cobrança é o
+ * backend, para o navegador não ter como assinar por um valor que não é o
+ * nosso. Sem argumento é o base.
  */
-export async function iniciarPagamento(): Promise<string> {
+export async function iniciarPagamento(plano: "base" | "pro" = "base"): Promise<string> {
     const dados = await apiFetch<RespostaLink>("/api/assinatura/checkout", {
         method: "POST",
+        body: { plano },
     })
     return dados.url
+}
+
+/**
+ * Troca o plano de quem JÁ assina — do base para o Pro, ou de volta.
+ *
+ * Não é o checkout, e não é o portal: o checkout criaria uma segunda
+ * assinatura na mesma loja, e o portal tem a troca de plano desligada de
+ * propósito no servidor (lá a subida não seria cobrada na hora). Aqui a
+ * assinatura existente muda de item, e subir é faturado imediatamente.
+ *
+ * Depois de trocar, a página precisa ser RECARREGADA de verdade: o menu do
+ * painel vem do servidor já resolvido para o plano, e o que está em memória
+ * continuaria mostrando as telas do Pro bloqueadas.
+ */
+export async function trocarDePlano(plano: "base" | "pro"): Promise<void> {
+    await apiFetch("/api/assinatura/plano", {
+        method: "POST",
+        body: { plano },
+    })
 }
 
 /**
@@ -75,6 +96,8 @@ export async function abrirPortalCobranca(): Promise<string> {
 export async function consultarOferta(): Promise<{
     cobranca_ativa: boolean
     tem_assinatura: boolean
+    /** Esta loja já está no Pro? Decide se o cartão dele oferece assinar. */
+    plano_pro?: boolean
     oferta: Oferta
 }> {
     return apiFetch("/api/assinatura/oferta")

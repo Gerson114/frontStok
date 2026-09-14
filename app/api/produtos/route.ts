@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao, sanitizeAtributos } from "@/security/sanitize"
 import { validarProduto, type NovoProduto } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { produtos } from "@/app/api/rotas"
 
 
@@ -49,6 +49,7 @@ export async function POST(request: Request) {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },

@@ -29,7 +29,6 @@ const ROTAS_PROTEGIDAS = [
     // de código ficaria exposto a quem nem sessão tem — que é o oposto de
     // exigir dois fatores.
     "/page/equipe",
-    "/page/venda",
     // Exige sessão como as demais, mas note que NÃO exige assinatura em dia:
     // é a tela onde o lojista bloqueado paga para voltar a ter acesso.
     "/page/assinatura",

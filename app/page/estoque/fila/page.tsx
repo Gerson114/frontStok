@@ -18,32 +18,55 @@ import {
     FiCheckCircle,
     FiClipboard,
     FiClock,
+    FiFilter,
     FiPlay,
     FiUser,
     FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { Selecao } from "@/app/components/campo/selecao"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    RodapeDaLista,
+    Visoes,
+    type Visao,
+} from "@/app/components/lista/lista"
 
 /**
  * A fila de trabalho do estoque.
  *
  * É a tela de quem está no chão da loja com o celular na mão: uma lista e
- * três botões — assumir, concluir, cancelar. Nada aqui decide o que precisa
- * ser feito nem em que ordem; isso já foi decidido pelo servidor quando a
- * tarefa nasceu (ver internal/services/estoque). Reordenar ou filtrar por
- * conta própria seria repetir a regra de prioridade em dois lugares, e no dia
- * em que ela mudasse a tela mandaria alguém à prateleira errada.
+ * três botões — assumir, concluir, cancelar.
  *
- * Concluir não é marcar concluído: é a hora em que a mercadoria se move de
- * verdade — o ressuprimento desce as peças do pulmão, a armazenagem tira da
- * doca. Por isso o botão é o último passo, e não o primeiro.
+ * ## O defeito que esta versão corrigiu
+ *
+ * A tela antiga imprimia dois números no topo, "Esperando alguém" e "Em
+ * andamento", e oferecia um seletor com três opções: Por fazer, Concluídas,
+ * Canceladas. Faltava justamente a que o número anunciava.
+ *
+ * Quem via "Em andamento 2" e ia procurar aquelas duas não tinha para onde
+ * ir: a opção não existia, e escolher qualquer outra fazia os contadores
+ * sumirem (eles só apareciam no modo sem filtro). O número existia sem
+ * resposta — e a impressão que ficava era a de que o sistema contava tarefas
+ * que não mostrava.
+ *
+ * Aqui o contador e o filtro são a MESMA coisa: cada situação é uma aba, e a
+ * contagem vive nela. Clicar em "Em andamento 2" mostra exatamente aquelas
+ * duas linhas, porque é a aba que faz a busca. Não há como o número e a lista
+ * discordarem quando são o mesmo elemento.
+ *
+ * A anatomia é a da lista de recursos do Shopify Admin (ver
+ * components/lista/lista.tsx).
  */
 
-const FILTROS: { chave: SituacaoTarefa | ""; nome: string }[] = [
-    { chave: "", nome: "Por fazer" },
-    { chave: "concluida", nome: "Concluídas" },
-    { chave: "cancelada", nome: "Canceladas" },
-]
+const COR_DO_TIPO: Record<string, string> = {
+    armazenagem: "bg-[#005BD3]",
+    ressuprimento: "bg-[#C7920A]",
+    separacao: "bg-[#0C5132]",
+    inventario: "bg-[#8E1F0B]",
+}
 
 const TIPOS: { chave: TipoTarefa | ""; nome: string }[] = [
     { chave: "", nome: "Todos os tipos" },
@@ -53,13 +76,25 @@ const TIPOS: { chave: TipoTarefa | ""; nome: string }[] = [
     { chave: "inventario", nome: "Contar endereço" },
 ]
 
-/** A cor da tarja diz o tipo de trabalho antes de a pessoa ler a linha. */
-const COR_DO_TIPO: Record<string, string> = {
-    armazenagem: "border-l-[#616161]",
-    ressuprimento: "border-l-[#005BD3]",
-    separacao: "border-l-[#0C5132]",
-    inventario: "border-l-[#C7920A]",
-}
+/*
+ * As abas.
+ *
+ * "Em aberto" é a soma das duas seguintes, e é o padrão porque é a pergunta
+ * de quem abre a tela para trabalhar: o que há para fazer agora. As duas
+ * abaixo dela recortam esse conjunto pela pergunta que vem em seguida — o que
+ * ninguém pegou, e o que alguém já está fazendo.
+ *
+ * Concluídas e canceladas não trazem contagem. Seria uma consulta a mais em
+ * cada abertura de tela para informar um número que ninguém usa para decidir
+ * nada: elas são histórico, e quem as abre quer a lista, não o total.
+ */
+const VISOES: { chave: string; nome: string; situacao: SituacaoTarefa | "" }[] = [
+    { chave: "aberto", nome: "Em aberto", situacao: "" },
+    { chave: "pendente", nome: "Esperando alguém", situacao: "pendente" },
+    { chave: "em_andamento", nome: "Em andamento", situacao: "em_andamento" },
+    { chave: "concluida", nome: "Concluídas", situacao: "concluida" },
+    { chave: "cancelada", nome: "Canceladas", situacao: "cancelada" },
+]
 
 export default function FilaDoEstoque() {
 
@@ -68,23 +103,53 @@ export default function FilaDoEstoque() {
     const [erro, setErro] = useState("")
     const [aviso, setAviso] = useState("")
 
-    const [situacao, setSituacao] = useState<SituacaoTarefa | "">("")
+    const [visao, setVisao] = useState("aberto")
     const [tipo, setTipo] = useState<TipoTarefa | "">("")
+    const [busca, setBusca] = useState("")
 
-    // Quem está mexendo agora, para o botão da linha desabilitar sozinho sem
-    // travar a lista inteira.
+    /*
+     * As contagens das abas, de uma consulta própria.
+     *
+     * Elas NÃO saem da lista que está na tela: se saíssem, a aba "Em
+     * andamento" mostraria zero enquanto se olha as concluídas — e voltaria a
+     * ser um número que não corresponde ao que existe. Uma consulta separada,
+     * sempre da fila em aberto, mantém as duas contagens verdadeiras
+     * independentemente da aba aberta.
+     */
+    const [contagens, setContagens] = useState({ aberto: 0, pendente: 0, em_andamento: 0 })
+
     const [ocupada, setOcupada] = useState<number | null>(null)
 
-    // O nome de quem está trabalhando. Não é login: numa loja pequena quem
-    // separa nem sempre tem conta no sistema, e exigir uma faria a fila ser
-    // preenchida no nome de quem tem a senha — o que é pior que não saber.
+    // Quem está mexendo agora. Não é login: numa loja pequena quem separa nem
+    // sempre tem conta no sistema, e exigir uma faria a fila ser preenchida no
+    // nome de quem tem a senha — o que é pior que não saber.
     const [responsavel, setResponsavel] = useState("")
+
+    const situacaoDaVisao = VISOES.find((v) => v.chave === visao)?.situacao ?? ""
+
+    const contar = useCallback(async () => {
+
+        try {
+            const emAberto = await listarTarefas({})
+
+            setContagens({
+                aberto: emAberto.length,
+                pendente: emAberto.filter((t) => t.situacao === "pendente").length,
+                em_andamento: emAberto.filter((t) => t.situacao === "em_andamento").length,
+            })
+
+        } catch {
+            // Contagem é enfeite informativo: falhar aqui não pode tirar a
+            // lista da tela, que é o que a pessoa veio ver.
+        }
+
+    }, [])
 
     const carregar = useCallback(async () => {
 
         try {
             const lista = await listarTarefas({
-                situacao: situacao || undefined,
+                situacao: situacaoDaVisao || undefined,
                 tipo: tipo || undefined,
             })
 
@@ -97,12 +162,17 @@ export default function FilaDoEstoque() {
             setCarregando(false)
         }
 
-    }, [situacao, tipo])
+    }, [situacaoDaVisao, tipo])
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- busca ao abrir e a cada troca de filtro
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- busca ao abrir e a cada troca de aba
         carregar()
     }, [carregar])
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- contagem das abas, uma vez ao abrir
+        contar()
+    }, [contar])
 
     async function executar(id: number, acao: () => Promise<unknown>, mensagem: string) {
 
@@ -113,22 +183,48 @@ export default function FilaDoEstoque() {
         try {
             await acao()
             setAviso(mensagem)
-            await carregar()
+            await Promise.all([carregar(), contar()])
 
         } catch (e) {
             // 409 é o caso normal aqui: outra pessoa pegou a mesma tarefa
             // primeiro. A fila é recarregada para a tela mostrar quem está
             // com ela em vez de insistir no botão.
             setErro(e instanceof ApiError ? e.message : "Não foi possível atualizar a tarefa.")
-            await carregar()
+            await Promise.all([carregar(), contar()])
 
         } finally {
             setOcupada(null)
         }
     }
 
-    const pendentes = tarefas.filter((tarefa) => tarefa.situacao === "pendente").length
-    const emAndamento = tarefas.filter((tarefa) => tarefa.situacao === "em_andamento").length
+    /*
+     * A busca é local, sobre o que já veio.
+     *
+     * A fila de um dia de trabalho tem dezenas de linhas, não milhares, e o
+     * servidor não tem busca por texto nesta rota. Filtrar aqui responde
+     * enquanto se digita; mandar para o servidor seria uma ida de rede por
+     * tecla para varrer a mesma lista que já está na memória.
+     */
+    const filtradas = busca.trim()
+        ? tarefas.filter((tarefa) => {
+            const alvo = [
+                tarefa.tipo_nome,
+                tarefa.produto_nome,
+                tarefa.produto_variacao,
+                tarefa.origem,
+                tarefa.destino,
+                tarefa.responsavel,
+            ].filter(Boolean).join(" ").toLowerCase()
+
+            return alvo.includes(busca.trim().toLowerCase())
+        })
+        : tarefas
+
+    const visoes: Visao[] = VISOES.map((v) => ({
+        chave: v.chave,
+        nome: v.nome,
+        contagem: v.chave in contagens ? contagens[v.chave as keyof typeof contagens] : undefined,
+    }))
 
     return (
         <Pagina
@@ -136,274 +232,298 @@ export default function FilaDoEstoque() {
             descricao="O que precisa ser feito no estoque, do mais urgente para o menos. Quem decide a ordem é o sistema; aqui se assume, se conclui e se cancela. Concluir move a mercadoria de verdade — não é só marcar feito."
         >
 
-            {!carregando && situacao === "" && (
-                <div className="grid grid-cols-2 gap-4">
-
-                    <div className="card p-5">
-                        <p className="text-sm text-[#616161]">Esperando alguém</p>
-                        <p className="num mt-1 text-3xl font-bold text-[#303030]">{pendentes}</p>
-                    </div>
-
-                    <div className="card p-5">
-                        <p className="text-sm text-[#616161]">Em andamento</p>
-                        <p className="num mt-1 text-3xl font-bold text-[#303030]">{emAndamento}</p>
-                    </div>
-
-                </div>
-            )}
-
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
             )}
 
-            <div className="card space-y-4 p-5">
+            <ListaDeRecursos>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Visoes visoes={visoes} ativa={visao} aoTrocar={setVisao} />
 
-                    <div className="space-y-1.5">
-                        <label className="rotulo" htmlFor="situacao">Mostrar</label>
-                        <select
-                            id="situacao"
-                            value={situacao}
-                            onChange={(e) => setSituacao(e.target.value as SituacaoTarefa | "")}
-                            className="field cursor-pointer"
-                        >
-                            {FILTROS.map((filtro) => (
-                                <option key={filtro.chave} value={filtro.chave}>{filtro.nome}</option>
-                            ))}
-                        </select>
-                    </div>
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={setBusca}
+                    placeholder="Buscar por produto, endereço ou responsável"
+                    controles={
+                        <>
+                            {/* O tipo fica como controle da lista, e não como
+                                campo de formulário: ele recorta o que já está
+                                na tela, como o filtro do Shopify. */}
+                            <div className="w-52">
+                                <Selecao
+                                    aria-label="Tipo de tarefa"
+                                    value={tipo}
+                                    onChange={(e) => setTipo(e.target.value as TipoTarefa | "")}
+                                >
+                                    {TIPOS.map((item) => (
+                                        <option key={item.chave} value={item.chave}>{item.nome}</option>
+                                    ))}
+                                </Selecao>
+                            </div>
 
-                    <div className="space-y-1.5">
-                        <label className="rotulo" htmlFor="tipo">Tipo</label>
-                        <select
-                            id="tipo"
-                            value={tipo}
-                            onChange={(e) => setTipo(e.target.value as TipoTarefa | "")}
-                            className="field cursor-pointer"
-                        >
-                            {TIPOS.map((item) => (
-                                <option key={item.chave} value={item.chave}>{item.nome}</option>
-                            ))}
-                        </select>
-                    </div>
+                            <div className="w-44">
+                                <input
+                                    type="text"
+                                    value={responsavel}
+                                    onChange={(e) => setResponsavel(e.target.value)}
+                                    placeholder="Quem está trabalhando"
+                                    aria-label="Quem está trabalhando"
+                                    className="field"
+                                />
+                            </div>
+                        </>
+                    }
+                />
 
-                    <div className="space-y-1.5">
-                        <label className="rotulo" htmlFor="responsavel">Quem está trabalhando</label>
-                        <input
-                            id="responsavel"
-                            type="text"
-                            value={responsavel}
-                            onChange={(e) => setResponsavel(e.target.value)}
-                            placeholder="Opcional — um nome, uma inicial"
-                            className="field"
-                        />
-                    </div>
+                {carregando ? (
 
-                </div>
-
-            </div>
-
-            {carregando ? (
-
-                <p className="text-[#616161]">Carregando a fila...</p>
-
-            ) : tarefas.length === 0 ? (
-
-                <div className="rounded-lg border border-dashed border-[#E1E1E1] bg-white p-12 text-center">
-
-                    <FiClipboard className="mx-auto w-9 text-[#8A8A8A]" aria-hidden />
-
-                    <h2 className="font-display mt-4 text-lg text-[#303030]">
-                        {situacao === "" ? "Nada na fila" : "Nada por aqui"}
-                    </h2>
-
-                    <p className="mt-2 text-sm text-[#616161]">
-                        {situacao === ""
-                            ? "Ninguém tem trabalho pendente no estoque agora. A fila enche sozinha quando chega mercadoria, quando a prateleira baixa do mínimo ou quando o inventário vence."
-                            : "Nenhuma tarefa nesta situação."}
+                    <p className="px-4 py-14 text-center text-sm text-[#616161]">
+                        Carregando a fila...
                     </p>
 
-                    {situacao === "" && (
-                        <div className="mt-6 flex flex-wrap justify-center gap-3">
-                            <Link href="/page/estoque/reposicao" className="btn btn-neutro text-sm">
-                                Ver o que falta na prateleira
-                            </Link>
-                            <Link href="/page/estoque/inventario" className="btn btn-neutro text-sm">
-                                Ver contagens atrasadas
-                            </Link>
-                        </div>
-                    )}
+                ) : filtradas.length === 0 ? (
 
-                </div>
+                    <ListaVazia
+                        icone={busca ? FiFilter : FiClipboard}
+                        titulo={
+                            busca
+                                ? "Nada com esse texto"
+                                : visao === "aberto"
+                                    ? "Nada na fila"
+                                    : "Nada nesta aba"
+                        }
+                        acao={
+                            !busca && visao === "aberto" ? (
+                                <>
+                                    <Link href="/page/estoque/reposicao" className="btn btn-neutro text-sm">
+                                        Ver o que falta na prateleira
+                                    </Link>
+                                    <Link href="/page/estoque/inventario" className="btn btn-neutro text-sm">
+                                        Ver contagens atrasadas
+                                    </Link>
+                                </>
+                            ) : undefined
+                        }
+                    >
+                        {busca
+                            ? "Nenhuma tarefa desta aba casa com o que você digitou."
+                            : visao === "aberto"
+                                ? "Ninguém tem trabalho pendente no estoque agora. A fila enche sozinha quando chega mercadoria, quando a prateleira baixa do mínimo ou quando o inventário vence."
+                                : "Nenhuma tarefa nesta situação."}
+                    </ListaVazia>
 
-            ) : (
+                ) : (
 
-                <ul className="space-y-3">
+                    <div className="overflow-x-auto">
 
-                    {tarefas.map((tarefa) => {
+                        <table className="tabela">
 
-                        const encerrada = tarefa.situacao === "concluida" || tarefa.situacao === "cancelada"
-                        const trabalhando = ocupada === tarefa.id
+                            <thead>
+                                <tr>
+                                    <th scope="col">Tarefa</th>
+                                    <th scope="col">Percurso</th>
+                                    <th scope="col">Situação</th>
+                                    <th scope="col" className="text-right">Prioridade</th>
+                                    <th scope="col"><span className="sr-only">Ações</span></th>
+                                </tr>
+                            </thead>
 
-                        return (
-                            <li
-                                key={tarefa.id}
-                                className={`card border-l-4 p-5 ${COR_DO_TIPO[tarefa.tipo] ?? "border-l-[#E1E1E1]"}`}
-                            >
+                            <tbody>
 
-                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                {filtradas.map((tarefa) => {
 
-                                    <div className="min-w-0">
+                                    const encerrada = tarefa.situacao === "concluida" || tarefa.situacao === "cancelada"
+                                    const trabalhando = ocupada === tarefa.id
 
-                                        <p className="font-display text-base text-[#303030]">
-                                            {tarefa.tipo_nome}
-                                        </p>
+                                    return (
+                                        <tr key={tarefa.id}>
 
-                                        {tarefa.produto_nome && (
-                                            <p className="mt-0.5 text-sm text-[#303030]">
-                                                <span className="num text-[#616161]">{tarefa.quantidade}x</span>{" "}
-                                                {tarefa.produto_nome}
-                                                {tarefa.produto_variacao ? ` · ${tarefa.produto_variacao}` : ""}
-                                            </p>
-                                        )}
+                                            <td>
+                                                <div className="flex items-start gap-2.5">
 
-                                        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#616161]">
+                                                    {/* A cor do tipo era uma borda de 4px no
+                                                        cartão. Numa tabela ela vira este traço:
+                                                        mesma informação, sem engordar a linha. */}
+                                                    <span
+                                                        className={`mt-0.5 h-8 w-1 shrink-0 rounded-full ${COR_DO_TIPO[tarefa.tipo] ?? "bg-[#E1E1E1]"}`}
+                                                        aria-hidden
+                                                    />
 
-                                            {tarefa.origem && (
-                                                <span className="num font-medium text-[#303030]">{tarefa.origem}</span>
-                                            )}
+                                                    <div className="min-w-0">
 
-                                            {tarefa.origem && tarefa.destino && (
-                                                <FiArrowRight className="w-3.5" aria-hidden />
-                                            )}
+                                                        <p className="font-medium text-[#303030]">
+                                                            {tarefa.tipo_nome}
+                                                        </p>
 
-                                            {tarefa.destino && (
-                                                <span className="num font-medium text-[#303030]">{tarefa.destino}</span>
-                                            )}
+                                                        {tarefa.produto_nome ? (
+                                                            <p className="mt-0.5 truncate text-[#616161]">
+                                                                <span className="num">{tarefa.quantidade}x</span>{" "}
+                                                                {tarefa.produto_nome}
+                                                                {tarefa.produto_variacao ? ` · ${tarefa.produto_variacao}` : ""}
+                                                            </p>
+                                                        ) : null}
 
-                                            {!tarefa.origem && !tarefa.destino && <span>sem endereço</span>}
+                                                        {tarefa.observacao && (
+                                                            <p className="mt-0.5 truncate text-xs text-[#8A8A8A]">
+                                                                {tarefa.observacao}
+                                                            </p>
+                                                        )}
 
-                                        </p>
+                                                    </div>
 
-                                        <p className="mt-2 flex flex-wrap items-center gap-2">
+                                                </div>
+                                            </td>
 
-                                            {tarefa.situacao === "em_andamento" && (
-                                                <span className="tag tag-info">
-                                                    <FiPlay className="w-3" aria-hidden />
-                                                    em andamento
-                                                </span>
-                                            )}
+                                            <td>
+                                                {tarefa.origem || tarefa.destino ? (
+                                                    <span className="flex items-center gap-1.5 whitespace-nowrap">
+                                                        {tarefa.origem && (
+                                                            <span className="num text-[#303030]">{tarefa.origem}</span>
+                                                        )}
+                                                        {tarefa.origem && tarefa.destino && (
+                                                            <FiArrowRight className="w-3.5 text-[#8A8A8A]" aria-hidden />
+                                                        )}
+                                                        {tarefa.destino && (
+                                                            <span className="num text-[#303030]">{tarefa.destino}</span>
+                                                        )}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[#8A8A8A]">sem endereço</span>
+                                                )}
+                                            </td>
 
-                                            {tarefa.situacao === "concluida" && (
-                                                <span className="tag tag-success">concluída</span>
-                                            )}
+                                            <td>
+                                                <div className="flex flex-wrap items-center gap-1.5">
 
-                                            {tarefa.situacao === "cancelada" && (
-                                                <span className="tag tag-neutral">cancelada</span>
-                                            )}
-
-                                            {tarefa.responsavel && (
-                                                <span className="tag tag-neutral">
-                                                    <FiUser className="w-3" aria-hidden />
-                                                    {tarefa.responsavel}
-                                                </span>
-                                            )}
-
-                                            {tarefa.pedido_id && (
-                                                <span className="tag tag-neutral num">
-                                                    pedido #{tarefa.pedido_id}
-                                                </span>
-                                            )}
-
-                                            {tarefa.onda_id && (
-                                                <span className="tag tag-neutral num">
-                                                    onda #{tarefa.onda_id}
-                                                </span>
-                                            )}
-
-                                            <span className="tag tag-neutral">
-                                                <FiClock className="w-3" aria-hidden />
-                                                prioridade {tarefa.prioridade}
-                                            </span>
-
-                                        </p>
-
-                                        {tarefa.observacao && (
-                                            <p className="mt-2 text-sm text-[#616161]">{tarefa.observacao}</p>
-                                        )}
-
-                                    </div>
-
-                                    {!encerrada && (
-
-                                        <div className="flex shrink-0 flex-wrap gap-2">
-
-                                            {tarefa.situacao === "pendente" && (
-                                                <button
-                                                    type="button"
-                                                    disabled={trabalhando}
-                                                    onClick={() => executar(
-                                                        tarefa.id,
-                                                        () => assumirTarefa(tarefa.id, responsavel.trim()),
-                                                        "Tarefa assumida."
+                                                    {tarefa.situacao === "pendente" && (
+                                                        <span className="tag tag-warning">esperando</span>
                                                     )}
-                                                    className="btn btn-neutro text-sm"
-                                                >
-                                                    Assumir
-                                                </button>
-                                            )}
 
-                                            <button
-                                                type="button"
-                                                disabled={trabalhando}
-                                                onClick={() => executar(
-                                                    tarefa.id,
-                                                    () => concluirTarefa(tarefa.id),
-                                                    "Tarefa concluída: a mercadoria foi movida."
+                                                    {tarefa.situacao === "em_andamento" && (
+                                                        <span className="tag tag-info">
+                                                            <FiPlay className="w-3" aria-hidden />
+                                                            em andamento
+                                                        </span>
+                                                    )}
+
+                                                    {tarefa.situacao === "concluida" && (
+                                                        <span className="tag tag-success">concluída</span>
+                                                    )}
+
+                                                    {tarefa.situacao === "cancelada" && (
+                                                        <span className="tag tag-neutral">cancelada</span>
+                                                    )}
+
+                                                    {tarefa.responsavel && (
+                                                        <span className="tag tag-neutral">
+                                                            <FiUser className="w-3" aria-hidden />
+                                                            {tarefa.responsavel}
+                                                        </span>
+                                                    )}
+
+                                                    {tarefa.pedido_id && (
+                                                        <span className="tag tag-neutral num">pedido #{tarefa.pedido_id}</span>
+                                                    )}
+
+                                                    {tarefa.onda_id && (
+                                                        <span className="tag tag-neutral num">onda #{tarefa.onda_id}</span>
+                                                    )}
+
+                                                </div>
+                                            </td>
+
+                                            <td className="text-right">
+                                                <span className="num inline-flex items-center gap-1 text-[#616161]">
+                                                    <FiClock className="w-3.5" aria-hidden />
+                                                    {tarefa.prioridade}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                {!encerrada && (
+
+                                                    <div className="flex justify-end gap-1.5 whitespace-nowrap">
+
+                                                        {tarefa.situacao === "pendente" && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={trabalhando}
+                                                                onClick={() => executar(
+                                                                    tarefa.id,
+                                                                    () => assumirTarefa(tarefa.id, responsavel.trim()),
+                                                                    "Tarefa assumida."
+                                                                )}
+                                                                className="btn btn-neutro text-xs"
+                                                            >
+                                                                Assumir
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={trabalhando}
+                                                            onClick={() => executar(
+                                                                tarefa.id,
+                                                                () => concluirTarefa(tarefa.id),
+                                                                "Tarefa concluída: a mercadoria foi movida."
+                                                            )}
+                                                            className="btn btn-primario text-xs"
+                                                        >
+                                                            {trabalhando ? "..." : "Concluir"}
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={trabalhando}
+                                                            aria-label="Cancelar tarefa"
+                                                            title="Cancelar tarefa"
+                                                            onClick={() => executar(
+                                                                tarefa.id,
+                                                                () => cancelarTarefa(tarefa.id),
+                                                                "Tarefa cancelada."
+                                                            )}
+                                                            className="btn btn-neutro px-2 text-xs"
+                                                        >
+                                                            <FiX className="w-3.5" aria-hidden />
+                                                        </button>
+
+                                                    </div>
+
                                                 )}
-                                                className="btn btn-primario text-sm"
-                                            >
-                                                {trabalhando ? "..." : "Concluir"}
-                                            </button>
+                                            </td>
 
-                                            <button
-                                                type="button"
-                                                disabled={trabalhando}
-                                                aria-label="Cancelar tarefa"
-                                                onClick={() => executar(
-                                                    tarefa.id,
-                                                    () => cancelarTarefa(tarefa.id),
-                                                    "Tarefa cancelada."
-                                                )}
-                                                className="btn btn-neutro text-sm"
-                                            >
-                                                <FiX className="w-4" aria-hidden />
-                                            </button>
+                                        </tr>
+                                    )
+                                })}
 
-                                        </div>
+                            </tbody>
 
-                                    )}
+                        </table>
 
-                                </div>
+                    </div>
 
-                            </li>
-                        )
-                    })}
+                )}
 
-                </ul>
+                {!carregando && filtradas.length > 0 && (
+                    <RodapeDaLista
+                        primeiro={1}
+                        ultimo={filtradas.length}
+                        total={filtradas.length}
+                        nome="tarefas"
+                    />
+                )}
 
-            )}
+            </ListaDeRecursos>
 
         </Pagina>
     )

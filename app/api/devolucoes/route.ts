@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { API_BASE } from "@/app/api/backend"
+import { API_BASE, cabecalhoDaLojaAberta } from "@/app/api/backend"
 
 
 // GET /api/devolucoes — a fila de quarentena da loja.
@@ -30,6 +30,7 @@ export async function repassar(metodo: "GET" | "POST", caminho: string, corpo: u
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo ? { "Content-Type": "application/json" } : {}),
             },

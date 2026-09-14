@@ -207,8 +207,8 @@ export default function Conversas() {
         let cancelado = false
 
         listarPedidos()
-            .then((lista) => {
-                if (!cancelado) setPedidos(lista)
+            .then((resposta) => {
+                if (!cancelado) setPedidos(resposta.pedidos)
             })
             .catch(() => {
                 // Sem a lista, o topo apenas não mostra código de pedido —
@@ -585,7 +585,7 @@ export default function Conversas() {
         // linha a menos na lista é um cliente que ele precisa rolar para achar.
         // A largura também vai inteira — as duas colunas crescem com a tela em
         // vez de deixarem faixas vazias dos lados.
-        <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[#F1F1F1] px-4 pb-4 pt-5 md:ml-64 md:px-6">
+        <main className="com-menu flex h-[calc(100dvh-3.5rem)] flex-col bg-[#F1F1F1] px-4 pb-4 pt-5 md:px-6">
 
             <div className="flex flex-wrap items-end justify-between gap-3">
 

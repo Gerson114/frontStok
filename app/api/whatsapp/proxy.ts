@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { API_BASE } from "@/app/api/backend"
+import { API_BASE, cabecalhoDaLojaAberta } from "@/app/api/backend"
 
 
 /**
@@ -28,6 +28,7 @@ export async function repassar(
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo !== undefined ? { "Content-Type": "application/json" } : {}),
             },
@@ -105,6 +106,7 @@ export async function repassarArquivo(
 
         const cabecalhosDaIda: Record<string, string> = {
             Authorization: `Bearer ${token}`,
+            ...(await cabecalhoDaLojaAberta()),
         }
 
         // Range vai adiante em vez de ser engolido aqui.

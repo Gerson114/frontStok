@@ -23,6 +23,7 @@ import {
     FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { ListaVazia } from "@/app/components/lista/lista"
 
 /**
  * Entrada de mercadoria: o que chegou do fornecedor virando peça no estoque.
@@ -361,78 +362,115 @@ export default function InserirEstoque() {
                 </p>
 
                 {linhas.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-[#E1E1E1] px-4 py-8 text-center text-sm text-[#616161]">
-                        Nenhum produto escolhido ainda. Use <strong>Escolher produtos</strong> para
-                        abrir o estoque e marcar o que chegou.
-                    </p>
+
+                    <ListaVazia
+                        icone={FiPackage}
+                        titulo="Nenhum produto escolhido ainda"
+                    >
+                        Use <strong>Escolher produtos</strong> para abrir o estoque e marcar o
+                        que chegou.
+                    </ListaVazia>
+
                 ) : (
-                    <div className="space-y-3">
-                        {linhas.map((linha) => {
 
-                            const produto = produtosPorId.get(linha.produtoId)
-                            const variacao = descreverVariacao(produto?.variacao_rotulo, produto?.variacao)
+                    <div className="overflow-x-auto">
 
-                            return (
-                                <div
-                                    key={linha.produtoId}
-                                    className="rounded-lg border border-[#EBEBEB] p-4"
-                                >
+                        {/* A remessa é uma tabela, e não uma pilha de cartões:
+                            conferir nota fiscal é ler uma coluna de quantidades
+                            de cima a baixo, e cartões obrigam o olho a caçar o
+                            número dentro de cada caixa. */}
+                        <table className="tabela">
 
-                                    <div className="flex items-start justify-between gap-3">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Produto</th>
+                                    <th scope="col" className="text-right">Em estoque</th>
+                                    <th scope="col" className="w-28 text-right">Quantidade</th>
+                                    <th scope="col" className="w-32 text-right">Custo unit.</th>
+                                    <th scope="col" className="text-right">Total</th>
+                                    <th scope="col"><span className="sr-only">Tirar</span></th>
+                                </tr>
+                            </thead>
 
-                                        <div className="min-w-0">
-                                            <p className="truncate font-semibold text-[#303030]">
-                                                {produto?.nome ?? `Produto #${linha.produtoId}`}
-                                            </p>
-                                            <p className="num text-xs text-[#616161]">
-                                                {produto?.codigo}
-                                                {variacao ? ` · ${variacao}` : ""}
-                                                {` · ${produto?.estoque ?? 0} em estoque`}
-                                            </p>
-                                        </div>
+                            <tbody>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => alternar(linha.produtoId)}
-                                            aria-label={`Tirar ${produto?.nome ?? "produto"} da remessa`}
-                                            className="shrink-0 rounded-lg p-2 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
-                                        >
-                                            <FiX className="w-4" aria-hidden />
-                                        </button>
+                                {linhas.map((linha) => {
 
-                                    </div>
+                                    const produto = produtosPorId.get(linha.produtoId)
+                                    const variacao = descreverVariacao(produto?.variacao_rotulo, produto?.variacao)
 
-                                    <div className="mt-3 grid grid-cols-2 gap-3">
+                                    const quantidade = parseInt(linha.quantidade, 10) || 0
+                                    const custo = parseFloat(linha.custo.replace(",", ".")) || 0
 
-                                        <div className="space-y-1">
-                                            <label className="rotulo text-xs">Quantidade</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={linha.quantidade}
-                                                onChange={(e) => mudarLinha(linha.produtoId, "quantidade", e.target.value)}
-                                                className="field num"
-                                            />
-                                        </div>
+                                    return (
+                                        <tr key={linha.produtoId}>
 
-                                        <div className="space-y-1">
-                                            <label className="rotulo text-xs">Custo unit.</label>
-                                            <input
-                                                type="text"
-                                                inputMode="decimal"
-                                                value={linha.custo}
-                                                onChange={(e) => mudarLinha(linha.produtoId, "custo", e.target.value)}
-                                                placeholder="0,00"
-                                                className="field num"
-                                            />
-                                        </div>
+                                            <td>
+                                                <p className="font-medium text-[#303030]">
+                                                    {produto?.nome ?? `Produto #${linha.produtoId}`}
+                                                </p>
+                                                <p className="num text-xs text-[#8A8A8A]">
+                                                    {produto?.codigo}
+                                                    {variacao ? ` · ${variacao}` : ""}
+                                                </p>
+                                            </td>
 
-                                    </div>
+                                            <td className="num text-right text-[#616161]">
+                                                {produto?.estoque ?? 0}
+                                            </td>
 
-                                </div>
-                            )
-                        })}
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    aria-label={`Quantidade de ${produto?.nome ?? "produto"}`}
+                                                    value={linha.quantidade}
+                                                    onChange={(e) => mudarLinha(linha.produtoId, "quantidade", e.target.value)}
+                                                    className="field num text-right"
+                                                />
+                                            </td>
+
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    inputMode="decimal"
+                                                    aria-label={`Custo unitário de ${produto?.nome ?? "produto"}`}
+                                                    value={linha.custo}
+                                                    onChange={(e) => mudarLinha(linha.produtoId, "custo", e.target.value)}
+                                                    placeholder="0,00"
+                                                    className="field num text-right"
+                                                />
+                                            </td>
+
+                                            <td className="num text-right font-medium text-[#303030]">
+                                                {(quantidade * custo).toLocaleString("pt-BR", {
+                                                    style: "currency",
+                                                    currency: "BRL",
+                                                })}
+                                            </td>
+
+                                            <td className="text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => alternar(linha.produtoId)}
+                                                    aria-label={`Tirar ${produto?.nome ?? "produto"} da remessa`}
+                                                    title="Tirar da remessa"
+                                                    className="rounded-lg p-2 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                >
+                                                    <FiX className="w-4" aria-hidden />
+                                                </button>
+                                            </td>
+
+                                        </tr>
+                                    )
+                                })}
+
+                            </tbody>
+
+                        </table>
+
                     </div>
+
                 )}
 
             </section>

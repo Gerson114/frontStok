@@ -1,5 +1,7 @@
 "use client"
 
+import { tituloDaAba } from "@/app/marca"
+
 /**
  * O anteparo de último recurso: erro no próprio layout raiz, antes de
  * qualquer tela existir.
@@ -37,7 +39,7 @@ export default function GlobalError({
                     fontFamily: "ui-sans-serif, system-ui, sans-serif",
                 }}
             >
-                <title>Erro | Arara</title>
+                <title>{tituloDaAba("Erro")}</title>
 
                 <div
                     style={{

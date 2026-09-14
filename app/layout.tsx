@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "./components/header/header";
+import { MARCA } from "@/app/marca"
 
 
 // Inter é a face do painel do Shopify (e da maior parte do software de
@@ -23,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Arara | Painel administrativo",
+  title: `${MARCA} | Painel administrativo`,
   description: "Painel administrativo para gestão de produtos, pedidos e clientes.",
 };
 

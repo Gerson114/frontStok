@@ -1,7 +1,17 @@
+<!-- A marca do TramaSistem na aba do navegador. É o mesmo desenho de
+     app/components/marca/marca.tsx: quatro tiras iguais, cada uma passando por
+     baixo da seguinte. Aqui ele vem escrito à mão, e não importado do
+     componente, porque o favicon é servido como arquivo estático — se um dos
+     dois mudar, mude o outro junto.
+
+     O azul é o #005BD3 dos tokens do painel. O #0086FF que estava aqui era
+     resto do sistema visual antigo e não existe mais em lugar nenhum. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-    <rect width="32" height="32" rx="7" fill="#0086FF"/>
-    <g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 25 16 8l7 17"/>
-        <path d="M6 19.5h20"/>
+    <rect width="32" height="32" rx="7" fill="#005BD3"/>
+    <g fill="#fff" transform="translate(16 16) scale(0.68) translate(-16 -16)">
+        <rect x="3.5" y="3.5" width="14" height="9" rx="2.25"/>
+        <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" transform="rotate(90 16 16)"/>
+        <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" transform="rotate(180 16 16)"/>
+        <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" transform="rotate(270 16 16)"/>
     </g>
 </svg>

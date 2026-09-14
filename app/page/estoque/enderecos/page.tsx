@@ -25,12 +25,18 @@ import {
     FiMapPin,
     FiPlus,
     FiPrinter,
-    FiSearch,
     FiSlash,
     FiUnlock,
     FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { Selecao } from "@/app/components/campo/selecao"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * Os endereços do estoque como grade de operação, no padrão de um WMS (a
@@ -398,126 +404,67 @@ export default function EnderecosPage() {
             )}
 
             {/* ==========================
-                BARRA DA GRADE
+                A LISTA
+                Abas, busca, ações em massa, tabela e rodapé num cartão só —
+                a lista de recursos do Shopify Admin (ver
+                components/lista/lista.tsx). A barra de marcação agora TOMA O
+                LUGAR da busca em vez de empurrar a tabela para baixo: o que
+                muda é o modo da tela, e a tabela não se mexe.
             ========================== */}
 
-            <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <ListaDeRecursos>
 
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por situação">
+                <Visoes
+                    visoes={filtros.map(({ chave, nome, total }) => ({ chave, nome, contagem: total }))}
+                    ativa={recorte}
+                    aoTrocar={(chave) => aoMudarRecorte(chave as Recorte)}
+                />
 
-                    {filtros.map(({ chave, nome, total }) => {
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={aoMudarBusca}
+                    placeholder="Buscar por código, zona ou descrição"
+                    marcadas={selecionados.length}
+                    aoDesmarcar={() => setSelecionados([])}
+                    acoesEmMassa={
+                        <>
+                            <div className="w-44">
+                                <Selecao
+                                    value={tamanho.chave}
+                                    onChange={(e) => {
+                                        const escolhido = TAMANHOS.find((item) => item.chave === Number(e.target.value))
+                                        if (escolhido) setTamanho(escolhido)
+                                    }}
+                                    aria-label="Tamanho da placa"
+                                >
+                                    {TAMANHOS.map((item) => (
+                                        <option key={item.chave} value={item.chave}>{item.nome}</option>
+                                    ))}
+                                </Selecao>
+                            </div>
 
-                        const ativo = chave === recorte
-
-                        return (
-                            <button
-                                key={chave}
-                                type="button"
-                                aria-pressed={ativo}
-                                onClick={() => aoMudarRecorte(chave)}
-                                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
-                                    ativo
-                                        ? "border-[#005BD3] bg-[#EAF4FF] text-[#00369B]"
-                                        : "border-[#E1E1E1] bg-white text-[#616161] hover:border-[#8A8A8A] hover:text-[#303030]"
-                                }`}
-                            >
-                                {nome}
-
-                                <span className={`num text-xs font-extrabold ${ativo ? "text-[#005BD3]" : "text-[#8A8A8A]"}`}>
-                                    {total}
-                                </span>
+                            <button type="button" onClick={() => window.print()} className="btn btn-primario text-sm">
+                                <FiPrinter className="w-4" aria-hidden />
+                                <span>Imprimir placas</span>
                             </button>
-                        )
-                    })}
-
-                </div>
-
-                <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-
-                    <select
-                        value={filtroTipo}
-                        onChange={(e) => aoMudarTipo(e.target.value as TipoEndereco | "")}
-                        aria-label="Filtrar por tipo de endereço"
-                        className="field cursor-pointer sm:w-52"
-                    >
-                        <option value="">Todos os tipos</option>
-                        {TIPOS_ENDERECO.map((item) => (
-                            <option key={item.chave} value={item.chave}>{item.nome}</option>
-                        ))}
-                    </select>
-
-                    <div className="relative w-full lg:w-80">
-
-                        <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
-
-                        <input
-                            type="text"
-                            value={busca}
-                            onChange={(e) => aoMudarBusca(e.target.value)}
-                            placeholder="Buscar por código, zona ou descrição"
-                            className="field"
-                            style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
-                        />
-
-                        {busca && (
-                            <button
-                                type="button"
-                                onClick={() => aoMudarBusca("")}
-                                aria-label="Limpar busca"
-                                className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        </>
+                    }
+                    controles={
+                        <div className="w-52">
+                            <Selecao
+                                value={filtroTipo}
+                                onChange={(e) => aoMudarTipo(e.target.value as TipoEndereco | "")}
+                                aria-label="Filtrar por tipo de endereço"
                             >
-                                <FiX className="w-4" aria-hidden />
-                            </button>
-                        )}
+                                <option value="">Todos os tipos</option>
+                                {TIPOS_ENDERECO.map((item) => (
+                                    <option key={item.chave} value={item.chave}>{item.nome}</option>
+                                ))}
+                            </Selecao>
+                        </div>
+                    }
+                />
 
-                    </div>
-
-                </div>
-
-            </div>
-
-            {/* ==========================
-                AÇÃO EM LOTE
-                Só aparece quando há linha marcada: barra de ação
-                vazia é barra que ocupa espaço sem responder nada.
-            ========================== */}
-
-            {selecionados.length > 0 && (
-
-                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-[#005BD3] bg-[#EAF4FF] px-4 py-2.5">
-
-                    <p className="text-sm font-bold text-[#00369B]">
-                        <span className="num">{selecionados.length}</span> endereço(s) marcado(s)
-                    </p>
-
-                    <span className="hidden h-5 w-px bg-[#CDE3FF] sm:block" />
-
-                    <select
-                        value={tamanho.chave}
-                        onChange={(e) => {
-                            const escolhido = TAMANHOS.find((item) => item.chave === Number(e.target.value))
-                            if (escolhido) setTamanho(escolhido)
-                        }}
-                        aria-label="Tamanho da placa"
-                        className="field w-auto cursor-pointer py-1.5 text-sm"
-                    >
-                        {TAMANHOS.map((item) => (
-                            <option key={item.chave} value={item.chave}>{item.nome}</option>
-                        ))}
-                    </select>
-
-                    <button type="button" onClick={() => window.print()} className="btn btn-primario text-sm">
-                        <FiPrinter className="w-4" aria-hidden />
-                        <span>Imprimir placas</span>
-                    </button>
-
-                    <button type="button" onClick={() => setSelecionados([])} className="btn btn-neutro text-sm">
-                        Limpar marcação
-                    </button>
-
-                </div>
-
-            )}
 
             {/* ==========================
                 A GRADE
@@ -525,48 +472,38 @@ export default function EnderecosPage() {
 
             {carregando ? (
 
-                <p className="mt-6 text-[#616161]">Carregando endereços...</p>
+                <p className="px-4 py-14 text-center text-sm text-[#616161]">Carregando endereços...</p>
 
             ) : ordenados.length === 0 ? (
 
-                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
-
-                    <FiMapPin className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
-
-                    <h3 className="font-display mt-5 text-xl text-[#303030]">
-                        {enderecos.length === 0 ? "Seu estoque ainda não tem endereços" : "Nenhum endereço encontrado"}
-                    </h3>
-
-                    <p className="mx-auto mt-2 max-w-md text-sm text-[#616161]">
-                        {enderecos.length === 0
-                            ? "Diga quantas ruas, blocos e andares ele tem e o sistema cria as prateleiras todas de uma vez. Depois é só imprimir as placas e colar."
-                            : "Nenhum endereço corresponde ao filtro ou à busca."}
-                    </p>
-
-                    {enderecos.length === 0 ? (
-
-                        <button type="button" onClick={() => setPainel("lote")} className="btn btn-primario mt-6">
-                            <FiGrid className="w-4" aria-hidden />
-                            <span>Montar estrutura</span>
-                        </button>
-
-                    ) : (
-
-                        <button
-                            type="button"
-                            onClick={() => { aoMudarBusca(""); aoMudarRecorte("todos"); aoMudarTipo("") }}
-                            className="btn btn-neutro mt-6"
-                        >
-                            Limpar filtros
-                        </button>
-
-                    )}
-
-                </div>
+                <ListaVazia
+                    icone={FiMapPin}
+                    titulo={enderecos.length === 0 ? "Seu estoque ainda não tem endereços" : "Nenhum endereço encontrado"}
+                    acao={
+                        enderecos.length === 0 ? (
+                            <button type="button" onClick={() => setPainel("lote")} className="btn btn-primario">
+                                <FiGrid className="w-4" aria-hidden />
+                                <span>Montar estrutura</span>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => { aoMudarBusca(""); aoMudarRecorte("todos"); aoMudarTipo("") }}
+                                className="btn btn-neutro"
+                            >
+                                Limpar filtros
+                            </button>
+                        )
+                    }
+                >
+                    {enderecos.length === 0
+                        ? "Diga quantas ruas, blocos e andares ele tem e o sistema cria as prateleiras todas de uma vez. Depois é só imprimir as placas e colar."
+                        : "Nenhum endereço corresponde ao filtro ou à busca."}
+                </ListaVazia>
 
             ) : (
 
-                <div className="card mt-6 overflow-hidden">
+                <>
 
                     {/* Em tela estreita a grade rola no eixo X em
                         vez de virar cartão: coluna que muda de
@@ -853,9 +790,11 @@ export default function EnderecosPage() {
 
                     </div>
 
-                </div>
+                </>
 
             )}
+
+            </ListaDeRecursos>
 
         </Pagina>
 

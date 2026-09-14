@@ -34,6 +34,16 @@ export const publico = {
 
     assinaturaCheckout: () => "/public/assinatura/checkout",
     assinaturaSessao: () => "/public/assinatura/sessao",
+
+    /**
+     * Esqueci minha senha: pedir o código e trocar a senha com ele.
+     *
+     * As duas rotas atendem dono E funcionário — é o mesmo formulário de
+     * entrada do painel, e quem esqueceu a senha não deveria precisar saber
+     * em qual das duas tabelas a conta dele mora.
+     */
+    senhaRecuperar: () => "/public/senha/recuperar",
+    senhaRedefinir: () => "/public/senha/redefinir",
 }
 
 /* ==========================================================================
@@ -63,6 +73,17 @@ export const painel = {
     atendimento: (dias: number) => `/private/painel/atendimento?dias=${dias}`,
 
     /**
+     * Os três painéis por assunto, cada um com a sua tela.
+     *
+     * A régua (dia, mês, ano) é o único parâmetro dos três, e é a mesma da
+     * série de vendas — assim as quatro telas se leem lado a lado sem
+     * ninguém refazer conta de cabeça.
+     */
+    produtos: (periodo: string) => `/private/painel/produtos?periodo=${encodeURIComponent(periodo)}`,
+    equipe: (periodo: string) => `/private/painel/equipe?periodo=${encodeURIComponent(periodo)}`,
+    entregas: (periodo: string) => `/private/painel/entregas?periodo=${encodeURIComponent(periodo)}`,
+
+    /**
      * O que chegou e ninguém viu: pedido novo, WhatsApp e chat do site.
      *
      * Alimenta a bolinha da barra superior, e é barata de propósito — três
@@ -78,6 +99,9 @@ export const conta = {
     oferta: () => "/private/assinatura/oferta",
     checkout: () => "/private/assinatura/checkout",
     portal: () => "/private/assinatura/portal",
+
+    /** Trocar o plano de quem já assina — base para Pro, ou de volta. */
+    plano: () => "/private/assinatura/plano",
 
     loja: () => "/private/loja",
     tema: () => "/private/loja/tema",
@@ -203,6 +227,10 @@ export const equipe = {
 export const produtos = {
     cadastrar: () => "/private/cadastrarProduto",
     cadastrarVariantes: () => "/private/cadastrarProdutoVariantes",
+
+    // Importação por planilha: a primeira só confere e não grava nada.
+    conferirPlanilha: () => "/private/produtos/importar/conferir",
+    importarPlanilha: () => "/private/produtos/importar",
 
     consultar: () => "/private/consulta",
 

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { funcionarios } from "@/app/api/rotas"
 
 /**
@@ -42,6 +42,7 @@ async function repassar(metodo: "GET" | "POST", corpo: unknown) {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo ? { "Content-Type": "application/json" } : {}),
             },

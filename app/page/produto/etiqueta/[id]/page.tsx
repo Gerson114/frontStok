@@ -9,6 +9,7 @@ import { descreverVariacao } from "@/app/components/produto/campos"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import { FiPrinter } from "react-icons/fi"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
+import { MARCA } from "@/app/marca"
 
 export default function EtiquetaProduto() {
     const params = useParams<{ id: string }>()
@@ -128,7 +129,7 @@ export default function EtiquetaProduto() {
                     >
 
                         <p className="font-display text-center text-sm text-[#303030]">
-                            Arara
+                            {MARCA}
                         </p>
 
                         <div className="mt-3 border-t border-[#E1E1E1]" />

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { atendimentos } from "@/app/api/rotas"
 
 /**
@@ -22,7 +22,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
         await fetch(url(atendimentos.digitando(id)), {
             method: "POST",
-            headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+            headers: { Authorization: `Bearer ${token}`, Accept: "application/json", ...(await cabecalhoDaLojaAberta()) },
             cache: "no-store",
         })
 

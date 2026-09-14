@@ -25,6 +25,14 @@ import {
     FiTrash2,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { Selecao } from "@/app/components/campo/selecao"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    RodapeDaLista,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * Inventário rotativo e curva ABC.
@@ -67,6 +75,11 @@ export default function Inventario() {
 
     const [gerando, setGerando] = useState(false)
     const [limite, setLimite] = useState("")
+
+    // Qual das duas visões da contagem está aberta, e o texto que recorta as
+    // duas (ver components/lista/lista.tsx).
+    const [visao, setVisao] = useState("atrasadas")
+    const [busca, setBusca] = useState("")
 
     const [curva, setCurva] = useState<ResultadoCurva | null>(null)
     const [dias, setDias] = useState("")
@@ -195,6 +208,23 @@ export default function Inventario() {
         }
     }
 
+    /*
+     * O texto da busca recorta as duas visões pelo endereço, que é a única
+     * coluna que as duas têm em comum — e é por ele que se procura: "o que
+     * aconteceu com a rua 2?".
+     */
+    const termo = busca.trim().toLowerCase()
+
+    const pendentesFiltradas = termo
+        ? pendentes.filter((c) =>
+            c.endereco.toLowerCase().includes(termo) ||
+            (c.endereco_nome ?? "").toLowerCase().includes(termo))
+        : pendentes
+
+    const conferenciasFiltradas = termo
+        ? conferencias.filter((c) => (c.endereco ?? "").toLowerCase().includes(termo))
+        : conferencias
+
     return (
         <Pagina
             titulo="Inventário rotativo"
@@ -216,126 +246,228 @@ export default function Inventario() {
             )}
 
             {/* ==========================
-                CONTAGENS ATRASADAS
+                O TRABALHO DE CONTAGEM
+                Duas visões da mesma coisa: o que falta contar e o que já foi
+                contado. Eram duas seções em pontas opostas da tela, cada uma
+                com o próprio formato de linha — e a segunda, que é o resultado
+                da primeira, ficava tão longe que ninguém as lia juntas.
             ========================== */}
 
-            <section className="card space-y-4 p-5 sm:p-7">
+            <ListaDeRecursos>
 
-                <div className="flex flex-wrap items-end justify-between gap-4">
+                <Visoes
+                    visoes={[
+                        { chave: "atrasadas", nome: "Atrasadas", contagem: pendentes.length },
+                        { chave: "fechadas", nome: "Já contadas", contagem: conferencias.length },
+                    ]}
+                    ativa={visao}
+                    aoTrocar={setVisao}
+                />
 
-                    <div>
-                        <h2 className="font-display text-base text-[#303030]">
-                            Atrasadas
-                        </h2>
-                        <p className="mt-1 text-sm text-[#616161]">
-                            Ver não cria trabalho. Pôr na fila é que manda alguém contar.
-                        </p>
-                    </div>
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={setBusca}
+                    placeholder="Buscar por endereço"
+                    controles={
+                        visao === "atrasadas" ? (
+                            <>
+                                <div className="w-20">
+                                    <input
+                                        id="limite"
+                                        type="number"
+                                        min={1}
+                                        value={limite}
+                                        onChange={(e) => setLimite(e.target.value)}
+                                        placeholder="5"
+                                        aria-label="Quantas pôr na fila"
+                                        className="field num text-center"
+                                    />
+                                </div>
 
-                    <div className="flex items-end gap-2">
-
-                        <div className="space-y-1.5">
-                            <label className="rotulo" htmlFor="limite">Quantas</label>
-                            <input
-                                id="limite"
-                                type="number"
-                                min="0"
-                                value={limite}
-                                onChange={(e) => setLimite(e.target.value)}
-                                placeholder="5"
-                                className="field num w-24"
-                            />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={porNaFila}
-                            disabled={gerando || pendentes.length === 0}
-                            className="btn btn-primario"
-                        >
-                            <FiPlusCircle className="w-4" aria-hidden />
-                            {gerando ? "Gerando..." : "Pôr na fila"}
-                        </button>
-
-                    </div>
-
-                </div>
+                                <button
+                                    type="button"
+                                    onClick={porNaFila}
+                                    disabled={gerando}
+                                    className="btn btn-primario whitespace-nowrap text-sm"
+                                >
+                                    <FiPlusCircle className="w-4" aria-hidden />
+                                    {gerando ? "Gerando..." : "Pôr na fila"}
+                                </button>
+                            </>
+                        ) : undefined
+                    }
+                />
 
                 {carregando ? (
 
-                    <p className="text-[#616161]">Carregando...</p>
+                    <p className="px-4 py-14 text-center text-sm text-[#616161]">Carregando...</p>
 
-                ) : pendentes.length === 0 ? (
+                ) : visao === "atrasadas" ? (
 
-                    <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
-                        Nenhum endereço atrasado. Tudo foi contado dentro do intervalo da curva
-                        que ele guarda.
-                    </p>
+                    pendentesFiltradas.length === 0 ? (
+
+                        <ListaVazia
+                            icone={busca ? FiRefreshCw : FiCheckCircle}
+                            titulo={busca ? "Nada com esse texto" : "Nenhum endereço atrasado"}
+                        >
+                            {busca
+                                ? "Nenhum endereço atrasado casa com o que você digitou."
+                                : "Tudo foi contado dentro do intervalo da curva que ele guarda."}
+                        </ListaVazia>
+
+                    ) : (
+
+                        <div className="overflow-x-auto">
+
+                            <table className="tabela">
+
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Endereço</th>
+                                        <th scope="col">Curva</th>
+                                        <th scope="col" className="text-right">Peças</th>
+                                        <th scope="col">Situação</th>
+                                        <th scope="col" className="text-right">Última contagem</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    {pendentesFiltradas.map((contagem) => (
+                                        <tr key={contagem.endereco_id}>
+
+                                            <td>
+                                                <span className="num font-medium text-[#303030]">{contagem.endereco}</span>
+                                                <span className="block text-xs text-[#616161]">{contagem.endereco_nome}</span>
+                                            </td>
+
+                                            <td>
+                                                <span className={`tag ${COR_DA_CURVA[contagem.curva] ?? "tag-neutral"}`}>
+                                                    {contagem.curva || "C"}
+                                                </span>
+                                            </td>
+
+                                            <td className="num text-right text-[#303030]">{contagem.pecas}</td>
+
+                                            <td>
+                                                {contagem.nunca_contado ? (
+                                                    <span className="tag tag-warning">nunca contado</span>
+                                                ) : (
+                                                    <span className="num text-[#616161]">
+                                                        {contagem.dias_sem_contar} dia(s) sem contar
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td className="num text-right text-[#616161]">
+                                                {formatarData(contagem.ultima_em)}
+                                            </td>
+
+                                        </tr>
+                                    ))}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    )
+
+                ) : conferenciasFiltradas.length === 0 ? (
+
+                    <ListaVazia icone={FiClipboard} titulo="Nenhuma contagem fechada ainda">
+                        O resultado de cada conferência aparece aqui: o que o sistema esperava, o
+                        que apareceu, e o que não bateu dos dois lados.
+                    </ListaVazia>
 
                 ) : (
 
-                    <ul className="divide-y divide-[#E1E1E1]">
+                    <div className="overflow-x-auto">
 
-                        {pendentes.map((contagem) => (
+                        <table className="tabela">
 
-                            <li key={contagem.endereco_id} className="flex flex-wrap items-center justify-between gap-3 py-3.5">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Endereço</th>
+                                    <th scope="col">Quando</th>
+                                    <th scope="col" className="text-right">Encontradas</th>
+                                    <th scope="col">Resultado</th>
+                                    <th scope="col">Diferença</th>
+                                </tr>
+                            </thead>
 
-                                <div className="min-w-0">
+                            <tbody>
 
-                                    <p className="num font-medium text-[#303030]">
-                                        {contagem.endereco}
-                                    </p>
+                                {conferenciasFiltradas.map((conferencia) => {
 
-                                    <p className="text-xs text-[#616161]">
-                                        {contagem.endereco_nome}
-                                    </p>
+                                    const bateu = !conferencia.faltando && !conferencia.sobrando
 
-                                    <p className="mt-1.5 flex flex-wrap items-center gap-2">
+                                    return (
+                                        <tr key={conferencia.id}>
 
-                                        <span className={`tag ${COR_DA_CURVA[contagem.curva] ?? "tag-neutral"}`}>
-                                            curva {contagem.curva || "C"}
-                                        </span>
+                                            <td className="num text-[#303030]">
+                                                {conferencia.endereco || "toda a loja"}
+                                            </td>
 
-                                        <span className="tag tag-neutral num">
-                                            {contagem.pecas} peça(s)
-                                        </span>
+                                            <td className="num text-[#616161]">
+                                                {formatarData(conferencia.created_at)}
+                                            </td>
 
-                                        {contagem.nunca_contado ? (
-                                            <span className="tag tag-warning">nunca contado</span>
-                                        ) : (
-                                            <span className="tag tag-neutral num">
-                                                {contagem.dias_sem_contar} dia(s) sem contar
-                                            </span>
-                                        )}
+                                            <td className="num text-right text-[#303030]">
+                                                {conferencia.encontradas} de {conferencia.esperadas}
+                                            </td>
 
-                                    </p>
+                                            <td>
+                                                <span className={`tag ${bateu ? "tag-success" : "tag-danger"}`}>
+                                                    {bateu ? "bateu" : "diferença"}
+                                                </span>
+                                            </td>
 
-                                </div>
+                                            <td className="text-xs">
+                                                {conferencia.faltando && (
+                                                    <span className="num block text-[#8E1F0B]">
+                                                        faltou: {conferencia.faltando}
+                                                    </span>
+                                                )}
+                                                {conferencia.sobrando && (
+                                                    <span className="num block text-[#5E4200]">
+                                                        sobrou: {conferencia.sobrando}
+                                                    </span>
+                                                )}
+                                                {bateu && <span className="text-[#8A8A8A]">—</span>}
+                                            </td>
 
-                                <p className="shrink-0 text-right text-xs text-[#616161]">
-                                    última contagem
-                                    <span className="num block text-sm text-[#303030]">
-                                        {formatarData(contagem.ultima_em)}
-                                    </span>
-                                </p>
+                                        </tr>
+                                    )
+                                })}
 
-                            </li>
+                            </tbody>
 
-                        ))}
+                        </table>
 
-                    </ul>
+                    </div>
 
                 )}
 
-                <p className="text-xs text-[#616161]">
-                    Quem vai contar pega a tarefa na{" "}
-                    <Link href="/page/estoque/fila" className="font-bold underline">
-                        fila de trabalho
-                    </Link>
-                    ; a contagem em si é fechada logo abaixo.
-                </p>
+                <RodapeDaLista
+                    primeiro={1}
+                    ultimo={visao === "atrasadas" ? pendentesFiltradas.length : conferenciasFiltradas.length}
+                    total={visao === "atrasadas" ? pendentesFiltradas.length : conferenciasFiltradas.length}
+                    nome={visao === "atrasadas" ? "endereços atrasados" : "contagens fechadas"}
+                    extra={
+                        visao === "atrasadas" ? (
+                            <>
+                                quem conta pega a tarefa na{" "}
+                                <Link href="/page/estoque/fila" className="font-medium text-[#005BD3] hover:underline">
+                                    fila de trabalho
+                                </Link>
+                            </>
+                        ) : undefined
+                    }
+                />
 
-            </section>
+            </ListaDeRecursos>
+
 
             {/* ==========================
                 CONTAR UM TRECHO
@@ -357,11 +489,10 @@ export default function Inventario() {
 
                 <div className="space-y-1.5">
                     <label className="rotulo" htmlFor="trecho">Trecho</label>
-                    <select
+                    <Selecao
                         id="trecho"
                         value={trecho}
                         onChange={(e) => setTrecho(e.target.value)}
-                        className="field cursor-pointer"
                     >
                         <option value="">Toda a loja (contagem geral)</option>
                         {enderecos.map((endereco) => (
@@ -369,7 +500,7 @@ export default function Inventario() {
                                 {endereco.codigo} · {endereco.nome}
                             </option>
                         ))}
-                    </select>
+                    </Selecao>
                 </div>
 
                 <form onSubmit={bipar} className="flex items-end gap-2">
@@ -565,85 +696,6 @@ export default function Inventario() {
 
             </section>
 
-            {/* ==========================
-                CONFERÊNCIAS FECHADAS
-            ========================== */}
-
-            <section className="card space-y-4 p-5 sm:p-7">
-
-                <div>
-                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
-                        <FiClipboard className="w-4 text-[#005BD3]" aria-hidden />
-                        Contagens já fechadas
-                    </h2>
-                    <p className="mt-1 text-sm text-[#616161]">
-                        O que cada conferência achou: o que o sistema esperava, o que apareceu, e
-                        o que não bateu dos dois lados.
-                    </p>
-                </div>
-
-                {conferencias.length === 0 ? (
-
-                    <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
-                        Nenhuma contagem fechada ainda.
-                    </p>
-
-                ) : (
-
-                    <ul className="divide-y divide-[#E1E1E1]">
-
-                        {conferencias.map((conferencia) => {
-
-                            const bateu = !conferencia.faltando && !conferencia.sobrando
-
-                            return (
-                                <li key={conferencia.id} className="flex flex-wrap items-start justify-between gap-3 py-3.5">
-
-                                    <div className="min-w-0">
-
-                                        <p className="num font-medium text-[#303030]">
-                                            {conferencia.endereco || "toda a loja"}
-                                        </p>
-
-                                        <p className="text-xs text-[#616161]">
-                                            {formatarData(conferencia.created_at)}
-                                        </p>
-
-                                        {conferencia.faltando && (
-                                            <p className="mt-1 font-mono text-xs text-[#8E1F0B]">
-                                                faltou: {conferencia.faltando}
-                                            </p>
-                                        )}
-
-                                        {conferencia.sobrando && (
-                                            <p className="mt-1 font-mono text-xs text-[#5E4200]">
-                                                sobrou: {conferencia.sobrando}
-                                            </p>
-                                        )}
-
-                                    </div>
-
-                                    <div className="shrink-0 text-right">
-
-                                        <p className="num text-sm text-[#303030]">
-                                            {conferencia.encontradas} de {conferencia.esperadas}
-                                        </p>
-
-                                        <span className={`tag ${bateu ? "tag-success" : "tag-danger"}`}>
-                                            {bateu ? "bateu" : "diferença"}
-                                        </span>
-
-                                    </div>
-
-                                </li>
-                            )
-                        })}
-
-                    </ul>
-
-                )}
-
-            </section>
 
         </Pagina>
     )

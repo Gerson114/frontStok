@@ -65,7 +65,7 @@ export function Pagina({
 
     return (
         <main
-            className={`min-h-[calc(100dvh-3.5rem)] bg-[#F1F1F1] text-[#303030] md:ml-64 md:border-r md:border-[#E1E1E1] ${
+            className={`com-menu min-h-[calc(100dvh-3.5rem)] bg-[#F1F1F1] text-[#303030] md:border-r md:border-[#E1E1E1] ${
                 paraImpressao ? "print:m-0 print:min-h-0 print:border-0 print:bg-white" : ""
             }`}
         >
@@ -139,7 +139,7 @@ export function Pagina({
  */
 export function PaginaCentrada({ children }: { children: ReactNode }) {
     return (
-        <main className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#F1F1F1] px-4 py-16 text-[#303030] md:ml-64">
+        <main className="com-menu flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#F1F1F1] px-4 py-16 text-[#303030]">
             <div className="w-full max-w-md">
                 {children}
             </div>

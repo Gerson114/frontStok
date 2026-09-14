@@ -8,6 +8,7 @@ import Barcode from "@/app/components/barcode/barcode"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import { FiAlertCircle, FiPrinter, FiRefreshCw, FiShoppingCart } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { MARCA } from "@/app/marca"
 
 /**
  * Etiquetas dos pedidos confirmados.
@@ -226,7 +227,7 @@ export default function EtiquetasPage() {
 
                         <div className="flex items-baseline justify-between gap-2">
                             <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[#616161]">
-                                Arara
+                                {MARCA}
                             </p>
 
                             {/* O número do volume é o que fecha o pacote:

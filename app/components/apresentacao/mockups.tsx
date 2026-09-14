@@ -440,3 +440,151 @@ export function MockupComprovante() {
         </div>
     )
 }
+
+/* ==========================================================================
+   A conversa da equipe — o que o plano Pro acrescenta
+   ========================================================================== */
+
+export function MockupEquipe() {
+    return (
+        <div className="card grid overflow-hidden sm:grid-cols-[1fr_10.5rem]">
+
+            <div className="flex min-h-[13rem] flex-col border-b border-[#EBEBEB] sm:border-b-0 sm:border-r">
+
+                <div className="flex items-center justify-between gap-2 border-b border-[#EBEBEB] bg-[#F7F7F7] px-3 py-2">
+                    <p className="text-xs font-semibold text-[#303030]">Equipe · Loja Centro</p>
+                    <span className="flex items-center gap-1 text-[0.6rem] font-semibold text-[#616161]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#1BAF7A]" aria-hidden />
+                        3 on-line
+                    </span>
+                </div>
+
+                <div className="flex-1 space-y-2 p-3">
+                    <div>
+                        <p className="text-[0.58rem] font-semibold text-[#8A8A8A]">Marcos · 09:12</p>
+                        <p className="mt-0.5 max-w-[85%] bg-[#F1F1F1] px-2.5 py-1.5 text-[0.68rem] leading-relaxed text-[#303030]">
+                            Chegou a carga do fornecedor. Dou entrada agora?
+                        </p>
+                    </div>
+
+                    <div className="text-right">
+                        <p className="text-[0.58rem] font-semibold text-[#8A8A8A]">Você · 09:14</p>
+                        <p className="mt-0.5 ml-auto max-w-[85%] bg-[#005BD3] px-2.5 py-1.5 text-[0.68rem] leading-relaxed text-white">
+                            Dá sim. Depois põe na tarefa da Helena para etiquetar.
+                        </p>
+                    </div>
+
+                    {/* As três bolinhas do "está digitando" — a mesma animação da
+                        conversa de verdade (.bolinha-digitando, em globals.css),
+                        e não um desenho parado imitando uma. */}
+                    <p className="flex items-center gap-1 pt-0.5" aria-label="Helena está digitando">
+                        <span className="text-[0.58rem] font-semibold text-[#8A8A8A]">Helena</span>
+                        {[0, 1, 2].map((i) => (
+                            <span
+                                key={i}
+                                className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[#B5B5B5]"
+                                aria-hidden
+                            />
+                        ))}
+                    </p>
+                </div>
+
+            </div>
+
+            <div className="min-w-0">
+                <p className="bg-[#F7F7F7] px-3 py-1.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] text-[#616161]">
+                    Tarefas de hoje
+                </p>
+
+                {[
+                    { texto: "Etiquetar a carga nova", quem: "Helena", feita: false },
+                    { texto: "Repor a prateleira 004", quem: "Marcos", feita: false },
+                    { texto: "Contagem do corredor 2", quem: "Dona Rita", feita: true },
+                ].map(({ texto, quem, feita }) => (
+                    <div key={texto} className="flex items-start gap-2 border-b border-[#F1F1F1] px-3 py-2">
+                        <span
+                            className={`mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center border ${
+                                feita ? "border-[#0C5132] bg-[#0C5132]" : "border-[#B5B5B5]"
+                            }`}
+                            aria-hidden
+                        >
+                            {feita && <FiCheck className="w-2 text-white" />}
+                        </span>
+
+                        <span className="min-w-0">
+                            <span
+                                className={`block text-[0.65rem] leading-snug ${
+                                    feita ? "text-[#8A8A8A] line-through" : "text-[#303030]"
+                                }`}
+                            >
+                                {texto}
+                            </span>
+                            <span className="block text-[0.58rem] text-[#8A8A8A]">{quem}</span>
+                        </span>
+                    </div>
+                ))}
+
+                <div className="nota nota-amarela m-3 p-2">
+                    <p className="text-[0.62rem] leading-snug text-[#303030]">
+                        Sábado abre 9h. Quem puder chegar 8h30 ajuda na reposição.
+                    </p>
+                    <p className="mt-1 text-[0.55rem] text-[#616161]">recado do mural</p>
+                </div>
+            </div>
+
+        </div>
+    )
+}
+
+/* ==========================================================================
+   A rede de lojas — o outro lado do Pro
+   ========================================================================== */
+
+export function MockupRede() {
+    return (
+        <div className="card overflow-hidden">
+
+            <div className="flex items-center justify-between border-b border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2.5">
+                <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+                    Minhas lojas
+                </p>
+                <span className="num text-[0.7rem] text-[#8A8A8A]">4 de 20</span>
+            </div>
+
+            <div className="divide-y divide-[#F1F1F1]">
+                {[
+                    { nome: "Loja Centro", papel: "matriz", gerente: "você", estoque: "1.204 peças" },
+                    { nome: "Loja Norte", papel: "filial", gerente: "Helena", estoque: "812 peças" },
+                    { nome: "Loja Shopping", papel: "filial", gerente: "Marcos", estoque: "640 peças" },
+                    { nome: "Loja Litoral", papel: "filial", gerente: "Dona Rita", estoque: "377 peças" },
+                ].map(({ nome, papel, gerente, estoque }) => (
+                    <div key={nome} className="flex items-center gap-3 px-4 py-2.5">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#EAF4FF]" aria-hidden>
+                            <FiShoppingBag className="w-3.5 text-[#00369B]" />
+                        </span>
+
+                        <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-2">
+                                <span className="truncate text-xs font-semibold text-[#303030]">{nome}</span>
+                                <span className={`tag ${papel === "matriz" ? "tag-info" : "tag-neutral"} shrink-0`}>
+                                    {papel}
+                                </span>
+                            </span>
+                            <span className="block truncate text-[0.62rem] text-[#8A8A8A]">
+                                gerente: {gerente}
+                            </span>
+                        </span>
+
+                        <span className="num shrink-0 text-[0.65rem] text-[#616161]">{estoque}</span>
+                    </div>
+                ))}
+            </div>
+
+            <p className="border-t border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2 text-[0.62rem] leading-snug text-[#616161]">
+                Cada loja com o seu estoque, o seu caixa e a sua equipe. A cara do
+                site é a da matriz, e o cliente troca de unidade na própria vitrine.
+            </p>
+
+        </div>
+    )
+}

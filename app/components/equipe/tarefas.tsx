@@ -45,11 +45,18 @@ import type {
  * pega o que sobrou.
  */
 
-const PRIORIDADES: { chave: PrioridadeDaTarefa; rotulo: string; tag: string }[] = [
-    { chave: "urgente", rotulo: "Urgente", tag: "tag-danger" },
-    { chave: "alta", rotulo: "Alta", tag: "tag-warning" },
-    { chave: "normal", rotulo: "Normal", tag: "tag-info" },
-    { chave: "baixa", rotulo: "Quando der", tag: "tag-neutral" },
+/**
+ * A prioridade, com as duas formas em que ela aparece no cartão: a etiqueta
+ * escrita e o fio colorido no alto.
+ *
+ * O fio existe porque numa pilha de oito cartões a etiqueta só se lê de perto
+ * — a borda se enxerga de longe, e é ela que faz a urgente saltar da coluna.
+ */
+const PRIORIDADES: { chave: PrioridadeDaTarefa; rotulo: string; tag: string; borda: string }[] = [
+    { chave: "urgente", rotulo: "Urgente", tag: "tag-danger", borda: "border-t-[#8E1F0B]" },
+    { chave: "alta", rotulo: "Alta", tag: "tag-warning", borda: "border-t-[#B98900]" },
+    { chave: "normal", rotulo: "Normal", tag: "tag-info", borda: "border-t-[#005BD3]" },
+    { chave: "baixa", rotulo: "Quando der", tag: "tag-neutral", borda: "border-t-[#E1E1E1]" },
 ]
 
 const FILTROS: { chave: "abertas" | "minhas" | "todas"; rotulo: string }[] = [
@@ -210,22 +217,77 @@ export default function TarefasDaEquipe({ membros, eu }: {
                         : "Nenhuma tarefa em aberto."}
                 </p>
             ) : (
-                <ul className="divide-y divide-[#EBEBEB]">
-                    {visiveis.map((tarefa) => (
-                        <Linha
-                            key={tarefa.id}
-                            tarefa={tarefa}
-                            eu={eu}
-                            ocupada={mexendo === tarefa.id}
-                            aoMover={mover}
-                            aoApagar={apagar}
-                        />
-                    ))}
-                </ul>
+
+                /* O QUADRO, em colunas por situação.
+                   A lista corrida escondia a pergunta que se faz olhando as
+                   tarefas de uma equipe: o que já está na mão de alguém e o
+                   que ainda não saiu do lugar. Em colunas isso é a altura de
+                   cada pilha, sem ler uma linha.
+
+                   Rola na horizontal no celular em vez de empilhar as
+                   colunas: empilhadas elas viram a mesma lista corrida de
+                   antes, só que com três títulos no meio. */
+                <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2">
+                    {COLUNAS.map((coluna) => {
+
+                        const daColuna = visiveis.filter((tarefa) => tarefa.situacao === coluna.chave)
+
+                        // A coluna de canceladas só existe quando há o que
+                        // mostrar: um quadro com uma pilha sempre vazia ensina
+                        // a ignorar um quarto da tela.
+                        if (coluna.chave === "cancelada" && daColuna.length === 0) return null
+
+                        return (
+                            <div key={coluna.chave} className="flex w-[17rem] shrink-0 flex-col rounded-xl bg-[#F7F7F7] p-2">
+
+                                <p className="flex items-center justify-between gap-2 px-1.5 py-1.5">
+                                    <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#616161]">
+                                        {coluna.nome}
+                                    </span>
+
+                                    <span className="num text-xs font-semibold text-[#8A8A8A]">
+                                        {daColuna.length}
+                                    </span>
+                                </p>
+
+                                <div className="space-y-2">
+                                    {daColuna.length === 0 ? (
+                                        <p className="rounded-lg border border-dashed border-[#E1E1E1] px-3 py-6 text-center text-xs text-[#8A8A8A]">
+                                            {coluna.vazia}
+                                        </p>
+                                    ) : daColuna.map((tarefa) => (
+                                        <Linha
+                                            key={tarefa.id}
+                                            tarefa={tarefa}
+                                            eu={eu}
+                                            ocupada={mexendo === tarefa.id}
+                                            aoMover={mover}
+                                            aoApagar={apagar}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
             )}
         </Secao>
     )
 }
+
+/**
+ * As colunas do quadro, na ordem em que uma tarefa anda.
+ *
+ * São as mesmas situações que o servidor já grava — o quadro não inventa
+ * estado nenhum, só mostra em pilhas o que existe. "Cancelada" fecha a fila
+ * porque é saída, e não etapa: ela aparece só quando há alguma.
+ */
+const COLUNAS = [
+    { chave: "aberta", nome: "A fazer", vazia: "Nada esperando." },
+    { chave: "em_andamento", nome: "Fazendo", vazia: "Ninguém pegou nada agora." },
+    { chave: "concluida", nome: "Pronto", vazia: "Nada concluído ainda." },
+    { chave: "cancelada", nome: "Canceladas", vazia: "" },
+] as const
 
 /* ==========================================================================
    Uma tarefa
@@ -253,48 +315,53 @@ function Linha({ tarefa, eu, ocupada, aoMover, aoApagar }: {
     const faz = tarefa.para_id === eu.id && tarefa.para_dono === eu.dono
 
     return (
-        <li className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
+        /* O cartão do quadro. Era uma linha de lista com divisória; dentro de
+           uma coluna ele precisa de borda própria, senão as tarefas viram um
+           bloco de texto sem começo nem fim.
 
-            <div className="min-w-0 flex-1">
+           A prioridade vira um FIO no alto do cartão, e não só uma etiqueta:
+           numa pilha de oito, a cor da borda é o que se enxerga de longe. */
+        <article className={`rounded-lg border border-[#E1E1E1] border-t-2 bg-white p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] ${prioridade.borda}`}>
+
+            <div className="min-w-0">
 
                 <p className={`text-sm font-medium ${fechada ? "text-[#8A8A8A] line-through" : "text-[#303030]"}`}>
                     {tarefa.titulo}
                 </p>
 
                 {tarefa.descricao && (
-                    <p className="mt-0.5 text-sm text-[#616161]">{tarefa.descricao}</p>
+                    <p className="mt-0.5 line-clamp-3 text-sm text-[#616161]">{tarefa.descricao}</p>
                 )}
 
-                <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8A8A8A]">
+                <p className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[#8A8A8A]">
 
                     <span className={`tag ${prioridade.tag}`}>{prioridade.rotulo}</span>
 
                     <span className="flex items-center gap-1">
                         <FiUser className="w-3.5" aria-hidden />
                         {tarefa.para}
-                        {tarefa.criada_por !== tarefa.para && ` · pedida por ${tarefa.criada_por}`}
                     </span>
 
                     <Prazo tarefa={tarefa} fechada={fechada} />
-
-                    {tarefa.situacao === "em_andamento" && (
-                        <span className="tag tag-info">Em andamento</span>
-                    )}
-
-                    {tarefa.situacao === "cancelada" && (
-                        <span className="tag tag-neutral">Cancelada</span>
-                    )}
-
-                    {/* Sem isto, quem pediu abre a lista, não vê botão nenhum
-                        e acha que a tela está quebrada. A ausência do botão
-                        precisa vir com o motivo. */}
-                    {!faz && !fechada && (
-                        <span>Só {tarefa.para} pode mover esta tarefa</span>
-                    )}
                 </p>
+
+                {tarefa.criada_por !== tarefa.para && (
+                    <p className="mt-1 text-xs text-[#8A8A8A]">
+                        pedida por {tarefa.criada_por}
+                    </p>
+                )}
+
+                {/* Sem isto, quem pediu abre o quadro, não vê botão nenhum e
+                    acha que a tela está quebrada. A ausência do botão precisa
+                    vir com o motivo. */}
+                {!faz && !fechada && (
+                    <p className="mt-1 text-xs text-[#8A8A8A]">
+                        Só {tarefa.para} pode mover esta tarefa
+                    </p>
+                )}
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#F1F1F1] pt-2.5 empty:mt-0 empty:border-0 empty:pt-0">
 
                 {/* Só os botões que fazem sentido no estado atual: oferecer
                     "concluir" numa tarefa já concluída é oferecer um clique
@@ -362,7 +429,7 @@ function Linha({ tarefa, eu, ocupada, aoMover, aoApagar }: {
                     </button>
                 )}
             </div>
-        </li>
+        </article>
     )
 }
 

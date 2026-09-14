@@ -10,7 +10,8 @@ import type { ReactNode } from "react"
  * criar quatro lugares onde o painel pode deixar de se parecer consigo
  * mesmo.
  *
- * O `md:ml-64` acompanha o menu lateral, que é largura fixa e continua na
+ * A classe `com-menu` acompanha o menu lateral, cuja largura é uma variável
+ * de CSS (ver --menu em globals.css) e continua na
  * tela: recado não é motivo para o lojista perder a navegação.
  */
 export default function Aviso({
@@ -35,7 +36,7 @@ export default function Aviso({
             : "bg-[#F1F1F1] text-[#616161]"
 
     return (
-        <main className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#F1F1F1] p-6 md:ml-64">
+        <main className="com-menu flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#F1F1F1] p-6">
 
             <div className="card w-full max-w-xl p-8 text-center md:p-10">
 

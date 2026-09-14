@@ -7,8 +7,15 @@ import { listarProdutos, listarTodasUnidades } from "@/middleware/produtos"
 import { descreverVariacao } from "@/app/components/produto/campos"
 import { consultarPorCodigo, type ConsultaPorCodigo } from "@/middleware/estoque"
 import { ApiError } from "@/middleware/client"
-import { FiAlertCircle, FiMapPin, FiSearch, FiTag, FiTruck } from "react-icons/fi"
+import { FiAlertCircle, FiMapPin, FiPackage, FiSearch, FiTag, FiTruck } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import {
+    BarraDaLista,
+    ListaDeRecursos,
+    ListaVazia,
+    RodapeDaLista,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * Consulta do estoque: o que existe de cada produto e onde está guardado.
@@ -18,17 +25,26 @@ import { Pagina } from "@/app/components/pagina/pagina"
  * A primeira poupa a volta inteira pelo estoque; a segunda é o que se usa ao
  * arrumar a prateleira ou conferir um trecho.
  *
+ * As duas eram duas seções empilhadas, cada uma com a própria busca e o
+ * próprio formato de cartão — o que fazia a tela parecer duas telas coladas.
+ * Aqui elas são duas VISÕES da mesma lista (ver components/lista/lista.tsx):
+ * a mesma busca serve as duas, e trocar de pergunta é trocar de aba.
+ *
  * Só peças que ainda estão lá: o que foi vendido saiu da loja, e o que está
  * avariado não é para ser buscado.
  */
 
-interface PecasNoLocal {
+/** Uma linha da lista: um produto num endereço, e quantas peças dele há ali. */
+interface Linha {
     /** Código da prateleira ("001.005.01.A"); vazio é a peça sem lugar. */
     codigo: string
     /** O endereço falado, do jeito que alguém repete no corredor. */
-    nome: string
-    porProduto: Map<number, number>
-    total: number
+    local: string
+    produtoId: number
+    produto: string
+    variacao: string
+    codigoProduto: string
+    quantidade: number
 }
 
 /**
@@ -44,11 +60,13 @@ function nomeDoLocal(unidade: Unidade): string {
 }
 
 export default function ConsultarEstoque() {
+
     const [produtos, setProdutos] = useState<Produto[]>([])
     const [unidades, setUnidades] = useState<Unidade[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState("")
     const [busca, setBusca] = useState("")
+    const [visao, setVisao] = useState("endereco")
 
     // Consulta pelo código: é a pergunta do balcão — passo o código e ele me
     // diz a rua. Funciona digitado ou com o leitor de código de barras, que
@@ -98,65 +116,81 @@ export default function ConsultarEstoque() {
         [unidades]
     )
 
-    const locais = useMemo(() => {
-        const mapa = new Map<string, PecasNoLocal>()
+    /*
+     * As linhas da lista.
+     *
+     * Uma por par produto × endereço, que é a menor unidade que responde às
+     * duas perguntas: lida por endereço conta o que há no trecho, lida por
+     * produto conta onde ele está. Antes eram duas estruturas diferentes para
+     * a mesma contagem, montadas em dois `useMemo` que podiam divergir.
+     */
+    const linhas = useMemo(() => {
+
+        const mapa = new Map<string, Linha>()
 
         for (const unidade of guardadas) {
 
-            const chave = unidade.endereco || "sem-local"
-            const local = mapa.get(chave) ?? {
-                codigo: unidade.endereco,
-                nome: nomeDoLocal(unidade),
-                porProduto: new Map<number, number>(),
-                total: 0,
+            const chave = `${unidade.endereco || "sem-local"}|${unidade.produto_id}`
+            const existente = mapa.get(chave)
+
+            if (existente) {
+                existente.quantidade++
+                continue
             }
 
-            local.porProduto.set(unidade.produto_id, (local.porProduto.get(unidade.produto_id) ?? 0) + 1)
-            local.total++
+            const produto = produtosPorId.get(unidade.produto_id)
 
-            mapa.set(chave, local)
+            mapa.set(chave, {
+                codigo: unidade.endereco,
+                local: nomeDoLocal(unidade),
+                produtoId: unidade.produto_id,
+                produto: produto?.nome ?? `Produto #${unidade.produto_id}`,
+                variacao: descreverVariacao(produto?.variacao_rotulo, produto?.variacao) ?? "",
+                codigoProduto: produto?.codigo ?? "",
+                quantidade: 1,
+            })
         }
 
-        // Na ordem do código, que é a ordem do caminho pelo estoque — o
-        // formato com zeros à esquerda existe justamente para ordenar como
-        // texto dar o mesmo resultado que ordenar pelos números. O que não
-        // tem lugar definido vai para o fim, que é onde vai dar trabalho
-        // procurar mesmo.
-        return [...mapa.values()].sort((a, b) => {
+        return [...mapa.values()]
 
-            if (!a.codigo !== !b.codigo) return a.codigo ? -1 : 1
-
-            return a.codigo.localeCompare(b.codigo)
-        })
-    }, [guardadas])
+    }, [guardadas, produtosPorId])
 
     const termo = busca.trim().toLowerCase()
 
-    /** Onde estão as peças de cada produto que casa com a busca. */
-    const achados = useMemo(() => {
-        if (!termo) return []
+    const filtradas = useMemo(() => {
 
-        return produtos
-            .filter(
-                (produto) =>
-                    produto.nome.toLowerCase().includes(termo) ||
-                    produto.codigo?.toLowerCase().includes(termo) ||
-                    produto.variacao?.toLowerCase().includes(termo)
+        const casam = termo
+            ? linhas.filter((linha) =>
+                linha.produto.toLowerCase().includes(termo) ||
+                linha.codigoProduto.toLowerCase().includes(termo) ||
+                linha.variacao.toLowerCase().includes(termo) ||
+                linha.local.toLowerCase().includes(termo) ||
+                linha.codigo.toLowerCase().includes(termo)
             )
-            .map((produto) => {
+            : linhas
 
-                const porLocal = new Map<string, number>()
-
-                for (const unidade of guardadas) {
-                    if (unidade.produto_id !== produto.id) continue
-
-                    const nome = nomeDoLocal(unidade)
-                    porLocal.set(nome, (porLocal.get(nome) ?? 0) + 1)
-                }
-
-                return { produto, porLocal }
+        /*
+         * Por endereço, a ordem é a do código — que é a ordem do caminho pelo
+         * estoque. O formato com zeros à esquerda existe justamente para
+         * ordenar como texto dar o mesmo resultado que ordenar pelos números.
+         * O que não tem lugar definido vai para o fim, que é onde vai dar
+         * trabalho procurar mesmo.
+         */
+        if (visao === "endereco") {
+            return [...casam].sort((a, b) => {
+                if (!a.codigo !== !b.codigo) return a.codigo ? -1 : 1
+                if (a.codigo !== b.codigo) return a.codigo.localeCompare(b.codigo)
+                return a.produto.localeCompare(b.produto)
             })
-    }, [termo, produtos, guardadas])
+        }
+
+        return [...casam].sort((a, b) =>
+            a.produto.localeCompare(b.produto) || a.codigo.localeCompare(b.codigo)
+        )
+
+    }, [linhas, termo, visao])
+
+    const totalPecas = filtradas.reduce((soma, linha) => soma + linha.quantidade, 0)
 
     async function consultarCodigo(evento: React.FormEvent<HTMLFormElement>) {
         evento.preventDefault()
@@ -211,17 +245,20 @@ export default function ConsultarEstoque() {
             {erro && (
                 <div
                     role="alert"
-                    className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
-            {/* PELO CÓDIGO — a pergunta do balcão */}
-            <section className="card p-5 sm:p-6">
+            {/* PELO CÓDIGO — a pergunta do balcão.
+                Fica fora da lista, e acima dela, porque não é um recorte do
+                que está embaixo: é um atalho que responde sozinho, com o
+                leitor na mão, sem olhar lista nenhuma. */}
+            <section className="card mb-4 p-4 sm:p-5">
 
-                <form onSubmit={consultarCodigo} className="space-y-1.5">
+                <form onSubmit={consultarCodigo}>
 
                     <label className="rotulo" htmlFor="codigo">
                         Código do produto
@@ -229,7 +266,7 @@ export default function ConsultarEstoque() {
 
                     <div className="flex gap-2">
                         <div className="relative flex-1">
-                            <FiTag className="absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                            <FiTag className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
                             <input
                                 id="codigo"
                                 type="text"
@@ -241,12 +278,12 @@ export default function ConsultarEstoque() {
                             />
                         </div>
 
-                        <button type="submit" disabled={consultando} className="btn btn-primario">
+                        <button type="submit" disabled={consultando} className="btn btn-primario shrink-0">
                             {consultando ? "Consultando..." : "Consultar"}
                         </button>
                     </div>
 
-                    <p className="text-xs text-[#616161]">
+                    <p className="mt-1.5 text-xs text-[#616161]">
                         O leitor de código de barras funciona aqui: ele digita o código e
                         dá Enter sozinho.
                     </p>
@@ -278,49 +315,62 @@ export default function ConsultarEstoque() {
                             {consulta.produto.categoria ? ` · ${consulta.produto.categoria}` : ""}
                         </p>
 
-                        {/* ONDE ESTÁ — a resposta que se procurou */}
-                        <div className="mt-4 rounded-lg bg-[#EAF4FF] p-4">
+                        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
 
-                            <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#00369B]">
-                                Onde está
-                            </p>
+                            {/* ONDE ESTÁ — a resposta que se procurou */}
+                            <div className="rounded-lg bg-[#EAF4FF] p-4">
 
-                            {Object.keys(consulta.locais).length === 0 ? (
-                                <p className="mt-1 text-sm text-[#303030]">
-                                    Nenhuma peça disponível na prateleira agora.
+                                <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#00369B]">
+                                    Onde está
                                 </p>
-                            ) : (
-                                <ul className="mt-2 space-y-1.5">
-                                    {Object.entries(consulta.locais).map(([local, quantidade]) => {
-                                        const [rua, bloco] = local.split("-")
 
-                                        return (
-                                            <li key={local} className="flex items-center justify-between gap-3">
-                                                <span className="flex items-center gap-2 font-display text-lg text-[#303030]">
-                                                    <FiMapPin className="w-4 shrink-0 text-[#00369B]" aria-hidden />
-                                                    Rua {rua} · Bloco {bloco}
-                                                </span>
-                                                <span className="num font-bold text-[#303030]">
-                                                    {quantidade} peça(s)
-                                                </span>
-                                            </li>
-                                        )
-                                    })}
-                                </ul>
-                            )}
+                                {Object.keys(consulta.locais).length === 0 ? (
+                                    <p className="mt-1 text-sm text-[#303030]">
+                                        Nenhuma peça disponível na prateleira agora.
+                                    </p>
+                                ) : (
+                                    <ul className="mt-2 space-y-1.5">
+                                        {Object.entries(consulta.locais).map(([local, quantidade]) => {
+                                            const [rua, bloco] = local.split("-")
+
+                                            return (
+                                                <li key={local} className="flex items-center justify-between gap-3">
+                                                    <span className="flex items-center gap-2 font-display text-lg text-[#303030]">
+                                                        <FiMapPin className="w-4 shrink-0 text-[#00369B]" aria-hidden />
+                                                        Rua {rua} · Bloco {bloco}
+                                                    </span>
+                                                    <span className="num font-bold text-[#303030]">
+                                                        {quantidade} peça(s)
+                                                    </span>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                )}
+
+                            </div>
+
+                            {/* O resumo em quatro números fica ao lado, e não
+                                embaixo em quatro colunas de definição: são
+                                estados do mesmo produto, e lê-se de cima para
+                                baixo como uma ficha. */}
+                            <dl className="divide-y divide-[#EBEBEB] rounded-lg border border-[#E1E1E1] px-4">
+
+                                {[
+                                    { rotulo: "Disponíveis", valor: consulta.resumo.disponiveis },
+                                    { rotulo: "Reservadas", valor: consulta.resumo.reservadas },
+                                    { rotulo: "Vendidas", valor: consulta.resumo.vendidas },
+                                    { rotulo: "Avariadas", valor: consulta.resumo.avariadas },
+                                ].map((item) => (
+                                    <div key={item.rotulo} className="flex items-center justify-between gap-3 py-2 text-sm">
+                                        <dt className="text-[#616161]">{item.rotulo}</dt>
+                                        <dd className="num font-semibold text-[#303030]">{item.valor}</dd>
+                                    </div>
+                                ))}
+
+                            </dl>
 
                         </div>
-
-                        <dl className="mt-4 grid grid-cols-2 gap-y-2 text-sm sm:grid-cols-4">
-                            <dt className="text-[#616161]">Disponíveis</dt>
-                            <dd className="num font-bold text-[#303030]">{consulta.resumo.disponiveis}</dd>
-                            <dt className="text-[#616161]">Reservadas</dt>
-                            <dd className="num font-bold text-[#303030]">{consulta.resumo.reservadas}</dd>
-                            <dt className="text-[#616161]">Vendidas</dt>
-                            <dd className="num font-bold text-[#303030]">{consulta.resumo.vendidas}</dd>
-                            <dt className="text-[#616161]">Avariadas</dt>
-                            <dd className="num font-bold text-[#303030]">{consulta.resumo.avariadas}</dd>
-                        </dl>
 
                         {/* DE ONDE VEIO */}
                         {consulta.procedencia && (
@@ -350,128 +400,141 @@ export default function ConsultarEstoque() {
 
             </section>
 
-            {/* POR NOME — quando não se tem o código na mão */}
-            <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
-                <input
-                    type="search"
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    placeholder="Ou busque por nome, código ou variação"
-                    className="field pl-9"
+            {/* A LISTA — as duas perguntas inversas, uma aba cada */}
+            <ListaDeRecursos>
+
+                <Visoes
+                    visoes={[
+                        { chave: "endereco", nome: "Por endereço" },
+                        { chave: "produto", nome: "Por produto" },
+                    ]}
+                    ativa={visao}
+                    aoTrocar={setVisao}
                 />
-            </div>
 
-            {/* ONDE ESTÁ ESTE PRODUTO */}
-            {termo && (
-                <section className="space-y-3">
-                    {achados.length === 0 && (
-                        <p className="card p-6 text-center text-sm text-[#616161]">
-                            Nenhum produto encontrado com “{busca.trim()}”.
-                        </p>
-                    )}
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={setBusca}
+                    placeholder="Buscar por produto, código, variação ou endereço"
+                />
 
-                    {achados.map(({ produto, porLocal }) => {
+                {filtradas.length === 0 ? (
 
-                        const variacao = descreverVariacao(produto.variacao_rotulo, produto.variacao)
+                    <ListaVazia
+                        icone={termo ? FiSearch : FiPackage}
+                        titulo={termo ? "Nada com esse texto" : "Nenhuma peça guardada"}
+                    >
+                        {termo
+                            ? `Nenhum produto ou endereço casa com “${busca.trim()}”.`
+                            : "Assim que a primeira entrada for registrada, as peças aparecem aqui com o endereço de cada uma."}
+                    </ListaVazia>
 
-                        return (
-                            <article key={produto.id} className="card p-5">
+                ) : (
 
-                                <p className="font-display text-base text-[#303030]">
-                                    {produto.nome}
-                                </p>
+                    <div className="overflow-x-auto">
 
-                                <p className="num text-xs text-[#616161]">
-                                    {produto.codigo}
-                                    {variacao ? ` · ${variacao}` : ""}
-                                </p>
+                        <table className="tabela">
 
-                                {porLocal.size === 0 ? (
-                                    <p className="mt-3 text-sm text-[#616161]">
-                                        Nenhuma peça guardada — todas foram vendidas, avariadas, ou o
-                                        estoque está zerado.
-                                    </p>
-                                ) : (
-                                    <ul className="mt-3 space-y-1.5">
-                                        {[...porLocal.entries()].map(([local, quantidade]) => (
-                                            <li key={local} className="flex items-center justify-between gap-3 text-sm">
-                                                <span className="flex items-center gap-2 text-[#303030]">
-                                                    <FiMapPin className="w-4 shrink-0 text-[#005BD3]" aria-hidden />
-                                                    {local}
+                            <thead>
+                                <tr>
+                                    {visao === "endereco" ? (
+                                        <>
+                                            <th scope="col">Endereço</th>
+                                            <th scope="col">Produto</th>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <th scope="col">Produto</th>
+                                            <th scope="col">Endereço</th>
+                                        </>
+                                    )}
+                                    <th scope="col" className="text-right">Peças</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {filtradas.map((linha, indice) => {
+
+                                    /*
+                                     * O endereço só aparece quando muda.
+                                     *
+                                     * Repetido em todas as linhas do mesmo trecho, ele
+                                     * vira uma coluna de texto igual que o olho tem de
+                                     * varrer para achar onde um grupo termina. Escrito
+                                     * uma vez, a lista volta a ser lida como o corredor
+                                     * é percorrido: um lugar, o que tem nele.
+                                     */
+                                    const anterior = filtradas[indice - 1]
+                                    const repetido = visao === "endereco" && anterior?.local === linha.local
+
+                                    const celulaEndereco = (
+                                        <td className={repetido ? "text-[#8A8A8A]" : ""}>
+                                            {repetido ? (
+                                                <span className="sr-only">{linha.local}</span>
+                                            ) : (
+                                                <span className="flex items-center gap-1.5">
+                                                    <FiMapPin className="w-3.5 shrink-0 text-[#8A8A8A]" aria-hidden />
+                                                    <span className="num text-[#303030]">{linha.local}</span>
                                                 </span>
-                                                <span className="num font-bold text-[#303030]">
-                                                    {quantidade} peça(s)
+                                            )}
+                                        </td>
+                                    )
+
+                                    const celulaProduto = (
+                                        <td>
+                                            <span className="text-[#303030]">{linha.produto}</span>
+                                            {linha.variacao && (
+                                                <span className="text-[#616161]"> · {linha.variacao}</span>
+                                            )}
+                                            {linha.codigoProduto && (
+                                                <span className="num block text-xs text-[#8A8A8A]">
+                                                    {linha.codigoProduto}
                                                 </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                            )}
+                                        </td>
+                                    )
 
-                            </article>
-                        )
-                    })}
-                </section>
-            )}
+                                    return (
+                                        <tr key={`${linha.codigo}-${linha.produtoId}`}>
 
-            {/* O QUE TEM EM CADA TRECHO */}
-            <section className="space-y-3">
+                                            {visao === "endereco" ? (
+                                                <>
+                                                    {celulaEndereco}
+                                                    {celulaProduto}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {celulaProduto}
+                                                    {celulaEndereco}
+                                                </>
+                                            )}
 
-                <h2 className="font-display text-lg text-[#303030]">
-                    O que tem em cada trecho
-                </h2>
+                                            <td className="num text-right font-medium text-[#303030]">
+                                                {linha.quantidade}
+                                            </td>
 
-                {locais.length === 0 && (
-                    <p className="card p-6 text-center text-sm text-[#616161]">
-                        Nenhuma peça guardada no estoque ainda.
-                    </p>
+                                        </tr>
+                                    )
+                                })}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
                 )}
 
-                {locais.map((local) => (
-                    <article key={local.codigo || "sem-local"} className="card p-5">
+                <RodapeDaLista
+                    primeiro={1}
+                    ultimo={filtradas.length}
+                    total={filtradas.length}
+                    nome={visao === "endereco" ? "posições ocupadas" : "produtos por endereço"}
+                    extra={<><span className="num">{totalPecas}</span> peças ao todo</>}
+                />
 
-                        <div className="flex items-center justify-between gap-3">
-
-                            <p className="flex items-center gap-2 font-display text-base text-[#303030]">
-                                <FiMapPin className="w-4 shrink-0 text-[#005BD3]" aria-hidden />
-                                {local.nome}
-                            </p>
-
-                            <span className="num text-sm font-bold text-[#616161]">
-                                {local.total} peça(s)
-                            </span>
-
-                        </div>
-
-                        <ul className="mt-3 space-y-1.5 border-t border-[#EBEBEB] pt-3">
-                            {[...local.porProduto.entries()].map(([produtoId, quantidade]) => {
-
-                                const produto = produtosPorId.get(produtoId)
-                                const variacao = descreverVariacao(produto?.variacao_rotulo, produto?.variacao)
-
-                                return (
-                                    <li key={produtoId} className="flex items-center justify-between gap-3 text-sm">
-
-                                        <span className="min-w-0 truncate text-[#303030]">
-                                            {produto?.nome ?? `Produto #${produtoId}`}
-                                            {variacao ? (
-                                                <span className="text-[#616161]"> · {variacao}</span>
-                                            ) : null}
-                                        </span>
-
-                                        <span className="num shrink-0 font-bold text-[#303030]">
-                                            {quantidade}
-                                        </span>
-
-                                    </li>
-                                )
-                            })}
-                        </ul>
-
-                    </article>
-                ))}
-
-            </section>
+            </ListaDeRecursos>
 
         </Pagina>
     )

@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao, sanitizeAtributos } from "@/security/sanitize"
 import { validarProdutoEditavel, type ProdutoEditavel } from "@/security/validate"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { produtos } from "@/app/api/rotas"
 
 
@@ -28,6 +28,7 @@ export async function DELETE(
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
             },
             cache: "no-store",
@@ -98,6 +99,7 @@ export async function PUT(
             method: "PUT",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },

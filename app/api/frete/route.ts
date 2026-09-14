@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 // GET /api/frete — a configuração de entrega e a tabela por estado.
@@ -36,6 +36,7 @@ async function repassar(metodo: "GET" | "PUT", corpo: unknown) {
             method: metodo,
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 ...(corpo ? { "Content-Type": "application/json" } : {}),
             },

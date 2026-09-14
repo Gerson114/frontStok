@@ -410,14 +410,9 @@ export default function ConversaDaEquipe() {
                 aoCriarGrupo={() => setCriandoGrupo(true)}
                 aoSair={() => setSaindo(true)}
                 eu={estado.eu}
-                vendo={vendo}
-                aoAbrirTarefas={() => setVendo("tarefas")}
-                aoAbrirMural={() => setVendo("mural")}
-                aoAbrirConfig={() => setVendo("config")}
-                podeConfigurar={(estado.pode_codigo ?? false) || (estado.pode_admitir ?? false)}
             />
 
-            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[#F1F1F1] px-4 pb-4 pt-4 md:ml-64 md:px-6">
+            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[#F1F1F1] px-4 pb-4 pt-4 md:ml-[19rem] md:px-6">
 
                 {erro && (
                     <div role="alert" className="mb-3 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
@@ -425,6 +420,57 @@ export default function ConversaDaEquipe() {
                         <span>{erro}</span>
                     </div>
                 )}
+
+                {/* ==========================================================
+                    AS ABAS DA EQUIPE
+
+                    O nome da sala aberta, e debaixo dele as quatro coisas que
+                    se faz nesta tela. É o arranjo dos aplicativos de equipe
+                    (a referência aqui é o Microsoft Teams), e ele resolve um
+                    problema que o anterior tinha: Tarefas e Mural moravam na
+                    barra da esquerda, no meio dos CANAIS — então "mural"
+                    parecia mais um canal, e a barra misturava dois tipos de
+                    coisa (onde eu falo, e o que eu faço).
+
+                    A sala continua escolhida à esquerda; o que se faz com ela
+                    se escolhe aqui em cima.
+                ========================================================== */}
+                <div className="mb-3 flex flex-wrap items-center gap-x-1 border-b border-[#E1E1E1]">
+
+                    <span className="mr-3 flex items-center gap-2 py-2 font-display text-base text-[#303030]">
+                        <IconeDaSala tipo={aberta?.tipo} />
+                        {aberta?.nome ?? "Conversa"}
+                    </span>
+
+                    {ABAS_DA_EQUIPE.map(({ chave, nome, Icone }) => {
+
+                        // Configurações só existe para quem tem o que
+                        // configurar: sem código nem admissão, a aba levaria a
+                        // uma tela em branco.
+                        if (chave === "config" && !((estado.pode_codigo ?? false) || (estado.pode_admitir ?? false))) {
+                            return null
+                        }
+
+                        const ativa = vendo === chave
+
+                        return (
+                            <button
+                                key={chave}
+                                type="button"
+                                onClick={() => setVendo(chave)}
+                                aria-current={ativa ? "page" : undefined}
+                                className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                    ativa
+                                        ? "border-[#005BD3] text-[#005BD3]"
+                                        : "border-transparent text-[#616161] hover:text-[#303030]"
+                                }`}
+                            >
+                                <Icone className="w-4 shrink-0" aria-hidden />
+                                {nome}
+                            </button>
+                        )
+                    })}
+                </div>
 
                 {vendo === "mural" ? (
                     <div className="anim-tela flex min-h-0 flex-1 flex-col">
@@ -448,13 +494,11 @@ export default function ConversaDaEquipe() {
 
                 <div className="anim-tela card flex min-h-0 flex-1 flex-col overflow-hidden">
 
-                    <header className="flex flex-wrap items-center gap-2 border-b border-[#EBEBEB] px-5 py-3">
-
-                        <IconeDaSala tipo={aberta?.tipo} />
-
-                        <h1 className="font-display text-base text-[#303030]">
-                            {aberta?.nome ?? "Conversa"}
-                        </h1>
+                    {/* Sem o nome da sala aqui: ele já está na barra de
+                        abas, logo acima, e repeti-lo gastava uma faixa
+                        inteira de altura para dizer de novo o que a linha de
+                        cima acabou de dizer. Fica só o que se FAZ na sala. */}
+                    <header className="flex flex-wrap items-center gap-2 border-b border-[#EBEBEB] px-5 py-2.5">
 
                         <div className="ml-auto flex items-center gap-2">
 
@@ -658,7 +702,6 @@ export default function ConversaDaEquipe() {
  */
 function MenuDoChat({
     salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu,
-    vendo, aoAbrirTarefas, aoAbrirMural, aoAbrirConfig, podeConfigurar,
 }: {
     salas: SalaDaEquipe[]
     sala: string
@@ -666,11 +709,6 @@ function MenuDoChat({
     aoCriarGrupo: () => void
     aoSair: () => void
     eu: MembroDaEquipe
-    vendo: "conversa" | "tarefas" | "mural" | "config"
-    aoAbrirTarefas: () => void
-    aoAbrirMural: () => void
-    aoAbrirConfig: () => void
-    podeConfigurar: boolean
 }) {
 
     const geral = salas.filter((s) => s.tipo === "geral")
@@ -680,7 +718,7 @@ function MenuDoChat({
     return (
         <aside
             style={{ top: "3.5rem", height: "calc(100dvh - 3.5rem)" }}
-            className="fixed left-0 z-30 hidden w-64 flex-col border-r border-[#E1E1E1] bg-[#F1F1F1] md:flex print:hidden"
+            className="fixed left-[var(--trilho)] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[#E1E1E1] bg-[#F1F1F1] md:flex print:hidden"
         >
             <div className="border-b border-[#E1E1E1] px-3 py-2.5">
                 <Link
@@ -702,33 +740,11 @@ function MenuDoChat({
                     no rodapé com as configurações: é coisa de todo dia, e o
                     que se abre todo dia não pode morar onde só se vai quando
                     algo dá errado. */}
-                <button
-                    type="button"
-                    onClick={aoAbrirTarefas}
-                    aria-current={vendo === "tarefas" ? "page" : undefined}
-                    className={`mt-0.5 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.8125rem] transition-colors ${
-                        vendo === "tarefas"
-                            ? "bg-white font-semibold text-[#303030] shadow-[0_1px_0_rgba(0,0,0,0.05)]"
-                            : "text-[#616161] hover:bg-white/70 hover:text-[#303030]"
-                    }`}
-                >
-                    <FiCheckSquare className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate">Tarefas</span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={aoAbrirMural}
-                    aria-current={vendo === "mural" ? "page" : undefined}
-                    className={`mt-0.5 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.8125rem] transition-colors ${
-                        vendo === "mural"
-                            ? "bg-white font-semibold text-[#303030] shadow-[0_1px_0_rgba(0,0,0,0.05)]"
-                            : "text-[#616161] hover:bg-white/70 hover:text-[#303030]"
-                    }`}
-                >
-                    <FiGrid className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate">Mural</span>
-                </button>
+                {/* Tarefas, Mural e Configurações saíram desta barra.
+                    Eles são o que se FAZ com a equipe, e estavam no meio dos
+                    CANAIS, que são onde se FALA — "Mural" parecia mais um
+                    canal, e a barra misturava dois tipos de coisa. Agora são
+                    abas no topo do conteúdo (ver ABAS_DA_EQUIPE). */}
 
                 <div className="mt-5 flex items-center justify-between px-2">
                     <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
@@ -788,22 +804,6 @@ function MenuDoChat({
                     {eu.nome}
                 </p>
 
-                {podeConfigurar && (
-                    <button
-                        type="button"
-                        onClick={aoAbrirConfig}
-                        aria-current={vendo === "config" ? "page" : undefined}
-                        className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8125rem] transition-colors ${
-                            vendo === "config"
-                                ? "bg-white font-semibold text-[#303030] shadow-[0_1px_0_rgba(0,0,0,0.05)]"
-                                : "font-semibold text-[#616161] hover:bg-white hover:text-[#303030]"
-                        }`}
-                    >
-                        <FiSettings className="w-4 shrink-0" aria-hidden />
-                        Código e acessos
-                    </button>
-                )}
-
                 {/* O dono não sai: ele é a única conta capaz de readmitir
                     quem saiu, e uma porta que fecha por dentro sem maçaneta é
                     o jeito de ficar do lado de fora do próprio sistema. O
@@ -826,6 +826,21 @@ function MenuDoChat({
         </aside>
     )
 }
+
+/**
+ * As quatro coisas que se faz na tela de equipe.
+ *
+ * Ficam num catálogo, e não escritas na mão no meio do JSX, porque a ordem
+ * delas é uma decisão: conversa primeiro (é o que abre por padrão e o que se
+ * usa o dia inteiro), tarefas e mural depois — os dois nascem de uma conversa
+ * —, e configurações por último, que é o que se mexe uma vez.
+ */
+const ABAS_DA_EQUIPE = [
+    { chave: "conversa", nome: "Conversa", Icone: FiMessageSquare },
+    { chave: "tarefas", nome: "Tarefas", Icone: FiCheckSquare },
+    { chave: "mural", nome: "Mural", Icone: FiGrid },
+    { chave: "config", nome: "Configurações", Icone: FiSettings },
+] as const
 
 function IconeDaSala({ tipo }: { tipo?: string }) {
 

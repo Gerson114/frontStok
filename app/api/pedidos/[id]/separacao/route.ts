@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { pedidos } from "@/app/api/rotas"
 
 
@@ -26,6 +26,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
             },
             cache: "no-store",

@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
 import Login from "../components/login/login"
+import { tituloDaAba } from "@/app/marca"
 
 export const metadata: Metadata = {
-  title: "Entrar | Arara",
+  title: tituloDaAba("Entrar"),
   description: "Acesse o painel administrativo da sua loja.",
 }
 

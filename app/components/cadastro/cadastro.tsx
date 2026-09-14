@@ -22,6 +22,7 @@ import {
     FiLock,
 } from "react-icons/fi"
 import MolduraAuth, { type ItemMoldura } from "../auth/moldura"
+import { MARCA } from "@/app/marca"
 
 const ITENS: ItemMoldura[] = [
     { texto: "Cadastro em dois passos: seus dados e o pagamento da assinatura.", Icone: FiTag },
@@ -415,7 +416,7 @@ export default function Cadastro() {
 
                         <div className="flex items-baseline justify-between gap-3">
                             <h2 className="font-display text-lg text-[#303030]">
-                                {oferta?.nome ?? "Arara"}
+                                {oferta?.nome ?? MARCA}
                             </h2>
 
                             <p className="shrink-0 text-right">

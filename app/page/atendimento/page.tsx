@@ -69,6 +69,16 @@ function quandoDe(iso: string): string {
         : data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
 }
 
+/**
+ * Por quanto tempo a bolinha "o cliente está digitando" fica na tela depois do
+ * último aviso.
+ *
+ * Casa com validadeDoAviso, do servidor: apagar antes dele faria a bolinha
+ * piscar entre uma tecla e outra; apagar depois a deixaria presa na tela de
+ * quem já foi embora.
+ */
+const VALIDADE_DIGITANDO = 6000
+
 export default function AtendimentoPage() {
 
     const [fios, setFios] = useState<Atendimento[]>([])
@@ -79,10 +89,22 @@ export default function AtendimentoPage() {
     const [enviando, setEnviando] = useState(false)
     const [erro, setErro] = useState("")
 
-    // O cliente está escrevendo agora? Vem na mesma consulta que a tela já
-    // faz sozinha; o backend guarda o aviso em memória por três segundos (ver
-    // services/atendimento/digitando.go).
+    // O cliente está escrevendo agora?
+    //
+    // Chega por DUAS portas, e as duas são necessárias. A leitura da conversa
+    // traz o estado de quando ela acontece — serve para a tela nascer certa ao
+    // abrir o fio. E o socket traz o aviso no instante em que o cliente
+    // encosta no teclado, que é o que faz a bolinha existir de verdade: esta
+    // tela não relê a conversa sozinha, ela só relê quando um aviso chega, e
+    // digitar não gerava aviso nenhum. A bolinha aparecia junto com a
+    // mensagem — no único momento em que ela não serve para nada.
     const [clienteDigitando, setClienteDigitando] = useState(false)
+
+    // O relógio que apaga a bolinha. O socket avisa que o cliente digitou,
+    // mas não avisa que ele parou: quem sabe disso é o silêncio. Cada aviso
+    // novo adia o apagamento, e o prazo é o mesmo que o servidor usa
+    // (validadeDoAviso, em services/atendimento/digitando.go).
+    const apagarBolinha = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const fim = useRef<HTMLDivElement | null>(null)
     const ultimoID = useRef(0)
@@ -220,6 +242,23 @@ export default function AtendimentoPage() {
     useEffect(() => {
 
         const fechar = escutarLoja((aviso) => {
+
+            // O cliente encostou no teclado. Não relê a conversa: o aviso já
+            // diz tudo o que a tela precisa, e uma ida ao servidor a cada duas
+            // teclas digitadas por cliente seria caro para desenhar três
+            // pontinhos.
+            if (aviso.tipo === "atendimento-digitando") {
+
+                if (aviso.conversa_id !== escolhido) return
+
+                setClienteDigitando(true)
+
+                if (apagarBolinha.current) clearTimeout(apagarBolinha.current)
+
+                apagarBolinha.current = setTimeout(() => setClienteDigitando(false), VALIDADE_DIGITANDO)
+
+                return
+            }
 
             if (aviso.tipo !== "atendimento") return
 

@@ -1,9 +1,10 @@
 import Link from "next/link"
-import { FiPlus } from "react-icons/fi"
+import { FiPlus, FiUploadCloud } from "react-icons/fi"
 import { unstable_rethrow } from "next/navigation"
 import { consultarMenu, listarProdutos, listarTodasUnidades } from "@/app/api/servidor"
 import Grade from "./grade"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { tituloDaAba } from "@/app/marca"
 
 /**
  * A lista de produtos, montada no servidor.
@@ -23,7 +24,7 @@ import { Pagina } from "@/app/components/pagina/pagina"
  * seriam três esperas somadas para a mesma tela.
  */
 export const metadata = {
-    title: "Produtos | Arara",
+    title: tituloDaAba("Produtos"),
 }
 
 export default async function ProdutosPage() {
@@ -54,10 +55,21 @@ export default async function ProdutosPage() {
             titulo="Produtos"
             descricao="Uma linha por peça física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
             acoes={
-                <Link href="/page/produto" className="btn btn-primario">
-                    <FiPlus className="w-4" aria-hidden />
-                    <span>Novo produto</span>
-                </Link>
+                <>
+                    {/* Importar fica ao lado de "Novo produto", e não escondido
+                        num menu: quem chega de outro sistema precisa achar esta
+                        porta na primeira tela, antes de desistir de redigitar
+                        o catálogo inteiro. */}
+                    <Link href="/page/produtos/importar" className="btn btn-neutro">
+                        <FiUploadCloud className="w-4" aria-hidden />
+                        <span>Importar planilha</span>
+                    </Link>
+
+                    <Link href="/page/produto" className="btn btn-primario">
+                        <FiPlus className="w-4" aria-hidden />
+                        <span>Novo produto</span>
+                    </Link>
+                </>
             }
         >
             <Grade produtos={produtos} unidades={unidades} temSite={temSite} />

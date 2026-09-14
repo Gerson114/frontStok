@@ -1,15 +1,16 @@
 import { cookies } from "next/headers"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url } from "@/app/api/backend"
+import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 
 // POST /api/assinatura/checkout — abre a sessão de pagamento e devolve a URL
 // hospedada pelo provedor de cobrança para onde o lojista deve ser levado.
 //
-// Não tem corpo: a assinatura é uma só e o preço dela vive na configuração do
-// backend, então o navegador não tem o que escolher nem como pedir outro
-// valor.
+// Do corpo passa adiante apenas QUAL PLANO ("base" ou "pro"). O preço de cada
+// um vive na configuração do backend, então o navegador escolhe entre dois
+// nomes e nunca um valor — mandar price_... daqui seria deixar qualquer um
+// assinar pelo que quisesse.
 //
 // Nenhum dado de cartão passa por aqui, nem pelo backend: o lojista digita o
 // cartão numa página do provedor. É isso que mantém este sistema fora do
@@ -20,7 +21,7 @@ import { conta } from "@/app/api/rotas"
 // do corpo desta requisição, então não há nada aqui que o navegador possa
 // forjar.
 
-export async function POST() {
+export async function POST(request: Request) {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get("token")?.value
@@ -29,14 +30,21 @@ export async function POST() {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
+        // Só o nome do plano atravessa, e nada mais: um corpo repassado
+        // inteiro deixaria o navegador acrescentar campos que o backend um dia
+        // passe a ler.
+        const pedido = safeParse(await request.text()) as { plano?: unknown } | null
+        const plano = pedido?.plano === "pro" ? "pro" : "base"
+
         const response = await fetch(url(conta.checkout()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
+                ...(await cabecalhoDaLojaAberta()),
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
-            body: "{}",
+            body: JSON.stringify({ plano }),
             cache: "no-store",
         })
 

@@ -24,6 +24,13 @@ import {
 } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
+import {
+    BarraDaLista,
+    FaixaDeNumeros,
+    ListaDeRecursos,
+    ListaVazia,
+    Visoes,
+} from "@/app/components/lista/lista"
 
 /**
  * O estoque como grade de operação, no padrão de um WMS (a referência é o
@@ -613,75 +620,28 @@ export default function Estoque() {
 
             {/* ==========================
                 RESUMO
+                A mesma faixa de números de todas as telas de Estoque (ver
+                components/lista/lista.tsx): eram quatro cartões desenhados
+                aqui, e outra tela tinha dois retângulos com um "0" gigante.
             ========================== */}
 
-            <div className="card grid grid-cols-2 divide-[#EBEBEB] md:grid-cols-4 md:divide-x">
+            <FaixaDeNumeros
+                numeros={[
+                    { rotulo: "Peças em estoque", valor: totalPecas, icone: FiBox },
+                    { rotulo: "Endereços ocupados", valor: locaisOcupados, icone: FiGrid },
+                    { rotulo: "Reservadas", valor: totalReservadas, icone: FiBookmark },
+                    {
+                        rotulo: "Sem local",
+                        valor: totalSemLocal,
+                        icone: FiAlertTriangle,
+                        alerta: totalSemLocal > 0,
+                    },
+                ]}
+            />
 
-                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
-
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
-                        <FiBox className="w-4" aria-hidden />
-                    </span>
-
-                    <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Peças em estoque</span>
-                        <span className="num block text-xl font-extrabold text-[#303030]">{totalPecas}</span>
-                    </span>
-
-                </div>
-
-                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
-
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
-                        <FiGrid className="w-4" aria-hidden />
-                    </span>
-
-                    <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Endereços ocupados</span>
-                        <span className="num block text-xl font-extrabold text-[#303030]">{locaisOcupados}</span>
-                    </span>
-
-                </div>
-
-                <div className="flex items-center gap-3 p-4">
-
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
-                        <FiBookmark className="w-4" aria-hidden />
-                    </span>
-
-                    <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Reservadas</span>
-                        <span className="num block text-xl font-extrabold text-[#303030]">{totalReservadas}</span>
-                    </span>
-
-                </div>
-
-                <div className="flex items-center gap-3 p-4">
-
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                        totalSemLocal > 0 ? "bg-[#FFF1E3] text-[#5E4200]" : "bg-[#F1F1F1] text-[#616161]"
-                    }`}>
-                        <FiAlertTriangle className="w-4" aria-hidden />
-                    </span>
-
-                    <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Sem local</span>
-                        <span className={`num block text-xl font-extrabold ${
-                            totalSemLocal > 0 ? "text-[#5E4200]" : "text-[#303030]"
-                        }`}>
-                            {totalSemLocal}
-                        </span>
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            {/* Peça que chegou e ninguém guardou é trabalho parado, e
-                por isso o aviso fica acima da grade em vez de virar
-                mais uma linha dentro dela. O botão leva ao recorte,
-                que é o que a pessoa vai fazer em seguida. */}
+            {/* Peça que chegou e ninguém guardou é trabalho parado, e o aviso
+                leva direto para o recorte que mostra só elas — que é o que a
+                pessoa vai fazer em seguida. */}
             {totalSemLocal > 0 && recorte !== "sem_local" && (
 
                 <div className="mt-6 flex flex-col gap-3 rounded-lg border-l-4 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -708,67 +668,34 @@ export default function Estoque() {
 
 
             {/* ==========================
-                BARRA DA GRADE
+                A LISTA
+                Abas, busca, tabela e rodapé num cartão só — a lista de
+                recursos do Shopify Admin (ver components/lista/lista.tsx).
+                Os recortes eram botões soltos acima do cartão; dentro dele,
+                eles se leem como o que são: modos de ver a mesma tabela.
             ========================== */}
 
-            <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <ListaDeRecursos>
 
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar peças">
+                <Visoes
+                    visoes={recortes.map(({ chave, nome, total }) => ({
+                        chave,
+                        nome,
+                        contagem: total,
+                    }))}
+                    ativa={recorte}
+                    // A lista fala em chaves de texto porque serve qualquer
+                    // tela; aqui a chave é um Recorte, e a conversão acontece
+                    // nesta linha em vez de afrouxar o tipo da tela inteira.
+                    aoTrocar={(chave) => aoMudarRecorte(chave as Recorte)}
+                />
 
-                    {recortes.map(({ chave, nome, total }) => {
+                <BarraDaLista
+                    busca={busca}
+                    aoBuscar={aoMudarBusca}
+                    placeholder="Buscar por produto, código ou endereço"
+                />
 
-                        const ativo = chave === recorte
-
-                        return (
-                            <button
-                                key={chave}
-                                type="button"
-                                aria-pressed={ativo}
-                                onClick={() => aoMudarRecorte(chave)}
-                                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
-                                    ativo
-                                        ? "border-[#005BD3] bg-[#EAF4FF] text-[#00369B]"
-                                        : "border-[#E1E1E1] bg-white text-[#616161] hover:border-[#8A8A8A] hover:text-[#303030]"
-                                }`}
-                            >
-                                {nome}
-
-                                <span className={`num text-xs font-extrabold ${ativo ? "text-[#005BD3]" : "text-[#8A8A8A]"}`}>
-                                    {total}
-                                </span>
-                            </button>
-                        )
-                    })}
-
-                </div>
-
-                <div className="relative w-full lg:w-80">
-
-                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
-
-                    <input
-                        type="text"
-                        value={busca}
-                        onChange={(e) => aoMudarBusca(e.target.value)}
-                        placeholder="Buscar por produto, código ou endereço"
-                        className="field"
-                        style={{ paddingLeft: "2.25rem", paddingRight: busca ? "2.25rem" : undefined }}
-                    />
-
-                    {busca && (
-                        <button
-                            type="button"
-                            onClick={() => aoMudarBusca("")}
-                            aria-label="Limpar busca"
-                            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1]"
-                        >
-                            <FiX className="w-4" aria-hidden />
-                        </button>
-                    )}
-
-                </div>
-
-            </div>
 
 
             {/* ==========================
@@ -777,23 +704,11 @@ export default function Estoque() {
 
             {totalPecas === 0 ? (
 
-                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
-
-                    <FiMapPin className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
-
-                    <h3 className="font-display mt-5 text-xl text-[#303030]">
-                        Nenhuma peça guardada ainda
-                    </h3>
-
-                    <p className="mt-2 text-sm text-[#616161]">
-                        {enderecos.length === 0
-                            ? "Cadastre os endereços do seu estoque: é por eles que o sistema decide sozinho onde guardar o que entra."
-                            : "Cadastre um produto ou dê entrada numa remessa — o sistema escolhe o endereço."}
-                    </p>
-
-                    <div className="mt-6 flex flex-wrap justify-center gap-3">
-
-                        {enderecos.length === 0 ? (
+                <ListaVazia
+                    icone={FiMapPin}
+                    titulo="Nenhuma peça guardada ainda"
+                    acao={
+                        enderecos.length === 0 ? (
                             <Link href="/page/estoque/enderecos" className="btn btn-primario">
                                 <FiMapPin className="w-4" aria-hidden />
                                 <span>Cadastrar endereços</span>
@@ -803,35 +718,33 @@ export default function Estoque() {
                                 <FiPlus className="w-4" aria-hidden />
                                 <span>Cadastrar produto</span>
                             </Link>
-                        )}
-
-                    </div>
-
-                </div>
+                        )
+                    }
+                >
+                    {enderecos.length === 0
+                        ? "Cadastre os endereços do seu estoque: é por eles que o sistema decide sozinho onde guardar o que entra."
+                        : "Cadastre um produto ou dê entrada numa remessa — o sistema escolhe o endereço."}
+                </ListaVazia>
 
             ) : linhasFiltradas.length === 0 ? (
 
-                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
-
-                    <FiSearch className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
-
-                    <h3 className="font-display mt-5 text-xl text-[#303030]">
-                        Nenhuma peça corresponde ao filtro
-                    </h3>
-
-                    <button
-                        type="button"
-                        onClick={() => { aoMudarBusca(""); aoMudarRecorte("todas") }}
-                        className="btn btn-neutro mt-6"
-                    >
-                        Limpar filtros
-                    </button>
-
-                </div>
+                <ListaVazia
+                    icone={FiSearch}
+                    titulo="Nenhuma peça corresponde ao filtro"
+                    acao={
+                        <button
+                            type="button"
+                            onClick={() => { aoMudarBusca(""); aoMudarRecorte("todas") }}
+                            className="btn btn-neutro"
+                        >
+                            Limpar filtros
+                        </button>
+                    }
+                />
 
             ) : (
 
-                <div className="card mt-6 overflow-hidden">
+                <>
 
                     <div className="overflow-x-auto">
 
@@ -1080,9 +993,11 @@ export default function Estoque() {
 
                     </div>
 
-                </div>
+                </>
 
             )}
+
+            </ListaDeRecursos>
 
         </Pagina>
 

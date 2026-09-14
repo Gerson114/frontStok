@@ -112,6 +112,17 @@ export interface ItemPedido {
     produto_codigo: string
     quantidade: number
     preco_unitario: number
+
+    /**
+     * Quanto a peça custava SEM promoção, no dia da venda.
+     *
+     * Gravado na hora porque o desconto não é reconstituível depois:
+     * `preco_unitario` já vem promocional, e comparar com o preço de hoje
+     * mentiria — o lojista muda preço, e uma venda de março apareceria com um
+     * desconto que nunca houve. Zero (ou ausente, nos pedidos antigos) quer
+     * dizer "sem desconto registrado", e a tela então não fala em desconto.
+     */
+    preco_cheio?: number
     produto_descricao: string
     produto_categoria: string
     produto_tamanho: string
@@ -306,11 +317,18 @@ export interface ItemMenu {
      */
     pai?: string
     /**
-     * Falso quando a tela existe no plano da loja mas está suspensa — hoje,
-     * só por assinatura atrasada. O que o plano não inclui nem chega aqui.
+     * Falso quando a tela existe mas não abre agora. O item continua no menu,
+     * em cinza e com cadeado — some só a tela que um funcionário não tem
+     * permissão de ver, e essa nem chega aqui.
      */
     liberado: boolean
-    /** "assinatura_inativa" quando o caminho é regularizar o pagamento. */
+    /**
+     * Por que não abre: "assinatura_inativa" quando o caminho é regularizar o
+     * pagamento, "plano_pro" quando a tela é do plano Pro e esta loja está no
+     * base, "so_matriz" quando a tela é da loja principal e o painel está
+     * aberto numa filial. Os dois primeiros levam à assinatura; o terceiro,
+     * à tela das lojas, que é onde se troca de unidade.
+     */
     motivo?: string
 }
 
@@ -360,16 +378,36 @@ export interface PrecoPlano {
 }
 
 /**
- * O que está à venda, do jeito que o backend descreve. É uma assinatura só,
- * com tudo dentro: nome, texto, o que inclui e quanto custa vêm todos de lá —
- * o preço, em particular, é lido do provedor de cobrança a cada consulta,
- * para a tela nunca mostrar um valor diferente do que a fatura vai cobrar.
+ * O plano Pro, quando este servidor o tem configurado: o que ele acrescenta
+ * ao base e quanto custa.
+ *
+ * Ausente quer dizer que o Pro não está à venda aqui — e aí a tela mostra um
+ * plano só, em vez de anunciar o que o checkout não conseguiria cobrar.
+ */
+export interface OfertaPro {
+    preco?: PrecoPlano
+    /** O que o Pro acrescenta ao base, e não a lista inteira do sistema. */
+    recursos: string[]
+    /** Quantas lojas o Pro abre na mesma conta. */
+    lojas: number
+}
+
+/**
+ * O que está à venda, do jeito que o backend descreve: nome, texto, o que
+ * inclui e quanto custa vêm todos de lá — o preço, em particular, é lido do
+ * provedor de cobrança a cada consulta, para a tela nunca mostrar um valor
+ * diferente do que a fatura vai cobrar.
+ *
+ * `recursos` é o que o plano BASE entrega. O que o Pro acrescenta vem em
+ * `pro`, separado, porque é assim que a tela os mostra: um ao lado do outro,
+ * com a diferença à vista.
  */
 export interface Oferta {
     nome: string
     descricao: string
     recursos: string[]
     preco?: PrecoPlano
+    pro?: OfertaPro
     /**
      * Dias de teste grátis antes da primeira cobrança, decididos pelo
      * servidor. Zero (ou ausente) quer dizer que este servidor cobra na
@@ -423,6 +461,25 @@ export interface CadastroConcluido {
  * editor não ser uma porta de injeção de código na página que o comprador
  * abre (ver services/paginas no backend, que valida tudo antes de gravar).
  */
+/**
+ * Um cartão da faixa de selos ("compra segura", "acompanhe seu pedido").
+ *
+ * O ícone é uma CHAVE de uma lista fechada ("cadeado", "caixa"), e não um
+ * endereço de imagem: quem a traduz em desenho é a vitrine, com os ícones que
+ * ela já tem. É a mesma regra do resto do editor — o que se guarda é dado, e o
+ * desenho continua sendo nosso.
+ *
+ * Título e texto aceitam etiquetas entre chaves, trocadas pela vitrine pelo
+ * dado real da loja: `{pagamentos}`, `{telefone}`, `{whatsapp}`, `{endereco}`,
+ * `{horario}`, `{loja}`.
+ */
+export interface Cartao {
+    icone?: string
+    titulo?: string
+    texto?: string
+    link?: string
+}
+
 export interface Bloco {
     /** Identifica o bloco dentro da página, para o editor saber o que arrastou. */
     id: string
@@ -446,6 +503,9 @@ export interface Bloco {
 
     link?: string
     botao_texto?: string
+
+    /** Só do tipo "cartoes": os selos da faixa, na ordem em que aparecem. */
+    cartoes?: Cartao[]
 
     /**
      * Só do tipo "secao": as colunas, cada uma com os blocos dela.
@@ -477,6 +537,19 @@ export interface Loja {
     telefone?: string
     endereco?: string
     horario?: string
+
+    /**
+     * Onde a loja fica no mapa, para a vitrine oferecer a unidade mais perto
+     * de quem está olhando.
+     *
+     * Preenchido à mão pelo lojista, e não adivinhado do endereço escrito:
+     * deduzir coordenada de texto livre exige um serviço externo, e um
+     * alfinete errado manda o cliente para outra cidade — o que é pior do que
+     * não oferecer a loja mais próxima. Loja sem o par não entra na ordenação
+     * por distância; ela continua na lista, no fim.
+     */
+    latitude?: number | null
+    longitude?: number | null
 }
 
 /* ==========================================================================
@@ -489,6 +562,17 @@ export interface Funcionario {
     nome: string
     email: string
     ativo: boolean
+
+    /**
+     * Gerente da filial: a conta que administra ESTA loja, um degrau abaixo
+     * do dono. Ela cadastra e afasta gente e ajusta o que cada um abre, mas
+     * não alcança as lojas da rede, a assinatura, a conta que recebe o
+     * dinheiro nem o layout do site — que é da matriz.
+     *
+     * Só o dono promove e rebaixa: um gerente que criasse outro gerente
+     * fabricaria um par para fazer o que ele mesmo não pode.
+     */
+    gerente: boolean
 
     /** As chaves das telas que esta pessoa pode abrir (as mesmas do menu). */
     recursos: string[]
@@ -533,6 +617,17 @@ export interface PeriodoDoPainel {
      * o lojista decidir em cima de um número que ele supõe exato.
      */
     custo_conhecido: boolean
+
+    /**
+     * O MESMO intervalo do período anterior — hoje até esta hora contra
+     * ontem até a mesma hora; este mês até hoje contra o mês passado até o
+     * mesmo dia.
+     *
+     * O intervalo igual é o que torna a comparação honesta: treze dias
+     * contra um mês inteiro faria toda loja parecer em queda até o dia 28.
+     */
+    faturamento_anterior: number
+    pecas_anterior: number
 }
 
 /** O que está parado esperando alguém agir. */
@@ -543,6 +638,22 @@ export interface AtencaoDoPainel {
     pecas_avariadas: number
     tarefas_abertas: number
     devolucoes_abertas: number
+
+    /** Passou do prazo prometido e ainda não chegou ao cliente. */
+    pedidos_atrasados: number
+
+    /** Mensagens de cliente sem resposta: WhatsApp e chat da vitrine somados. */
+    clientes_esperando: number
+
+    /**
+     * Devolução que a loja aceitou e cujo dinheiro ainda não voltou.
+     *
+     * É a pendência mais cara da lista: dívida com nome e endereço. Acontece
+     * quando o provedor de pagamento não estorna por API — alguém precisa
+     * devolver no painel dele.
+     */
+    devolucoes_a_pagar: number
+    valor_a_pagar: number
 }
 
 /** Uma linha do "o que mais sai". */
@@ -624,7 +735,26 @@ export interface LojaDaRede {
     /** A que o painel está mostrando agora. */
     aberta: boolean
 
+    /**
+     * Quem trabalha nesta unidade: o gerente primeiro, depois o resto.
+     *
+     * Vem na lista da rede porque "quem responde por esta loja, e quem está
+     * nela?" é pergunta de dono, e a tela de Funcionários só responde pela
+     * unidade ABERTA — montar esse retrato por lá seria abrir uma loja de cada
+     * vez. Quem está afastado vem junto, marcado: uma filial com três pessoas
+     * e duas sem acesso é justamente o que o dono precisa enxergar.
+     */
+    equipe?: PessoaDaLoja[]
+
     criada_em: string
+}
+
+/** Alguém da equipe de uma loja, como o dono a vê na lista da rede. */
+export interface PessoaDaLoja {
+    nome: string
+    email: string
+    gerente: boolean
+    ativo: boolean
 }
 
 /** As lojas do dono, com o que o plano dele comporta. */
@@ -1041,4 +1171,209 @@ export interface RegraFrete {
     uf: string
     valor: number
     prazo_dias: number
+}
+
+/* ==========================================================================
+   Os três painéis por assunto (ver services/painel no backend)
+
+   A régua é a mesma dos gráficos de venda — dia, mês ou ano —, e por isso o
+   tipo dela é reaproveitado: quatro telas com a mesma régua se leem lado a
+   lado sem ninguém refazer conta de cabeça.
+   ========================================================================== */
+
+/** Uma janela da régua no painel da mercadoria. */
+export interface PontoDeMercadoria {
+    rotulo: string
+    pecas_entraram: number
+    pecas_sairam: number
+
+    /** O dinheiro dos dois lados: o que a loja pagou e o que ela recebeu. */
+    custo: number
+    receita: number
+}
+
+export interface LinhaDeProduto {
+    produto_id: number
+    nome: string
+    codigo: string
+    pecas: number
+    valor: number
+}
+
+export interface LinhaDeFornecedor {
+    nome: string
+    pecas: number
+    custo: number
+}
+
+export interface LinhaParada {
+    produto_id: number
+    nome: string
+    codigo: string
+    pecas: number
+    dias_paradas: number
+}
+
+export interface PainelDaMercadoria {
+    granularidade: GranularidadeDeVendas
+    serie: PontoDeMercadoria[]
+
+    resumo: {
+        pecas_entraram: number
+        pecas_sairam: number
+        custo_entrada: number
+        receita_saida: number
+
+        /** O que está na loja agora — não depende da régua escolhida. */
+        em_estoque: number
+        reservadas: number
+        avariadas: number
+        devolvidas: number
+        custo_parado: number
+    }
+
+    mais_sairam: LinhaDeProduto[]
+    mais_entraram: LinhaDeProduto[]
+    fornecedores: LinhaDeFornecedor[]
+    paradas: LinhaParada[]
+}
+
+/** Uma pessoa no painel da equipe, com o que ela fez na janela. */
+export interface PessoaNoPainel {
+    id: number
+    nome: string
+    email?: string
+    gerente: boolean
+    ativo: boolean
+
+    /** Quem aparece nas somas sem estar no cadastro: o dono, ou quem saiu. */
+    dono: boolean
+
+    desde_em?: string
+
+    pecas_vendidas: number
+    faturamento: number
+    pedidos_assumidos: number
+    conversas_atendidas: number
+    tarefas_concluidas: number
+
+    /** Quantas telas do painel esta pessoa pode abrir. */
+    telas: number
+}
+
+export interface PainelDaEquipe {
+    granularidade: GranularidadeDeVendas
+
+    resumo: {
+        pessoas: number
+        ativos: number
+        gerentes: number
+        pecas_vendidas: number
+        faturamento: number
+
+        /** Peças que saíram sem nome gravado: venda do site, baixa automática. */
+        sem_dono: number
+    }
+
+    pessoas: PessoaNoPainel[]
+}
+
+/** Uma janela da régua no painel da expedição. */
+export interface PontoDeEntrega {
+    rotulo: string
+    retiradas: number
+    entregas: number
+}
+
+export interface LinhaDeTransportadora {
+    nome: string
+    pedidos: number
+    frete: number
+}
+
+export interface LinhaDeDestino {
+    uf: string
+    cidade: string
+    pedidos: number
+    frete: number
+}
+
+export interface PainelDasEntregas {
+    granularidade: GranularidadeDeVendas
+    serie: PontoDeEntrega[]
+
+    resumo: {
+        retiradas: number
+        entregas: number
+        frete_cobrado: number
+
+        /** Só conta pedido entregue: o que está a caminho não tem desfecho. */
+        no_prazo: number
+        atrasados: number
+
+        /** Horas entre o pagamento e o despacho — o tempo que é da loja. */
+        horas_ate_despachar: number
+
+        /** A fila de agora, fora da régua de tempo. */
+        a_embalar: number
+        a_caminho: number
+        a_retirar: number
+    }
+
+    transportadoras: LinhaDeTransportadora[]
+    destinos: LinhaDeDestino[]
+}
+
+/* ==========================================================================
+   As regras que cada loja ajusta para si (ver services/configuracao)
+
+   Tudo o que está aqui já era decidido — só que escrito à mão no código,
+   igual para todas as lojas. O que mudou é que agora há onde mudar.
+   ========================================================================== */
+
+export interface ConfiguracaoDaLoja {
+    /** Onde o DIA desta loja começa, no nome IANA. Vazio é "o do servidor". */
+    fuso: string
+
+    /** Quanto tempo o pedido segura as peças esperando o pagamento. */
+    minutos_para_pagar: number
+
+    /** Janela para o comprador avisar que a mercadoria chegou danificada. */
+    dias_para_avisar_avaria: number
+
+    /** O que conta como atraso num pedido sem prazo combinado. */
+    dias_sem_prazo_prometido: number
+
+    /** A partir de quando uma peça vendável entra na lista do que está parado. */
+    dias_para_considerar_parado: number
+
+    /** Liga o recado que o servidor manda no WhatsApp quando alguém pede devolução. */
+    avisar_devolucao_no_whatsapp: boolean
+
+    /**
+     * Oferece, no checkout, combinar o pagamento com a loja em vez de pagar
+     * na hora. O pedido nasce "combinando" — aparece no painel e não conta
+     * como venda até alguém confirmar que o dinheiro caiu.
+     */
+    pagar_pelo_whatsapp: boolean
+
+    /** Quanto tempo o pedido combinado segura as peças antes de ser desfeito. */
+    horas_para_combinar: number
+
+    atualizado_em?: string
+}
+
+export interface LimiteDeCampo {
+    minimo: number
+    maximo: number
+}
+
+export interface RespostaDaConfiguracao {
+    configuracao: ConfiguracaoDaLoja
+
+    /** Os limites de cada campo, para a tela mostrá-los ao lado em vez de só recusar. */
+    limites: Record<string, LimiteDeCampo>
+
+    /** Os fusos que a loja pode escolher. */
+    fusos: { valor: string; nome: string }[]
 }

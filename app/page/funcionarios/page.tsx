@@ -4,14 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import {
     FiAlertCircle,
     FiCheckCircle,
+    FiChevronDown,
+    FiChevronRight,
     FiKey,
-    FiPlus,
+    FiLock,
+    FiSearch,
+    FiSlash,
     FiTrash2,
     FiUserPlus,
     FiUsers,
     FiX,
 } from "react-icons/fi"
-import { Pagina, Secao, Estado } from "@/app/components/pagina/pagina"
+import { Pagina } from "@/app/components/pagina/pagina"
 import FluxoDoAtendimento from "@/app/components/painel/fluxo"
 import type { Funcionario, PermissaoConcedivel } from "@/app/type/type"
 import {
@@ -29,11 +33,27 @@ import {
  * tudo. Quem confere mercadoria via o faturamento, e tirar o acesso de quem
  * saiu significava trocar a senha de todo mundo.
  *
+ * O ARRANJO é o dos painéis de administração de conta (a referência aqui é o
+ * Google Workspace Admin): a lista de pessoas fica estreita à esquerda e a
+ * ficha de quem se escolheu ocupa a área principal. Ele substituiu uma lista
+ * de cartões em que cada pessoa carregava as trinta caixas de permissão
+ * abertas — três funcionários viravam uma página de rolagem, e a pergunta
+ * "quem é gerente aqui?" exigia ler tudo.
+ *
+ * Duas decisões que vêm desse arranjo e não são enfeite:
+ *
+ *   - as permissões abrem por SEÇÃO, fechadas, com a conta do que está
+ *     marcado ("4 de 6"). O dono quase sempre quer conferir, não editar, e a
+ *     conta responde isso sem abrir nada;
+ *   - cadastrar acontece no mesmo lugar da ficha, e não numa segunda tela ou
+ *     num formulário empilhado acima da lista. É a mesma área respondendo
+ *     "quem é esta pessoa", esteja ela sendo criada ou editada.
+ *
  * A permissão é marcada tela a tela, no mesmo catálogo que monta o menu — por
- * isso a lista aqui aparece agrupada exatamente como o menu do lado esquerdo.
+ * isso a lista aparece agrupada exatamente como o menu do lado esquerdo.
  * Marcar "Estoque" para alguém é dizer que aquele item vai existir no menu
- * dele; o que não for marcado não aparece bloqueado, simplesmente não está
- * lá, porque não é assunto dele.
+ * dele; o que não for marcado não aparece bloqueado, simplesmente não está lá,
+ * porque não é assunto dele.
  *
  * Três telas não estão na lista e não podem ser concedidas: a assinatura, a
  * conta que recebe o dinheiro das vendas e esta própria. Quem pode conceder
@@ -94,29 +114,54 @@ function agrupar(permissoes: PermissaoConcedivel[]): { secao: string; grupos: Gr
     return secoes
 }
 
+/** A inicial que vai no círculo da lista, para o olho achar a linha de novo. */
+function inicial(nome: string): string {
+    return (nome.trim()[0] ?? "?").toUpperCase()
+}
+
+/** Texto pronto para busca: minúsculo e sem acento. */
+function comparavel(texto: string): string {
+    return texto
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase()
+}
+
 export default function Funcionarios() {
 
     const [equipe, setEquipe] = useState<Funcionario[]>([])
     const [permissoes, setPermissoes] = useState<PermissaoConcedivel[]>([])
+    const [podePromover, setPodePromover] = useState(false)
+    const [lojaAberta, setLojaAberta] = useState("")
+
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState("")
     const [aviso, setAviso] = useState("")
+    const [salvando, setSalvando] = useState(false)
 
-    // O formulário de cadastro abre acima da lista, a partir do botão do
-    // cabeçalho — não é uma segunda tela.
-    const [criando, setCriando] = useState(false)
+    // Quem está aberto na ficha à direita. `"novo"` é o cadastro, que ocupa a
+    // mesma área — é a mesma pergunta ("quem é esta pessoa?"), sendo criada em
+    // vez de editada.
+    const [escolhido, setEscolhido] = useState<number | "novo" | null>(null)
+
+    const [busca, setBusca] = useState("")
+
+    // O rascunho da ficha aberta. Fica em estado próprio, e não lido direto da
+    // lista, porque é ele que o botão Salvar grava — e é ele que se descarta
+    // ao trocar de pessoa sem salvar.
     const [nome, setNome] = useState("")
     const [email, setEmail] = useState("")
     const [senha, setSenha] = useState("")
     const [marcadas, setMarcadas] = useState<string[]>([])
-    const [salvando, setSalvando] = useState(false)
+    const [gerente, setGerente] = useState(false)
 
-    // Quem está sendo editado na lista, e a seleção em andamento dele.
-    const [editando, setEditando] = useState<number | null>(null)
-    const [marcadasEdicao, setMarcadasEdicao] = useState<string[]>([])
+    // Seções de permissão abertas. Todas nascem fechadas: a conta ao lado do
+    // título ("4 de 6") responde à conferência sem abrir nada.
+    const [abertas, setAbertas] = useState<Record<string, boolean>>({})
 
-    // A troca de senha é um pedido à parte, e por isso tem estado à parte.
-    const [trocandoSenha, setTrocandoSenha] = useState<number | null>(null)
+    // A troca de senha é um pedido à parte do servidor, e por isso tem estado
+    // à parte — salvar a ficha não mexe na senha, e vice-versa.
+    const [trocandoSenha, setTrocandoSenha] = useState(false)
     const [senhaNova, setSenhaNova] = useState("")
 
     const secoes = useMemo(() => agrupar(permissoes), [permissoes])
@@ -126,6 +171,8 @@ export default function Funcionarios() {
             const dados = await consultarEquipe()
             setEquipe(dados.funcionarios)
             setPermissoes(dados.permissoes)
+            setPodePromover(dados.pode_promover)
+            setLojaAberta(dados.loja)
             setErro("")
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível carregar a equipe.")
@@ -149,6 +196,8 @@ export default function Funcionarios() {
                 if (!cancelado) {
                     setEquipe(dados.funcionarios)
                     setPermissoes(dados.permissoes)
+                    setPodePromover(dados.pode_promover)
+                    setLojaAberta(dados.loja)
                 }
             } catch (e) {
                 if (!cancelado) {
@@ -166,27 +215,58 @@ export default function Funcionarios() {
         }
     }, [])
 
-    function alternar(lista: string[], chave: string): string[] {
-        return lista.includes(chave)
-            ? lista.filter((c) => c !== chave)
-            : [...lista, chave]
+    const pessoa = useMemo(
+        () => (typeof escolhido === "number" ? equipe.find((f) => f.id === escolhido) ?? null : null),
+        [escolhido, equipe],
+    )
+
+    const listados = useMemo(() => {
+
+        const termo = comparavel(busca.trim())
+
+        if (termo === "") return equipe
+
+        return equipe.filter((f) =>
+            comparavel(f.nome).includes(termo) || comparavel(f.email).includes(termo))
+    }, [busca, equipe])
+
+    /** Abre a ficha de alguém, descartando o rascunho de quem estava aberto. */
+    function abrir(funcionario: Funcionario) {
+        setEscolhido(funcionario.id)
+        setNome(funcionario.nome)
+        setEmail(funcionario.email)
+        setMarcadas(funcionario.recursos)
+        setGerente(funcionario.gerente)
+        setSenha("")
+        setTrocandoSenha(false)
+        setSenhaNova("")
+        setAbertas({})
     }
 
-    /** Marca ou desmarca uma seção inteira de uma vez. */
-    function alternarSecao(lista: string[], chaves: string[]): string[] {
-        const todasMarcadas = chaves.every((chave) => lista.includes(chave))
-
-        return todasMarcadas
-            ? lista.filter((chave) => !chaves.includes(chave))
-            : [...new Set([...lista, ...chaves])]
-    }
-
-    function limparFormulario() {
-        setCriando(false)
+    function abrirCadastro() {
+        setEscolhido("novo")
         setNome("")
         setEmail("")
         setSenha("")
         setMarcadas([])
+        setGerente(false)
+        setTrocandoSenha(false)
+        setAbertas({})
+    }
+
+    function alternar(chave: string) {
+        setMarcadas((atual) =>
+            atual.includes(chave) ? atual.filter((c) => c !== chave) : [...atual, chave])
+    }
+
+    function alternarSecao(chaves: string[]) {
+        setMarcadas((atual) => {
+            const todas = chaves.every((chave) => atual.includes(chave))
+
+            return todas
+                ? atual.filter((chave) => !chaves.includes(chave))
+                : [...new Set([...atual, ...chaves])]
+        })
     }
 
     async function handleCriar(evento: React.FormEvent) {
@@ -196,9 +276,21 @@ export default function Funcionarios() {
         setAviso("")
 
         try {
-            await criarFuncionario({ nome, email, password: senha, recursos: marcadas })
-            limparFormulario()
-            setAviso("Funcionário criado. Ele já pode entrar com o e-mail e a senha que você definiu.")
+            const criado = await criarFuncionario({ nome, email, password: senha, recursos: marcadas, gerente })
+
+            // O que dizer ao dono depende de a pessoa ter recebido o convite.
+            //
+            // Com o convite no ar, a senha que ele digitou é provisória e ele
+            // não deve passá-la adiante: a pessoa cria a dela pelo código que
+            // chegou no e-mail. Sem servidor de e-mail, o convite não sai, e aí
+            // a senha provisória é mesmo a única forma de a pessoa entrar — e o
+            // dono precisa saber disso para combiná-la com ela.
+            setAviso(
+                criado.convite_enviado
+                    ? `${nome} recebeu um e-mail com um código para criar a própria senha. Até usar o código, a senha provisória que você digitou é que vale — prefira não passá-la adiante.`
+                    : `${nome} já pode entrar com o e-mail e a senha que você definiu. Peça que ele a troque assim que entrar.`,
+            )
+            setEscolhido(null)
             await carregar()
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível criar o funcionário.")
@@ -207,22 +299,25 @@ export default function Funcionarios() {
         }
     }
 
-    async function handleSalvar(funcionario: Funcionario) {
+    async function handleSalvar() {
+
+        if (!pessoa) return
+
         setSalvando(true)
         setErro("")
         setAviso("")
 
         try {
-            await salvarFuncionario(funcionario.id, {
-                nome: funcionario.nome,
-                recursos: marcadasEdicao,
-                ativo: funcionario.ativo,
+            await salvarFuncionario(pessoa.id, {
+                nome,
+                recursos: marcadas,
+                ativo: pessoa.ativo,
+                gerente,
             })
-            setEditando(null)
-            setAviso(`Permissões de ${funcionario.nome} atualizadas. A sessão aberta dele caiu — na próxima vez que entrar, o menu já vem novo.`)
+            setAviso(`${pessoa.nome} atualizado. A sessão aberta dele caiu — na próxima vez que entrar, o menu já vem novo.`)
             await carregar()
         } catch (e) {
-            setErro(e instanceof Error ? e.message : "Não foi possível salvar as permissões.")
+            setErro(e instanceof Error ? e.message : "Não foi possível salvar.")
         } finally {
             setSalvando(false)
         }
@@ -247,17 +342,20 @@ export default function Funcionarios() {
         }
     }
 
-    async function handleSenha(funcionario: Funcionario, evento: React.FormEvent) {
+    async function handleSenha(evento: React.FormEvent) {
         evento.preventDefault()
+
+        if (!pessoa) return
+
         setSalvando(true)
         setErro("")
         setAviso("")
 
         try {
-            await trocarSenhaDoFuncionario(funcionario.id, senhaNova)
-            setTrocandoSenha(null)
+            await trocarSenhaDoFuncionario(pessoa.id, senhaNova)
+            setTrocandoSenha(false)
             setSenhaNova("")
-            setAviso(`Senha de ${funcionario.nome} trocada. As sessões abertas com a antiga caíram.`)
+            setAviso(`Senha de ${pessoa.nome} trocada. As sessões abertas com a antiga caíram.`)
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível trocar a senha.")
         } finally {
@@ -272,75 +370,98 @@ export default function Funcionarios() {
         try {
             await excluirFuncionario(funcionario.id)
             setAviso(`${funcionario.nome} foi excluído.`)
+            setEscolhido(null)
             await carregar()
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível excluir.")
         }
     }
 
-    /** A grade de caixas para marcar, compartilhada pelo cadastro e pela edição. */
-    function listaDePermissoes(marcadasAgora: string[], aoMudar: (novas: string[]) => void) {
+    /**
+     * As permissões, por seção e fechadas.
+     *
+     * Fechadas porque a pergunta frequente é de conferência ("ele vê o
+     * estoque?"), e a conta no cabeçalho da seção já responde. Abrir as trinta
+     * caixas de uma vez era o que fazia esta tela parecer um formulário de
+     * imposto de renda.
+     */
+    function listaDePermissoes() {
         return (
-            <div className="space-y-5">
+            <div className="divide-y divide-[#EBEBEB] border-y border-[#EBEBEB]">
                 {secoes.map(({ secao, grupos }) => {
 
-                    const chavesDaSecao = grupos.flatMap((g) => [g.item.chave, ...g.filhos.map((f) => f.chave)])
-                    const todas = chavesDaSecao.every((chave) => marcadasAgora.includes(chave))
+                    const chaves = grupos.flatMap((g) => [g.item.chave, ...g.filhos.map((f) => f.chave)])
+                    const marcadasAqui = chaves.filter((chave) => marcadas.includes(chave)).length
+                    const aberta = abertas[secao] ?? false
 
                     return (
                         <div key={secao}>
 
-                            <div className="mb-2 flex items-center justify-between gap-3 border-b border-[#EBEBEB] pb-1.5">
-                                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
-                                    {secao}
-                                </p>
+                            <div className="flex items-center gap-2">
 
                                 <button
                                     type="button"
-                                    onClick={() => aoMudar(alternarSecao(marcadasAgora, chavesDaSecao))}
-                                    className="text-xs font-medium text-[#005BD3] hover:underline"
+                                    onClick={() => setAbertas((a) => ({ ...a, [secao]: !aberta }))}
+                                    aria-expanded={aberta}
+                                    className="flex flex-1 items-center gap-2 py-3 text-left transition-colors hover:bg-[#F7F7F7]"
                                 >
-                                    {todas ? "Desmarcar seção" : "Marcar seção"}
+                                    {aberta
+                                        ? <FiChevronDown className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
+                                        : <FiChevronRight className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />}
+
+                                    <span className="flex-1 text-sm font-semibold text-[#303030]">
+                                        {secao}
+                                    </span>
+
+                                    <span className={`num text-xs ${
+                                        marcadasAqui > 0 ? "font-semibold text-[#303030]" : "text-[#8A8A8A]"
+                                    }`}>
+                                        {marcadasAqui} de {chaves.length}
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => alternarSecao(chaves)}
+                                    className="shrink-0 px-2 py-1 text-xs font-semibold text-[#005BD3] hover:underline"
+                                >
+                                    {marcadasAqui === chaves.length ? "Limpar" : "Marcar tudo"}
                                 </button>
                             </div>
 
-                            <div className="space-y-1">
-                                {grupos.map(({ item, filhos }) => (
-                                    <div key={item.chave}>
+                            {aberta && (
+                                <div className="grid gap-1 pb-3 pl-6 sm:grid-cols-2">
+                                    {grupos.map((grupo) => (
+                                        <div key={grupo.item.chave} className="min-w-0">
 
-                                        <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[0.8125rem] text-[#303030] transition-colors hover:bg-[#F7F7F7]">
-                                            <input
-                                                type="checkbox"
-                                                checked={marcadasAgora.includes(item.chave)}
-                                                onChange={() => aoMudar(alternar(marcadasAgora, item.chave))}
-                                                className="h-4 w-4 shrink-0 accent-[#005BD3]"
-                                            />
-                                            <span className="font-medium">{item.nome}</span>
-                                        </label>
+                                            <label className="flex items-center gap-2 py-1 text-sm text-[#303030]">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={marcadas.includes(grupo.item.chave)}
+                                                    onChange={() => alternar(grupo.item.chave)}
+                                                    className="h-4 w-4 shrink-0"
+                                                />
+                                                <span className="truncate">{grupo.item.nome}</span>
+                                            </label>
 
-                                        {filhos.length > 0 && (
-                                            <div className="ml-4 border-l border-[#EBEBEB] pl-2">
-                                                {filhos.map((filho) => (
-                                                    <label
-                                                        key={filho.chave}
-                                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-[0.8125rem] text-[#616161] transition-colors hover:bg-[#F7F7F7]"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={marcadasAgora.includes(filho.chave)}
-                                                            onChange={() => aoMudar(alternar(marcadasAgora, filho.chave))}
-                                                            className="h-4 w-4 shrink-0 accent-[#005BD3]"
-                                                        />
-                                                        {filho.nome}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                    </div>
-                                ))}
-                            </div>
-
+                                            {grupo.filhos.map((filho) => (
+                                                <label
+                                                    key={filho.chave}
+                                                    className="flex items-center gap-2 py-1 pl-6 text-sm text-[#616161]"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={marcadas.includes(filho.chave)}
+                                                        onChange={() => alternar(filho.chave)}
+                                                        className="h-4 w-4 shrink-0"
+                                                    />
+                                                    <span className="truncate">{filho.nome}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )
                 })}
@@ -348,13 +469,32 @@ export default function Funcionarios() {
         )
     }
 
-    /** O nome das telas de alguém, para a linha da lista não mostrar chaves. */
-    function nomesDas(chaves: string[]): string {
-        const nomes = chaves
-            .map((chave) => permissoes.find((p) => p.chave === chave)?.nome)
-            .filter((nome): nome is string => Boolean(nome))
+    /** O seletor de cargo — só para o dono, que é quem promove. */
+    function campoDeCargo() {
 
-        return nomes.join(" · ")
+        if (!podePromover) return null
+
+        return (
+            <div>
+                <label htmlFor="cargo" className="rotulo">Cargo</label>
+
+                <select
+                    id="cargo"
+                    value={gerente ? "gerente" : "funcionario"}
+                    onChange={(e) => setGerente(e.target.value === "gerente")}
+                    className="field w-full sm:max-w-xs"
+                >
+                    <option value="funcionario">Funcionário — só as telas marcadas</option>
+                    <option value="gerente">Gerente — administra esta loja</option>
+                </select>
+
+                <p className="mt-1.5 text-xs text-[#616161]">
+                    {gerente
+                        ? "Abre o sistema inteiro desta loja e cuida da equipe daqui. Não alcança o que é seu: a assinatura e o plano, as suas outras lojas, a conta que recebe o dinheiro e a cara do site."
+                        : "Enxerga só o que você marcar abaixo. O menu dele é montado a partir dessa marcação."}
+                </p>
+            </div>
+        )
     }
 
     if (carregando) {
@@ -368,15 +508,15 @@ export default function Funcionarios() {
     return (
         <Pagina
             titulo="Funcionários"
-            descricao="Cada pessoa da sua equipe entra com a própria senha e enxerga só as telas que você marcar. O menu dela é montado a partir desta lista."
+            descricao={
+                lojaAberta
+                    ? `A equipe de ${lojaAberta}. Cada pessoa entra com a própria senha, e quem você cadastrar aqui nasce nesta loja — para outra unidade, troque de loja no topo.`
+                    : "Cada pessoa da sua equipe entra com a própria senha e enxerga só as telas que você marcar."
+            }
             acoes={
-                <button
-                    type="button"
-                    onClick={() => setCriando((v) => !v)}
-                    className="btn btn-primario"
-                >
-                    <FiPlus className="w-4" aria-hidden />
-                    <span>Novo funcionário</span>
+                <button type="button" onClick={abrirCadastro} className="btn btn-primario">
+                    <FiUserPlus className="w-4" aria-hidden />
+                    <span>Adicionar pessoa</span>
                 </button>
             }
         >
@@ -395,230 +535,323 @@ export default function Funcionarios() {
                 </div>
             )}
 
-            {criando && (
-                <Secao
-                    titulo="Novo funcionário"
-                    descricao="Ele entra pelo mesmo endereço que você, com este e-mail e esta senha."
-                    acoes={
-                        <button type="button" onClick={limparFormulario} className="btn btn-neutro">
-                            <FiX className="w-4" aria-hidden />
-                            <span>Cancelar</span>
-                        </button>
-                    }
-                >
-                    <form onSubmit={handleCriar} className="space-y-5">
+            {/* Lista estreita e ficha larga. No celular viram uma coluna só: a
+                lista primeiro e a ficha embaixo, que é a ordem em que se usa. */}
+            <div className="grid gap-4 lg:grid-cols-[19rem_minmax(0,1fr)]">
 
-                        <div className="grid gap-4 sm:grid-cols-3">
-                            <div>
-                                <label className="rotulo" htmlFor="nome">Nome</label>
-                                <input
-                                    id="nome"
-                                    value={nome}
-                                    onChange={(e) => setNome(e.target.value)}
-                                    placeholder="Ex: Ana Paula"
-                                    className="field"
-                                    required
-                                />
-                            </div>
+                {/* ---------------------------------------------------------
+                    A LISTA
+                    --------------------------------------------------------- */}
+                <section className="card flex max-h-[calc(100dvh-14rem)] flex-col overflow-hidden p-0">
 
-                            <div>
-                                <label className="rotulo" htmlFor="email">E-mail</label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="ana@sualoja.com.br"
-                                    className="field"
-                                    required
-                                />
-                            </div>
+                    <div className="border-b border-[#EBEBEB] p-3">
+                        <div className="relative">
+                            <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
 
-                            <div>
-                                <label className="rotulo" htmlFor="senha">Senha</label>
-                                <input
-                                    id="senha"
-                                    type="password"
-                                    value={senha}
-                                    onChange={(e) => setSenha(e.target.value)}
-                                    placeholder="Mínimo de 8 caracteres"
-                                    className="field"
-                                    required
-                                />
-                            </div>
+                            <input
+                                type="search"
+                                value={busca}
+                                onChange={(e) => setBusca(e.target.value)}
+                                placeholder="Buscar pessoa"
+                                aria-label="Buscar pessoa na equipe"
+                                className="field w-full pl-8"
+                            />
                         </div>
+                    </div>
 
-                        <div>
-                            <p className="rotulo">O que ele pode abrir</p>
-                            {listaDePermissoes(marcadas, setMarcadas)}
-                        </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto">
 
-                        <div className="flex justify-end gap-2 border-t border-[#EBEBEB] pt-4">
-                            <button type="submit" disabled={salvando} className="btn btn-primario">
-                                <FiUserPlus className="w-4" aria-hidden />
-                                <span>{salvando ? "Criando..." : "Criar funcionário"}</span>
-                            </button>
-                        </div>
+                        {listados.length === 0 && (
+                            <p className="px-4 py-6 text-center text-sm text-[#616161]">
+                                {equipe.length === 0
+                                    ? "Ninguém cadastrado ainda."
+                                    : "Ninguém com esse nome."}
+                            </p>
+                        )}
 
-                    </form>
-                </Secao>
-            )}
+                        {listados.map((funcionario) => {
 
-            {equipe.length === 0 ? (
-                <Estado
-                    Icone={FiUsers}
-                    titulo="Você é a única pessoa com acesso"
-                    texto="Enquanto a loja tiver uma conta só, todo mundo que precisar do painel usa a sua senha — e ninguém consegue dizer quem fez o quê. Crie uma conta para cada pessoa e marque só as telas de que ela precisa."
-                    acao={
-                        <button type="button" onClick={() => setCriando(true)} className="btn btn-primario">
-                            <FiPlus className="w-4" aria-hidden />
-                            <span>Novo funcionário</span>
-                        </button>
-                    }
-                />
-            ) : (
-                <div className="space-y-4">
-                    {equipe.map((funcionario) => (
-                        <Secao
-                            key={funcionario.id}
-                            titulo={funcionario.nome}
-                            descricao={
-                                <>
-                                    {funcionario.email}
-                                    {funcionario.recursos.length > 0 && (
-                                        <span className="block text-xs text-[#8A8A8A]">
-                                            {nomesDas(funcionario.recursos)}
-                                        </span>
-                                    )}
-                                    {funcionario.recursos.length === 0 && (
-                                        <span className="block text-xs text-[#8A8A8A]">
-                                            Nenhuma tela marcada — ele entra e não encontra nada.
-                                        </span>
-                                    )}
-                                </>
-                            }
-                            acoes={
-                                <>
-                                    <span className={funcionario.ativo ? "tag tag-success" : "tag tag-neutral"}>
-                                        {funcionario.ativo ? "Ativo" : "Sem acesso"}
+                            const ativo = escolhido === funcionario.id
+
+                            return (
+                                <button
+                                    key={funcionario.id}
+                                    type="button"
+                                    onClick={() => abrir(funcionario)}
+                                    aria-current={ativo ? "true" : undefined}
+                                    className={`flex w-full items-center gap-3 border-b border-[#F1F1F1] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
+                                        ativo ? "bg-[#F1F1F1]" : "hover:bg-[#F7F7F7]"
+                                    }`}
+                                >
+                                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                        funcionario.ativo
+                                            ? "bg-[#303030] text-white"
+                                            : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                    }`}>
+                                        {inicial(funcionario.nome)}
                                     </span>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setEditando(editando === funcionario.id ? null : funcionario.id)
-                                            setMarcadasEdicao(funcionario.recursos)
-                                            setTrocandoSenha(null)
-                                        }}
-                                        className="btn btn-neutro"
-                                    >
-                                        {editando === funcionario.id ? "Fechar" : "Permissões"}
-                                    </button>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block truncate text-sm font-semibold text-[#303030]">
+                                            {funcionario.nome}
+                                        </span>
+
+                                        <span className="block truncate text-xs text-[#616161]">
+                                            {funcionario.gerente ? "Gerente" : "Funcionário"}
+                                            {!funcionario.ativo && " · sem acesso"}
+                                        </span>
+                                    </span>
+
+                                    {funcionario.gerente && (
+                                        <FiLock className="w-3.5 shrink-0 text-[#8A8A8A]" aria-hidden />
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </section>
+
+                {/* ---------------------------------------------------------
+                    A FICHA
+                    --------------------------------------------------------- */}
+                <section className="card p-6">
+
+                    {escolhido === null && (
+                        <div className="flex min-h-[18rem] flex-col items-center justify-center text-center">
+                            <FiUsers className="w-8 text-[#B5B5B5]" aria-hidden />
+
+                            <p className="mt-3 font-display text-base text-[#303030]">
+                                Escolha alguém na lista
+                            </p>
+
+                            <p className="mt-1 max-w-sm text-sm text-[#616161]">
+                                A ficha mostra o cargo da pessoa, as telas que ela abre e o que
+                                fazer com a conta dela.
+                            </p>
+                        </div>
+                    )}
+
+                    {escolhido === "novo" && (
+                        <form onSubmit={handleCriar} className="space-y-5">
+
+                            <div className="flex items-start justify-between gap-3">
+                                <p className="font-display text-lg text-[#303030]">Nova pessoa</p>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setEscolhido(null)}
+                                    aria-label="Cancelar"
+                                    className="rounded-lg p-1.5 text-[#616161] hover:bg-[#F1F1F1]"
+                                >
+                                    <FiX className="w-4" aria-hidden />
+                                </button>
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-3">
+                                <div>
+                                    <label className="rotulo" htmlFor="nome">Nome</label>
+                                    <input
+                                        id="nome"
+                                        value={nome}
+                                        onChange={(e) => setNome(e.target.value)}
+                                        placeholder="Ex: Ana Paula"
+                                        className="field"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="rotulo" htmlFor="email">E-mail</label>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="ana@sualoja.com.br"
+                                        className="field"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="rotulo" htmlFor="senha">Senha</label>
+                                    <input
+                                        id="senha"
+                                        type="password"
+                                        value={senha}
+                                        onChange={(e) => setSenha(e.target.value)}
+                                        placeholder="Mínimo de 8 caracteres"
+                                        className="field"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {campoDeCargo()}
+
+                            {/* O gerente abre tudo por cargo: as caixas não
+                                decidiriam nada, e mostrá-las diria o contrário
+                                do que o servidor faz. */}
+                            {!gerente && (
+                                <div>
+                                    <p className="rotulo">O que ele pode abrir</p>
+                                    {listaDePermissoes()}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-2 border-t border-[#EBEBEB] pt-4">
+                                <button type="button" onClick={() => setEscolhido(null)} className="btn btn-neutro">
+                                    Cancelar
+                                </button>
+
+                                <button type="submit" disabled={salvando} className="btn btn-primario">
+                                    <FiUserPlus className="w-4" aria-hidden />
+                                    <span>{salvando ? "Criando..." : "Criar conta"}</span>
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {pessoa && (
+                        <div className="space-y-6">
+
+                            {/* Identidade. O e-mail não se edita: é com ele
+                                que a pessoa entra, e trocá-lo no mesmo
+                                formulário do resto é como se troca login por
+                                engano. */}
+                            <div className="flex items-start gap-3">
+                                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                                    pessoa.ativo ? "bg-[#303030] text-white" : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                }`}>
+                                    {inicial(pessoa.nome)}
+                                </span>
+
+                                <div className="min-w-0 flex-1">
+                                    <input
+                                        value={nome}
+                                        onChange={(e) => setNome(e.target.value)}
+                                        aria-label="Nome"
+                                        className="field w-full sm:max-w-sm"
+                                    />
+
+                                    <p className="mt-1 truncate text-sm text-[#616161]">{pessoa.email}</p>
+                                </div>
+
+                                <span className={pessoa.ativo ? "tag tag-success" : "tag tag-neutral"}>
+                                    {pessoa.ativo ? "Ativo" : "Sem acesso"}
+                                </span>
+                            </div>
+
+                            {campoDeCargo()}
+
+                            {gerente ? (
+                                <p className="rounded-lg bg-[#F1F1F1] px-4 py-3 text-sm text-[#616161]">
+                                    Como gerente, abre o sistema inteiro desta loja — não há telas a
+                                    marcar. Volte o cargo para funcionário se quiser escolher uma a uma.
+                                </p>
+                            ) : (
+                                <div>
+                                    <p className="rotulo">O que ele pode abrir</p>
+                                    {listaDePermissoes()}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end border-t border-[#EBEBEB] pt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleSalvar}
+                                    disabled={salvando}
+                                    className="btn btn-primario"
+                                >
+                                    {salvando ? "Salvando..." : "Salvar"}
+                                </button>
+                            </div>
+
+                            {/* ------------------------------------------------
+                                SEGURANÇA — o que mexe na conta, e não no que
+                                ela vê. Fica no fim e separado por uma linha
+                                justamente porque é o que não se clica por
+                                engano.
+                                ------------------------------------------------ */}
+                            <div className="border-t border-[#EBEBEB] pt-5">
+
+                                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                    Segurança
+                                </p>
+
+                                <div className="mt-3 flex flex-wrap gap-2">
 
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setTrocandoSenha(trocandoSenha === funcionario.id ? null : funcionario.id)
+                                            setTrocandoSenha((v) => !v)
                                             setSenhaNova("")
-                                            setEditando(null)
                                         }}
-                                        title="Definir uma senha nova"
-                                        aria-label={`Trocar a senha de ${funcionario.nome}`}
                                         className="btn btn-neutro"
                                     >
                                         <FiKey className="w-4" aria-hidden />
+                                        <span>Trocar senha</span>
                                     </button>
-                                </>
-                            }
-                        >
 
-                            {editando === funcionario.id ? (
-                                <div className="space-y-5">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleAtivo(pessoa, !pessoa.ativo)}
+                                        className="btn btn-neutro"
+                                    >
+                                        <FiSlash className="w-4" aria-hidden />
+                                        <span>{pessoa.ativo ? "Tirar o acesso" : "Devolver o acesso"}</span>
+                                    </button>
 
-                                    {listaDePermissoes(marcadasEdicao, setMarcadasEdicao)}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExcluir(pessoa)}
+                                        className="btn btn-neutro text-[#8E1F0B]"
+                                    >
+                                        <FiTrash2 className="w-4" aria-hidden />
+                                        <span>Excluir</span>
+                                    </button>
+                                </div>
 
-                                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEBEB] pt-4">
+                                <p className="mt-2 text-xs text-[#8A8A8A]">
+                                    Tirar o acesso mantém a conta e o histórico do que ela fez —
+                                    é o caminho de quem saiu da empresa. Excluir apaga a linha e
+                                    leva junto a resposta de quem deu entrada em cada mercadoria.
+                                </p>
 
-                                        <div className="flex flex-wrap gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleAtivo(funcionario, !funcionario.ativo)}
-                                                className="btn btn-neutro"
-                                            >
-                                                {funcionario.ativo ? "Tirar o acesso" : "Devolver o acesso"}
-                                            </button>
+                                {trocandoSenha && (
+                                    <form onSubmit={handleSenha} className="mt-4 flex flex-wrap items-end gap-3">
+                                        <div className="min-w-[14rem] flex-1">
+                                            <label className="rotulo" htmlFor="senha-nova">Senha nova</label>
 
-                                            <button
-                                                type="button"
-                                                onClick={() => handleExcluir(funcionario)}
-                                                className="btn btn-neutro text-[#8E1F0B]"
-                                            >
-                                                <FiTrash2 className="w-4" aria-hidden />
-                                                <span>Excluir</span>
-                                            </button>
+                                            <input
+                                                id="senha-nova"
+                                                type="password"
+                                                value={senhaNova}
+                                                onChange={(e) => setSenhaNova(e.target.value)}
+                                                placeholder="Mínimo de 8 caracteres"
+                                                className="field w-full"
+                                                required
+                                            />
                                         </div>
+
+                                        <button type="submit" disabled={salvando} className="btn btn-primario">
+                                            {salvando ? "Trocando..." : "Trocar senha"}
+                                        </button>
 
                                         <button
                                             type="button"
-                                            onClick={() => handleSalvar(funcionario)}
-                                            disabled={salvando}
-                                            className="btn btn-primario"
+                                            onClick={() => setTrocandoSenha(false)}
+                                            className="btn btn-neutro"
                                         >
-                                            {salvando ? "Salvando..." : "Salvar permissões"}
+                                            Cancelar
                                         </button>
-
-                                    </div>
-
-                                </div>
-
-                            ) : trocandoSenha === funcionario.id ? (
-
-                                <form onSubmit={(e) => handleSenha(funcionario, e)} className="flex flex-wrap items-end gap-3">
-                                    <div className="min-w-[16rem] flex-1">
-                                        <label className="rotulo" htmlFor={`senha-${funcionario.id}`}>
-                                            Nova senha
-                                        </label>
-                                        <input
-                                            id={`senha-${funcionario.id}`}
-                                            type="password"
-                                            value={senhaNova}
-                                            onChange={(e) => setSenhaNova(e.target.value)}
-                                            placeholder="Mínimo de 8 caracteres"
-                                            className="field"
-                                            required
-                                        />
-                                    </div>
-
-                                    <button type="submit" disabled={salvando} className="btn btn-primario">
-                                        {salvando ? "Trocando..." : "Trocar senha"}
-                                    </button>
-                                </form>
-
-                            ) : (
-
-                                <p className="text-sm text-[#616161]">
-                                    {funcionario.recursos.length === 0
-                                        ? "Sem nenhuma tela marcada. Abra as permissões para escolher o que ele faz aqui."
-                                        : `${funcionario.recursos.length} tela(s) liberada(s).`}
-                                </p>
-
-                            )}
-
-                        </Secao>
-                    ))}
-                </div>
-            )}
-
-            {/* ==========================
-                O ATENDIMENTO DA EQUIPE
-
-                Abaixo da lista, e não noutra tela: quem decide quem entra na
-                equipe e o que cada um abre é quem precisa ver como o
-                atendimento anda circulando entre eles. Uma segunda tela de
-                "relatório de equipe" seria uma segunda porta para a mesma
-                pergunta — e a resposta viveria longe da decisão que ela
-                informa.
-            ========================== */}
+                                    </form>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </section>
+            </div>
 
             <FluxoDoAtendimento />
 

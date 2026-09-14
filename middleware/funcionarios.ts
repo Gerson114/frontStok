@@ -17,6 +17,23 @@ interface RespostaEquipe {
      * permissão para uma tela que não existe mais.
      */
     permissoes: PermissaoConcedivel[]
+
+    /**
+     * Quem está olhando pode promover alguém a gerente da filial?
+     *
+     * Só o dono pode, e é o servidor que responde — a tela esconde o campo de
+     * cargo em vez de mostrá-lo e ver a gravação recusada.
+     */
+    pode_promover: boolean
+
+    /**
+     * O nome da loja ABERTA no painel — a unidade em que a conta vai nascer.
+     *
+     * Vem porque o cadastro usa a loja do token: numa rede, quem esquecer de
+     * trocar de unidade cadastra o gerente da filial dentro da matriz e só
+     * descobre quando a pessoa entra na loja errada.
+     */
+    loja: string
 }
 
 export async function consultarEquipe(): Promise<RespostaEquipe> {
@@ -25,6 +42,8 @@ export async function consultarEquipe(): Promise<RespostaEquipe> {
     return {
         funcionarios: dados.funcionarios ?? [],
         permissoes: dados.permissoes ?? [],
+        pode_promover: dados.pode_promover ?? false,
+        loja: dados.loja ?? "",
     }
 }
 
@@ -33,18 +52,24 @@ export async function criarFuncionario(dados: {
     email: string
     password: string
     recursos: string[]
-}): Promise<Funcionario> {
-    const resposta = await apiFetch<{ funcionario: Funcionario }>("/api/funcionarios", {
-        method: "POST",
-        body: dados,
-    })
+    gerente?: boolean
+}): Promise<Funcionario & { convite_enviado: boolean }> {
+    const resposta = await apiFetch<{ funcionario: Funcionario; convite_enviado?: boolean }>(
+        "/api/funcionarios",
+        { method: "POST", body: dados },
+    )
 
-    return resposta.funcionario
+    // `convite_enviado` diz se a pessoa recebeu por e-mail o código para criar
+    // a PRÓPRIA senha. Interessa à tela porque muda o que o dono precisa fazer
+    // em seguida: com o convite no ar, ele não precisa (nem deve) passar a
+    // senha provisória adiante; sem ele, precisa combinar a senha de algum
+    // jeito com a pessoa.
+    return { ...resposta.funcionario, convite_enviado: resposta.convite_enviado === true }
 }
 
 export async function salvarFuncionario(
     id: number,
-    dados: { nome: string; recursos: string[]; ativo: boolean },
+    dados: { nome: string; recursos: string[]; ativo: boolean; gerente?: boolean },
 ): Promise<Funcionario> {
     const resposta = await apiFetch<{ funcionario: Funcionario }>(`/api/funcionarios/${id}`, {
         method: "PUT",
