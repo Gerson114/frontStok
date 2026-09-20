@@ -108,7 +108,7 @@ export function CamposDeVariacao({ rotulo, aoMudarRotulo, linhas, aoMudarLinhas 
                     ))}
                 </datalist>
 
-                <p className="text-xs text-[#616161]">
+                <p className="text-xs text-[var(--ink-2)]">
                     Cada variação vira um produto separado, com seu próprio estoque e código
                     de barras. Produto que não se divide em nada leva uma variação só.
                 </p>
@@ -128,8 +128,8 @@ export function CamposDeVariacao({ rotulo, aoMudarRotulo, linhas, aoMudarLinhas 
                                 disabled={jaTem}
                                 className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
                                     jaTem
-                                        ? "border-[#EBEBEB] text-[#B5B5B5]"
-                                        : "border-[#E1E1E1] text-[#303030] hover:border-[#005BD3] hover:text-[#005BD3]"
+                                        ? "border-[var(--linha-suave)] text-[var(--ink-4)]"
+                                        : "border-[var(--linha)] text-[var(--ink)] hover:border-[var(--azul)] hover:text-[var(--azul)]"
                                 }`}
                             >
                                 {valor}
@@ -166,7 +166,7 @@ export function CamposDeVariacao({ rotulo, aoMudarRotulo, linhas, aoMudarLinhas 
                             type="button"
                             onClick={() => remover(indice)}
                             aria-label={`Remover variação ${indice + 1}`}
-                            className="shrink-0 rounded-lg p-2.5 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                            className="shrink-0 rounded-lg p-2.5 text-[var(--ink-3)] transition-colors hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
@@ -239,7 +239,7 @@ export function CamposDeFicha({ linhas, aoMudar }: FichaProps) {
                             type="button"
                             onClick={() => aoMudar(linhas.filter((_, i) => i !== indice))}
                             aria-label={`Remover item ${indice + 1} da ficha técnica`}
-                            className="shrink-0 rounded-lg p-2.5 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                            className="shrink-0 rounded-lg p-2.5 text-[var(--ink-3)] transition-colors hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>

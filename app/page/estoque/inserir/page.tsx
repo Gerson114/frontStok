@@ -153,7 +153,7 @@ export default function InserirEstoque() {
         )
     }
 
-    const totalPecas = linhas.reduce((soma, linha) => soma + (parseInt(linha.quantidade, 10) || 0), 0)
+    const totalUnidades = linhas.reduce((soma, linha) => soma + (parseInt(linha.quantidade, 10) || 0), 0)
 
     const custoTotal = linhas.reduce((soma, linha) => {
         const quantidade = parseInt(linha.quantidade, 10) || 0
@@ -202,7 +202,7 @@ export default function InserirEstoque() {
             const resposta = await registrarEntrada({ itens })
 
             setResultado({
-                pecas: resposta.entrada?.pecas ?? totalPecas,
+                pecas: resposta.entrada?.pecas ?? totalUnidades,
                 produtos: itens.length,
                 enderecos: resposta.enderecos ?? [],
             })
@@ -223,7 +223,7 @@ export default function InserirEstoque() {
     if (carregando) {
         return (
             <Pagina titulo="Inserir no estoque">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando estoque...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando estoque...</div>
             </Pagina>
         )
     }
@@ -231,13 +231,13 @@ export default function InserirEstoque() {
     return (
         <Pagina
             titulo="Inserir no estoque"
-            descricao="O que entra no estoque: produto novo, que ainda não existe no sistema, ou mais peças do que você já vende. O endereço de cada peça é escolhido pelo sistema."
+            descricao="O que entra no estoque: produto novo, que ainda não existe no sistema, ou mais unidades do que você já vende. O endereço de cada unidade é escolhido pelo sistema."
         >
 
             {erro && (
                 <div
                     role="alert"
-                    className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
@@ -245,19 +245,19 @@ export default function InserirEstoque() {
             )}
 
             {resultado && (
-                <section role="status" className="card border-l-4 border-l-[#0C5132] p-5">
+                <section role="status" className="card border-l-4 border-l-[var(--verde)] p-5">
 
-                    <p className="flex items-start gap-2.5 text-sm font-semibold text-[#0C5132]">
+                    <p className="flex items-start gap-2.5 text-sm font-semibold text-[var(--verde)]">
                         <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>
-                            Entrada registrada: {resultado.pecas} peça(s) de {resultado.produtos}{" "}
+                            Entrada registrada: {resultado.pecas} unidade(s) de {resultado.produtos}{" "}
                             produto(s) entraram no estoque.
                         </span>
                     </p>
 
                     {resultado.enderecos.length > 0 && (
                         <>
-                            <p className="mt-4 text-sm font-semibold text-[#303030]">
+                            <p className="mt-4 text-sm font-semibold text-[var(--ink)]">
                                 Onde guardar:
                             </p>
 
@@ -267,16 +267,16 @@ export default function InserirEstoque() {
                                         key={`${endereco.produto_id}-${endereco.endereco}`}
                                         className="flex items-center justify-between gap-3 text-sm"
                                     >
-                                        <span className="min-w-0 truncate text-[#303030]">
-                                            <span className="num text-[#616161]">{endereco.quantidade}x</span>{" "}
+                                        <span className="min-w-0 truncate text-[var(--ink)]">
+                                            <span className="num text-[var(--ink-2)]">{endereco.quantidade}x</span>{" "}
                                             {endereco.produto_nome}
                                         </span>
 
-                                        <span className="flex shrink-0 items-center gap-1.5 text-right font-bold text-[#00369B]">
+                                        <span className="flex shrink-0 items-center gap-1.5 text-right font-bold text-[var(--azul-escuro)]">
                                             <FiMapPin className="w-3.5 shrink-0" aria-hidden />
                                             <span>
                                                 <span className="num">{endereco.endereco}</span>
-                                                <span className="block text-xs font-normal text-[#616161]">
+                                                <span className="block text-xs font-normal text-[var(--ink-2)]">
                                                     {endereco.endereco_nome}
                                                 </span>
                                             </span>
@@ -285,7 +285,7 @@ export default function InserirEstoque() {
                                 ))}
                             </ul>
 
-                            <div className="mt-4 flex flex-wrap gap-3 border-t border-[#EBEBEB] pt-4">
+                            <div className="mt-4 flex flex-wrap gap-3 border-t border-[var(--linha-suave)] pt-4">
                                 <Link href="/page/estoque/consultar" className="btn btn-neutro text-sm">
                                     Consultar estoque
                                 </Link>
@@ -302,10 +302,10 @@ export default function InserirEstoque() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
 
                     <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#00369B]">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-[var(--azul-escuro)]">
                             <FiPackage className="w-4" aria-hidden />
                         </span>
-                        <h2 className="font-display text-base text-[#303030]">O que entra no estoque</h2>
+                        <h2 className="font-display text-base text-[var(--ink)]">O que entra no estoque</h2>
                     </div>
 
                     <button
@@ -321,7 +321,7 @@ export default function InserirEstoque() {
 
                 {/* O custo se repete no lote inteiro; o endereço quem
                     escolhe é o sistema. */}
-                <div className="grid grid-cols-1 gap-3 rounded-lg bg-[#F1F1F1] p-4 sm:grid-cols-[1fr_auto]">
+                <div className="grid grid-cols-1 gap-3 rounded-lg bg-[var(--fundo)] p-4 sm:grid-cols-[1fr_auto]">
 
                     <div className="space-y-1.5">
                         <label className="rotulo text-xs" htmlFor="custo-padrao">
@@ -351,8 +351,8 @@ export default function InserirEstoque() {
 
                 </div>
 
-                <p className="flex items-start gap-2 text-xs text-[#616161]">
-                    <FiMapPin className="mt-0.5 w-3.5 shrink-0 text-[#005BD3]" aria-hidden />
+                <p className="flex items-start gap-2 text-xs text-[var(--ink-2)]">
+                    <FiMapPin className="mt-0.5 w-3.5 shrink-0 text-[var(--azul)]" aria-hidden />
                     <span>
                         Você não precisa dizer a prateleira: o sistema guarda cada produto
                         junto do que já existe dele e, quando é a primeira vez, no trecho
@@ -406,16 +406,16 @@ export default function InserirEstoque() {
                                         <tr key={linha.produtoId}>
 
                                             <td>
-                                                <p className="font-medium text-[#303030]">
+                                                <p className="font-medium text-[var(--ink)]">
                                                     {produto?.nome ?? `Produto #${linha.produtoId}`}
                                                 </p>
-                                                <p className="num text-xs text-[#8A8A8A]">
+                                                <p className="num text-xs text-[var(--ink-3)]">
                                                     {produto?.codigo}
                                                     {variacao ? ` · ${variacao}` : ""}
                                                 </p>
                                             </td>
 
-                                            <td className="num text-right text-[#616161]">
+                                            <td className="num text-right text-[var(--ink-2)]">
                                                 {produto?.estoque ?? 0}
                                             </td>
 
@@ -442,7 +442,7 @@ export default function InserirEstoque() {
                                                 />
                                             </td>
 
-                                            <td className="num text-right font-medium text-[#303030]">
+                                            <td className="num text-right font-medium text-[var(--ink)]">
                                                 {(quantidade * custo).toLocaleString("pt-BR", {
                                                     style: "currency",
                                                     currency: "BRL",
@@ -455,7 +455,7 @@ export default function InserirEstoque() {
                                                     onClick={() => alternar(linha.produtoId)}
                                                     aria-label={`Tirar ${produto?.nome ?? "produto"} da remessa`}
                                                     title="Tirar da remessa"
-                                                    className="rounded-lg p-2 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                    className="rounded-lg p-2 text-[var(--ink-3)] transition-colors hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                                                 >
                                                     <FiX className="w-4" aria-hidden />
                                                 </button>
@@ -478,14 +478,14 @@ export default function InserirEstoque() {
             {/* FECHAMENTO */}
             <section className="card flex flex-wrap items-center justify-between gap-4 p-5 sm:p-7">
 
-                <div className="text-sm text-[#616161]">
+                <div className="text-sm text-[var(--ink-2)]">
                     <p>
-                        <span className="num font-bold text-[#303030]">{linhas.length}</span> produto(s) ·{" "}
-                        <span className="num font-bold text-[#303030]">{totalPecas}</span> peça(s)
+                        <span className="num font-bold text-[var(--ink)]">{linhas.length}</span> produto(s) ·{" "}
+                        <span className="num font-bold text-[var(--ink)]">{totalUnidades}</span> unidade(s)
                     </p>
                     <p className="mt-0.5">
                         Custo total:{" "}
-                        <span className="num font-bold text-[#303030]">{formatarMoeda(custoTotal)}</span>
+                        <span className="num font-bold text-[var(--ink)]">{formatarMoeda(custoTotal)}</span>
                     </p>
                 </div>
 
@@ -508,16 +508,16 @@ export default function InserirEstoque() {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="titulo-seletor"
-                className="fixed inset-0 z-50 flex items-end justify-center bg-[#303030]/50 p-4 sm:items-center"
+                className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--ink)]/50 p-4 sm:items-center"
             >
                 <div className="card flex max-h-[85vh] w-full max-w-2xl flex-col p-5 sm:p-6">
 
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <h2 id="titulo-seletor" className="font-display text-lg text-[#303030]">
+                            <h2 id="titulo-seletor" className="font-display text-lg text-[var(--ink)]">
                                 Escolher produtos
                             </h2>
-                            <p className="text-sm text-[#616161]">
+                            <p className="text-sm text-[var(--ink-2)]">
                                 {escolhidos.size} de {produtos.length} marcados
                             </p>
                         </div>
@@ -526,14 +526,14 @@ export default function InserirEstoque() {
                             type="button"
                             onClick={() => setSeletorAberto(false)}
                             aria-label="Fechar"
-                            className="rounded-lg p-2 text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                            className="rounded-lg p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
                     </div>
 
                     <div className="relative mt-4">
-                        <FiSearch className="absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                        <FiSearch className="absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
                         <input
                             type="search"
                             value={busca}
@@ -568,7 +568,7 @@ export default function InserirEstoque() {
                                 <li key={produto.id}>
                                     <label
                                         className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                                            marcado ? "bg-[#EAF4FF]" : "hover:bg-[#F1F1F1]"
+                                            marcado ? "bg-[var(--azul-suave)]" : "hover:bg-[var(--fundo)]"
                                         }`}
                                     >
                                         <input
@@ -579,16 +579,16 @@ export default function InserirEstoque() {
                                         />
 
                                         <span className="min-w-0 flex-1">
-                                            <span className="block truncate font-semibold text-[#303030]">
+                                            <span className="block truncate font-semibold text-[var(--ink)]">
                                                 {produto.nome}
                                             </span>
-                                            <span className="num block text-xs text-[#616161]">
+                                            <span className="num block text-xs text-[var(--ink-2)]">
                                                 {produto.codigo}
                                                 {variacao ? ` · ${variacao}` : ""}
                                             </span>
                                         </span>
 
-                                        <span className="num shrink-0 text-xs text-[#616161]">
+                                        <span className="num shrink-0 text-xs text-[var(--ink-2)]">
                                             {produto.estoque} em estoque
                                         </span>
                                     </label>
@@ -597,13 +597,13 @@ export default function InserirEstoque() {
                         })}
 
                         {produtosFiltrados.length === 0 && (
-                            <li className="px-3 py-8 text-center text-sm text-[#616161]">
+                            <li className="px-3 py-8 text-center text-sm text-[var(--ink-2)]">
                                 Nenhum produto encontrado.
                             </li>
                         )}
                     </ul>
 
-                    <div className="mt-4 flex justify-end gap-3 border-t border-[#EBEBEB] pt-4">
+                    <div className="mt-4 flex justify-end gap-3 border-t border-[var(--linha-suave)] pt-4">
                         <Link href="/page/produto" className="btn btn-neutro flex items-center gap-2 text-sm">
                             <FiPlus className="w-4" aria-hidden />
                             Cadastrar produto novo

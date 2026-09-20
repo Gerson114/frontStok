@@ -190,7 +190,7 @@ export default function ConsultarEstoque() {
 
     }, [linhas, termo, visao])
 
-    const totalPecas = filtradas.reduce((soma, linha) => soma + linha.quantidade, 0)
+    const totalUnidades = filtradas.reduce((soma, linha) => soma + linha.quantidade, 0)
 
     async function consultarCodigo(evento: React.FormEvent<HTMLFormElement>) {
         evento.preventDefault()
@@ -221,7 +221,7 @@ export default function ConsultarEstoque() {
     if (carregando) {
         return (
             <Pagina titulo="Consultar">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando estoque...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando estoque...</div>
             </Pagina>
         )
     }
@@ -233,9 +233,9 @@ export default function ConsultarEstoque() {
                 <>
                 Passe o código da etiqueta e o sistema diz em que rua o produto
                 está, quanto existe e de onde ele veio. Também dá para buscar pelo
-                nome ou percorrer a lista de trechos. Para mover uma peça de lugar,
+                nome ou percorrer a lista de trechos. Para mover uma unidade de lugar,
                 use{" "}
-                <Link href="/page/estoque" className="font-semibold text-[#005BD3] hover:underline">
+                <Link href="/page/estoque" className="font-semibold text-[var(--azul)] hover:underline">
                 Estoque
                 </Link>.
                 </>
@@ -245,7 +245,7 @@ export default function ConsultarEstoque() {
             {erro && (
                 <div
                     role="alert"
-                    className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
@@ -266,7 +266,7 @@ export default function ConsultarEstoque() {
 
                     <div className="flex gap-2">
                         <div className="relative flex-1">
-                            <FiTag className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                            <FiTag className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
                             <input
                                 id="codigo"
                                 type="text"
@@ -283,7 +283,7 @@ export default function ConsultarEstoque() {
                         </button>
                     </div>
 
-                    <p className="mt-1.5 text-xs text-[#616161]">
+                    <p className="mt-1.5 text-xs text-[var(--ink-2)]">
                         O leitor de código de barras funciona aqui: ele digita o código e
                         dá Enter sozinho.
                     </p>
@@ -291,19 +291,19 @@ export default function ConsultarEstoque() {
                 </form>
 
                 {erroCodigo && (
-                    <p role="alert" className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                    <p role="alert" className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                         {erroCodigo}
                     </p>
                 )}
 
                 {consulta && (
-                    <div className="mt-5 border-t border-[#EBEBEB] pt-5">
+                    <div className="mt-5 border-t border-[var(--linha-suave)] pt-5">
 
-                        <p className="font-display text-lg text-[#303030]">
+                        <p className="font-display text-lg text-[var(--ink)]">
                             {consulta.produto.nome}
                         </p>
 
-                        <p className="num text-xs text-[#616161]">
+                        <p className="num text-xs text-[var(--ink-2)]">
                             {consulta.produto.codigo}
                             {(() => {
                                 const variacao = descreverVariacao(
@@ -318,15 +318,15 @@ export default function ConsultarEstoque() {
                         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
 
                             {/* ONDE ESTÁ — a resposta que se procurou */}
-                            <div className="rounded-lg bg-[#EAF4FF] p-4">
+                            <div className="rounded-lg bg-[var(--azul-suave)] p-4">
 
-                                <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#00369B]">
+                                <p className="text-xs font-bold text-[var(--azul-escuro)]">
                                     Onde está
                                 </p>
 
                                 {Object.keys(consulta.locais).length === 0 ? (
-                                    <p className="mt-1 text-sm text-[#303030]">
-                                        Nenhuma peça disponível na prateleira agora.
+                                    <p className="mt-1 text-sm text-[var(--ink)]">
+                                        Nenhuma unidade disponível na prateleira agora.
                                     </p>
                                 ) : (
                                     <ul className="mt-2 space-y-1.5">
@@ -335,12 +335,12 @@ export default function ConsultarEstoque() {
 
                                             return (
                                                 <li key={local} className="flex items-center justify-between gap-3">
-                                                    <span className="flex items-center gap-2 font-display text-lg text-[#303030]">
-                                                        <FiMapPin className="w-4 shrink-0 text-[#00369B]" aria-hidden />
+                                                    <span className="flex items-center gap-2 font-display text-lg text-[var(--ink)]">
+                                                        <FiMapPin className="w-4 shrink-0 text-[var(--azul-escuro)]" aria-hidden />
                                                         Rua {rua} · Bloco {bloco}
                                                     </span>
-                                                    <span className="num font-bold text-[#303030]">
-                                                        {quantidade} peça(s)
+                                                    <span className="num font-bold text-[var(--ink)]">
+                                                        {quantidade} unidade(s)
                                                     </span>
                                                 </li>
                                             )
@@ -354,7 +354,7 @@ export default function ConsultarEstoque() {
                                 embaixo em quatro colunas de definição: são
                                 estados do mesmo produto, e lê-se de cima para
                                 baixo como uma ficha. */}
-                            <dl className="divide-y divide-[#EBEBEB] rounded-lg border border-[#E1E1E1] px-4">
+                            <dl className="divide-y divide-[var(--linha-suave)] rounded-lg border border-[var(--linha)] px-4">
 
                                 {[
                                     { rotulo: "Disponíveis", valor: consulta.resumo.disponiveis },
@@ -363,8 +363,8 @@ export default function ConsultarEstoque() {
                                     { rotulo: "Avariadas", valor: consulta.resumo.avariadas },
                                 ].map((item) => (
                                     <div key={item.rotulo} className="flex items-center justify-between gap-3 py-2 text-sm">
-                                        <dt className="text-[#616161]">{item.rotulo}</dt>
-                                        <dd className="num font-semibold text-[#303030]">{item.valor}</dd>
+                                        <dt className="text-[var(--ink-2)]">{item.rotulo}</dt>
+                                        <dd className="num font-semibold text-[var(--ink)]">{item.valor}</dd>
                                     </div>
                                 ))}
 
@@ -374,19 +374,19 @@ export default function ConsultarEstoque() {
 
                         {/* DE ONDE VEIO */}
                         {consulta.procedencia && (
-                            <div className="mt-4 border-t border-[#EBEBEB] pt-4">
+                            <div className="mt-4 border-t border-[var(--linha-suave)] pt-4">
 
-                                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                <p className="flex items-center gap-2 text-xs font-bold text-[var(--ink-2)]">
                                     <FiTruck className="w-3.5" aria-hidden />
                                     De onde veio
                                 </p>
 
-                                <p className="mt-1.5 text-sm text-[#303030]">
+                                <p className="mt-1.5 text-sm text-[var(--ink)]">
                                     {consulta.procedencia.fornecedor || "Fornecedor não informado"}
                                     {consulta.procedencia.documento ? ` · ${consulta.procedencia.documento}` : ""}
                                 </p>
 
-                                <p className="text-xs text-[#616161]">
+                                <p className="text-xs text-[var(--ink-2)]">
                                     Recebido em{" "}
                                     {new Date(consulta.procedencia.recebida_em).toLocaleDateString("pt-BR")}
                                     {consulta.procedencia.contato ? ` · ${consulta.procedencia.contato}` : ""}
@@ -422,11 +422,11 @@ export default function ConsultarEstoque() {
 
                     <ListaVazia
                         icone={termo ? FiSearch : FiPackage}
-                        titulo={termo ? "Nada com esse texto" : "Nenhuma peça guardada"}
+                        titulo={termo ? "Nada com esse texto" : "Nenhuma unidade guardada"}
                     >
                         {termo
                             ? `Nenhum produto ou endereço casa com “${busca.trim()}”.`
-                            : "Assim que a primeira entrada for registrada, as peças aparecem aqui com o endereço de cada uma."}
+                            : "Assim que a primeira entrada for registrada, as unidades aparecem aqui com o endereço de cada uma."}
                     </ListaVazia>
 
                 ) : (
@@ -448,7 +448,7 @@ export default function ConsultarEstoque() {
                                             <th scope="col">Endereço</th>
                                         </>
                                     )}
-                                    <th scope="col" className="text-right">Peças</th>
+                                    <th scope="col" className="text-right">Unidades</th>
                                 </tr>
                             </thead>
 
@@ -469,13 +469,13 @@ export default function ConsultarEstoque() {
                                     const repetido = visao === "endereco" && anterior?.local === linha.local
 
                                     const celulaEndereco = (
-                                        <td className={repetido ? "text-[#8A8A8A]" : ""}>
+                                        <td className={repetido ? "text-[var(--ink-3)]" : ""}>
                                             {repetido ? (
                                                 <span className="sr-only">{linha.local}</span>
                                             ) : (
                                                 <span className="flex items-center gap-1.5">
-                                                    <FiMapPin className="w-3.5 shrink-0 text-[#8A8A8A]" aria-hidden />
-                                                    <span className="num text-[#303030]">{linha.local}</span>
+                                                    <FiMapPin className="w-3.5 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                                                    <span className="num text-[var(--ink)]">{linha.local}</span>
                                                 </span>
                                             )}
                                         </td>
@@ -483,12 +483,12 @@ export default function ConsultarEstoque() {
 
                                     const celulaProduto = (
                                         <td>
-                                            <span className="text-[#303030]">{linha.produto}</span>
+                                            <span className="text-[var(--ink)]">{linha.produto}</span>
                                             {linha.variacao && (
-                                                <span className="text-[#616161]"> · {linha.variacao}</span>
+                                                <span className="text-[var(--ink-2)]"> · {linha.variacao}</span>
                                             )}
                                             {linha.codigoProduto && (
-                                                <span className="num block text-xs text-[#8A8A8A]">
+                                                <span className="num block text-xs text-[var(--ink-3)]">
                                                     {linha.codigoProduto}
                                                 </span>
                                             )}
@@ -510,7 +510,7 @@ export default function ConsultarEstoque() {
                                                 </>
                                             )}
 
-                                            <td className="num text-right font-medium text-[#303030]">
+                                            <td className="num text-right font-medium text-[var(--ink)]">
                                                 {linha.quantidade}
                                             </td>
 
@@ -531,7 +531,7 @@ export default function ConsultarEstoque() {
                     ultimo={filtradas.length}
                     total={filtradas.length}
                     nome={visao === "endereco" ? "posições ocupadas" : "produtos por endereço"}
-                    extra={<><span className="num">{totalPecas}</span> peças ao todo</>}
+                    extra={<><span className="num">{totalUnidades}</span> unidades ao todo</>}
                 />
 
             </ListaDeRecursos>

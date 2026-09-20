@@ -76,9 +76,9 @@ function CartaoEntrega({ pedido }: { pedido: Pedido }) {
 
     const cor = ehEntrega
         ? jaSaiu
-            ? "bg-[#FFF1E3] text-[#5E4200] hover:bg-[#FFE4C4]"
-            : "bg-[#FFE4C4] text-[#5E4200] hover:bg-[#FFD59E]"
-        : "bg-[#EAF4FF] text-[#00369B] hover:bg-[#CDE3FF]"
+            ? "bg-[var(--amarelo-fundo)] text-[var(--amarelo)] hover:bg-[#FFE4C4]"
+            : "bg-[#FFE4C4] text-[var(--amarelo)] hover:bg-[#FFD59E]"
+        : "bg-[var(--azul-suave)] text-[var(--azul-escuro)] hover:bg-[#CDE3FF]"
 
     return (
         <Link
@@ -147,15 +147,15 @@ function LinhaSemDia({
     return (
         <li className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
 
-            <Link href="/page/pedidos" className="num text-sm font-semibold text-[#005BD3] hover:underline">
+            <Link href="/page/pedidos" className="num text-sm font-semibold text-[var(--azul)] hover:underline">
                 #{pedido.codigo}
             </Link>
 
-            <span className="min-w-0 flex-1 truncate text-sm text-[#303030]">
+            <span className="min-w-0 flex-1 truncate text-sm text-[var(--ink)]">
                 {pedido.cliente_nome}
             </span>
 
-            <span className="text-xs text-[#616161]">
+            <span className="text-xs text-[var(--ink-2)]">
                 {pedido.cidade}
                 {pedido.uf ? `/${pedido.uf}` : ""}
             </span>
@@ -363,7 +363,7 @@ export default function Entregas() {
                         <FiChevronLeft className="w-4" aria-hidden />
                     </button>
 
-                    <span className="min-w-[10rem] px-2 text-center text-sm font-semibold text-[#303030]">
+                    <span className="min-w-[10rem] px-2 text-center text-sm font-semibold text-[var(--ink)]">
                         {MESES[mes.getMonth()]} de {mes.getFullYear()}
                     </span>
 
@@ -388,14 +388,14 @@ export default function Entregas() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="rounded-lg bg-[#E5F5E5] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="rounded-lg bg-[#E5F5E5] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     {aviso}
                 </div>
             )}
@@ -409,22 +409,22 @@ export default function Entregas() {
                 <button
                     type="button"
                     onClick={() => setPainel("sem-dia")}
-                    className="flex w-full items-center gap-2.5 rounded-lg border-l-4 border-[#8E1F0B] bg-[#FEE9E8] px-4 py-3 text-left"
+                    className="flex w-full items-center gap-2.5 rounded-lg border-l-4 border-[var(--vermelho)] bg-[var(--vermelho-fundo)] px-4 py-3 text-left"
                 >
-                    <FiAlertCircle className="w-4 shrink-0 text-[#8E1F0B]" aria-hidden />
+                    <FiAlertCircle className="w-4 shrink-0 text-[var(--vermelho)]" aria-hidden />
 
-                    <span className="flex-1 text-sm font-semibold text-[#8E1F0B]">
+                    <span className="flex-1 text-sm font-semibold text-[var(--vermelho)]">
                         {atrasados.length} pedido(s) passaram do dia de sair e ninguém despachou
                     </span>
 
-                    <span className="shrink-0 text-xs font-semibold text-[#8E1F0B] underline underline-offset-2">
+                    <span className="shrink-0 text-xs font-semibold text-[var(--vermelho)] underline underline-offset-2">
                         remarcar
                     </span>
                 </button>
             )}
 
             {carregando ? (
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando a agenda...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando a agenda...</div>
             ) : totalDoMes === 0 && semDia.length === 0 ? (
                 <Estado
                     Icone={FiTruck}
@@ -446,9 +446,9 @@ export default function Entregas() {
                         --------------------------------------------------- */}
                     <div className="card overflow-hidden">
 
-                        <div className="grid grid-cols-7 border-b border-[#E1E1E1] bg-[#F7F7F7]">
+                        <div className="grid grid-cols-7 border-b border-[var(--linha)] bg-[var(--superficie-2)]">
                             {DIAS.map((dia) => (
-                                <div key={dia} className="px-2 py-2 text-center text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                <div key={dia} className="px-2 py-2 text-center text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
                                     {dia}
                                 </div>
                             ))}
@@ -460,7 +460,7 @@ export default function Entregas() {
                                 // As casas antes do dia 1º existem só para
                                 // empurrar a primeira semana até a coluna certa.
                                 if (!data) {
-                                    return <div key={`vazio-${indice}`} className="min-h-[5rem] border-b border-r border-[#EBEBEB] bg-[#F7F7F7]" />
+                                    return <div key={`vazio-${indice}`} className="min-h-[5rem] border-b border-r border-[var(--linha-suave)] bg-[var(--superficie-2)]" />
                                 }
 
                                 const dia = chaveDoDia(data)
@@ -477,21 +477,21 @@ export default function Entregas() {
                                         type="button"
                                         onClick={() => { setDiaAberto(dia); setPainel("dia") }}
                                         aria-current={aberto ? "true" : undefined}
-                                        className={`min-h-[5rem] border-b border-r border-[#EBEBEB] p-1.5 text-left transition-colors ${
+                                        className={`min-h-[5rem] border-b border-r border-[var(--linha-suave)] p-1.5 text-left transition-colors ${
                                             aberto
-                                                ? "bg-[#303030]/5 ring-1 ring-inset ring-[#303030]"
-                                                : ehHoje ? "bg-[#EAF4FF]" : "hover:bg-[#F7F7F7]"
+                                                ? "bg-[var(--azul-suave)] ring-1 ring-inset ring-[var(--azul)]"
+                                                : ehHoje ? "bg-[var(--azul-suave)]" : "hover:bg-[var(--superficie-2)]"
                                         }`}
                                     >
                                         <span className="flex items-baseline justify-between gap-1">
                                             <span className={`num text-xs ${
-                                                ehHoje ? "font-bold text-[#005BD3]" : "font-medium text-[#8A8A8A]"
+                                                ehHoje ? "font-bold text-[var(--azul)]" : "font-medium text-[var(--ink-3)]"
                                             }`}>
                                                 {data.getDate()}
                                             </span>
 
                                             {doDia.length > 0 && (
-                                                <span className="num text-[0.625rem] font-semibold text-[#616161]">
+                                                <span className="num text-[0.625rem] font-semibold text-[var(--ink-2)]">
                                                     {doDia.length}
                                                 </span>
                                             )}
@@ -505,13 +505,13 @@ export default function Entregas() {
                                         {doDia.length > 0 && (
                                             <span className="mt-1 block space-y-0.5">
                                                 {envios > 0 && (
-                                                    <span className="block truncate rounded bg-[#FFE4C4] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#5E4200]">
+                                                    <span className="block truncate rounded bg-[#FFE4C4] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[var(--amarelo)]">
                                                         {envios} para despachar
                                                     </span>
                                                 )}
 
                                                 {retiradas > 0 && (
-                                                    <span className="block truncate rounded bg-[#EAF4FF] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[#005BD3]">
+                                                    <span className="block truncate rounded bg-[var(--azul-suave)] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[var(--azul)]">
                                                         {retiradas} para retirar
                                                     </span>
                                                 )}
@@ -528,14 +528,14 @@ export default function Entregas() {
                         --------------------------------------------------- */}
                     <section className="card flex max-h-[calc(100dvh-16rem)] flex-col overflow-hidden p-0">
 
-                        <div className="flex border-b border-[#EBEBEB]">
+                        <div className="flex border-b border-[var(--linha-suave)]">
                             <button
                                 type="button"
                                 onClick={() => setPainel("dia")}
                                 className={`flex-1 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
                                     painel === "dia"
-                                        ? "border-[#005BD3] text-[#005BD3]"
-                                        : "border-transparent text-[#616161] hover:text-[#303030]"
+                                        ? "border-[var(--azul)] text-[var(--azul)]"
+                                        : "border-transparent text-[var(--ink-2)] hover:text-[var(--ink)]"
                                 }`}
                             >
                                 {new Date(`${diaAberto}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
@@ -546,15 +546,15 @@ export default function Entregas() {
                                 onClick={() => setPainel("sem-dia")}
                                 className={`flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
                                     painel === "sem-dia"
-                                        ? "border-[#005BD3] text-[#005BD3]"
-                                        : "border-transparent text-[#616161] hover:text-[#303030]"
+                                        ? "border-[var(--azul)] text-[var(--azul)]"
+                                        : "border-transparent text-[var(--ink-2)] hover:text-[var(--ink)]"
                                 }`}
                             >
                                 Sem dia
 
                                 {semDia.length > 0 && (
                                     <span className={`num rounded-full px-2 py-0.5 text-xs font-bold ${
-                                        painel === "sem-dia" ? "bg-[#EAF4FF] text-[#005BD3]" : "bg-[#F1F1F1] text-[#616161]"
+                                        painel === "sem-dia" ? "bg-[var(--azul-suave)] text-[var(--azul)]" : "bg-[var(--fundo)] text-[var(--ink-2)]"
                                     }`}>
                                         {semDia.length}
                                     </span>
@@ -566,11 +566,11 @@ export default function Entregas() {
 
                             {painel === "dia" ? (
                                 (porDia.get(diaAberto) ?? []).length === 0 ? (
-                                    <p className="px-4 py-8 text-center text-sm text-[#616161]">
+                                    <p className="px-4 py-8 text-center text-sm text-[var(--ink-2)]">
                                         Nada marcado para este dia.
                                     </p>
                                 ) : (
-                                    <ul className="divide-y divide-[#EBEBEB]">
+                                    <ul className="divide-y divide-[var(--linha-suave)]">
                                         {(porDia.get(diaAberto) ?? []).map((pedido) => (
                                             <li key={pedido.id} className="p-4">
                                                 <CartaoEntrega pedido={pedido} />
@@ -579,11 +579,11 @@ export default function Entregas() {
                                     </ul>
                                 )
                             ) : semDia.length === 0 ? (
-                                <p className="px-4 py-8 text-center text-sm text-[#616161]">
+                                <p className="px-4 py-8 text-center text-sm text-[var(--ink-2)]">
                                     Todo pedido confirmado já tem dia de saída.
                                 </p>
                             ) : (
-                                <ul className="divide-y divide-[#EBEBEB]">
+                                <ul className="divide-y divide-[var(--linha-suave)]">
                                     {semDia.map((pedido) => {
 
                                         const atrasado = atrasados.some((outro) => outro.id === pedido.id)
@@ -596,14 +596,14 @@ export default function Entregas() {
                                                 aoMarcar={marcar}
                                                 complemento={
                                                     atrasado ? (
-                                                        <span className="text-xs font-semibold text-[#8E1F0B]">
+                                                        <span className="text-xs font-semibold text-[var(--vermelho)]">
                                                             devia sair em{" "}
                                                             {pedido.envio_previsto_em
                                                                 ? new Date(pedido.envio_previsto_em).toLocaleDateString("pt-BR")
                                                                 : "—"}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-xs text-[#8A8A8A]">
+                                                        <span className="text-xs text-[var(--ink-3)]">
                                                             pedido em {new Date(pedido.created_at).toLocaleDateString("pt-BR")}
                                                         </span>
                                                     )
@@ -621,14 +621,14 @@ export default function Entregas() {
             {/* A legenda existe porque a cor está carregando informação: sem
                 ela, dois tons diferentes são só decoração. */}
             {totalDoMes > 0 && (
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#616161]">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--ink-2)]">
                     <span className="flex items-center gap-1.5">
                         <span className="h-3 w-3 rounded bg-[#FFE4C4]" aria-hidden />
                         Para despachar neste dia
                     </span>
 
                     <span className="flex items-center gap-1.5">
-                        <span className="h-3 w-3 rounded bg-[#EAF4FF]" aria-hidden />
+                        <span className="h-3 w-3 rounded bg-[var(--azul-suave)]" aria-hidden />
                         O cliente vem buscar
                     </span>
 

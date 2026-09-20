@@ -60,7 +60,7 @@ export default function EtiquetaProduto() {
     if (loading) {
         return (
             <Pagina titulo="Etiquetas do produto" volta={{ nome: "Produtos", rota: "/page/produtos" }} paraImpressao>
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando...</div>
             </Pagina>
         )
     }
@@ -105,7 +105,7 @@ export default function EtiquetaProduto() {
         <Pagina
             titulo="Etiquetas do produto"
             descricao={codigosParaImprimir.length > 0
-                ? `${codigosParaImprimir.length} etiqueta(s) pronta(s), uma para cada peça em estoque — todas com o código ${codigoProduto}.`
+                ? `${codigosParaImprimir.length} etiqueta(s) pronta(s), uma para cada unidade em estoque — todas com o código ${codigoProduto}.`
                 : "Todas as unidades deste produto já foram vendidas."}
             volta={{ nome: "Produtos", rota: "/page/produtos" }}
             paraImpressao
@@ -125,20 +125,20 @@ export default function EtiquetaProduto() {
 
                     <div
                         key={indice}
-                        className="w-full rounded-lg border border-[#E1E1E1] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
+                        className="w-full rounded-lg border border-[var(--linha)] bg-[var(--superficie)] p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
                     >
 
-                        <p className="font-display text-center text-sm text-[#303030]">
+                        <p className="font-display text-center text-sm text-[var(--ink)]">
                             {MARCA}
                         </p>
 
-                        <div className="mt-3 border-t border-[#E1E1E1]" />
+                        <div className="mt-3 border-t border-[var(--linha)]" />
 
-                        <h2 className="font-display mt-4 text-center text-lg leading-snug text-[#303030]">
+                        <h2 className="font-display mt-4 text-center text-lg leading-snug text-[var(--ink)]">
                             {produto.nome}
                         </h2>
 
-                        <p className="mt-1 text-center text-xs text-[#616161]">
+                        <p className="mt-1 text-center text-xs text-[var(--ink-2)]">
                             {[produto.categoria, descreverVariacao(produto.variacao_rotulo, produto.variacao)]
                                 .filter(Boolean)
                                 .join(" · ") || "—"}
@@ -155,7 +155,7 @@ export default function EtiquetaProduto() {
                             {/* Etiqueta física: valor cheio em preto, sem os centavos
                                 reduzidos da vitrine — imprime legível e não gasta
                                 tinta colorida em impressora monocromática. */}
-                            <span className="num text-2xl font-extrabold text-[#303030]">
+                            <span className="num text-2xl font-extrabold text-[var(--ink)]">
                                 {formatarMoeda(Number(precoExibido))}
                             </span>
 

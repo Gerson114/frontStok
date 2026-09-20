@@ -114,21 +114,21 @@ export default function CodigoDaEquipe() {
             }
         >
             {erro && (
-                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm font-semibold text-[#8E1F0B]">
+                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </p>
             )}
 
             {carregando ? (
-                <div className="h-10 w-64 animate-pulse rounded-lg bg-[#F1F1F1]" />
+                <div className="h-10 w-64 animate-pulse rounded-lg bg-[var(--fundo)]" />
             ) : dados && (
                 <>
                     <div className="flex flex-wrap items-center gap-3">
 
-                        <span className="flex items-center gap-2 rounded-lg border border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5">
-                            <FiKey className="w-4 text-[#8A8A8A]" aria-hidden />
-                            <span className="num text-lg font-bold tracking-[0.14em] text-[#303030]">
+                        <span className="flex items-center gap-2 rounded-lg border border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-2.5">
+                            <FiKey className="w-4 text-[var(--ink-3)]" aria-hidden />
+                            <span className="num text-lg font-bold tracking-[0.14em] text-[var(--ink)]">
                                 {dados.codigo}
                             </span>
                         </span>
@@ -139,20 +139,20 @@ export default function CodigoDaEquipe() {
                         </button>
                     </div>
 
-                    <p className="mt-3 text-sm text-[#616161]">
+                    <p className="mt-3 text-sm text-[var(--ink-2)]">
                         Passe-o de viva voz ou por um canal que só a equipe leia. O acesso de cada
                         pessoa vale por doze horas — depois disso, ela digita de novo, o que
                         também fecha a conversa no computador do balcão no fim do expediente.
                     </p>
 
                     {confirmando && (
-                        <div className="mt-4 rounded-lg border border-[#E1E1E1] bg-[#FFF1E3] p-4">
+                        <div className="mt-4 rounded-lg border border-[var(--linha)] bg-[var(--amarelo-fundo)] p-4">
 
-                            <p className="text-sm font-semibold text-[#5E4200]">
+                            <p className="text-sm font-semibold text-[var(--amarelo)]">
                                 Trocar o código tira todo mundo da conversa — você inclusive.
                             </p>
 
-                            <p className="mt-1 text-sm text-[#5E4200]">
+                            <p className="mt-1 text-sm text-[var(--amarelo)]">
                                 Cada pessoa da equipe volta a entrar digitando o código novo. É o
                                 que se faz quando alguém sai da loja ou o código foi parar onde
                                 não devia. As mensagens continuam onde estão.
@@ -181,7 +181,7 @@ export default function CodigoDaEquipe() {
                     )}
 
                     {dados.aviso && (
-                        <p role="status" className="mt-3 rounded-lg bg-[#CDFEE1] px-3 py-2 text-sm font-semibold text-[#0C5132]">
+                        <p role="status" className="mt-3 rounded-lg bg-[var(--verde-fundo)] px-3 py-2 text-sm font-semibold text-[var(--verde)]">
                             {dados.aviso}
                         </p>
                     )}

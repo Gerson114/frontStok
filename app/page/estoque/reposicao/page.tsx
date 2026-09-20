@@ -234,21 +234,21 @@ export default function Reposicao() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
             )}
 
             {urgentes > 0 && (
-                <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[#8E1F0B] bg-[#FEE9E8] px-4 py-3 text-sm text-[#8E1F0B]">
+                <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[var(--vermelho)] bg-[var(--vermelho-fundo)] px-4 py-3 text-sm text-[var(--vermelho)]">
                     <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
                         <span className="num font-bold">{urgentes}</span> prateleira(s) já estão
@@ -277,7 +277,7 @@ export default function Reposicao() {
 
                 {carregando ? (
 
-                    <p className="px-4 py-14 text-center text-sm text-[#616161]">
+                    <p className="px-4 py-14 text-center text-sm text-[var(--ink-2)]">
                         Carregando o ressuprimento...
                     </p>
 
@@ -327,17 +327,17 @@ export default function Reposicao() {
                                                     diz a mesma coisa sem engordar a linha. */}
                                                 <span
                                                     className={`mt-0.5 h-8 w-1 shrink-0 rounded-full ${
-                                                        reposicao.urgente ? "bg-[#8E1F0B]" : "bg-[#C7920A]"
+                                                        reposicao.urgente ? "bg-[var(--vermelho)]" : "bg-[var(--amarelo-forte)]"
                                                     }`}
                                                     aria-hidden
                                                 />
 
                                                 <div className="min-w-0">
-                                                    <p className="font-medium text-[#303030]">
+                                                    <p className="font-medium text-[var(--ink)]">
                                                         {reposicao.produto_nome}
                                                         {reposicao.variacao ? ` · ${reposicao.variacao}` : ""}
                                                     </p>
-                                                    <p className="num text-xs text-[#8A8A8A]">
+                                                    <p className="num text-xs text-[var(--ink-3)]">
                                                         {reposicao.produto_codigo}
                                                     </p>
                                                 </div>
@@ -349,13 +349,13 @@ export default function Reposicao() {
                                             <span className="flex flex-wrap items-center gap-1.5">
                                                 {reposicao.origem ? (
                                                     <>
-                                                        <span className="num text-[#303030]">{reposicao.origem}</span>
-                                                        <FiArrowDown className="w-3.5 text-[#8A8A8A]" aria-hidden />
+                                                        <span className="num text-[var(--ink)]">{reposicao.origem}</span>
+                                                        <FiArrowDown className="w-3.5 text-[var(--ink-3)]" aria-hidden />
                                                     </>
                                                 ) : null}
-                                                <span className="num text-[#303030]">{reposicao.destino}</span>
+                                                <span className="num text-[var(--ink)]">{reposicao.destino}</span>
                                             </span>
-                                            <span className="block text-xs text-[#616161]">
+                                            <span className="block text-xs text-[var(--ink-2)]">
                                                 {reposicao.destino_nome}
                                             </span>
                                         </td>
@@ -372,24 +372,24 @@ export default function Reposicao() {
                                             )}
 
                                             {!reposicao.urgente && reposicao.origem && (
-                                                <span className="text-[#8A8A8A]">abaixo do mínimo</span>
+                                                <span className="text-[var(--ink-3)]">abaixo do mínimo</span>
                                             )}
                                         </td>
 
-                                        <td className="num text-right text-[#303030]">
+                                        <td className="num text-right text-[var(--ink)]">
                                             {reposicao.no_picking}
-                                            <span className="text-[#8A8A8A]"> / {reposicao.minimo}</span>
+                                            <span className="text-[var(--ink-3)]"> / {reposicao.minimo}</span>
                                         </td>
 
-                                        <td className="num text-right text-[#616161]">
+                                        <td className="num text-right text-[var(--ink-2)]">
                                             {reposicao.no_pulmao}
                                         </td>
 
                                         <td className="text-right">
-                                            <span className="num font-semibold text-[#303030]">
+                                            <span className="num font-semibold text-[var(--ink)]">
                                                 {reposicao.quantidade}
                                             </span>
-                                            <span className="num block text-xs text-[#8A8A8A]">
+                                            <span className="num block text-xs text-[var(--ink-3)]">
                                                 até {reposicao.maximo}
                                             </span>
                                         </td>
@@ -423,11 +423,11 @@ export default function Reposicao() {
             <section className="card space-y-4 p-5 sm:p-7">
 
                 <div>
-                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
-                        <FiMapPin className="w-4 text-[#005BD3]" aria-hidden />
+                    <h2 className="font-display flex items-center gap-2 text-base text-[var(--ink)]">
+                        <FiMapPin className="w-4 text-[var(--azul)]" aria-hidden />
                         Prateleira de venda de um produto
                     </h2>
-                    <p className="mt-1 text-sm text-[#616161]">
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                         Onde o produto mora e quanto ele tem de ter ali. É o par sem o qual não
                         existe reposição — e sem o qual a loja descobre a prateleira vazia pela
                         boca do cliente, com o estoque cheio no fundo.
@@ -436,7 +436,7 @@ export default function Reposicao() {
 
                 {enderecos.length === 0 ? (
 
-                    <p className="rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                    <p className="rounded-lg bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                         Nenhuma prateleira de venda cadastrada.{" "}
                         <Link href="/page/estoque/enderecos" className="font-bold underline">
                             Cadastre um endereço do tipo &ldquo;prateleira de venda&rdquo;

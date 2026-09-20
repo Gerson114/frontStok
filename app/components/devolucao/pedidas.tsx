@@ -69,7 +69,7 @@ const CAUSAS: Record<CausaDevolucao, { rotulo: string; confira: string; Icone: t
     },
     danificado: {
         rotulo: "chegou danificado",
-        confira: "A mercadoria chegou avariada. Peça foto pela conversa se precisar ver o dano — e guarde a embalagem, que é o que a transportadora cobra num pedido de indenização.",
+        confira: "A mercadoria chegou avariada. Unidade foto pela conversa se precisar ver o dano — e guarde a embalagem, que é o que a transportadora cobra num pedido de indenização.",
         Icone: FiPackage,
     },
 }
@@ -178,16 +178,16 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
             <div className="flex flex-wrap items-center justify-between gap-3">
 
                 <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFF1E3] text-[#B98900]">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--amarelo-fundo)] text-[#B98900]">
                         <FiCreditCard className="w-4" aria-hidden />
                     </span>
 
                     <div>
-                        <h2 className="font-display text-base text-[#303030]">
+                        <h2 className="font-display text-base text-[var(--ink)]">
                             Devoluções pedidas pelos clientes
                         </h2>
 
-                        <p className="text-xs text-[#616161]">
+                        <p className="text-xs text-[var(--ink-2)]">
                             {esperando > 0 && (
                                 <>
                                     {esperando} {esperando === 1 ? "pessoa espera" : "pessoas esperam"} sua
@@ -213,7 +213,7 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                 <button
                     type="button"
                     onClick={() => setSituacao(situacao === "pedida" ? "todas" : "pedida")}
-                    className="text-sm font-semibold text-[#005BD3] transition-colors hover:text-[#004299]"
+                    className="text-sm font-semibold text-[var(--azul)] transition-colors hover:text-[#004299]"
                 >
                     {situacao === "pedida" ? "ver todas" : "ver só as que esperam"}
                 </button>
@@ -223,7 +223,7 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
             {erro && (
                 <div
                     role="alert"
-                    className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="mt-4 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
@@ -233,7 +233,7 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
             {aviso && (
                 <div
                     role="status"
-                    className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#EAFBF1] px-4 py-3 text-sm font-semibold text-[#0C5132]"
+                    className="mt-4 flex items-start gap-2.5 rounded-lg bg-[var(--verde-suave)] px-4 py-3 text-sm font-semibold text-[var(--verde)]"
                 >
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
@@ -241,9 +241,9 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
             )}
 
             {carregando ? (
-                <p className="mt-5 text-sm text-[#616161]">Carregando...</p>
+                <p className="mt-5 text-sm text-[var(--ink-2)]">Carregando...</p>
             ) : lista.length === 0 ? (
-                <p className="mt-5 text-sm text-[#616161]">
+                <p className="mt-5 text-sm text-[var(--ink-2)]">
                     Nenhum pedido de devolução por aqui.
                 </p>
             ) : (
@@ -251,17 +251,17 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                     {lista.map((devolucao) => (
                         <li
                             key={devolucao.id}
-                            className="rounded-xl border border-[#EBEBEB] p-4 sm:p-5"
+                            className="rounded-xl border border-[var(--linha-suave)] p-4 sm:p-5"
                         >
 
                             <div className="flex flex-wrap items-start justify-between gap-3">
 
                                 <div className="min-w-0">
-                                    <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#303030]">
+                                    <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                                         <span className="num">Pedido {devolucao.codigo}</span>
 
                                         {CAUSAS[devolucao.causa] && (
-                                            <span className="tag inline-flex items-center gap-1 bg-[#FFF1E3] text-[#B98900]">
+                                            <span className="tag inline-flex items-center gap-1 bg-[var(--amarelo-fundo)] text-[#B98900]">
                                                 {(() => {
                                                     const { Icone } = CAUSAS[devolucao.causa]
                                                     return <Icone className="w-3" aria-hidden />
@@ -271,15 +271,15 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                                         )}
 
                                         {devolucao.situacao === "aceita" && (
-                                            <span className="tag bg-[#CDFEE1] text-[#0C5132]">aceita</span>
+                                            <span className="tag bg-[var(--verde-fundo)] text-[var(--verde)]">aceita</span>
                                         )}
 
                                         {devolucao.situacao === "recusada" && (
-                                            <span className="tag bg-[#FEE9E8] text-[#8E1F0B]">recusada</span>
+                                            <span className="tag bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">recusada</span>
                                         )}
                                     </p>
 
-                                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#616161]">
+                                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--ink-2)]">
                                         <span className="inline-flex items-center gap-1.5">
                                             <FiUser className="w-3.5" aria-hidden />
                                             {devolucao.cliente_nome || "cliente"}
@@ -297,32 +297,32 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                                 </div>
 
                                 <p className="shrink-0 text-right">
-                                    <span className="num font-display text-lg text-[#303030]">
+                                    <span className="num font-display text-lg text-[var(--ink)]">
                                         {formatarMoeda(devolucao.valor)}
                                     </span>
 
-                                    <span className="block text-xs text-[#8A8A8A]">
-                                        {devolucao.frete > 0 ? "com o frete" : "só as peças"}
+                                    <span className="block text-xs text-[var(--ink-3)]">
+                                        {devolucao.frete > 0 ? "com o frete" : "só as unidades"}
                                     </span>
                                 </p>
 
                             </div>
 
                             <ul className="mt-3 space-y-1">
-                                {devolucao.itens.map((peca) => (
-                                    <li key={peca.item_pedido_id} className="text-sm text-[#616161]">
-                                        <span className="num">{peca.quantidade}×</span>{" "}
-                                        {peca.produto_nome || `produto #${peca.produto_id}`}
-                                        {peca.produto_codigo ? (
-                                            <span className="num text-[#8A8A8A]"> ({peca.produto_codigo})</span>
+                                {devolucao.itens.map((unidade) => (
+                                    <li key={unidade.item_pedido_id} className="text-sm text-[var(--ink-2)]">
+                                        <span className="num">{unidade.quantidade}×</span>{" "}
+                                        {unidade.produto_nome || `produto #${unidade.produto_id}`}
+                                        {unidade.produto_codigo ? (
+                                            <span className="num text-[var(--ink-3)]"> ({unidade.produto_codigo})</span>
                                         ) : null}
                                         {" · "}
-                                        <span className="num">{formatarMoeda(peca.preco_unitario)}</span>
+                                        <span className="num">{formatarMoeda(unidade.preco_unitario)}</span>
                                     </li>
                                 ))}
                             </ul>
 
-                            <p className="mt-3 rounded-lg bg-[#F7F7F7] px-4 py-3 text-sm leading-relaxed text-[#303030]">
+                            <p className="mt-3 rounded-lg bg-[var(--superficie-2)] px-4 py-3 text-sm leading-relaxed text-[var(--ink)]">
                                 &ldquo;{devolucao.motivo}&rdquo;
                             </p>
 
@@ -332,7 +332,7 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                                 exatamente a que não deve ser tomada no
                                 automático. */}
                             {devolucao.situacao === "pedida" && CAUSAS[devolucao.causa] && (
-                                <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-[#616161]">
+                                <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-[var(--ink-2)]">
                                     <FiAlertCircle className="mt-0.5 w-3.5 shrink-0 text-[#B98900]" aria-hidden />
                                     {CAUSAS[devolucao.causa].confira}
                                 </p>
@@ -353,11 +353,11 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                                                 value={resposta}
                                                 maxLength={500}
                                                 onChange={(e) => setResposta(e.target.value)}
-                                                placeholder="A peça foi usada, o prazo venceu, a etiqueta foi retirada..."
+                                                placeholder="A unidade foi usada, o prazo venceu, a etiqueta foi retirada..."
                                                 className="field"
                                             />
 
-                                            <p className="text-xs text-[#616161]">
+                                            <p className="text-xs text-[var(--ink-2)]">
                                                 O cliente lê esta frase na tela do pedido dele.
                                             </p>
 
@@ -414,12 +414,12 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                                 <div className="mt-3 space-y-2">
 
                                     {devolucao.resposta && (
-                                        <p className="border-l-2 border-[#EBEBEB] pl-3 text-sm leading-relaxed text-[#616161]">
+                                        <p className="border-l-2 border-[var(--linha-suave)] pl-3 text-sm leading-relaxed text-[var(--ink-2)]">
                                             {devolucao.resposta}
                                         </p>
                                     )}
 
-                                    <p className="text-xs text-[#8A8A8A]">
+                                    <p className="text-xs text-[var(--ink-3)]">
                                         {devolucao.situacao === "aceita" ? "Aceita" : "Recusada"}
                                         {devolucao.decidida_em ? ` em ${formatarData(devolucao.decidida_em)}` : ""}
                                         {devolucao.decidida_por ? ` por ${devolucao.decidida_por}` : ""}
@@ -433,7 +433,7 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                                         pendência desta tela que o sistema não
                                         consegue fechar sozinho. */}
                                     {devolucao.situacao === "aceita" && !devolucao.estornado_em && (
-                                        <p className="flex items-start gap-2 rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm font-semibold leading-relaxed text-[#B98900]">
+                                        <p className="flex items-start gap-2 rounded-lg bg-[var(--amarelo-fundo)] px-4 py-3 text-sm font-semibold leading-relaxed text-[#B98900]">
                                             <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                                             {devolucao.estorno_manual
                                                 ? `Devolva ${formatarMoeda(devolucao.valor)} pelo painel do seu provedor de pagamento: ele não faz estorno por aqui. O cliente já foi avisado de que a devolução foi aceita.`
@@ -445,9 +445,9 @@ export default function DevolucoesPedidas({ aoDecidir }: { aoDecidir?: () => voi
                             )}
 
                             {devolucao.situacao === "aceita" && devolucao.estornado_em && (
-                                <p className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[#616161]">
-                                    <FiCheckCircle className="mt-0.5 w-3.5 shrink-0 text-[#0C5132]" aria-hidden />
-                                    Quando a peça chegar, registre-a na fila de quarentena abaixo — é lá que se
+                                <p className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[var(--ink-2)]">
+                                    <FiCheckCircle className="mt-0.5 w-3.5 shrink-0 text-[var(--verde)]" aria-hidden />
+                                    Quando a unidade chegar, registre-a na fila de quarentena abaixo — é lá que se
                                     decide se ela volta para a venda.
                                 </p>
                             )}

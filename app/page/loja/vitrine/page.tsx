@@ -114,7 +114,7 @@ export default function ProdutosDoSite() {
 
                 <div className="flex min-w-0 items-center gap-3">
 
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
                         {produto.imagem_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={urlDaImagem(produto.imagem_url)} alt={produto.nome} className="h-full w-full object-cover" />
@@ -123,12 +123,12 @@ export default function ProdutosDoSite() {
 
                     <div className="min-w-0">
 
-                        <p className="truncate text-sm font-medium text-[#303030]">
+                        <p className="truncate text-sm font-medium text-[var(--ink)]">
                             {produto.nome}
                             {produto.variacao ? ` · ${produto.variacao}` : ""}
                         </p>
 
-                        <p className="flex flex-wrap items-center gap-2 font-mono text-xs text-[#616161]">
+                        <p className="flex flex-wrap items-center gap-2 font-mono text-xs text-[var(--ink-2)]">
                             <span>{produto.codigo}</span>
                             <span className="font-sans">{formatarMoeda(preco)}</span>
                             <span className="font-sans">{produto.estoque} em estoque</span>
@@ -176,14 +176,14 @@ export default function ProdutosDoSite() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -191,7 +191,7 @@ export default function ProdutosDoSite() {
 
             <div className="relative w-full sm:w-80">
 
-                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                 <input
                     type="text"
@@ -211,11 +211,11 @@ export default function ProdutosDoSite() {
             <section className="card space-y-4 p-5 sm:p-7">
 
                 <div>
-                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
-                        <FiEye className="w-4 text-[#005BD3]" aria-hidden />
+                    <h2 className="font-display flex items-center gap-2 text-base text-[var(--ink)]">
+                        <FiEye className="w-4 text-[var(--azul)]" aria-hidden />
                         No site
                     </h2>
-                    <p className="mt-1 text-sm text-[#616161]">
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                         {carregando
                             ? "Carregando..."
                             : `${naVitrine.length} produto(s) aparecendo para quem visita a loja.`}
@@ -225,7 +225,7 @@ export default function ProdutosDoSite() {
                 {!carregando && (
                     naVitrine.length === 0 ? (
 
-                        <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
+                        <p className="rounded-lg border border-dashed border-[var(--linha)] p-8 text-center text-sm text-[var(--ink-2)]">
                             {termo
                                 ? "Nenhum produto do site corresponde à busca."
                                 : "Sua vitrine está vazia. Escolha abaixo o que vai para o site."}
@@ -233,7 +233,7 @@ export default function ProdutosDoSite() {
 
                     ) : (
 
-                        <ul className="divide-y divide-[#E1E1E1]">
+                        <ul className="divide-y divide-[var(--linha)]">
                             {naVitrine.map((produto) => linha(produto, true))}
                         </ul>
 
@@ -249,11 +249,11 @@ export default function ProdutosDoSite() {
             <section className="card space-y-4 p-5 sm:p-7">
 
                 <div>
-                    <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
-                        <FiPackage className="w-4 text-[#616161]" aria-hidden />
+                    <h2 className="font-display flex items-center gap-2 text-base text-[var(--ink)]">
+                        <FiPackage className="w-4 text-[var(--ink-2)]" aria-hidden />
                         Só no estoque
                     </h2>
-                    <p className="mt-1 text-sm text-[#616161]">
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                         Existe na loja, não aparece no site.
                     </p>
                 </div>
@@ -261,7 +261,7 @@ export default function ProdutosDoSite() {
                 {!carregando && (
                     soNoEstoque.length === 0 ? (
 
-                        <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
+                        <p className="rounded-lg border border-dashed border-[var(--linha)] p-8 text-center text-sm text-[var(--ink-2)]">
                             {termo
                                 ? "Nenhum produto fora do site corresponde à busca."
                                 : (
@@ -277,7 +277,7 @@ export default function ProdutosDoSite() {
 
                     ) : (
 
-                        <ul className="divide-y divide-[#E1E1E1]">
+                        <ul className="divide-y divide-[var(--linha)]">
                             {soNoEstoque.map((produto) => linha(produto, false))}
                         </ul>
 

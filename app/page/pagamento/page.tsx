@@ -164,7 +164,7 @@ export default function PagamentoPage() {
     if (carregando) {
         return (
             <Pagina titulo="Receber pagamento">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando...</div>
             </Pagina>
         )
     }
@@ -201,24 +201,24 @@ export default function PagamentoPage() {
             {/* Estado atual */}
             <section className="card p-6">
                 <div className="flex items-start gap-3">
-                    <span className={conectado ? "text-[#0C5132]" : "text-[#8A8A8A]"}>
+                    <span className={conectado ? "text-[var(--verde)]" : "text-[var(--ink-3)]"}>
                         {conectado
                             ? <FiCheckCircle className="w-5" aria-hidden />
                             : <FiCreditCard className="w-5" aria-hidden />}
                     </span>
 
                     <div className="min-w-0 flex-1">
-                        <p className="font-display text-lg text-[#303030]">
+                        <p className="font-display text-lg text-[var(--ink)]">
                             {conectado ? "Conta conectada" : "Nenhuma conta conectada"}
                         </p>
 
                         {conectado ? (
-                            <p className="mt-1 text-sm text-[#616161]">
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
                                 {nomeConectado} · chave terminada em{" "}
                                 <span className="num font-semibold">{situacao?.sufixo || "—"}</span>
                             </p>
                         ) : (
-                            <p className="mt-1 text-sm text-[#616161]">
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
                                 Enquanto não conectar, a vitrine não consegue cobrar: quem
                                 tentar fechar um pedido recebe um aviso para falar com a loja.
                             </p>
@@ -234,7 +234,7 @@ export default function PagamentoPage() {
             </section>
 
             {semEnderecos ? (
-                <p className="flex items-start gap-2 border-l-2 border-[#8E1F0B] bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p className="flex items-start gap-2 border-l-2 border-[var(--vermelho)] bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
                         O servidor está sem os endereços públicos configurados
@@ -260,14 +260,14 @@ export default function PagamentoPage() {
                         ? "Cadastre este endereço no painel do seu provedor, no lugar de webhooks. É por ele que a confirmação de pagamento chega — sem isso, o cliente paga e o pedido não aparece aqui."
                         : "Este é o endereço por onde a confirmação de pagamento chega. No seu provedor ele vai junto de cada cobrança, automaticamente: não há nada a cadastrar. Ele está aqui para você reconhecê-lo se precisar."}
                 >
-                    <code className="block overflow-x-auto whitespace-nowrap rounded-lg border border-[#E1E1E1] bg-[#F7F7F7] px-3 py-2 font-mono text-xs text-[#303030]">
+                    <code className="block overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--linha)] bg-[var(--superficie-2)] px-3 py-2 font-mono text-xs text-[var(--ink)]">
                         {situacao.url_webhook}
                     </code>
                 </Secao>
             ) : null}
 
             {semWebhook ? (
-                <p className="flex items-start gap-2 border-l-2 border-[#C7920A] bg-[#FFF1E3] px-3 py-2 text-sm text-[#5E4200]">
+                <p className="flex items-start gap-2 border-l-2 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-3 py-2 text-sm text-[var(--amarelo)]">
                     <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
                         Falta o segredo do webhook. Sem ele a loja até cobra, mas nunca
@@ -300,7 +300,7 @@ export default function PagamentoPage() {
                         })}
                     </div>
 
-                    <p className="mb-5 text-xs text-[#616161]">
+                    <p className="mb-5 text-xs text-[var(--ink-2)]">
                         A escolha é só da sua loja. Trocar de provedor aqui não muda
                         nada para as outras lojas do sistema.
                     </p>
@@ -316,7 +316,7 @@ export default function PagamentoPage() {
                         className="field"
                         required
                     />
-                    <p className="mt-1 text-xs text-[#616161]">{ajuda?.OndeAcharChave}</p>
+                    <p className="mt-1 text-xs text-[var(--ink-2)]">{ajuda?.OndeAcharChave}</p>
 
                     {/* O campo só existe para provedor que assina a
                         notificação. Pedir um segredo que o provedor não emite
@@ -333,22 +333,22 @@ export default function PagamentoPage() {
                                 autoComplete="off"
                                 className="field"
                             />
-                            <p className="mt-1 text-xs text-[#616161]">{ajuda?.OndeAcharWebhook}</p>
+                            <p className="mt-1 text-xs text-[var(--ink-2)]">{ajuda?.OndeAcharWebhook}</p>
                         </>
                     ) : (
-                        <p className="mt-5 border-l-2 border-[#005BD3] bg-[#EAF4FF] px-3 py-2 text-xs leading-relaxed text-[#00369B]">
+                        <p className="mt-5 border-l-2 border-[var(--azul)] bg-[var(--azul-suave)] px-3 py-2 text-xs leading-relaxed text-[var(--azul-escuro)]">
                             {ajuda?.OndeAcharWebhook}
                         </p>
                     )}
 
                     {erro ? (
-                        <p className="mt-4 border-l-2 border-[#8E1F0B] bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                        <p className="mt-4 border-l-2 border-[var(--vermelho)] bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                             {erro}
                         </p>
                     ) : null}
 
                     {aviso ? (
-                        <p className="mt-4 border-l-2 border-[#0C5132] bg-[#EAFBF1] px-3 py-2 text-sm text-[#0C5132]">
+                        <p className="mt-4 border-l-2 border-[var(--verde)] bg-[var(--verde-suave)] px-3 py-2 text-sm text-[var(--verde)]">
                             {aviso}
                         </p>
                     ) : null}
@@ -361,7 +361,7 @@ export default function PagamentoPage() {
 
                 </form>
 
-                <p className="mt-5 flex items-start gap-2 text-xs text-[#616161]">
+                <p className="mt-5 flex items-start gap-2 text-xs text-[var(--ink-2)]">
                     <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                     <span>
                         O token é guardado cifrado com uma chave exclusiva da sua loja e

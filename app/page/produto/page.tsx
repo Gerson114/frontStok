@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { cadastrarProdutoVariantes, listarProdutos } from "@/middleware/produtos"
 import { listarEnderecos, type EnderecoEstoque } from "@/middleware/estoque"
+import { consultarConfiguracao } from "@/middleware/configuracao"
 import { sanitizeText, sanitizeUrl, sanitizeDescricao } from "@/security/sanitize"
 import { validarProdutoVariantes, type NovoProdutoVariantes } from "@/security/validate"
 import { ApiError } from "@/middleware/client"
@@ -102,6 +103,17 @@ export default function Produto() {
   // pelo servidor, e oferecê-la seria prometer o que não vai acontecer.
   const [enderecos, setEnderecos] = useState<EnderecoEstoque[]>([])
 
+  /* O RAMO decide o que esta tela pergunta.
+  
+     Numa loja de comida não há o que endereçar nem o que contar: a pizza
+     existe quando alguém a pede. Perguntar "em que prateleira vai?" a uma
+     pizzaria é o tipo de campo que faz o sistema parecer emprestado de outro
+     ramo — e o lojista inventa um número para poder salvar.
+  
+     Vem da configuração da loja, e não de um palpite sobre o nome do produto:
+     adivinhar erraria na primeira cafeteria que vende caneca. */
+  const [semContagem, setSemContagem] = useState(false)
+
   // As categorias que ESTA loja já usou, para sugerir enquanto o lojista
   // digita. O sistema não tem lista de categorias própria — ele não sabe (nem
   // deve supor) se a loja vende ventilador, panela ou camisa.
@@ -114,6 +126,10 @@ export default function Produto() {
       try {
         const lista = await listarEnderecos()
         if (!cancelado) setEnderecos(lista.filter((endereco) => !endereco.bloqueado))
+
+        const configuracao = await consultarConfiguracao()
+
+        if (!cancelado) setSemContagem(configuracao.configuracao?.ramo === "comida")
       } catch {
         // Sem a lista, o cadastro continua funcionando: endereço em branco é
         // o caso normal, e aí quem escolhe onde guardar é o servidor.
@@ -163,14 +179,19 @@ export default function Produto() {
       imagem_url: sanitizeUrl(formData.imagem_url),
       preco: parseFloat(formData.preco.replace(",", ".")),
       loja_id: LOJA_ID,
-      endereco: formData.endereco,
+      endereco: semContagem ? "" : formData.endereco,
+
+      // Item de cardápio não é contado unidade a unidade. O servidor confere
+      // de novo e zera o estoque — aqui é para a tela não pedir o que não
+      // existe.
+      sem_contagem: semContagem,
       // Linha em branco é linha que o lojista não usou: some antes de virar
       // erro de validação.
       variacoes: variacoes
         .filter((linha) => linha.variacao.trim() || linha.estoque.trim())
         .map((linha) => ({
           variacao: sanitizeText(linha.variacao),
-          estoque: parseInt(linha.estoque, 10),
+          estoque: semContagem ? 0 : parseInt(linha.estoque, 10),
         })),
     }
 
@@ -245,8 +266,8 @@ export default function Produto() {
           {/* Bloco 1 */}
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">01</span>
-              <h2 className="font-display text-sm text-[#303030]">Informações básicas</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">01</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Informações básicas</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -310,8 +331,8 @@ export default function Produto() {
           {/* Bloco 2 */}
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">02</span>
-              <h2 className="font-display text-sm text-[#303030]">Variações e ficha técnica</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">02</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Variações e ficha técnica</h2>
             </div>
 
             <CamposDeVariacao
@@ -321,9 +342,9 @@ export default function Produto() {
               aoMudarLinhas={setVariacoes}
             />
 
-            <div className="space-y-1.5 border-t border-[#EBEBEB] pt-5">
+            <div className="space-y-1.5 border-t border-[var(--linha-suave)] pt-5">
               <label className="rotulo">Ficha técnica</label>
-              <p className="pb-1 text-xs text-[#616161]">
+              <p className="pb-1 text-xs text-[var(--ink-2)]">
                 O que descreve este produto no seu ramo: material, marca, garantia,
                 validade, dimensões. Vale para todas as variações.
               </p>
@@ -335,8 +356,8 @@ export default function Produto() {
           {/* Bloco 3 */}
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">03</span>
-              <h2 className="font-display text-sm text-[#303030]">Valores e mídia</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">03</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Valores e mídia</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -368,11 +389,15 @@ export default function Produto() {
             </div>
           </section>
 
-          {/* Bloco 4 */}
+          {/* Bloco 4 — só existe para quem conta unidade.
+          
+              Numa cozinha ele seria uma pergunta sem resposta possível: não
+              há prateleira onde guardar a pizza que ainda não foi feita. */}
+          {!semContagem && (
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">04</span>
-              <h2 className="font-display text-sm text-[#303030]">Local no estoque</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">04</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Local no estoque</h2>
             </div>
 
             <div className="space-y-1.5">
@@ -392,19 +417,20 @@ export default function Produto() {
                 ))}
               </select>
 
-              <p className="text-xs text-[#616161]">
-                Em branco, o servidor guarda as peças junto do que já existe deste produto
+              <p className="text-xs text-[var(--ink-2)]">
+                Em branco, o servidor guarda as unidades junto do que já existe deste produto
                 ou no trecho mais vazio. Guardar mercadoria não deveria exigir que alguém
                 decida, caixa por caixa, em que prateleira ela cabe.
               </p>
             </div>
           </section>
+          )}
 
           {/* Feedback */}
           {erros.length > 0 && (
             <div
               role="alert"
-              className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+              className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
             >
               <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
               <div className="space-y-1">
@@ -418,7 +444,7 @@ export default function Produto() {
           {sucesso && (
             <div
               role="status"
-              className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]"
+              className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]"
             >
               <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
               <span>Produto cadastrado com sucesso! Redirecionando...</span>
@@ -448,15 +474,15 @@ export default function Produto() {
         {/* Etiqueta / preview ao vivo */}
         <div className="lg:sticky lg:top-10">
           <div className="card relative overflow-hidden p-5">
-            <p className="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+            <p className="mb-4 text-[0.68rem] font-bold text-[var(--ink-3)]">
               Pré-visualização da etiqueta
             </p>
 
             {/* Ticket / hang tag */}
-            <div className="rounded-lg bg-[#F1F1F1] p-5">
+            <div className="rounded-lg bg-[var(--fundo)] p-5">
 
               <div className="flex items-start justify-between gap-3">
-                <h3 className="font-display text-xl leading-snug text-[#303030] break-words">
+                <h3 className="font-display text-xl leading-snug text-[var(--ink)] break-words">
                   {formData.nome || "Nome do produto"}
                 </h3>
                 {swatch ? (
@@ -472,7 +498,7 @@ export default function Produto() {
                 ) : null}
               </div>
 
-              <p className="text-xs text-[#616161] mt-1">
+              <p className="text-xs text-[var(--ink-2)] mt-1">
                 {formData.categoria || "Categoria"}
               </p>
 
@@ -480,31 +506,35 @@ export default function Produto() {
                 {precoNumero != null ? (
                   <Preco valor={precoNumero} className="text-2xl" />
                 ) : (
-                  <span className="preco text-2xl text-[#8A8A8A]">R$ —</span>
+                  <span className="preco text-2xl text-[var(--ink-3)]">R$ —</span>
                 )}
               </div>
 
 
               <dl className="grid grid-cols-2 gap-y-2.5 text-xs">
-                <dt className="text-[#616161]">{variacaoRotulo.trim() || "Variações"}</dt>
-                <dd className="text-right font-semibold text-[#303030] break-words">
+                <dt className="text-[var(--ink-2)]">{variacaoRotulo.trim() || "Variações"}</dt>
+                <dd className="text-right font-semibold text-[var(--ink)] break-words">
                   {variacoesPreenchidas.length > 0
                     ? variacoesPreenchidas.map((linha) => linha.variacao.trim()).join(", ")
                     : "—"}
                 </dd>
-                <dt className="text-[#616161]">Estoque total</dt>
-                <dd className="num text-right font-semibold text-[#303030]">
-                  {variacoesPreenchidas.length > 0 ? estoqueTotal : "—"}
-                </dd>
-                <dt className="text-[#616161]">Local</dt>
-                <dd className="num text-right font-semibold text-[#303030]">
-                  {formData.endereco || "o sistema escolhe"}
-                </dd>
+                {!semContagem && (
+                  <>
+                    <dt className="text-[var(--ink-2)]">Estoque total</dt>
+                    <dd className="num text-right font-semibold text-[var(--ink)]">
+                      {variacoesPreenchidas.length > 0 ? estoqueTotal : "—"}
+                    </dd>
+                    <dt className="text-[var(--ink-2)]">Local</dt>
+                    <dd className="num text-right font-semibold text-[var(--ink)]">
+                      {formData.endereco || "o sistema escolhe"}
+                    </dd>
+                  </>
+                )}
               </dl>
             </div>
 
             {formData.imagem_url && (
-              <div className="mt-4 rounded-xl overflow-hidden border border-[#E1E1E1] aspect-[4/3] bg-[#F1F1F1]">
+              <div className="mt-4 rounded-xl overflow-hidden border border-[var(--linha)] aspect-[4/3] bg-[var(--fundo)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={urlDaImagem(formData.imagem_url)}

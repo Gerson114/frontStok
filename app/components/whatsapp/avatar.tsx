@@ -14,12 +14,12 @@ import { urlDaFoto } from "@/middleware/whatsapp"
  * Cada par é fundo + texto já escolhido para ter contraste sobre ele.
  */
 const CORES = [
-    { fundo: "#EAF4FF", texto: "#0058A8" },
-    { fundo: "#EAFBF1", texto: "#0C5132" },
+    { fundo: "var(--azul-suave)", texto: "#0058A8" },
+    { fundo: "var(--verde-suave)", texto: "var(--verde)" },
     { fundo: "#FFF3E0", texto: "#B26A00" },
     { fundo: "#F3E5F5", texto: "#7B1FA2" },
     { fundo: "#E0F7FA", texto: "#00707C" },
-    { fundo: "#FEE9E8", texto: "#C1351C" },
+    { fundo: "var(--vermelho-fundo)", texto: "#C1351C" },
     { fundo: "#EDE7F6", texto: "#4A3C9E" },
     { fundo: "#F1F8E9", texto: "#557B18" },
 ]
@@ -100,7 +100,7 @@ export default function Avatar({
             // que impede a lista de engasgar enquanto rola.
             decoding="async"
             onError={() => setFalhou(true)}
-            className={`${tamanho} shrink-0 rounded-full bg-[#F1F1F1] object-cover`}
+            className={`${tamanho} shrink-0 rounded-full bg-[var(--fundo)] object-cover`}
         />
     )
 }

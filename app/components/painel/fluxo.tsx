@@ -142,7 +142,7 @@ export default function FluxoDoAtendimento() {
             titulo="O atendimento da equipe"
             descricao="O chat do site e o WhatsApp somados: quem pega conversa, quem passa para quem, e quem encerra."
             acoes={
-                <div className="flex rounded-lg border border-[#E1E1E1] p-0.5" role="group" aria-label="Período do relatório">
+                <div className="flex rounded-lg border border-[var(--linha)] p-0.5" role="group" aria-label="Período do relatório">
                     {JANELAS.map((janela) => (
                         <button
                             key={janela.dias}
@@ -151,8 +151,8 @@ export default function FluxoDoAtendimento() {
                             aria-pressed={janela.dias === dias}
                             className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                                 janela.dias === dias
-                                    ? "bg-[#303030] text-white"
-                                    : "text-[#616161] hover:bg-[#F1F1F1]"
+                                    ? "bg-[var(--azul)] text-white"
+                                    : "text-[var(--ink-2)] hover:bg-[var(--fundo)]"
                             }`}
                         >
                             {janela.rotulo}
@@ -162,7 +162,7 @@ export default function FluxoDoAtendimento() {
             }
         >
             {erro && (
-                <p className="mb-4 flex items-center gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p className="mb-4 flex items-center gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertCircle className="w-4 shrink-0" aria-hidden />
                     {erro}
                 </p>
@@ -175,14 +175,14 @@ export default function FluxoDoAtendimento() {
                 preencher gráfico com número estimado é o contrário do que
                 este painel faz. */}
             {semRastro && !erro && (
-                <p className="mb-4 rounded-lg bg-[#FFF1E3] px-3 py-2 text-sm text-[#5E4200]">
+                <p className="mb-4 rounded-lg bg-[var(--amarelo-fundo)] px-3 py-2 text-sm text-[var(--amarelo)]">
                     O registro de quem pega, passa e encerra conversa começa agora. Os gráficos
                     se enchem conforme a equipe atende — o que aconteceu antes não ficou gravado.
                 </p>
             )}
 
             {carregando && !dados ? (
-                <div className="h-64 animate-pulse rounded-lg bg-[#F1F1F1]" />
+                <div className="h-64 animate-pulse rounded-lg bg-[var(--fundo)]" />
             ) : dados && (
                 <div className={`space-y-8 ${carregando ? "opacity-60 transition-opacity" : "transition-opacity"}`}>
 
@@ -256,14 +256,14 @@ export default function FluxoDoAtendimento() {
 
 function Titulo({ children }: { children: React.ReactNode }) {
     return (
-        <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+        <h3 className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
             {children}
         </h3>
     )
 }
 
 function Explicacao({ children }: { children: React.ReactNode }) {
-    return <p className="mb-3 mt-0.5 text-sm text-[#616161]">{children}</p>
+    return <p className="mb-3 mt-0.5 text-sm text-[var(--ink-2)]">{children}</p>
 }
 
 /**
@@ -279,19 +279,19 @@ function TabelaDePassagens({ fitas }: { fitas: Fita[] }) {
         <table className="mt-4 w-full text-sm">
 
             <thead>
-                <tr className="border-b border-[#E1E1E1] text-left text-xs uppercase tracking-[0.06em] text-[#8A8A8A]">
+                <tr className="border-b border-[var(--linha)] text-left text-xs uppercase tracking-[0.06em] text-[var(--ink-3)]">
                     <th className="py-2 font-semibold">Passou</th>
                     <th className="py-2 font-semibold">Recebeu</th>
                     <th className="py-2 text-right font-semibold">Vezes</th>
                 </tr>
             </thead>
 
-            <tbody className="divide-y divide-[#EBEBEB]">
+            <tbody className="divide-y divide-[var(--linha-suave)]">
                 {fitas.map((fita) => (
                     <tr key={`${fita.de}->${fita.para}`}>
-                        <td className="py-2 text-[#303030]">{fita.de}</td>
-                        <td className="py-2 text-[#303030]">{fita.para}</td>
-                        <td className="num py-2 text-right font-semibold text-[#303030]">{fita.total}</td>
+                        <td className="py-2 text-[var(--ink)]">{fita.de}</td>
+                        <td className="py-2 text-[var(--ink)]">{fita.para}</td>
+                        <td className="num py-2 text-right font-semibold text-[var(--ink)]">{fita.total}</td>
                     </tr>
                 ))}
             </tbody>

@@ -69,7 +69,7 @@ function useLargura<T extends HTMLElement>(): [React.RefObject<T | null>, number
 }
 
 /* ==========================================================================
-   Peças comuns
+   Unidades comuns
    ========================================================================== */
 
 /** Uma série do gráfico: o nome escrito, a cor, e o total quando ele cabe. */
@@ -92,7 +92,7 @@ export function Legenda({ series }: { series: Serie[] }) {
     return (
         <ul className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
             {series.map((serie) => (
-                <li key={serie.rotulo} className="flex items-center gap-1.5 text-xs text-[#616161]">
+                <li key={serie.rotulo} className="flex items-center gap-1.5 text-xs text-[var(--ink-2)]">
 
                     <span
                         className="h-2.5 w-2.5 shrink-0 rounded-sm"
@@ -103,7 +103,7 @@ export function Legenda({ series }: { series: Serie[] }) {
                     {serie.rotulo}
 
                     {serie.total && (
-                        <span className="num font-semibold text-[#303030]">{serie.total}</span>
+                        <span className="num font-semibold text-[var(--ink)]">{serie.total}</span>
                     )}
                 </li>
             ))}
@@ -126,7 +126,7 @@ function Dica({ x, y, largura, children }: {
 
     return (
         <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-[#E1E1E1] bg-white px-2.5 py-1.5 text-xs shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg border border-[var(--linha)] bg-[var(--superficie)] px-2.5 py-1.5 text-xs shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
             style={{ left: esquerda, top: y - 8, minWidth: 120 }}
             role="tooltip"
         >
@@ -140,14 +140,14 @@ function LinhaDaDica({ cor, rotulo, valor }: { cor?: string; rotulo: string; val
     return (
         <p className="flex items-center justify-between gap-3 whitespace-nowrap">
 
-            <span className="flex items-center gap-1.5 text-[#616161]">
+            <span className="flex items-center gap-1.5 text-[var(--ink-2)]">
                 {cor && (
                     <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: cor }} aria-hidden />
                 )}
                 {rotulo}
             </span>
 
-            <span className="num font-semibold text-[#303030]">{valor}</span>
+            <span className="num font-semibold text-[var(--ink)]">{valor}</span>
         </p>
     )
 }
@@ -155,7 +155,7 @@ function LinhaDaDica({ cor, rotulo, valor }: { cor?: string; rotulo: string; val
 /** Nada para desenhar. Dito em texto, e não com um gráfico vazio. */
 function Vazio({ children }: { children: React.ReactNode }) {
     return (
-        <p className="rounded-lg border border-dashed border-[#E1E1E1] px-4 py-8 text-center text-sm text-[#8A8A8A]">
+        <p className="rounded-lg border border-dashed border-[var(--linha)] px-4 py-8 text-center text-sm text-[var(--ink-3)]">
             {children}
         </p>
     )
@@ -254,7 +254,7 @@ export function BarrasEmpilhadas({ colunas, series, formatar, altura = 220, rotu
                                         y={posicao(marca)}
                                         textAnchor="end"
                                         dominantBaseline="middle"
-                                        className="fill-[#8A8A8A]"
+                                        className="fill-[var(--ink-3)]"
                                         style={{ fontSize: 10 }}
                                     >
                                         {formatar(marca)}
@@ -336,7 +336,7 @@ export function BarrasEmpilhadas({ colunas, series, formatar, altura = 220, rotu
                                         x={passo * indice + passo / 2}
                                         y={areaAltura + 16}
                                         textAnchor="middle"
-                                        className="fill-[#8A8A8A]"
+                                        className="fill-[var(--ink-3)]"
                                         style={{ fontSize: 10 }}
                                     >
                                         {rotuloDoEixo ? rotuloDoEixo(coluna.rotulo) : coluna.rotulo}
@@ -353,7 +353,7 @@ export function BarrasEmpilhadas({ colunas, series, formatar, altura = 220, rotu
                         y={margem.topo + posicao(colunas[sobre].partes.reduce((a, b) => a + b, 0))}
                         largura={largura}
                     >
-                        <p className="mb-1 font-semibold text-[#303030]">
+                        <p className="mb-1 font-semibold text-[var(--ink)]">
                             {rotuloDoEixo ? rotuloDoEixo(colunas[sobre].rotulo) : colunas[sobre].rotulo}
                         </p>
 
@@ -462,7 +462,7 @@ export function Linhas({ rotulos, series, valores, formatar, altura = 200, rotul
                                         y={y(marca)}
                                         textAnchor="end"
                                         dominantBaseline="middle"
-                                        className="fill-[#8A8A8A]"
+                                        className="fill-[var(--ink-3)]"
                                         style={{ fontSize: 10 }}
                                     >
                                         {formatar(marca)}
@@ -537,7 +537,7 @@ export function Linhas({ rotulos, series, valores, formatar, altura = 200, rotul
                                         x={x(indice)}
                                         y={areaAltura + 16}
                                         textAnchor={indice === 0 ? "start" : indice === rotulos.length - 1 ? "end" : "middle"}
-                                        className="fill-[#8A8A8A]"
+                                        className="fill-[var(--ink-3)]"
                                         style={{ fontSize: 10 }}
                                     >
                                         {rotuloDoEixo ? rotuloDoEixo(rotulo) : rotulo}
@@ -551,7 +551,7 @@ export function Linhas({ rotulos, series, valores, formatar, altura = 200, rotul
                 {sobre !== null && (
                     <Dica x={margem.esquerda + x(sobre)} y={margem.topo} largura={largura}>
 
-                        <p className="mb-1 font-semibold text-[#303030]">
+                        <p className="mb-1 font-semibold text-[var(--ink)]">
                             {rotuloDoEixo ? rotuloDoEixo(rotulos[sobre]) : rotulos[sobre]}
                         </p>
 
@@ -616,7 +616,7 @@ export function BarrasPorPessoa({ linhas, series }: {
                     return (
                         <li key={linha.nome} className="grid grid-cols-[minmax(6rem,10rem)_1fr_auto] items-center gap-3">
 
-                            <span className="truncate text-sm text-[#303030]" title={linha.nome}>
+                            <span className="truncate text-sm text-[var(--ink)]" title={linha.nome}>
                                 {linha.nome}
                             </span>
 
@@ -635,11 +635,11 @@ export function BarrasPorPessoa({ linhas, series }: {
                                 ))}
 
                                 {total === 0 && (
-                                    <span className="w-full rounded-md bg-[#F1F1F1]" />
+                                    <span className="w-full rounded-md bg-[var(--fundo)]" />
                                 )}
                             </span>
 
-                            <span className="num w-16 text-right text-xs text-[#616161]">
+                            <span className="num w-16 text-right text-xs text-[var(--ink-2)]">
                                 {linha.marca}
                             </span>
                         </li>
@@ -688,7 +688,7 @@ export function BarraDeEstados({ partes }: {
 
             <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
                 {partes.map((parte) => (
-                    <li key={parte.rotulo} className="flex items-center gap-1.5 text-xs text-[#616161]">
+                    <li key={parte.rotulo} className="flex items-center gap-1.5 text-xs text-[var(--ink-2)]">
 
                         <span
                             className="h-2.5 w-2.5 shrink-0 rounded-sm"
@@ -697,7 +697,7 @@ export function BarraDeEstados({ partes }: {
                         />
 
                         {parte.rotulo}
-                        <span className="num font-semibold text-[#303030]">{parte.valor}</span>
+                        <span className="num font-semibold text-[var(--ink)]">{parte.valor}</span>
                     </li>
                 ))}
             </ul>
@@ -783,7 +783,7 @@ export function Fluxo({ fitas, cores }: { fitas: Fita[]; cores: string[] }) {
                             x={colunaEsquerda}
                             y={alturaDaPessoa(origens, indice)}
                             dominantBaseline="middle"
-                            className="fill-[#303030]"
+                            className="fill-[var(--ink)]"
                             style={{ fontSize: 12 }}
                         >
                             {encurtar(nome)}
@@ -797,7 +797,7 @@ export function Fluxo({ fitas, cores }: { fitas: Fita[]; cores: string[] }) {
                             y={alturaDaPessoa(destinos, indice)}
                             textAnchor="end"
                             dominantBaseline="middle"
-                            className="fill-[#303030]"
+                            className="fill-[var(--ink)]"
                             style={{ fontSize: 12 }}
                         >
                             {encurtar(nome)}
@@ -815,7 +815,7 @@ export function Fluxo({ fitas, cores }: { fitas: Fita[]; cores: string[] }) {
                 </Dica>
             )}
 
-            <p className="mt-1 flex justify-between text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            <p className="mt-1 flex justify-between text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                 <span>Passou</span>
                 <span>Recebeu</span>
             </p>

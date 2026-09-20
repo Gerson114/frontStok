@@ -110,7 +110,7 @@ export default function Frete() {
     if (carregando) {
         return (
             <Pagina titulo="Frete e entrega">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando...</div>
             </Pagina>
         )
     }
@@ -134,14 +134,14 @@ export default function Frete() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -160,13 +160,13 @@ export default function Frete() {
                                 type="checkbox"
                                 checked={config.ativo}
                                 onChange={(e) => setConfig({ ...config, ativo: e.target.checked })}
-                                className="mt-0.5 h-4 w-4 shrink-0 accent-[#005BD3]"
+                                className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--azul)]"
                             />
                             <span>
-                                <span className="block text-sm font-medium text-[#303030]">
+                                <span className="block text-sm font-medium text-[var(--ink)]">
                                     Entrego no endereço do cliente
                                 </span>
-                                <span className="block text-sm text-[#616161]">
+                                <span className="block text-sm text-[var(--ink-2)]">
                                     A vitrine passa a pedir o CEP e a cobrar o frete da tabela abaixo.
                                 </span>
                             </span>
@@ -177,25 +177,25 @@ export default function Frete() {
                                 type="checkbox"
                                 checked={config.retirada_na_loja}
                                 onChange={(e) => setConfig({ ...config, retirada_na_loja: e.target.checked })}
-                                className="mt-0.5 h-4 w-4 shrink-0 accent-[#005BD3]"
+                                className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--azul)]"
                             />
                             <span>
-                                <span className="block text-sm font-medium text-[#303030]">
+                                <span className="block text-sm font-medium text-[var(--ink)]">
                                     O cliente pode retirar no balcão
                                 </span>
-                                <span className="block text-sm text-[#616161]">
+                                <span className="block text-sm text-[var(--ink-2)]">
                                     Sem frete e sem endereço: ele compra pelo site e busca na loja.
                                 </span>
                             </span>
                         </label>
 
-                        <div className="border-t border-[#EBEBEB] pt-4">
+                        <div className="border-t border-[var(--linha-suave)] pt-4">
                             <label className="rotulo" htmlFor="gratis">
                                 Frete grátis a partir de
                             </label>
 
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#616161]">R$</span>
+                                <span className="text-sm text-[var(--ink-2)]">R$</span>
                                 <input
                                     id="gratis"
                                     type="number"
@@ -210,7 +210,7 @@ export default function Frete() {
                                 />
                             </div>
 
-                            <p className="mt-1.5 text-sm text-[#616161]">
+                            <p className="mt-1.5 text-sm text-[var(--ink-2)]">
                                 Em branco ou zero desliga a isenção. Não quer dizer &ldquo;tudo grátis&rdquo;.
                             </p>
                         </div>
@@ -236,15 +236,15 @@ export default function Frete() {
                 >
                     {regras.length === 0 ? (
                         <div className="flex flex-col items-center px-6 py-10 text-center">
-                            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F7F7] text-[#8A8A8A]">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--superficie-2)] text-[var(--ink-3)]">
                                 <FiTruck className="w-5" aria-hidden />
                             </span>
 
-                            <p className="font-display mt-4 text-base text-[#303030]">
+                            <p className="font-display mt-4 text-base text-[var(--ink)]">
                                 Nenhuma linha na tabela
                             </p>
 
-                            <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#616161]">
+                            <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[var(--ink-2)]">
                                 Acrescente ao menos a linha que vale para todo o resto do país. Sem
                                 ela, quem morar num estado que você não listou não consegue fechar
                                 o pedido.
@@ -310,7 +310,7 @@ export default function Frete() {
                                                         aria-label="Prazo em dias"
                                                         className="field num max-w-[5.5rem]"
                                                     />
-                                                    <span className="text-sm text-[#616161]">dias</span>
+                                                    <span className="text-sm text-[var(--ink-2)]">dias</span>
                                                 </div>
                                             </td>
 
@@ -320,7 +320,7 @@ export default function Frete() {
                                                     onClick={() => remover(indice)}
                                                     title="Remover esta linha"
                                                     aria-label={`Remover ${nomeDaUF(regra.uf)}`}
-                                                    className="rounded-lg p-2 text-[#8A8A8A] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                    className="rounded-lg p-2 text-[var(--ink-3)] transition-colors hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                                                 >
                                                     <FiTrash2 className="w-4" aria-hidden />
                                                 </button>
@@ -335,7 +335,7 @@ export default function Frete() {
                 </Secao>
 
                 {config.ativo && !temCuringa && regras.length > 0 && (
-                    <p className="flex items-start gap-2.5 rounded-lg border-l-2 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                    <p className="flex items-start gap-2.5 rounded-lg border-l-2 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>
                             Falta a linha de <strong>todo o resto do país</strong>. Do jeito que

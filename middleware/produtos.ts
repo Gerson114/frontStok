@@ -20,12 +20,6 @@ interface RespostaUnidades {
     unidades: Unidade[]
 }
 
-interface RespostaVenda {
-    mensagem: string
-    unidade: Unidade
-    produto: Produto
-}
-
 /**
  * Como uma peça se identifica nas telas do painel.
  *
@@ -111,13 +105,6 @@ export async function listarUnidades(produtoId: number): Promise<Unidade[]> {
 export async function listarTodasUnidades(): Promise<Unidade[]> {
     const dados = await apiFetch<RespostaUnidades>("/api/unidades")
     return Array.isArray(dados.unidades) ? dados.unidades : []
-}
-
-/** Marca a próxima unidade disponível do produto como vendida e desconta 1 do estoque. */
-export async function venderUnidade(produtoId: number): Promise<RespostaVenda> {
-    return apiFetch<RespostaVenda>(`/api/produtos/${produtoId}/vender`, {
-        method: "POST",
-    })
 }
 
 /**

@@ -1,5 +1,6 @@
 "use client"
 
+import { FiArrowDown, FiArrowUp, FiCopy, FiShoppingBag, FiTrash2 } from "react-icons/fi"
 import type { Bloco } from "@/app/type/type"
 import type { TemaLoja } from "@/middleware/loja"
 
@@ -26,17 +27,34 @@ import type { TemaLoja } from "@/middleware/loja"
 
 const CINZA = "rgba(0,0,0,0.06)"
 
+/**
+ * O que dá para fazer com o bloco escolhido, direto da prévia — a barra que
+ * aparece sobre ele ao ser clicado, no mesmo espírito do Elementor: sem
+ * precisar descer o olho até a lista "Estrutura" para subir, descer,
+ * duplicar ou tirar. A lista continua existindo (ver page.tsx) para quem
+ * navega pelo teclado ou está no celular, onde não há o que passar o mouse
+ * por cima para revelar.
+ */
+export interface AcoesDoBloco {
+    nomeDoTipo: (tipo: string) => string
+    aoSubir: (id: string) => void
+    aoDescer: (id: string) => void
+    aoDuplicar: (id: string) => void
+    aoRemover: (id: string) => void
+}
+
 export default function Previa({
     blocos,
     tema,
     escolhido,
     aoEscolher,
+    ...acoes
 }: {
     blocos: Bloco[]
     tema: TemaLoja
     escolhido: string | null
     aoEscolher: (id: string) => void
-}) {
+} & AcoesDoBloco) {
 
     // As cores do lojista entram como variáveis, do mesmo jeito que a vitrine
     // as recebe — assim a prévia muda junto quando ele troca o tema.
@@ -52,16 +70,73 @@ export default function Previa({
             style={estilo}
             className="min-h-[30rem] overflow-hidden bg-[var(--fundo)] text-[var(--ink)]"
         >
-            {/* O cabeçalho não é editável: ele é a marca, a busca e a sacola,
-                e vem em toda página da loja. Está aqui só para a prévia
-                parecer a loja. */}
-            <div className="flex items-center justify-between gap-4 border-b px-5 py-3" style={{ borderColor: CINZA }}>
-                <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-80">
-                    Sua loja
-                </span>
+            {/* O cabeçalho e o rodapé aqui não desenham o que o lojista montou
+                no editor de moldura (ver /page/loja/moldura): a marca, a
+                busca e a sacola vêm em toda página da loja, e redesenhá-las
+                aqui de novo seria manter dois lugares que precisam concordar.
+                O que É desta tela — clicável, igual a um bloco — são as
+                PALAVRAS de cada um: o texto do campo de busca, o rótulo do
+                menu da conta, o que o rodapé escreve. Clicar aqui abre essas
+                palavras nos Ajustes, do mesmo jeito que clicar num bloco
+                abre as propriedades dele — é a mesma pergunta ("como esta
+                loja se apresenta"), e por isso é a mesma porta.
 
-                <span className="h-6 w-40 rounded" style={{ background: CINZA }} />
-            </div>
+                "Produto" e "Sacola e checkout" moram aqui do mesmo jeito,
+                mesmo sem seção própria na home de verdade: são palavras da
+                loja como as outras, e o lojista não devia precisar lembrar
+                que existe uma segunda lista rolando lá embaixo para achar
+                onde escreve o botão de fechar o pedido. Uma tira fina cada
+                uma, do tamanho do que elas são — não é a página do produto
+                nem o carrinho de verdade, é só a etiqueta de onde a palavra
+                mora, igual ao "Rodapé da loja" logo abaixo. */}
+            <Marcavel chave="area:topo" escolhido={escolhido} aoEscolher={aoEscolher}>
+                <div className="flex items-center justify-between gap-4 border-b px-5 py-3" style={{ borderColor: CINZA }}>
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-80">
+                        Sua loja
+                    </span>
+
+                    <span className="flex items-center gap-3">
+                        <span className="h-6 w-32 rounded" style={{ background: CINZA }} />
+
+                        {/* A sacola é a ÚNICA peça do topo que ganha alvo
+                            próprio: as outras palavras do topo (busca,
+                            categorias, conta) já se leem juntas na tira
+                            inteira, mas a sacola é a única com palavras BEM
+                            diferentes das do resto da barra ("Sua sacola",
+                            "Finalizar pedido"), e merecer o próprio clique
+                            evita que reescrever a busca e reescrever a
+                            sacola pareçam a mesma tarefa. */}
+                        <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                aoEscolher("area:sacola")
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    aoEscolher("area:sacola")
+                                }
+                            }}
+                            aria-label="Palavras da sacola e do checkout"
+                            title="Palavras da sacola e do checkout"
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors ${
+                                escolhido === "area:sacola" ? "bg-[var(--azul)] text-white" : "hover:bg-black/10"
+                            }`}
+                        >
+                            <FiShoppingBag className="w-3.5" aria-hidden />
+                        </span>
+                    </span>
+                </div>
+            </Marcavel>
+
+            <Marcavel chave="area:produto" escolhido={escolhido} aoEscolher={aoEscolher}>
+                <div className="border-b px-5 py-2.5 text-center text-[0.65rem] font-semibold uppercase tracking-[0.12em] opacity-50" style={{ borderColor: CINZA }}>
+                    Página do produto
+                </div>
+            </Marcavel>
 
             {blocos.length === 0 ? (
                 <p className="px-6 py-16 text-center text-sm opacity-60">
@@ -74,27 +149,74 @@ export default function Previa({
                         bloco={bloco}
                         escolhido={escolhido}
                         aoEscolher={aoEscolher}
+                        {...acoes}
                     />
                 ))
             )}
 
-            <div className="border-t px-5 py-6 text-center text-[0.7rem] opacity-50" style={{ borderColor: CINZA }}>
-                Rodapé da loja
-            </div>
+            <Marcavel chave="area:rodape" escolhido={escolhido} aoEscolher={aoEscolher}>
+                <div className="border-t px-5 py-6 text-center text-[0.7rem] opacity-50" style={{ borderColor: CINZA }}>
+                    Rodapé da loja
+                </div>
+            </Marcavel>
         </div>
     )
 }
 
-/** Um bloco na prévia, clicável para abrir os ajustes dele. */
+/**
+ * Marca uma área que não é bloco — o topo e o rodapé, hoje — como clicável
+ * para abrir as PALAVRAS dela nos Ajustes. Mesmo visual de `Selecionavel`,
+ * mas pela chave da área ("area:topo"), não pelo id de um bloco.
+ */
+function Marcavel({
+    chave,
+    escolhido,
+    aoEscolher,
+    children,
+}: {
+    chave: string
+    escolhido: string | null
+    aoEscolher: (id: string) => void
+    children: React.ReactNode
+}) {
+    return (
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={() => aoEscolher(chave)}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    aoEscolher(chave)
+                }
+            }}
+            className={`relative cursor-pointer outline-offset-[-2px] transition-shadow ${
+                escolhido === chave ? "outline outline-2 outline-[var(--azul)]" : "hover:outline hover:outline-1 hover:outline-[var(--ink-4)]"
+            }`}
+        >
+            {children}
+        </div>
+    )
+}
+
+/**
+ * Um bloco na prévia, clicável para abrir os ajustes dele — e, escolhido,
+ * com a barrinha flutuante de ações por cima (nome do bloco, subir, descer,
+ * duplicar, tirar), do jeito que o Elementor mostra sobre o widget ativo.
+ */
 function Selecionavel({
     bloco,
     escolhido,
     aoEscolher,
+    ...acoes
 }: {
     bloco: Bloco
     escolhido: string | null
     aoEscolher: (id: string) => void
-}) {
+} & AcoesDoBloco) {
+
+    const ativo = escolhido === bloco.id
+
     return (
         <div
             role="button"
@@ -112,10 +234,70 @@ function Selecionavel({
                 }
             }}
             className={`relative cursor-pointer outline-offset-[-2px] transition-shadow ${
-                escolhido === bloco.id ? "outline outline-2 outline-[#005BD3]" : "hover:outline hover:outline-1 hover:outline-[#B5B5B5]"
+                ativo ? "outline outline-2 outline-[var(--azul)]" : "hover:outline hover:outline-1 hover:outline-[var(--ink-4)]"
             }`}
         >
-            <Desenho bloco={bloco} escolhido={escolhido} aoEscolher={aoEscolher} />
+            {ativo && (
+                <div
+                    role="toolbar"
+                    aria-label={`Ações de ${acoes.nomeDoTipo(bloco.tipo)}`}
+                    // Encostada no topo do próprio bloco, e não flutuando por
+                    // cima da barra anterior: com blocos vizinhos, uma barra
+                    // que sobe fica meio dentro do bloco de cima, que é
+                    // justamente o efeito ruim que "por cima do elemento"
+                    // costuma ter quando o elemento está colado no anterior.
+                    className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 bg-[var(--azul)] px-2 py-1 text-white"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <span className="truncate text-[0.7rem] font-semibold">
+                        {acoes.nomeDoTipo(bloco.tipo)}
+                    </span>
+
+                    <span className="flex shrink-0 items-center">
+                        <button
+                            type="button"
+                            aria-label="Subir"
+                            title="Subir"
+                            onClick={() => acoes.aoSubir(bloco.id)}
+                            className="rounded p-1 transition-colors hover:bg-white/20"
+                        >
+                            <FiArrowUp className="w-3.5" aria-hidden />
+                        </button>
+
+                        <button
+                            type="button"
+                            aria-label="Descer"
+                            title="Descer"
+                            onClick={() => acoes.aoDescer(bloco.id)}
+                            className="rounded p-1 transition-colors hover:bg-white/20"
+                        >
+                            <FiArrowDown className="w-3.5" aria-hidden />
+                        </button>
+
+                        <button
+                            type="button"
+                            aria-label="Duplicar"
+                            title="Duplicar"
+                            onClick={() => acoes.aoDuplicar(bloco.id)}
+                            className="rounded p-1 transition-colors hover:bg-white/20"
+                        >
+                            <FiCopy className="w-3.5" aria-hidden />
+                        </button>
+
+                        <button
+                            type="button"
+                            aria-label={`Tirar ${acoes.nomeDoTipo(bloco.tipo)}`}
+                            title="Tirar"
+                            onClick={() => acoes.aoRemover(bloco.id)}
+                            className="rounded p-1 transition-colors hover:bg-[var(--vermelho-forte)]"
+                        >
+                            <FiTrash2 className="w-3.5" aria-hidden />
+                        </button>
+                    </span>
+                </div>
+            )}
+
+            <Desenho bloco={bloco} escolhido={escolhido} aoEscolher={aoEscolher} {...acoes} />
         </div>
     )
 }
@@ -124,11 +306,12 @@ function Desenho({
     bloco,
     escolhido,
     aoEscolher,
+    ...acoes
 }: {
     bloco: Bloco
     escolhido: string | null
     aoEscolher: (id: string) => void
-}) {
+} & AcoesDoBloco) {
 
     switch (bloco.tipo) {
 
@@ -170,6 +353,7 @@ function Desenho({
                                             bloco={filho}
                                             escolhido={escolhido}
                                             aoEscolher={aoEscolher}
+                                            {...acoes}
                                         />
                                     ))
                                 )}
@@ -210,24 +394,32 @@ function Desenho({
 
             return (
                 <div className="grid grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-4">
-                    {cartoes.map((cartao, i) => (
-                        <span key={i} className="flex items-start gap-2">
-                            <span
-                                className="h-7 w-7 shrink-0 rounded-full"
-                                style={{ background: "var(--destaque)" }}
-                            />
-                            <span className="min-w-0">
-                                <span className="block truncate text-[0.7rem] font-bold">
-                                    {cartao.titulo || "sem título"}
-                                </span>
-                                {cartao.texto ? (
-                                    <span className="mt-0.5 block text-[0.6rem] leading-snug opacity-70">
-                                        {cartao.texto}
+                    {cartoes.map((cartao, i) => {
+
+                        // O tamanho é do CARTÃO, não da faixa: um selo de
+                        // campanha ao lado de selos de confiança comuns.
+                        const bolha = cartao.tamanho === "grande" ? "h-9 w-9" : cartao.tamanho === "pequeno" ? "h-5 w-5" : "h-7 w-7"
+                        const titulo = cartao.tamanho === "grande" ? "text-[0.8rem]" : cartao.tamanho === "pequeno" ? "text-[0.6rem]" : "text-[0.7rem]"
+
+                        return (
+                            <span key={i} className="flex items-start gap-2">
+                                <span
+                                    className={`${bolha} shrink-0 rounded-full`}
+                                    style={{ background: "var(--destaque)" }}
+                                />
+                                <span className="min-w-0">
+                                    <span className={`block truncate font-bold ${titulo}`}>
+                                        {cartao.titulo || "sem título"}
                                     </span>
-                                ) : null}
+                                    {cartao.texto ? (
+                                        <span className="mt-0.5 block text-[0.6rem] leading-snug opacity-70">
+                                            {cartao.texto}
+                                        </span>
+                                    ) : null}
+                                </span>
                             </span>
-                        </span>
-                    ))}
+                        )
+                    })}
                 </div>
             )
         }

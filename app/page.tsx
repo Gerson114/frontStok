@@ -76,7 +76,7 @@ export const metadata: Metadata = {
 /** Os três pilares. É o "por que este sistema é diferente" em três frases. */
 const fundamentos: { titulo: string; texto: string; Icone: IconType }[] = [
   {
-    titulo: "A peça, e não a quantidade",
+    titulo: "A unidade, e não a quantidade",
     texto:
       "Em vez de “tenho 8 no estoque”, oito unidades com código próprio — sejam elas ventiladores, panelas ou camisas. Cada uma sabe onde está guardada, por quanto entrou, por quanto saiu e quem a vendeu. É daí que vem todo o resto: a etiqueta, a busca no corredor, a margem real e o histórico que não se perde.",
     Icone: FiBox,
@@ -84,7 +84,7 @@ const fundamentos: { titulo: string; texto: string; Icone: IconType }[] = [
   {
     titulo: "Uma loja só, em dois lugares",
     texto:
-      "O balcão e a internet bebem do mesmo estoque. A peça vendida na loja some da vitrine no mesmo instante, e o pedido do site cai na mesma tela em que você separa o pedido do WhatsApp. Nada de conferir duas listas e descobrir a diferença na hora de entregar.",
+      "O balcão e a internet bebem do mesmo estoque. A unidade vendida na loja some da vitrine no mesmo instante, e o pedido do site cai na mesma tela em que você separa o pedido do WhatsApp. Nada de conferir duas listas e descobrir a diferença na hora de entregar.",
     Icone: FiShoppingCart,
   },
   {
@@ -97,14 +97,14 @@ const fundamentos: { titulo: string; texto: string; Icone: IconType }[] = [
 
 const passos: { titulo: string; texto: string }[] = [
   {
-    titulo: "Cadastre a peça",
+    titulo: "Cadastre a unidade",
     texto:
       "Nome, categoria, preço e as variações que a SUA loja usa: voltagem, tamanho, peso, sabor, cor. Nada é fixo — o sistema não decide por você o que descreve o seu produto. Cada unidade física que entrou vira um registro.",
   },
   {
     titulo: "Imprima a etiqueta",
     texto:
-      "Cada unidade sai com código próprio e código de barras. Dois ventiladores iguais deixam de ser um número no estoque e passam a ser duas peças distintas.",
+      "Cada unidade sai com código próprio e código de barras. Dois ventiladores iguais deixam de ser um número no estoque e passam a ser duas unidades distintas.",
   },
   {
     titulo: "Guarde e ache",
@@ -128,7 +128,7 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
   {
     titulo: "Etiqueta com código de barras",
     texto:
-      "Pronta para imprimir, com o código que o leitor do balcão reconhece. A venda vira um bipe, e a baixa acontece na peça certa.",
+      "Pronta para imprimir, com o código que o leitor do balcão reconhece. A venda vira um bipe, e a baixa acontece na unidade certa.",
     Icone: FiPrinter,
   },
   {
@@ -140,7 +140,7 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
   {
     titulo: "Endereços e separação",
     texto:
-      "Diga onde cada peça está guardada, com capacidade e bloqueio, um endereço a um. As placas das prateleiras saem prontas para imprimir.",
+      "Diga onde cada unidade está guardada, com capacidade e bloqueio, um endereço a um. As placas das prateleiras saem prontas para imprimir.",
     Icone: FiMapPin,
   },
   {
@@ -152,7 +152,7 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
   {
     titulo: "Venda no balcão",
     texto:
-      "Bipe a etiqueta e pronto: a peça sai do estoque, some da vitrine e entra no fechamento do dia com o nome de quem vendeu.",
+      "Bipe a etiqueta e pronto: a unidade sai do estoque, some da vitrine e entra no fechamento do dia com o nome de quem vendeu.",
     Icone: FiShoppingCart,
   },
   {
@@ -170,7 +170,7 @@ const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
   {
     titulo: "Promoções, devoluções e avarias",
     texto:
-      "Preço promocional com começo e fim, o que voltou isolado até a tratativa e a peça quebrada fora do estoque vendável — sem sumir do histórico.",
+      "Preço promocional com começo e fim, o que voltou isolado até a tratativa e a unidade quebrada fora do estoque vendável — sem sumir do histórico.",
     Icone: FiRefreshCw,
   },
   {
@@ -198,7 +198,7 @@ const recursosPro: { titulo: string; texto: string; Icone: IconType }[] = [
   {
     titulo: "Funcionários, um acesso por pessoa",
     texto:
-      "Cada um entra com o próprio login e abre só o que você marcou. Quem respondeu fica gravado na mensagem, e quem vendeu, na peça.",
+      "Cada um entra com o próprio login e abre só o que você marcou. Quem respondeu fica gravado na mensagem, e quem vendeu, na unidade.",
     Icone: FiUsers,
   },
   {
@@ -236,7 +236,7 @@ const perguntas: { pergunta: string; resposta: string }[] = [
   {
     pergunta: "Serve para o que eu vendo?",
     resposta:
-      "As variações são suas: voltagem, tamanho, peso, sabor, cor, o que for. O sistema não traz uma lista pronta de campos de vestuário nem de eletro — ele guarda o que descreve o seu produto. O controle peça a peça funciona igual num ventilador e numa camisa.",
+      "As variações são suas: voltagem, tamanho, peso, sabor, cor, o que for. O sistema não traz uma lista pronta de campos de vestuário nem de eletro — ele guarda o que descreve o seu produto. O controle unidade a unidade funciona igual num ventilador e numa camisa.",
   },
   {
     pergunta: "Tenho de comprar equipamento?",
@@ -313,7 +313,7 @@ const RECURSOS_RESERVA: string[] = [
   "Chat ao vivo com o cliente dentro da sua vitrine",
   "Histórico de vendas da loja",
   "Lista de produtos com preços e promoções",
-  "Estoque controlado peça por peça",
+  "Estoque controlado unidade por unidade",
   "Entrada de mercadoria com custo e fornecedor",
   "Aviso de prateleira vazia antes do cliente reclamar",
   "Inventário rotativo pelo giro de cada produto",
@@ -325,7 +325,7 @@ const RECURSOS_RESERVA: string[] = [
   "Banners e destaques da vitrine",
   "A conta que recebe o dinheiro das vendas do site",
   "Tabela de frete por estado, com prazo e frete grátis acima de um valor",
-  "Peças cadastradas sem limite",
+  "Unidades cadastradas sem limite",
 ]
 
 const RECURSOS_PRO_RESERVA: string[] = [
@@ -525,7 +525,7 @@ export default async function Home() {
       <div className="border-b border-[#EBEBEB] bg-white">
         <ul className="lp-cascata mx-auto grid max-w-6xl gap-x-8 gap-y-3 px-4 py-5 text-sm font-semibold text-[#616161] sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { texto: "Código de barras por peça", Icone: FiPrinter },
+            { texto: "Código de barras por unidade", Icone: FiPrinter },
             { texto: "Vitrine com pagamento online", Icone: FiCreditCard },
             { texto: "Agenda de entregas e frete", Icone: FiCalendar },
             { texto: "Atendimento, equipe e rede de lojas", Icone: FiUsers },
@@ -583,7 +583,7 @@ export default async function Home() {
             <MockupEtiqueta />
 
             <p className="mt-4 text-sm leading-relaxed text-[#8A8A8A]">
-              É esta etiqueta que muda o resto: com ela, a peça tem nome
+              É esta etiqueta que muda o resto: com ela, a unidade tem nome
               próprio no sistema — e passa a ser possível dizer onde ela está,
               por quanto saiu e quem a vendeu.
             </p>
@@ -603,7 +603,7 @@ export default async function Home() {
           </h2>
 
           <p className="lp-revelar mt-3 max-w-2xl text-base text-[#616161]">
-            O caminho é o mesmo que a peça já faz na sua loja hoje — a
+            O caminho é o mesmo que a unidade já faz na sua loja hoje — a
             diferença é que agora cada etapa fica registrada.
           </p>
 
@@ -735,8 +735,8 @@ export default async function Home() {
             <ul className="mt-6 space-y-2.5">
               {[
                 "Cada conversa com um responsável, e o histórico junto do cliente",
-                "Quem respondeu fica gravado na mensagem, e quem vendeu, na peça",
-                "O catálogo do seu estoque à mão, para mandar a peça dentro da conversa",
+                "Quem respondeu fica gravado na mensagem, e quem vendeu, na unidade",
+                "O catálogo do seu estoque à mão, para mandar a unidade dentro da conversa",
                 "Sem abrir o celular no meio do expediente",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-[#303030]">
@@ -766,7 +766,7 @@ export default async function Home() {
               </h2>
 
               <p className="mt-4 text-base leading-relaxed text-white/85">
-                A vitrine mostra o mesmo estoque do painel: a peça vendida no
+                A vitrine mostra o mesmo estoque do painel: a unidade vendida no
                 balcão deixa de aparecer para o cliente na mesma hora. Ele paga
                 por Pix ou cartão, acompanha o pedido por uma tela própria,
                 imprime o comprovante e avalia o que recebeu — e você escolhe o
@@ -951,7 +951,7 @@ export default async function Home() {
             ) : (
               <>
                 Quem assina recebe o sistema inteiro, do cadastro da primeira
-                peça à loja no ar com pagamento. Sem fidelidade, e o
+                unidade à loja no ar com pagamento. Sem fidelidade, e o
                 cancelamento é feito por você mesmo.
               </>
             )}
@@ -1057,7 +1057,7 @@ export default async function Home() {
               </ul>
 
               <p className="mt-auto border-t border-[#EBEBEB] pt-6 text-sm leading-relaxed text-[#616161]">
-                Inclui tudo o que está ao lado: estoque peça a peça, etiquetas,
+                Inclui tudo o que está ao lado: estoque unidade a unidade, etiquetas,
                 balcão, vitrine com pagamento, pedidos, entregas, clientes e
                 atendimento. O Pro não troca o sistema por outro — ele abre as
                 telas que só fazem sentido com mais gente, ou mais de um
@@ -1144,7 +1144,7 @@ export default async function Home() {
         <div className="lp-revelar mx-auto max-w-3xl px-4 py-16 text-center sm:py-20">
 
           <h2 className="font-display text-2xl text-white sm:text-3xl">
-            Comece pela primeira peça
+            Comece pela primeira unidade
           </h2>
 
           <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-white/70">

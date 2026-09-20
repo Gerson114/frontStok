@@ -124,13 +124,13 @@ export default function ClientesPage() {
         >
 
             {erro && (
-                <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     {erro}
                 </div>
             )}
 
             {carregando ? (
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando os clientes...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando os clientes...</div>
             ) : clientes.length === 0 ? (
                 <Estado
                     Icone={FiUsers}
@@ -155,7 +155,7 @@ export default function ClientesPage() {
                     <div className="flex flex-wrap items-center gap-3">
 
                         <div className="relative min-w-[14rem] flex-1">
-                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                             <label className="sr-only" htmlFor="busca-clientes">Buscar cliente</label>
 
@@ -175,7 +175,7 @@ export default function ClientesPage() {
                                     type="button"
                                     onClick={() => setBusca("")}
                                     aria-label="Limpar busca"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A8A] hover:text-[#303030]"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] hover:text-[var(--ink)]"
                                 >
                                     <FiX className="w-4" aria-hidden />
                                 </button>
@@ -191,8 +191,8 @@ export default function ClientesPage() {
                                     aria-pressed={ordem === opcao.chave}
                                     className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                                         ordem === opcao.chave
-                                            ? "border-[#303030] bg-[#303030] text-white"
-                                            : "border-[#E1E1E1] text-[#616161] hover:border-[#303030]"
+                                            ? "border-[var(--azul)] bg-[var(--azul)] text-white"
+                                            : "border-[var(--linha)] text-[var(--ink-2)] hover:border-[var(--ink)]"
                                     }`}
                                 >
                                     {opcao.nome}
@@ -204,25 +204,25 @@ export default function ClientesPage() {
 
                     {/* A LISTA */}
                     {daPagina.length === 0 ? (
-                        <div className="card p-8 text-center text-sm text-[#616161]">
+                        <div className="card p-8 text-center text-sm text-[var(--ink-2)]">
                             Nenhum cliente encontrado para “{busca}”.
                         </div>
                     ) : (
                         <div className="card overflow-hidden">
-                            <ul className="divide-y divide-[#EBEBEB]">
+                            <ul className="divide-y divide-[var(--linha-suave)]">
                                 {daPagina.map((cliente) => (
                                     <li key={cliente.id}>
                                         <Link
                                             href={`/page/clientes/${cliente.id}`}
-                                            className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3.5 transition-colors hover:bg-[#F7F7F7]"
+                                            className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3.5 transition-colors hover:bg-[var(--superficie-2)]"
                                         >
 
                                             <div className="min-w-[12rem] flex-1">
-                                                <p className="flex items-center gap-2 text-sm font-semibold text-[#303030]">
+                                                <p className="flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                                                     {cliente.nome || "Cliente"}
 
                                                     {cliente.nao_lidas > 0 && (
-                                                        <span className="inline-flex items-center gap-1 rounded-full bg-[#005BD3] px-2 py-0.5 text-[0.65rem] font-bold text-white">
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--azul)] px-2 py-0.5 text-[0.65rem] font-bold text-white">
                                                             <FiMessageSquare className="w-3" aria-hidden />
                                                             {cliente.nao_lidas}
                                                         </span>
@@ -233,7 +233,7 @@ export default function ClientesPage() {
                                                     )}
                                                 </p>
 
-                                                <p className="mt-0.5 text-xs text-[#8A8A8A]">
+                                                <p className="mt-0.5 text-xs text-[var(--ink-3)]">
                                                     {cliente.contato.includes("@")
                                                         ? cliente.contato
                                                         : telefoneLegivel(cliente.contato)}
@@ -241,26 +241,26 @@ export default function ClientesPage() {
                                             </div>
 
                                             <div className="w-20 text-right">
-                                                <p className="num text-sm font-semibold text-[#303030]">
+                                                <p className="num text-sm font-semibold text-[var(--ink)]">
                                                     {cliente.pedidos}
                                                 </p>
-                                                <p className="text-[0.7rem] text-[#8A8A8A]">
+                                                <p className="text-[0.7rem] text-[var(--ink-3)]">
                                                     {cliente.pedidos === 1 ? "pedido" : "pedidos"}
                                                 </p>
                                             </div>
 
                                             <div className="w-32 text-right">
-                                                <p className="num text-sm font-semibold text-[#303030]">
+                                                <p className="num text-sm font-semibold text-[var(--ink)]">
                                                     {formatarMoeda(cliente.total_gasto)}
                                                 </p>
-                                                <p className="text-[0.7rem] text-[#8A8A8A]">comprado</p>
+                                                <p className="text-[0.7rem] text-[var(--ink-3)]">comprado</p>
                                             </div>
 
                                             <div className="w-28 text-right">
-                                                <p className="num text-sm text-[#616161]">
+                                                <p className="num text-sm text-[var(--ink-2)]">
                                                     {data(cliente.ultimo_pedido)}
                                                 </p>
-                                                <p className="text-[0.7rem] text-[#8A8A8A]">último</p>
+                                                <p className="text-[0.7rem] text-[var(--ink-3)]">último</p>
                                             </div>
 
                                         </Link>
@@ -286,8 +286,8 @@ export default function ClientesPage() {
 function Numero({ rotulo, valor }: { rotulo: string; valor: string }) {
     return (
         <div className="card p-4">
-            <p className="text-xs text-[#8A8A8A]">{rotulo}</p>
-            <p className="num mt-1 text-xl font-bold text-[#303030]">{valor}</p>
+            <p className="text-xs text-[var(--ink-3)]">{rotulo}</p>
+            <p className="num mt-1 text-xl font-bold text-[var(--ink)]">{valor}</p>
         </div>
     )
 }

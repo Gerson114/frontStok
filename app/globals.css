@@ -1,24 +1,33 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   SISTEMA VISUAL DO PAINEL — referência: Shopify Admin (Polaris)
+   SISTEMA VISUAL DO PAINEL — identidade própria da Chonnostech
    ==========================================================================
 
-   O painel anterior seguia o magazineluiza.com.br: azul de marca em faixa
-   larga no topo da barra lateral, botão principal azul, cor forte por toda
-   parte. Isso funciona numa VITRINE, onde a cor tem de chamar quem passa —
-   mas num painel de trabalho ela compete com o que o lojista precisa ler.
+   Isto já foi, letra por letra, o Shopify Admin (Polaris): o mesmo cinza
+   #F1F1F1, a mesma tinta #303030, o mesmo azul de ação — e por baixo dele, a
+   mesma anatomia de trilho que é a do Slack e do Teams. Cada peça tinha uma
+   razão local para existir, mas a soma lia como "painel de SaaS genérico",
+   porque as três eram, ao pé da letra, cópias de sistemas com nome.
 
-   A referência agora é o painel do Shopify, que é o padrão de credibilidade
-   em software de loja: a moldura inteira é cinza neutro, o conteúdo mora em
-   cartões brancos, e a cor aparece em três lugares só — o azul do que é
-   clicável, o verde do que deu certo, o vermelho do que precisa de atenção.
-   O botão principal é quase preto: destaca sem gritar, e sobra contraste
-   para o estado que realmente importa na tela.
+   A troca não é de cor por cor. É trocar a temperatura da base — de cinza
+   frio para um neutro morno, cor de papel de ficha — e trocar o sinal de "é
+   aqui que você está" por um símbolo que só esta marca tem: o ponto cheio do
+   miolo do C (ver components/marca/marca.tsx), em vez do fio ou da pílula
+   coloridos que qualquer painel usa. O trilho continua azul e o botão
+   principal continua azul — isso é a marca, "azul e branco como no Insta", e
+   não volta a ser preto — mas o AZUL sozinho não é mais o que diz "produto
+   próprio"; é o ponto.
 
-   Light-only por decisão de projeto, como o próprio Shopify Admin: todas as
-   cores são pintadas explicitamente, sem depender do tema do sistema.
-   ========================================================================== */
+   O papel vem do contexto: quem usa este painel roda uma loja de verdade —
+   estoque físico com endereço, etiqueta impressa, pedido em ficha, entrega na
+   rua. Não é o painel de um app que só existe na tela. Um fundo com
+   temperatura de papel, cartões de tinta branca sobre ele e uma tinta quase-
+   preta mas morna (não o cinza-azulado de qualquer dashboard) contam essa
+   história sem precisar de ilustração nenhuma.
+
+   Light-only continua por decisão de projeto: todas as cores são pintadas
+   explicitamente, sem depender do tema do sistema. */
 
 @theme inline {
   --color-background: var(--background);
@@ -52,66 +61,102 @@
 }
 
 :root {
-  /* Neutros puros, sem viés de matiz. O Polaris abandonou o cinza azulado
-     justamente para que o azul do link seja a única coisa azul da tela. */
-  --background: #F1F1F1;
-  --foreground: #303030;
+  /* Neutro quase sem matiz — nem o cinza-azulado que todo painel de SaaS
+     empresta do Shopify ou do Linear, nem o creme quente que virou a cara
+     padrão de tela gerada por IA. Era #F0ECE2 (papel de ficha, puxando para
+     o amarelo); o lojista achou que estava "pouco profissional" e este é
+     mais cinza, quase neutro, com só um traço do calor de antes. */
+  --background: #F1F1EE;
+  --foreground: #23201B;
 
-  /* Azul de interação: link, foco, item selecionado. Nunca é fundo de
-     botão principal — no Polaris o azul significa "isto leva a algum
-     lugar", e usá-lo também como ação apagaria essa distinção. */
+  /* Azul de interação: link, foco, item selecionado. É o mesmo #005BD3 da
+     marca — o azul do C do logotipo, o mesmo que vai nas artes do
+     Instagram. */
   --azul: #005BD3;
   --azul-escuro: #00369B;
   --azul-suave: #EAF4FF;
 
-  /* Ação: o quase-preto do botão principal do Shopify. */
-  --acao: #303030;
-  --acao-forte: #1A1A1A;
+  /* Ação: o azul da marca.
 
-  --ink: #303030;
-  --ink-2: #616161;
-  --ink-3: #8A8A8A;
-  --ink-4: #B5B5B5;
+     Aqui o painel se afasta do Polaris de propósito, a pedido do usuário:
+     no Shopify o botão principal é quase-preto e o azul fica reservado para
+     "isto leva a algum lugar", justamente para as duas coisas não se
+     confundirem. Trocando o quase-preto pelo azul, a tela passa a ser azul
+     e branca como a marca, e o preço é esse — a cor sozinha não distingue
+     mais navegar de agir. O que sustenta a diferença agora é a forma: ação
+     é o retângulo cheio com a sombra interna do .btn-primario, navegação é
+     texto azul sem fundo.
+
+     Se algum dia o painel voltar ao quase-preto, os valores antigos eram
+     #303030 e #1A1A1A. */
+  --acao: #005BD3;
+  --acao-forte: #00369B;
+
+  --ink: #23201B;
+  --ink-2: #5C5648;
+  --ink-3: #8B8571;
+  --ink-4: #B6AF9A;
 
   /* ==========================================================================
      A largura que a navegação ocupa à esquerda.
      ==========================================================================
 
-     O menu deixou de ser uma barra só. Agora são duas peças: um trilho
-     escuro e estreito com as ÁREAS da loja, sempre visível, e um painel
-     claro ao lado com as telas da área aberta — a anatomia do Slack e do
-     Teams, escolhida para o painel não parecer o mesmo menu de 256px que
-     Linear, Stripe, Vercel e Shopify usam.
+     Duas peças lado a lado: um trilho escuro e estreito (4.5rem) com as
+     ÁREAS da loja, sempre visível, e um painel claro de 15rem ao lado com as
+     telas da área aberta. É — letra por letra — a anatomia do Slack e do
+     Teams, e por um tempo o painel tentou fugir dela, achatando as duas
+     peças numa coluna só com as áreas espremidas numa fileira no topo. O
+     lojista comparou com os painéis grandes que usa todo dia — Meta
+     Business Suite entre eles — e pediu de volta o trilho fixo: duas
+     colunas coladas na borda esquerda é "assinatura visual genérica" quando
+     ninguém pediu por ela, mas aqui foi escolha dele, feita duas vezes. O
+     trilho nasceu com 4rem e cresceu para 4.5rem no mesmo dia — a primeira
+     medida deixava ícone e legenda pequenos demais para o resto do painel.
 
-     A conta vive aqui, e não repetida em cada tela, porque o painel RECOLHE:
-     quando ele recolhe, seis telas precisariam ser reescritas para o
-     conteúdo ocupar o espaço vago. O header muda esta variável e todas
-     acompanham.
+     A conta vive no header, e não repetida em cada tela, porque o PAINEL
+     recolhe (o trilho não): quando ele recolhe, seis telas precisariam ser
+     reescritas para o conteúdo ocupar o espaço vago. O header muda esta
+     variável e todas acompanham.
 
-        --menu = 4rem  (64px)   só o trilho, painel recolhido
-        --menu = 19rem (304px)  trilho + painel
+        --menu = 7rem     painel recolhido (trilho + tira de reabrir)
+        --menu = 19.5rem  painel aberto    (trilho + painel de 15rem)
 
-     O painel tem 240px porque "Endereços do estoque" precisa caber inteiro:
-     nome de tela cortado no meio obriga a passar o mouse para saber o que
-     é, e o menu deixa de ser lido de relance.
+     15rem porque "Endereços do estoque" precisa caber inteiro: nome de tela
+     cortado no meio obriga a passar o mouse para saber o que é, e o menu
+     deixa de ser lido de relance. --painel-menu é este mesmo valor (sem o
+     trilho), com nome próprio para a coluna da conversa da equipe, que
+     desenha a lista de grupos e pessoas no lugar do painel de telas (ver
+     page/equipe) — o trilho continua de pé ali também, por isso ela só
+     precisa da largura do painel, não da soma inteira.
 
-     Quem usa é a classe .com-menu, lá embaixo. */
-  --trilho: 4rem;
+     Quem usa --menu é a classe .com-menu, lá embaixo. */
   --painel-menu: 15rem;
-  --menu: 19rem;
+  --menu: 19.5rem;
 
-  --linha: #E1E1E1;
-  --linha-suave: #EBEBEB;
-  --linha-campo: #B5B5B5;
+  --linha: #DDDDD8;
+  --linha-suave: #E8E8E3;
+  --linha-campo: #B5B4AC;
   --superficie: #FFFFFF;
-  --superficie-2: #F7F7F7;
-  --fundo: #F1F1F1;
+  --superficie-2: #F6F6F3;
+  --fundo: #F1F1EE;
 
-  /* Barra superior escura — a moldura do painel do Shopify. Ela existe
-     para que a marca e a busca não ocupem espaço de cor dentro da tela de
-     trabalho. */
-  --topo: #1A1A1A;
-  --topo-2: #303030;
+  /* Cinza do tag sem informação (nem sucesso, nem erro, nem aviso) e o fundo
+     do fio de mensagens (ver .tag-neutral e .fio-conversa) — cores fixas que
+     eram escritas direto na classe. Viraram variável só para o modo escuro
+     ter o que sobrescrever. */
+  --cinza-tag: #E3E3E3;
+  --fio-fundo: #F7F7F7;
+  --fio-ponto: rgba(0, 0, 0, 0.045);
+
+  /* A moldura de marca: o trilho do menu à esquerda. Era quase-preta, e
+     ficou azul junto com o botão principal — é a peça que dá ao painel a
+     cara azul e branca da Chonnostech. O --topo-2 é o tom mais fundo, do
+     item aberto e do estado pressionado. */
+  --topo: #005BD3;
+  --topo-2: #00369B;
+  --topo-linha: #0047A8;
+  --topo-hover: #0051BD;
+  --topo-texto: #BBD6FF;
 
   --verde: #0C5132;
   --verde-fundo: #CDFEE1;
@@ -159,10 +204,131 @@
   --grade: #EBEBEB;
   --eixo: #D9D9D9;
 
-  /* Sombras do Polaris: rasas de propósito. O cartão não flutua — ele
-     apenas assenta sobre o cinza. Sombra grande é o tique de template. */
-  --sombra-cartao: 0 1px 0 rgba(0, 0, 0, 0.05);
-  --sombra-suspensa: 0 4px 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  /* O cartão não tem sombra nenhuma — nem a sombra rasa de 1px que o Polaris
+     usa para "assentar" o branco sobre o cinza. Sombra embaixo de uma caixa
+     branca é o que faz qualquer cartão parecer o mesmo cartão; aqui quem
+     separa o cartão do fundo é a temperatura (tinta branca sobre papel
+     morno) e o fio de 1px, e mais nada precisa fingir profundidade.
+     A sombra suspensa continua existindo — um menu ou um popover que se abre
+     por cima do conteúdo precisa mesmo parecer que está por cima. */
+  --sombra-cartao: none;
+  --sombra-suspensa: 0 8px 20px rgba(35, 32, 27, 0.14), 0 0 0 1px rgba(35, 32, 27, 0.06);
+}
+
+/* ==========================================================================
+   MODO ESCURO
+   ==========================================================================
+
+   Um atributo no <html> (data-theme="escuro"), e não a preferência do
+   sistema: é o mesmo espírito do "light-only por decisão de projeto" que
+   valia antes — a cor não muda sozinha atrás das costas de quem está
+   olhando, só quando a pessoa pede, pelo interruptor do cabeçalho (ver
+   header.tsx). Quem liga e desliga guarda a escolha no localStorage e
+   escreve o atributo antes da primeira pintura (ver o script em
+   app/layout.tsx), para a tela não nascer clara e trocar de cor um instante
+   depois.
+
+   Reescreve exatamente as MESMAS variáveis do :root, e mais nenhuma — é
+   assim que .card, .btn-*, .field, .tag-*, .tabela e o resto dos componentes
+   já escritos em cima destes tokens (ver o resto deste arquivo) mudam de
+   cor sozinhos, sem precisar de uma segunda classe "escura" espalhada pelo
+   JSX. O trilho do menu (--topo*) fica de fora de propósito: ele já é a
+   marca azul sobre uma faixa escura, e essa faixa já funciona em cima de um
+   fundo claro ou escuro sem precisar mudar. */
+:root[data-theme="dark"] {
+
+  --background: #1B1B1A;
+  --foreground: #ECEAE4;
+
+  --azul: #4C9AFF;
+  --azul-escuro: #8AB9FF;
+  --azul-suave: #16283F;
+
+  --acao: #2B7FFF;
+  --acao-forte: #1E63D1;
+
+  --ink: #ECEAE4;
+  --ink-2: #B9B5AB;
+  --ink-3: #8C887E;
+  --ink-4: #5C584F;
+
+  --linha: #38372F;
+  --linha-suave: #2C2B26;
+  --linha-campo: #4A4840;
+
+  --superficie: #232320;
+  --superficie-2: #2A2A25;
+  --fundo: #1B1B1A;
+
+  --cinza-tag: #3A3935;
+  --fio-fundo: #202020;
+  --fio-ponto: rgba(255, 255, 255, 0.06);
+
+  --verde: #6FE3A5;
+  --verde-fundo: #12301F;
+  --verde-suave: #16261E;
+  --vermelho: #FF8A75;
+  --vermelho-forte: #FF564A;
+  --vermelho-fundo: #3A1712;
+  --amarelo: #F0C24B;
+  --amarelo-forte: #E0A828;
+  --amarelo-fundo: #3A2C0A;
+
+  --serie-1: #4C9AFF;
+  --serie-2: #FF8F5C;
+  --serie-3: #3ED99A;
+  --serie-4: #FFC240;
+  --serie-5: #FF9EC2;
+  --serie-6: #9285E0;
+
+  --situacao-livre: #E0A828;
+  --situacao-atribuido: #4C9AFF;
+  --situacao-atendendo: #3ED99A;
+
+  --grade: #2C2B26;
+  --eixo: #46443C;
+
+  /* Sombra preta some sobre fundo já escuro — quem faz o cartão suspenso se
+     separar da página aqui é a borda clara de baixa opacidade, com a sombra
+     só reforçando. */
+  --sombra-suspensa: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* O ícone do botão de tema troca sozinho, só com CSS — nunca com estado do
+   React (ver o comentário em header.tsx, perto de alternarTema). A lua
+   aparece no claro (ela é o que vai ACONTECER ao clicar), o sol aparece no
+   escuro, pela mesma lógica. */
+.icone-tema-escuro {
+  display: none;
+}
+
+:root[data-theme="dark"] .icone-tema-claro {
+  display: none;
+}
+
+:root[data-theme="dark"] .icone-tema-escuro {
+  display: inline-flex;
+}
+
+/* Impressão sai sempre clara, não importa o tema da tela: etiqueta e
+   relatório são para papel, e papel escuro gastaria o cartucho à toa. Refaz
+   só os tokens de cor — a etiqueta e o relatório continuam lidos por
+   `print:` (ver pagina.tsx e as telas de etiqueta) para o resto do ajuste
+   fino de margem e borda. */
+@media print {
+  :root {
+    --background: #FFFFFF;
+    --foreground: #23201B;
+    --superficie: #FFFFFF;
+    --superficie-2: #FFFFFF;
+    --fundo: #FFFFFF;
+    --ink: #23201B;
+    --ink-2: #5C5648;
+    --ink-3: #8B8571;
+    --ink-4: #B6AF9A;
+    --linha: #DDDDD8;
+    --linha-suave: #E8E8E3;
+  }
 }
 
 @layer base {
@@ -420,8 +586,10 @@
 
 /* ==========================================================================
    CARD
-   A unidade de layout do painel: branco, raio 12px, borda de fio e a
-   sombra de 1px que o assenta sobre o cinza da moldura.
+   A unidade de layout do painel: tinta branca sobre o papel morno da
+   moldura, com só o fio de 1px marcando a borda — sem sombra. É a mesma
+   ficha que separa "conteúdo" de "mesa" num arquivo físico: a folha é mais
+   clara que a mesa, e isso já basta para o olho separar as duas.
    ========================================================================== */
 .card {
   background: var(--superficie);
@@ -430,13 +598,37 @@
   box-shadow: var(--sombra-cartao);
 }
 
+/* O hover não levanta o cartão (nenhuma sombra nova aparece) — só escurece
+   o fio. "Sobe e flutua" é o hover de card que qualquer template SaaS tem de
+   fábrica; aqui o cartão continua pousado, e o que muda é só a borda ficando
+   mais nítida, como o canto de uma ficha que alguém tocou. */
 .card-hover {
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color 120ms ease;
 }
 
 .card-hover:hover {
   border-color: var(--ink-4);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* O ponto da marca: o miolo cheio do C do logotipo (ver
+   components/marca/marca.tsx), reaproveitado como o único sinal de "você
+   está aqui" em toda a navegação — no trilho, no painel, na gaveta do
+   celular. Um vocabulário só, em vez de um fio colorido aqui e uma pílula
+   lá: quem já reconhece o ponto no símbolo reconhece o mesmo ponto
+   apontando para onde ele está.
+
+   Não usa a escala de raio (que está zerada): ele é redondo por natureza,
+   como a bolinha de não lidas e a foto de conta — ver o comentário de
+   --radius-* acima. A cor vem de fora (currentColor), então o mesmo ponto
+   fica azul no painel claro e branco no trilho escuro sem precisar de duas
+   classes. */
+.marca-ponto {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: currentColor;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -478,7 +670,7 @@
 }
 
 .tag-neutral {
-  background: #E3E3E3;
+  background: var(--cinza-tag);
   color: var(--ink-2);
 }
 
@@ -543,9 +735,9 @@
  * cliente, não o papel de parede.
  */
 .fio-conversa {
-  background-color: #F7F7F7;
+  background-color: var(--fio-fundo);
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.045) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, var(--fio-ponto) 1px, transparent 0);
   background-size: 22px 22px;
 }
 

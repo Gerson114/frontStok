@@ -182,15 +182,15 @@ export default function Avarias() {
                 <div className="flex items-center justify-between">
 
                     <div>
-                        <p className="text-sm text-[#616161]">
-                            Total de peças avariadas
+                        <p className="text-sm text-[var(--ink-2)]">
+                            Total de unidades avariadas
                         </p>
-                        <p className="num mt-2 text-3xl font-extrabold text-[#303030]">
+                        <p className="num mt-2 text-3xl font-extrabold text-[var(--ink)]">
                             {avariadas.length}
                         </p>
                     </div>
 
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FEE9E8] text-[#8E1F0B]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">
                         <FiAlertTriangle className="w-5" aria-hidden />
                     </div>
 
@@ -200,7 +200,7 @@ export default function Avarias() {
 
 
             {erroRestaurar && (
-                <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                     {erroRestaurar}
                 </div>
             )}
@@ -215,14 +215,14 @@ export default function Avarias() {
                 <Estado
                     Icone={FiCheck}
                     titulo="Nenhuma avaria registrada"
-                    texto="Quando uma peça for avariada, ela aparece aqui."
+                    texto="Quando uma unidade for avariada, ela aparece aqui."
                 />
 
             ) : (
 
                 <div className="card overflow-hidden">
 
-                    <ul className="divide-y divide-[#EBEBEB] px-5">
+                    <ul className="divide-y divide-[var(--linha-suave)] px-5">
 
                         {avariadas.map(({ unidade, produto }) => (
 
@@ -231,7 +231,7 @@ export default function Avarias() {
                                 className="flex items-center gap-3 py-3.5"
                             >
 
-                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
                                     {produto?.imagem_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -244,11 +244,11 @@ export default function Avarias() {
 
                                 <div className="min-w-0 flex-1">
 
-                                    <p className="truncate text-sm font-semibold text-[#303030]">
+                                    <p className="truncate text-sm font-semibold text-[var(--ink)]">
                                         {produto?.nome ?? `Produto #${unidade.produto_id}`}
                                     </p>
 
-                                    <p className="text-xs text-[#616161]">
+                                    <p className="text-xs text-[var(--ink-2)]">
                                         <span className="font-mono">{identificarPeca(produto?.codigo, unidade.sequencia)}</span>
                                         {" · "}
                                         {unidade.endereco_nome || "sem lugar definido"}
@@ -262,7 +262,7 @@ export default function Avarias() {
                                     type="button"
                                     onClick={() => handleRestaurar(unidade.id)}
                                     disabled={restaurando === unidade.id}
-                                    className="shrink-0 rounded-lg border border-[#E1E1E1] bg-white px-3.5 py-2 text-xs font-bold text-[#303030] transition-colors hover:bg-[#F1F1F1] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="shrink-0 rounded-lg border border-[var(--linha)] bg-[var(--superficie)] px-3.5 py-2 text-xs font-bold text-[var(--ink)] transition-colors hover:bg-[var(--fundo)] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {restaurando === unidade.id ? "Restaurando..." : "Restaurar ao estoque"}
                                 </button>

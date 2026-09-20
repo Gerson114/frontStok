@@ -168,7 +168,7 @@ export default function LojaPage() {
     if (carregando) {
         return (
             <Pagina titulo="Minha loja">
-                <div className="card p-8 text-center text-sm text-[#616161]">
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">
                     Carregando dados da loja...
                 </div>
             </Pagina>
@@ -191,7 +191,7 @@ export default function LojaPage() {
 
                     <div
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                            noAr ? "bg-[#CDFEE1] text-[#0C5132]" : "bg-[#F1F1F1] text-[#8A8A8A]"
+                            noAr ? "bg-[var(--verde-fundo)] text-[var(--verde)]" : "bg-[var(--fundo)] text-[var(--ink-3)]"
                         }`}
                     >
                         {noAr
@@ -201,18 +201,18 @@ export default function LojaPage() {
 
                     <div className="min-w-0 flex-1">
 
-                        <p className="font-display text-lg text-[#303030]">
+                        <p className="font-display text-lg text-[var(--ink)]">
                             {noAr ? "Sua vitrine está no ar" : "Sua vitrine ainda não está no ar"}
                         </p>
 
                         {noAr ? (
                             <>
-                                <p className="mt-1 text-sm text-[#616161]">
+                                <p className="mt-1 text-sm text-[var(--ink-2)]">
                                     Este é o endereço para divulgar aos seus clientes.
                                 </p>
 
                                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                                    <code className="rounded-lg bg-[#F1F1F1] px-3 py-2 font-mono text-sm text-[#303030]">
+                                    <code className="rounded-lg bg-[var(--fundo)] px-3 py-2 font-mono text-sm text-[var(--ink)]">
                                         {urlPublica}
                                     </code>
 
@@ -237,14 +237,14 @@ export default function LojaPage() {
                                 </div>
                             </>
                         ) : (
-                            <p className="mt-1 text-sm text-[#616161]">
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
                                 {!loja?.slug
                                     ? "Escolha um endereço abaixo para publicar a sua loja."
                                     : (
                                         <>
                                             O endereço já está escolhido, mas a vitrine só vai ao ar
                                             com a assinatura em dia.{" "}
-                                            <Link href="/page/assinatura" className="font-semibold text-[#005BD3] hover:underline">
+                                            <Link href="/page/assinatura" className="font-semibold text-[var(--azul)] hover:underline">
                                                 Ver assinatura
                                             </Link>
                                         </>
@@ -281,7 +281,7 @@ export default function LojaPage() {
                             }}
                         />
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Aparece no cabeçalho da vitrine e no rodapé.
                         </p>
                     </div>
@@ -292,7 +292,7 @@ export default function LojaPage() {
                         </label>
 
                         <div className="flex items-stretch">
-                            <span className="flex items-center rounded-l-lg border border-r-0 border-[#E1E1E1] bg-[#F1F1F1] px-3 font-mono text-sm text-[#616161]">
+                            <span className="flex items-center rounded-l-lg border border-r-0 border-[var(--linha)] bg-[var(--fundo)] px-3 font-mono text-sm text-[var(--ink-2)]">
                                 {urlDaVitrine("")}
                             </span>
 
@@ -307,7 +307,7 @@ export default function LojaPage() {
                             />
                         </div>
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Letras, números e hífen. Acentos e espaços viram hífen enquanto
                             você digita. Trocar o endereço depois quebra os links já
                             divulgados, então escolha com calma.
@@ -322,11 +322,11 @@ export default function LojaPage() {
                         problema com a entrega — ou ia buscar no balcão e não
                         sabia onde era — ficava sem para onde ligar.
                     ============================== */}
-                    <div className="border-t border-[#EBEBEB] pt-5">
-                        <p className="text-sm font-semibold text-[#303030]">
+                    <div className="border-t border-[var(--linha-suave)] pt-5">
+                        <p className="text-sm font-semibold text-[var(--ink)]">
                             Contato da loja
                         </p>
-                        <p className="mt-1 text-xs text-[#8A8A8A]">
+                        <p className="mt-1 text-xs text-[var(--ink-3)]">
                             Aparece no rodapé da vitrine e na tela em que o cliente
                             acompanha o pedido. O que você deixar em branco simplesmente
                             não aparece lá.
@@ -354,7 +354,7 @@ export default function LojaPage() {
                                 }}
                             />
 
-                            <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                            <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                                 Com DDD. Vira um botão de conversa na tela do pedido, já
                                 com o número dele escrito na mensagem.
                             </p>
@@ -379,7 +379,7 @@ export default function LojaPage() {
                                 }}
                             />
 
-                            <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                            <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                                 Para quem prefere ligar. Opcional.
                             </p>
                         </div>
@@ -404,7 +404,7 @@ export default function LojaPage() {
                             }}
                         />
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Onde o cliente vai buscar o pedido. Sem isto, a tela dele diz
                             só &quot;você retira na loja&quot; e não diz onde.
                         </p>
@@ -428,7 +428,7 @@ export default function LojaPage() {
                             }}
                         />
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Escreva como você diria ao telefone.
                         </p>
                     </div>
@@ -468,7 +468,7 @@ export default function LojaPage() {
                             />
                         </div>
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Só é usado quando você tem mais de uma loja: é o que faz o site
                             oferecer a unidade mais perto de quem está olhando. Para achar os
                             números, abra o endereço no Google Maps, clique com o botão direito
@@ -482,7 +482,7 @@ export default function LojaPage() {
                 {erro && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
@@ -490,7 +490,7 @@ export default function LojaPage() {
                 )}
 
                 {salvo && !erro && (
-                    <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                    <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                         <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>Dados da loja salvos.</span>
                     </div>
@@ -516,8 +516,8 @@ export default function LojaPage() {
                 prateleira de uma loja que ainda não abriu. */}
             <section className="card flex flex-wrap items-center justify-between gap-4 p-6">
                 <div className="min-w-[16rem] flex-1">
-                    <p className="text-sm font-semibold text-[#303030]">Página inicial</p>
-                    <p className="mt-1 text-xs leading-relaxed text-[#616161]">
+                    <p className="text-sm font-semibold text-[var(--ink)]">Página inicial</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--ink-2)]">
                         Escolha quais seções aparecem na sua home e em que ordem —
                         banners, prateleiras de produtos, textos e faixas de destaque —
                         arrastando cada uma para o lugar.
@@ -536,10 +536,10 @@ export default function LojaPage() {
                 problema quando alguém cobra. */}
             <section className="card flex flex-wrap items-center justify-between gap-4 p-6">
                 <div className="min-w-[16rem] flex-1">
-                    <p className="text-sm font-semibold text-[#303030]">
+                    <p className="text-sm font-semibold text-[var(--ink)]">
                         Política de privacidade (LGPD)
                     </p>
-                    <p className="mt-1 text-xs leading-relaxed text-[#616161]">
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--ink-2)]">
                         Sua vitrine já publica a política, escrita com os dados desta loja
                         e ligada no rodapé de todas as páginas. Ela descreve o que o
                         sistema realmente faz — leia uma vez, porque quem responde pelos

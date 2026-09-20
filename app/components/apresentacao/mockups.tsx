@@ -52,8 +52,8 @@ export function MockupPainel() {
 
             <div className="grid grid-cols-2 gap-px bg-[#EBEBEB]">
                 {[
-                    { rotulo: "Saiu no balcão", valor: "R$ 842,00", detalhe: "7 peças", Icone: FiShoppingBag },
-                    { rotulo: "Saiu por pedido", valor: "R$ 1.284,50", detalhe: "9 peças", Icone: FiPackage },
+                    { rotulo: "Saiu no balcão", valor: "R$ 842,00", detalhe: "7 unidades", Icone: FiShoppingBag },
+                    { rotulo: "Saiu por pedido", valor: "R$ 1.284,50", detalhe: "9 unidades", Icone: FiPackage },
                     { rotulo: "Pagamentos confirmados", valor: "R$ 1.109,40", detalhe: "6 pedidos", Icone: FiCheck },
                     { rotulo: "Ticket médio", valor: "R$ 184,90", detalhe: "por pedido pago", Icone: FiTag },
                 ].map(({ rotulo, valor, detalhe, Icone }) => (
@@ -235,7 +235,7 @@ export function MockupAtendimento() {
                     </p>
 
                     <p className="ml-auto max-w-[80%] rounded-lg bg-[#005BD3] px-2.5 py-1.5 text-[0.68rem] leading-relaxed text-white">
-                        Tem sim, Paulo — última peça. Separo para você?
+                        Tem sim, Paulo — última unidade. Separo para você?
                     </p>
 
                     <p className="text-right text-[0.58rem] text-[#8A8A8A]">Helena · 14:32</p>
@@ -308,7 +308,7 @@ export function MockupVitrine() {
 }
 
 /* ==========================================================================
-   A etiqueta da peça — o objeto concreto que o sistema produz
+   A etiqueta da unidade — o objeto concreto que o sistema produz
    ========================================================================== */
 
 /** Larguras das barras. Índice par é barra; ímpar, espaço. */
@@ -323,7 +323,7 @@ export function MockupEtiqueta() {
 
             <div className="flex items-center justify-between gap-3 border-b border-[#EBEBEB] pb-4">
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
-                    Etiqueta da peça
+                    Etiqueta da unidade
                 </p>
                 <span className="tag tag-success">
                     <FiCheck className="w-3" aria-hidden />
@@ -553,10 +553,10 @@ export function MockupRede() {
 
             <div className="divide-y divide-[#F1F1F1]">
                 {[
-                    { nome: "Loja Centro", papel: "matriz", gerente: "você", estoque: "1.204 peças" },
-                    { nome: "Loja Norte", papel: "filial", gerente: "Helena", estoque: "812 peças" },
-                    { nome: "Loja Shopping", papel: "filial", gerente: "Marcos", estoque: "640 peças" },
-                    { nome: "Loja Litoral", papel: "filial", gerente: "Dona Rita", estoque: "377 peças" },
+                    { nome: "Loja Centro", papel: "matriz", gerente: "você", estoque: "1.204 unidades" },
+                    { nome: "Loja Norte", papel: "filial", gerente: "Helena", estoque: "812 unidades" },
+                    { nome: "Loja Shopping", papel: "filial", gerente: "Marcos", estoque: "640 unidades" },
+                    { nome: "Loja Litoral", papel: "filial", gerente: "Dona Rita", estoque: "377 unidades" },
                 ].map(({ nome, papel, gerente, estoque }) => (
                     <div key={nome} className="flex items-center gap-3 px-4 py-2.5">
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-[#EAF4FF]" aria-hidden>

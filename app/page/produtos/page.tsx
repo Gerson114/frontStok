@@ -53,7 +53,7 @@ export default async function ProdutosPage() {
     return (
         <Pagina
             titulo="Produtos"
-            descricao="Uma linha por peça física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
+            descricao="Uma linha por unidade física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
             acoes={
                 <>
                     {/* Importar fica ao lado de "Novo produto", e não escondido

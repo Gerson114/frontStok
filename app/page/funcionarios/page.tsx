@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
     FiAlertCircle,
@@ -119,6 +120,21 @@ function inicial(nome: string): string {
     return (nome.trim()[0] ?? "?").toUpperCase()
 }
 
+/**
+ * O que vai para o servidor a partir do que foi digitado.
+ *
+ * Vazio vira zero — "não recebe comissão" —, e vírgula vira ponto, porque o
+ * teclado brasileiro escreve 2,5 e o JSON lê 2.5. Texto que não é número
+ * nenhum também vira zero: o backend recusa o que estiver fora de 0 a 100, e
+ * mandar NaN daqui só trocaria o valor certo por um erro.
+ */
+function percentualDigitado(texto: string): number {
+
+    const numero = Number(texto.trim().replace(",", "."))
+
+    return Number.isFinite(numero) && numero >= 0 && numero <= 100 ? numero : 0
+}
+
 /** Texto pronto para busca: minúsculo e sem acento. */
 function comparavel(texto: string): string {
     return texto
@@ -154,6 +170,11 @@ export default function Funcionarios() {
     const [senha, setSenha] = useState("")
     const [marcadas, setMarcadas] = useState<string[]>([])
     const [gerente, setGerente] = useState(false)
+
+    // O percentual de comissão, guardado como TEXTO enquanto se digita: um
+    // number aqui apagaria o campo a cada tecla no meio de "2,5" e não
+    // deixaria o dono limpá-lo para escrever outro.
+    const [comissao, setComissao] = useState("")
 
     // Seções de permissão abertas. Todas nascem fechadas: a conta ao lado do
     // título ("4 de 6") responde à conferência sem abrir nada.
@@ -237,6 +258,7 @@ export default function Funcionarios() {
         setEmail(funcionario.email)
         setMarcadas(funcionario.recursos)
         setGerente(funcionario.gerente)
+        setComissao(funcionario.comissao_percentual > 0 ? String(funcionario.comissao_percentual) : "")
         setSenha("")
         setTrocandoSenha(false)
         setSenhaNova("")
@@ -250,6 +272,7 @@ export default function Funcionarios() {
         setSenha("")
         setMarcadas([])
         setGerente(false)
+        setComissao("")
         setTrocandoSenha(false)
         setAbertas({})
     }
@@ -276,7 +299,14 @@ export default function Funcionarios() {
         setAviso("")
 
         try {
-            const criado = await criarFuncionario({ nome, email, password: senha, recursos: marcadas, gerente })
+            const criado = await criarFuncionario({
+                nome,
+                email,
+                password: senha,
+                recursos: marcadas,
+                gerente,
+                comissao_percentual: percentualDigitado(comissao),
+            })
 
             // O que dizer ao dono depende de a pessoa ter recebido o convite.
             //
@@ -288,7 +318,7 @@ export default function Funcionarios() {
             setAviso(
                 criado.convite_enviado
                     ? `${nome} recebeu um e-mail com um código para criar a própria senha. Até usar o código, a senha provisória que você digitou é que vale — prefira não passá-la adiante.`
-                    : `${nome} já pode entrar com o e-mail e a senha que você definiu. Peça que ele a troque assim que entrar.`,
+                    : `${nome} já pode entrar com o e-mail e a senha que você definiu. Unidade que ele a troque assim que entrar.`,
             )
             setEscolhido(null)
             await carregar()
@@ -313,6 +343,7 @@ export default function Funcionarios() {
                 recursos: marcadas,
                 ativo: pessoa.ativo,
                 gerente,
+                comissao_percentual: percentualDigitado(comissao),
             })
             setAviso(`${pessoa.nome} atualizado. A sessão aberta dele caiu — na próxima vez que entrar, o menu já vem novo.`)
             await carregar()
@@ -387,7 +418,7 @@ export default function Funcionarios() {
      */
     function listaDePermissoes() {
         return (
-            <div className="divide-y divide-[#EBEBEB] border-y border-[#EBEBEB]">
+            <div className="divide-y divide-[var(--linha-suave)] border-y border-[var(--linha-suave)]">
                 {secoes.map(({ secao, grupos }) => {
 
                     const chaves = grupos.flatMap((g) => [g.item.chave, ...g.filhos.map((f) => f.chave)])
@@ -403,18 +434,18 @@ export default function Funcionarios() {
                                     type="button"
                                     onClick={() => setAbertas((a) => ({ ...a, [secao]: !aberta }))}
                                     aria-expanded={aberta}
-                                    className="flex flex-1 items-center gap-2 py-3 text-left transition-colors hover:bg-[#F7F7F7]"
+                                    className="flex flex-1 items-center gap-2 py-3 text-left transition-colors hover:bg-[var(--superficie-2)]"
                                 >
                                     {aberta
-                                        ? <FiChevronDown className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
-                                        : <FiChevronRight className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />}
+                                        ? <FiChevronDown className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                                        : <FiChevronRight className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />}
 
-                                    <span className="flex-1 text-sm font-semibold text-[#303030]">
+                                    <span className="flex-1 text-sm font-semibold text-[var(--ink)]">
                                         {secao}
                                     </span>
 
                                     <span className={`num text-xs ${
-                                        marcadasAqui > 0 ? "font-semibold text-[#303030]" : "text-[#8A8A8A]"
+                                        marcadasAqui > 0 ? "font-semibold text-[var(--ink)]" : "text-[var(--ink-3)]"
                                     }`}>
                                         {marcadasAqui} de {chaves.length}
                                     </span>
@@ -423,7 +454,7 @@ export default function Funcionarios() {
                                 <button
                                     type="button"
                                     onClick={() => alternarSecao(chaves)}
-                                    className="shrink-0 px-2 py-1 text-xs font-semibold text-[#005BD3] hover:underline"
+                                    className="shrink-0 px-2 py-1 text-xs font-semibold text-[var(--azul)] hover:underline"
                                 >
                                     {marcadasAqui === chaves.length ? "Limpar" : "Marcar tudo"}
                                 </button>
@@ -434,7 +465,7 @@ export default function Funcionarios() {
                                     {grupos.map((grupo) => (
                                         <div key={grupo.item.chave} className="min-w-0">
 
-                                            <label className="flex items-center gap-2 py-1 text-sm text-[#303030]">
+                                            <label className="flex items-center gap-2 py-1 text-sm text-[var(--ink)]">
                                                 <input
                                                     type="checkbox"
                                                     checked={marcadas.includes(grupo.item.chave)}
@@ -447,7 +478,7 @@ export default function Funcionarios() {
                                             {grupo.filhos.map((filho) => (
                                                 <label
                                                     key={filho.chave}
-                                                    className="flex items-center gap-2 py-1 pl-6 text-sm text-[#616161]"
+                                                    className="flex items-center gap-2 py-1 pl-6 text-sm text-[var(--ink-2)]"
                                                 >
                                                     <input
                                                         type="checkbox"
@@ -465,6 +496,55 @@ export default function Funcionarios() {
                         </div>
                     )
                 })}
+            </div>
+        )
+    }
+
+    /**
+     * O percentual de comissão — só para o dono, que é quem paga.
+     *
+     * Fica na ficha da pessoa, e não numa tela de comissão, porque é dela
+     * que ele é: quem contrata combina o percentual na mesma conversa em que
+     * combina o cargo e o que a pessoa vai poder abrir. A tela de Comissões
+     * só usa este número, e não o define — uma tela que também o editasse
+     * seria a segunda porta para a mesma coisa.
+     *
+     * Vazio é zero, e zero é o normal: o conferente do estoque não vende. O
+     * campo não avisa nada quando fica em branco, porque em branco é a
+     * resposta certa para a maior parte de uma loja.
+     */
+    function campoDeComissao() {
+
+        if (!podePromover) return null
+
+        return (
+            <div>
+                <label htmlFor="comissao" className="rotulo">Comissão sobre o que vender</label>
+
+                <div className="flex max-w-[10rem] items-center gap-2">
+                    <input
+                        id="comissao"
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        value={comissao}
+                        onChange={(e) => setComissao(e.target.value)}
+                        placeholder="0"
+                        className="field w-full text-right"
+                    />
+
+                    <span className="text-sm font-semibold text-[var(--ink-2)]">%</span>
+                </div>
+
+                <p className="mt-1.5 text-xs text-[var(--ink-2)]">
+                    Em branco é quem não trabalha por comissão. O fechamento do mês fica
+                    em{" "}
+                    <Link href="/page/comissoes" className="font-semibold text-[var(--azul)] hover:underline">
+                        Comissões
+                    </Link>, e conta só a unidade que saiu com o nome dela e não voltou.
+                </p>
             </div>
         )
     }
@@ -488,7 +568,7 @@ export default function Funcionarios() {
                     <option value="gerente">Gerente — administra esta loja</option>
                 </select>
 
-                <p className="mt-1.5 text-xs text-[#616161]">
+                <p className="mt-1.5 text-xs text-[var(--ink-2)]">
                     {gerente
                         ? "Abre o sistema inteiro desta loja e cuida da equipe daqui. Não alcança o que é seu: a assinatura e o plano, as suas outras lojas, a conta que recebe o dinheiro e a cara do site."
                         : "Enxerga só o que você marcar abaixo. O menu dele é montado a partir dessa marcação."}
@@ -500,7 +580,7 @@ export default function Funcionarios() {
     if (carregando) {
         return (
             <Pagina titulo="Funcionários">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando equipe...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando equipe...</div>
             </Pagina>
         )
     }
@@ -522,14 +602,14 @@ export default function Funcionarios() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -544,9 +624,9 @@ export default function Funcionarios() {
                     --------------------------------------------------------- */}
                 <section className="card flex max-h-[calc(100dvh-14rem)] flex-col overflow-hidden p-0">
 
-                    <div className="border-b border-[#EBEBEB] p-3">
+                    <div className="border-b border-[var(--linha-suave)] p-3">
                         <div className="relative">
-                            <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                            <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                             <input
                                 type="search"
@@ -562,7 +642,7 @@ export default function Funcionarios() {
                     <div className="min-h-0 flex-1 overflow-y-auto">
 
                         {listados.length === 0 && (
-                            <p className="px-4 py-6 text-center text-sm text-[#616161]">
+                            <p className="px-4 py-6 text-center text-sm text-[var(--ink-2)]">
                                 {equipe.length === 0
                                     ? "Ninguém cadastrado ainda."
                                     : "Ninguém com esse nome."}
@@ -579,31 +659,31 @@ export default function Funcionarios() {
                                     type="button"
                                     onClick={() => abrir(funcionario)}
                                     aria-current={ativo ? "true" : undefined}
-                                    className={`flex w-full items-center gap-3 border-b border-[#F1F1F1] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
-                                        ativo ? "bg-[#F1F1F1]" : "hover:bg-[#F7F7F7]"
+                                    className={`flex w-full items-center gap-3 border-b border-[var(--fundo)] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
+                                        ativo ? "bg-[var(--fundo)]" : "hover:bg-[var(--superficie-2)]"
                                     }`}
                                 >
                                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                                         funcionario.ativo
-                                            ? "bg-[#303030] text-white"
-                                            : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                            ? "bg-[var(--azul)] text-white"
+                                            : "bg-[var(--linha)] text-[var(--ink-3)]"
                                     }`}>
                                         {inicial(funcionario.nome)}
                                     </span>
 
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-sm font-semibold text-[#303030]">
+                                        <span className="block truncate text-sm font-semibold text-[var(--ink)]">
                                             {funcionario.nome}
                                         </span>
 
-                                        <span className="block truncate text-xs text-[#616161]">
+                                        <span className="block truncate text-xs text-[var(--ink-2)]">
                                             {funcionario.gerente ? "Gerente" : "Funcionário"}
                                             {!funcionario.ativo && " · sem acesso"}
                                         </span>
                                     </span>
 
                                     {funcionario.gerente && (
-                                        <FiLock className="w-3.5 shrink-0 text-[#8A8A8A]" aria-hidden />
+                                        <FiLock className="w-3.5 shrink-0 text-[var(--ink-3)]" aria-hidden />
                                     )}
                                 </button>
                             )
@@ -618,13 +698,13 @@ export default function Funcionarios() {
 
                     {escolhido === null && (
                         <div className="flex min-h-[18rem] flex-col items-center justify-center text-center">
-                            <FiUsers className="w-8 text-[#B5B5B5]" aria-hidden />
+                            <FiUsers className="w-8 text-[var(--ink-4)]" aria-hidden />
 
-                            <p className="mt-3 font-display text-base text-[#303030]">
+                            <p className="mt-3 font-display text-base text-[var(--ink)]">
                                 Escolha alguém na lista
                             </p>
 
-                            <p className="mt-1 max-w-sm text-sm text-[#616161]">
+                            <p className="mt-1 max-w-sm text-sm text-[var(--ink-2)]">
                                 A ficha mostra o cargo da pessoa, as telas que ela abre e o que
                                 fazer com a conta dela.
                             </p>
@@ -635,13 +715,13 @@ export default function Funcionarios() {
                         <form onSubmit={handleCriar} className="space-y-5">
 
                             <div className="flex items-start justify-between gap-3">
-                                <p className="font-display text-lg text-[#303030]">Nova pessoa</p>
+                                <p className="font-display text-lg text-[var(--ink)]">Nova pessoa</p>
 
                                 <button
                                     type="button"
                                     onClick={() => setEscolhido(null)}
                                     aria-label="Cancelar"
-                                    className="rounded-lg p-1.5 text-[#616161] hover:bg-[#F1F1F1]"
+                                    className="rounded-lg p-1.5 text-[var(--ink-2)] hover:bg-[var(--fundo)]"
                                 >
                                     <FiX className="w-4" aria-hidden />
                                 </button>
@@ -689,6 +769,8 @@ export default function Funcionarios() {
 
                             {campoDeCargo()}
 
+                            {campoDeComissao()}
+
                             {/* O gerente abre tudo por cargo: as caixas não
                                 decidiriam nada, e mostrá-las diria o contrário
                                 do que o servidor faz. */}
@@ -699,7 +781,7 @@ export default function Funcionarios() {
                                 </div>
                             )}
 
-                            <div className="flex justify-end gap-2 border-t border-[#EBEBEB] pt-4">
+                            <div className="flex justify-end gap-2 border-t border-[var(--linha-suave)] pt-4">
                                 <button type="button" onClick={() => setEscolhido(null)} className="btn btn-neutro">
                                     Cancelar
                                 </button>
@@ -721,7 +803,7 @@ export default function Funcionarios() {
                                 engano. */}
                             <div className="flex items-start gap-3">
                                 <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                                    pessoa.ativo ? "bg-[#303030] text-white" : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                    pessoa.ativo ? "bg-[var(--azul)] text-white" : "bg-[var(--linha)] text-[var(--ink-3)]"
                                 }`}>
                                     {inicial(pessoa.nome)}
                                 </span>
@@ -734,7 +816,7 @@ export default function Funcionarios() {
                                         className="field w-full sm:max-w-sm"
                                     />
 
-                                    <p className="mt-1 truncate text-sm text-[#616161]">{pessoa.email}</p>
+                                    <p className="mt-1 truncate text-sm text-[var(--ink-2)]">{pessoa.email}</p>
                                 </div>
 
                                 <span className={pessoa.ativo ? "tag tag-success" : "tag tag-neutral"}>
@@ -744,8 +826,10 @@ export default function Funcionarios() {
 
                             {campoDeCargo()}
 
+                            {campoDeComissao()}
+
                             {gerente ? (
-                                <p className="rounded-lg bg-[#F1F1F1] px-4 py-3 text-sm text-[#616161]">
+                                <p className="rounded-lg bg-[var(--fundo)] px-4 py-3 text-sm text-[var(--ink-2)]">
                                     Como gerente, abre o sistema inteiro desta loja — não há telas a
                                     marcar. Volte o cargo para funcionário se quiser escolher uma a uma.
                                 </p>
@@ -756,7 +840,7 @@ export default function Funcionarios() {
                                 </div>
                             )}
 
-                            <div className="flex justify-end border-t border-[#EBEBEB] pt-4">
+                            <div className="flex justify-end border-t border-[var(--linha-suave)] pt-4">
                                 <button
                                     type="button"
                                     onClick={handleSalvar}
@@ -773,9 +857,9 @@ export default function Funcionarios() {
                                 justamente porque é o que não se clica por
                                 engano.
                                 ------------------------------------------------ */}
-                            <div className="border-t border-[#EBEBEB] pt-5">
+                            <div className="border-t border-[var(--linha-suave)] pt-5">
 
-                                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                                     Segurança
                                 </p>
 
@@ -805,14 +889,14 @@ export default function Funcionarios() {
                                     <button
                                         type="button"
                                         onClick={() => handleExcluir(pessoa)}
-                                        className="btn btn-neutro text-[#8E1F0B]"
+                                        className="btn btn-neutro text-[var(--vermelho)]"
                                     >
                                         <FiTrash2 className="w-4" aria-hidden />
                                         <span>Excluir</span>
                                     </button>
                                 </div>
 
-                                <p className="mt-2 text-xs text-[#8A8A8A]">
+                                <p className="mt-2 text-xs text-[var(--ink-3)]">
                                     Tirar o acesso mantém a conta e o histórico do que ela fez —
                                     é o caminho de quem saiu da empresa. Excluir apaga a linha e
                                     leva junto a resposta de quem deu entrada em cada mercadoria.

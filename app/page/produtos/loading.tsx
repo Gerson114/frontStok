@@ -21,33 +21,33 @@ export default function Carregando() {
     return (
         <Pagina
             titulo="Produtos"
-            descricao="Uma linha por peça física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
+            descricao="Uma linha por unidade física, com o código, o endereço em que ela está e o preço que a vitrine mostra."
         >
 
             <div className="card h-[4.5rem] animate-pulse" />
 
             <div className="flex gap-2">
                 {[1, 2, 3, 4].map(item => (
-                    <div key={item} className="h-9 w-28 animate-pulse rounded-lg bg-[#E1E1E1]" />
+                    <div key={item} className="h-9 w-28 animate-pulse rounded-lg bg-[var(--linha)]" />
                 ))}
             </div>
 
             <div className="card overflow-hidden">
 
-                <div className="h-10 border-b border-[#E1E1E1] bg-[#F7F7F7]" />
+                <div className="h-10 border-b border-[var(--linha)] bg-[var(--superficie-2)]" />
 
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(item => (
 
                     <div
                         key={item}
-                        className="flex items-center gap-3 border-b border-[#EBEBEB] px-4 py-2.5 last:border-b-0"
+                        className="flex items-center gap-3 border-b border-[var(--linha-suave)] px-4 py-2.5 last:border-b-0"
                     >
 
-                        <div className="h-9 w-9 shrink-0 animate-pulse rounded-md bg-[#F1F1F1]" />
+                        <div className="h-9 w-9 shrink-0 animate-pulse rounded-md bg-[var(--fundo)]" />
 
-                        <div className="h-4 w-1/3 animate-pulse rounded bg-[#F1F1F1]" />
+                        <div className="h-4 w-1/3 animate-pulse rounded bg-[var(--fundo)]" />
 
-                        <div className="ml-auto h-4 w-20 animate-pulse rounded bg-[#F1F1F1]" />
+                        <div className="ml-auto h-4 w-20 animate-pulse rounded bg-[var(--fundo)]" />
 
                     </div>
 

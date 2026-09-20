@@ -9,7 +9,8 @@ import { escutarLoja } from "@/middleware/whatsapp"
 import { ApiError } from "@/middleware/client"
 import Pagination from "@/app/components/pagination/pagination"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
-import { FiFileText, FiSearch, FiAlertTriangle, FiFilePlus } from "react-icons/fi"
+import {
+    FiCalendar, FiFileText, FiSearch, FiAlertTriangle, FiFilePlus } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 import { telefoneLegivel } from "@/app/components/contato/telefone"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
@@ -102,14 +103,14 @@ const TEXTOS: Record<Filtro, { titulo: string; explicacao: string; rotulo: strin
         titulo: "Aguardando pagamento",
         explicacao:
             "Pedidos que o cliente fechou no site e ainda não foram pagos. Eles não entram no " +
-            "seu trabalho do dia e as peças voltam ao estoque depois de 30 minutos. Se o cliente " +
+            "seu trabalho do dia e as unidades voltam ao estoque depois de 30 minutos. Se o cliente " +
             "diz que já pagou, use \"verificar pagamento\" — o sistema pergunta direto ao seu provedor.",
         rotulo: "Aguardando pagamento",
         vazio: "Nenhum pedido esperando pagamento.",
     },
     entregues: {
         titulo: "Pedidos entregues",
-        explicacao: "Pedidos que chegaram ao cliente. As peças que saíram estão em Vendidos.",
+        explicacao: "Pedidos que chegaram ao cliente. As unidades que saíram estão em Vendidos.",
         rotulo: "Entregues",
         vazio: "Nenhum pedido entregue até agora.",
     },
@@ -598,7 +599,7 @@ function PedidosInterno() {
                 ABAS DE SITUAÇÃO
                 As contagens vêm do servidor (ver o comentário em `contagens`).
             ========================== */}
-            <div role="tablist" aria-label="Situação dos pedidos" className="flex flex-wrap gap-1 border-b border-[#E1E1E1]">
+            <div role="tablist" aria-label="Situação dos pedidos" className="flex flex-wrap gap-1 border-b border-[var(--linha)]">
 
                 {FILTROS.map(({ chave, nome }) => {
 
@@ -613,14 +614,14 @@ function PedidosInterno() {
                             onClick={() => trocarFiltro(chave)}
                             className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
                                 ativa
-                                    ? "border-[#005BD3] text-[#005BD3]"
-                                    : "border-transparent text-[#616161] hover:text-[#303030]"
+                                    ? "border-[var(--azul)] text-[var(--azul)]"
+                                    : "border-transparent text-[var(--ink-2)] hover:text-[var(--ink)]"
                             }`}
                         >
                             {nome}
 
                             <span className={`num rounded-full px-2 py-0.5 text-xs font-bold ${
-                                ativa ? "bg-[#EAF4FF] text-[#005BD3]" : "bg-[#F1F1F1] text-[#616161]"
+                                ativa ? "bg-[var(--azul-suave)] text-[var(--azul)]" : "bg-[var(--fundo)] text-[var(--ink-2)]"
                             }`}>
                                 {contagens[chave]}
                             </span>
@@ -634,29 +635,29 @@ function PedidosInterno() {
                 que importa aqui é quanto a aba soma, não o enfeite ao redor. */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
 
-                <span className="text-[#616161]">
-                    <strong className="num text-[#303030]">{daAba.length}</strong> pedido(s)
+                <span className="text-[var(--ink-2)]">
+                    <strong className="num text-[var(--ink)]">{daAba.length}</strong> pedido(s)
                 </span>
 
-                <span className="text-[#616161]">
-                    Somam <strong className="num text-[#303030]">{formatarMoeda(valorTotal)}</strong>
+                <span className="text-[var(--ink-2)]">
+                    Somam <strong className="num text-[var(--ink)]">{formatarMoeda(valorTotal)}</strong>
                 </span>
 
                 {mostraPendentes && pendentes > 0 && (
-                    <span className="text-[#5E4200]">
+                    <span className="text-[var(--amarelo)]">
                         <strong className="num">{pendentes}</strong> esperando confirmação
                     </span>
                 )}
             </div>
 
             {erroAtualizacao && (
-                <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                     {erroAtualizacao}
                 </div>
             )}
 
             {avisoVerificacao && (
-                <p role="status" className="border-l-2 border-[#0C5132] bg-[#EAFBF1] px-3 py-2 text-sm text-[#0C5132]">
+                <p role="status" className="border-l-2 border-[var(--verde)] bg-[var(--verde-suave)] px-3 py-2 text-sm text-[var(--verde)]">
                     {avisoVerificacao}
                 </p>
             )}
@@ -666,9 +667,9 @@ function PedidosInterno() {
                 meio de uma tela cheia passa despercebida por quem estava
                 olhando para outra parte dela. */}
             {chegou > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-[#0C5132] bg-[#EAFBF1] px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-[var(--verde)] bg-[var(--verde-suave)] px-4 py-3">
 
-                    <p className="text-sm font-bold text-[#0C5132]">
+                    <p className="text-sm font-bold text-[var(--verde)]">
                         Chegou pedido novo — a lista já está atualizada.
                     </p>
 
@@ -677,7 +678,7 @@ function PedidosInterno() {
                             <button
                                 type="button"
                                 onClick={() => { setChegou(0); trocarFiltro("aguardando") }}
-                                className="text-sm font-semibold text-[#0C5132] underline underline-offset-4"
+                                className="text-sm font-semibold text-[var(--verde)] underline underline-offset-4"
                             >
                                 ver aguardando pagamento
                             </button>
@@ -687,7 +688,7 @@ function PedidosInterno() {
                             type="button"
                             onClick={() => setChegou(0)}
                             aria-label="Dispensar aviso"
-                            className="text-sm text-[#0C5132] opacity-70 transition-opacity hover:opacity-100"
+                            className="text-sm text-[var(--verde)] opacity-70 transition-opacity hover:opacity-100"
                         >
                             dispensar
                         </button>
@@ -696,7 +697,7 @@ function PedidosInterno() {
             )}
 
             {loading ? (
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando pedidos...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando pedidos...</div>
             ) : erro ? (
                 <Estado Icone={FiAlertTriangle} titulo="Não foi possível carregar" texto={erro} tom="erro" />
             ) : daAba.length === 0 ? (
@@ -716,9 +717,9 @@ function PedidosInterno() {
                         --------------------------------------------------- */}
                     <section className="card flex max-h-[calc(100dvh-18rem)] flex-col overflow-hidden p-0">
 
-                        <div className="border-b border-[#EBEBEB] p-3">
+                        <div className="border-b border-[var(--linha-suave)] p-3">
                             <div className="relative">
-                                <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                                <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                                 <input
                                     type="search"
@@ -730,7 +731,7 @@ function PedidosInterno() {
                                 />
                             </div>
 
-                            <p className="mt-2 text-xs text-[#8A8A8A]">
+                            <p className="mt-2 text-xs text-[var(--ink-3)]">
                                 {pedidosFiltrados.length} de {daAba.length} nesta aba
                             </p>
                         </div>
@@ -738,7 +739,7 @@ function PedidosInterno() {
                         <div className="min-h-0 flex-1 overflow-y-auto">
 
                             {pedidosDaPagina.length === 0 && (
-                                <p className="px-4 py-6 text-center text-sm text-[#616161]">
+                                <p className="px-4 py-6 text-center text-sm text-[var(--ink-2)]">
                                     Nenhum pedido com esse termo.
                                 </p>
                             )}
@@ -753,19 +754,19 @@ function PedidosInterno() {
                                         type="button"
                                         onClick={() => setSelecionado(pedido.id)}
                                         aria-current={escolhido ? "true" : undefined}
-                                        className={`flex w-full flex-col gap-1 border-b border-[#F1F1F1] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
-                                            escolhido ? "bg-[#F1F1F1]" : "hover:bg-[#F7F7F7]"
+                                        className={`flex w-full flex-col gap-1 border-b border-[var(--fundo)] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
+                                            escolhido ? "bg-[var(--fundo)]" : "hover:bg-[var(--superficie-2)]"
                                         }`}
                                     >
                                         <span className="flex items-center justify-between gap-2">
-                                            <span className="num truncate text-xs font-semibold text-[#616161]">
+                                            <span className="num truncate text-xs font-semibold text-[var(--ink-2)]">
                                                 {pedido.codigo || `#${pedido.id}`}
                                             </span>
 
                                             <Preco valor={totalDoPedido(pedido)} className="text-sm" />
                                         </span>
 
-                                        <span className="truncate text-sm font-semibold text-[#303030]">
+                                        <span className="truncate text-sm font-semibold text-[var(--ink)]">
                                             {pedido.cliente_nome || `Cliente #${pedido.cliente_id}`}
                                         </span>
 
@@ -776,7 +777,7 @@ function PedidosInterno() {
 
                                             <SeloPagamento pedido={pedido} />
 
-                                            <span className="text-xs text-[#8A8A8A]">
+                                            <span className="text-xs text-[var(--ink-3)]">
                                                 {formatarData(pedido.created_at)}
                                             </span>
                                         </span>
@@ -785,7 +786,7 @@ function PedidosInterno() {
                             })}
                         </div>
 
-                        <div className="border-t border-[#EBEBEB]">
+                        <div className="border-t border-[var(--linha-suave)]">
                             <Pagination
                                 paginaAtual={paginaAtualCorrigida}
                                 totalPaginas={totalPaginas}
@@ -801,13 +802,13 @@ function PedidosInterno() {
 
                         {!pedidoAberto ? (
                             <div className="flex min-h-[18rem] flex-col items-center justify-center text-center">
-                                <FiFileText className="w-8 text-[#B5B5B5]" aria-hidden />
+                                <FiFileText className="w-8 text-[var(--ink-4)]" aria-hidden />
 
-                                <p className="mt-3 font-display text-base text-[#303030]">
+                                <p className="mt-3 font-display text-base text-[var(--ink)]">
                                     Escolha um pedido na lista
                                 </p>
 
-                                <p className="mt-1 max-w-sm text-sm text-[#616161]">
+                                <p className="mt-1 max-w-sm text-sm text-[var(--ink-2)]">
                                     A ficha mostra o cliente, o que ele comprou, como pagou, para
                                     onde vai e a conta fechada.
                                 </p>
@@ -847,7 +848,7 @@ function PedidosInterno() {
 // A aba vem do endereço, e ler o endereço exige Suspense no App Router.
 export default function Pedidos() {
     return (
-        <Suspense fallback={<main className="com-menu min-h-[calc(100dvh-3.5rem)] bg-[#F1F1F1]" />}>
+        <Suspense fallback={<main className="com-menu min-h-[calc(100dvh-3.5rem)] bg-[var(--fundo)]" />}>
             <PedidosInterno />
         </Suspense>
     )
@@ -903,10 +904,31 @@ function SeloPagamento({ pedido }: { pedido: Pedido }) {
 
         return (
             <span
-                className="tag bg-[#EAFBF1] text-[#0C5132]"
+                className="tag bg-[var(--verde-suave)] text-[var(--verde)]"
                 title={pedido.pago_em ? `Pago em ${dataCurta(pedido.pago_em)}` : "Pago pelo site"}
             >
                 {meio ? `pago · ${meio}` : "pago"}
+            </span>
+        )
+    }
+
+    /* Entrada paga: metade do dinheiro entrou e a outra metade está na rua.
+    
+       Selo azul, e não verde nem âmbar, porque é um terceiro estado de
+       verdade: verde diria "pago" a um pedido que ainda deve, e âmbar diria
+       "não pagou" a quem já pagou — e pagamento recebido não pode aparecer
+       como não recebido. A loja SEPARA e ENTREGA este pedido; o que falta é
+       receber o resto na porta. */
+    if (situacao === "entrada_paga") {
+
+        const falta = (pedido.total ?? 0) - (pedido.valor_pago ?? 0)
+
+        return (
+            <span
+                className="tag bg-[var(--azul-suave)] text-[var(--azul-escuro)]"
+                title={`Entrada recebida. Faltam ${formatarMoeda(falta)} a receber na entrega.`}
+            >
+                entrada paga · falta {formatarMoeda(falta)}
             </span>
         )
     }
@@ -918,7 +940,7 @@ function SeloPagamento({ pedido }: { pedido: Pedido }) {
     if (situacao === "combinando") {
         return (
             <span
-                className="tag bg-[#FFF1E3] text-[#5E4200]"
+                className="tag bg-[var(--amarelo-fundo)] text-[var(--amarelo)]"
                 title="O cliente escolheu combinar o pagamento no WhatsApp. Confirme o recebimento quando o dinheiro cair."
             >
                 combinando no WhatsApp
@@ -927,14 +949,14 @@ function SeloPagamento({ pedido }: { pedido: Pedido }) {
     }
 
     if (situacao === "estornado") {
-        return <span className="tag bg-[#FEE9E8] text-[#8E1F0B]">estornado</span>
+        return <span className="tag bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">estornado</span>
     }
 
     if (situacao === "recusado") {
-        return <span className="tag bg-[#FEE9E8] text-[#8E1F0B]">pagamento recusado</span>
+        return <span className="tag bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">pagamento recusado</span>
     }
 
-    return <span className="tag bg-[#E3E3E3] text-[#616161]">{situacao}</span>
+    return <span className="tag bg-[#E3E3E3] text-[var(--ink-2)]">{situacao}</span>
 }
 
 /** A data do pagamento, para a dica que aparece ao passar o mouse no selo. */
@@ -1008,7 +1030,7 @@ function FichaDoPedido({
 
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="num text-sm font-semibold text-[#303030]">
+                        <span className="num text-sm font-semibold text-[var(--ink)]">
                             {pedido.codigo || `Pedido #${pedido.id}`}
                         </span>
 
@@ -1019,7 +1041,7 @@ function FichaDoPedido({
                         <SeloPagamento pedido={pedido} />
                     </div>
 
-                    <p className="mt-1 text-xs text-[#8A8A8A]">
+                    <p className="mt-1 text-xs text-[var(--ink-3)]">
                         Nº interno {pedido.id} · feito em {formatarData(pedido.created_at)}
                     </p>
                 </div>
@@ -1045,43 +1067,86 @@ function FichaDoPedido({
             <div className="grid gap-4 sm:grid-cols-2">
 
                 <div>
-                    <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                    <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                         Cliente
                     </p>
 
-                    <p className="mt-1 text-sm font-semibold text-[#303030]">
+                    <p className="mt-1 text-sm font-semibold text-[var(--ink)]">
                         {pedido.cliente_nome || `Cliente #${pedido.cliente_id}`}
                     </p>
 
                     {pedido.cliente_contato && (
-                        <p className="text-sm text-[#616161]">{pedido.cliente_contato}</p>
+                        <p className="text-sm text-[var(--ink-2)]">{pedido.cliente_contato}</p>
                     )}
 
                     {pedido.telefone && (
-                        <p className="num text-sm text-[#616161]">{telefoneLegivel(pedido.telefone)}</p>
+                        <p className="num text-sm text-[var(--ink-2)]">{telefoneLegivel(pedido.telefone)}</p>
+                    )}
+
+                    {/* A hora marcada, quando existe.
+                    
+                        Em destaque, e não em cinza ao lado do resto: numa
+                        cozinha ela é a informação que decide a ordem da fila
+                        do dia, e um pedido marcado para as 12h lido como
+                        "para agora" é comida pronta três horas cedo. */}
+                    {pedido.agendado_para && (
+                        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--azul-suave)] px-2 py-1 text-[0.8125rem] font-semibold text-[var(--azul)]">
+                            <FiCalendar className="w-3.5 shrink-0" aria-hidden />
+                            {horaMarcada(pedido.agendado_para)}
+                        </p>
                     )}
                 </div>
 
                 <div>
-                    <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                    <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                         Pagamento
                     </p>
 
-                    <p className="mt-1 text-sm text-[#303030]">
+                    <p className="mt-1 text-sm text-[var(--ink)]">
                         {pedido.pagamento_status === "aprovado"
                             ? `Pago${pedido.pagamento_metodo ? ` · ${METODOS_DE_PAGAMENTO[pedido.pagamento_metodo] ?? pedido.pagamento_metodo}` : ""}`
-                            : pedido.pagamento_status === "aguardando"
-                                ? "Esperando o dinheiro cair"
-                                : pedido.pagamento_status
-                                    ? pedido.pagamento_status
-                                    : "Combinado fora do site"}
+                            : pedido.pagamento_status === "entrada_paga"
+                                ? "Entrada recebida"
+                                : pedido.pagamento_status === "aguardando"
+                                    ? "Esperando o dinheiro cair"
+                                    : pedido.pagamento_status
+                                        ? pedido.pagamento_status
+                                        : "Combinado fora do site"}
                     </p>
 
+                    {/* A conta do que falta, escrita: o lojista cobra na porta
+                        e precisa do número na mão, não de uma subtração. */}
+                    {pedido.pagamento_status === "entrada_paga" && (
+                        <p className="num text-sm font-semibold text-[var(--azul-escuro)]">
+                            {formatarMoeda(pedido.valor_pago ?? 0)} pagos ·{" "}
+                            {formatarMoeda((pedido.total ?? 0) - (pedido.valor_pago ?? 0))} a receber
+                        </p>
+                    )}
+
                     {pedido.pago_em && (
-                        <p className="text-sm text-[#616161]">em {formatarData(pedido.pago_em)}</p>
+                        <p className="text-sm text-[var(--ink-2)]">em {formatarData(pedido.pago_em)}</p>
                     )}
                 </div>
             </div>
+
+            {/* O RESTANTE DE QUEM PAGOU ENTRADA
+
+                O pedido já está separado e a caminho — o que falta é a loja
+                receber o resto na porta e dizer aqui que recebeu. Fica junto
+                do pedido, e não numa tela de cobrança à parte, porque é no
+                pedido que o lojista está quando o cliente paga. */}
+            {pedido.pagamento_status === "entrada_paga" && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        limparAvisos()
+                        setManualCodigo(manualCodigo === pedido.codigo ? "" : pedido.codigo)
+                    }}
+                    className="btn btn-primario"
+                >
+                    Recebi o restante
+                </button>
+            )}
 
             {/* AS DUAS SAÍDAS DE QUEM ESPERA PAGAMENTO */}
             {filtro === "aguardando" && (
@@ -1112,13 +1177,13 @@ function FichaDoPedido({
                 pedido, e não numa janela solta, para não haver dúvida sobre
                 QUAL pedido está sendo dado como pago. */}
             {manualCodigo === pedido.codigo && (
-                <div className="border border-[#E0B3B2] bg-[#FEE9E8] p-4">
+                <div className="border border-[#E0B3B2] bg-[var(--vermelho-fundo)] p-4">
 
-                    <p className="text-sm font-bold text-[#8E1F0B]">
+                    <p className="text-sm font-bold text-[var(--vermelho)]">
                         Confirmar que o pedido {pedido.codigo} foi pago?
                     </p>
 
-                    <p className="mt-1.5 text-xs leading-relaxed text-[#303030]">
+                    <p className="mt-1.5 text-xs leading-relaxed text-[var(--ink)]">
                         O provedor de pagamento não confirmou este pedido. Ao continuar, quem está
                         afirmando que o dinheiro entrou é você — o sistema grava o seu nome nessa
                         confirmação e o valor passa a contar no faturamento. Se o cliente pagou pelo
@@ -1146,7 +1211,7 @@ function FichaDoPedido({
                             type="button"
                             onClick={() => confirmarManual(pedido)}
                             disabled={salvandoManual}
-                            className="btn bg-[#8E1F0B] px-3 py-2 text-sm text-white disabled:opacity-50"
+                            className="btn bg-[var(--vermelho)] px-3 py-2 text-sm text-white disabled:opacity-50"
                         >
                             {salvandoManual ? "confirmando..." : "confirmar recebimento"}
                         </button>
@@ -1165,11 +1230,11 @@ function FichaDoPedido({
 
             {/* O QUE ELE COMPROU */}
             <div>
-                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                     {pedido.itens.length} item(ns)
                 </p>
 
-                <ul className="mt-2 divide-y divide-[#EBEBEB] border-y border-[#EBEBEB]">
+                <ul className="mt-2 divide-y divide-[var(--linha-suave)] border-y border-[var(--linha-suave)]">
                     {pedido.itens.map((item) => {
 
                         const detalhes = [item.produto_categoria, item.produto_tamanho, item.produto_tecido, item.produto_cor]
@@ -1180,7 +1245,7 @@ function FichaDoPedido({
                         return (
                             <li key={item.id} className="flex items-start gap-3 py-3 text-sm">
 
-                                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
                                     {item.produto_imagem_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -1192,11 +1257,11 @@ function FichaDoPedido({
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate font-medium text-[#303030]">
+                                    <p className="truncate font-medium text-[var(--ink)]">
                                         {item.produto_nome || `Produto #${item.produto_id}`}
 
                                         {item.produto_codigo && (
-                                            <span className="num ml-1.5 text-xs font-normal text-[#8A8A8A]">
+                                            <span className="num ml-1.5 text-xs font-normal text-[var(--ink-3)]">
                                                 #{item.produto_codigo}
                                             </span>
                                         )}
@@ -1205,7 +1270,7 @@ function FichaDoPedido({
                                     {detalhes.length > 0 && (
                                         <div className="mt-1 flex flex-wrap gap-1.5">
                                             {detalhes.map((detalhe, indice) => (
-                                                <span key={indice} className="rounded-full bg-[#F1F1F1] px-2 py-0.5 text-xs text-[#616161]">
+                                                <span key={indice} className="rounded-full bg-[var(--fundo)] px-2 py-0.5 text-xs text-[var(--ink-2)]">
                                                     {detalhe}
                                                 </span>
                                             ))}
@@ -1215,15 +1280,15 @@ function FichaDoPedido({
                                     {/* "2x R$ 39,90" — e, quando houve promoção, o
                                         preço cheio riscado. É o que o cliente viu na
                                         vitrine, e responde "por que veio mais barato?" */}
-                                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[#616161]">
+                                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[var(--ink-2)]">
                                         <span>{item.quantidade}x {formatarMoeda(item.preco_unitario)}</span>
 
                                         {cheio > item.preco_unitario && (
                                             <>
-                                                <span className="text-[#8A8A8A] line-through">
+                                                <span className="text-[var(--ink-3)] line-through">
                                                     {formatarMoeda(cheio)}
                                                 </span>
-                                                <span className="font-semibold text-[#0C5132]">promoção</span>
+                                                <span className="font-semibold text-[var(--verde)]">promoção</span>
                                             </>
                                         )}
                                     </p>
@@ -1241,20 +1306,20 @@ function FichaDoPedido({
             {/* PARA ONDE VAI, E COM QUE CÓDIGO */}
             {pedido.entrega_tipo === "entrega" ? (
                 <div>
-                    <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                    <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                         Entregar em
                     </p>
 
-                    <address className="mt-1 not-italic text-sm leading-relaxed text-[#303030]">
+                    <address className="mt-1 not-italic text-sm leading-relaxed text-[var(--ink)]">
                         {pedido.logradouro}, {pedido.numero}
                         {pedido.complemento ? ` — ${pedido.complemento}` : ""}
                         <br />
                         {pedido.bairro} · {pedido.cidade}{pedido.uf ? `/${pedido.uf}` : ""}
-                        {pedido.cep ? <span className="num text-[#616161]"> · CEP {pedido.cep}</span> : null}
+                        {pedido.cep ? <span className="num text-[var(--ink-2)]"> · CEP {pedido.cep}</span> : null}
                     </address>
 
                     {pedido.previsao_entrega && (
-                        <p className="mt-1 text-sm text-[#616161]">
+                        <p className="mt-1 text-sm text-[var(--ink-2)]">
                             Previsão de chegada: {new Date(pedido.previsao_entrega).toLocaleDateString("pt-BR")}
                         </p>
                     )}
@@ -1265,14 +1330,14 @@ function FichaDoPedido({
                     {pedido.status === "confirmado" && !pedido.envio_previsto_em && (
                         <Link
                             href="/page/entregas"
-                            className="mt-2 inline-block rounded-lg border border-[#FFD59E] bg-[#FFF1E3] px-3 py-2 text-xs font-semibold text-[#5E4200] transition-colors hover:bg-[#FFE4C4]"
+                            className="mt-2 inline-block rounded-lg border border-[#FFD59E] bg-[var(--amarelo-fundo)] px-3 py-2 text-xs font-semibold text-[var(--amarelo)] transition-colors hover:bg-[#FFE4C4]"
                         >
                             Em preparo, sem dia de saída — marque na agenda de entregas
                         </Link>
                     )}
 
                     {pedido.envio_previsto_em && (
-                        <p className="mt-1 text-sm text-[#616161]">
+                        <p className="mt-1 text-sm text-[var(--ink-2)]">
                             Sai em {new Date(pedido.envio_previsto_em).toLocaleDateString("pt-BR")}.
                         </p>
                     )}
@@ -1315,7 +1380,7 @@ function FichaDoPedido({
                     </form>
                 </div>
             ) : (
-                <p className="text-sm text-[#616161]">
+                <p className="text-sm text-[var(--ink-2)]">
                     {pedido.entrega_tipo === "retirada"
                         ? "O cliente vem buscar na loja."
                         : "Sem entrega registrada — pedido lançado no painel."}
@@ -1324,34 +1389,55 @@ function FichaDoPedido({
 
             {/* A CONTA, ABERTA.
                 Um "Total" sozinho obriga o lojista a somar de cabeça para
-                conferir com o extrato: ele precisa saber quanto foi de peça,
+                conferir com o extrato: ele precisa saber quanto foi de unidade,
                 quanto saiu de desconto e quanto entrou de frete. */}
-            <div className="space-y-1 border-t border-[#EBEBEB] pt-4 text-sm">
+            <div className="space-y-1 border-t border-[var(--linha-suave)] pt-4 text-sm">
 
-                <div className="flex items-center justify-between gap-3 text-[#616161]">
+                <div className="flex items-center justify-between gap-3 text-[var(--ink-2)]">
                     <span>Produtos</span>
                     <span className="num">{formatarMoeda(somaDosItens(pedido))}</span>
                 </div>
 
                 {desconto > 0 && (
-                    <div className="flex items-center justify-between gap-3 text-[#0C5132]">
+                    <div className="flex items-center justify-between gap-3 text-[var(--verde)]">
                         <span>Desconto</span>
                         <span className="num">− {formatarMoeda(desconto)}</span>
                     </div>
                 )}
 
                 {(pedido.frete ?? 0) > 0 && (
-                    <div className="flex items-center justify-between gap-3 text-[#616161]">
+                    <div className="flex items-center justify-between gap-3 text-[var(--ink-2)]">
                         <span>Frete</span>
                         <span className="num">{formatarMoeda(pedido.frete ?? 0)}</span>
                     </div>
                 )}
 
-                <div className="flex items-center justify-between gap-3 border-t border-[#E1E1E1] pt-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-[#616161]">Total</span>
+                <div className="flex items-center justify-between gap-3 border-t border-[var(--linha)] pt-1.5">
+                    <span className="text-xs font-semibold text-[var(--ink-2)]">Total</span>
                     <Preco valor={totalDoPedido(pedido)} className="text-lg" />
                 </div>
             </div>
         </div>
     )
+}
+
+/**
+ * A hora marcada, escrita como a cozinha lê.
+ *
+ * Dia e hora juntos, e sempre: "12:30" sozinho obriga quem lê a descobrir se
+ * é hoje ou amanhã, e essa é justamente a pergunta que a linha existe para
+ * responder.
+ */
+function horaMarcada(quando: string): string {
+
+    const data = new Date(quando)
+
+    if (Number.isNaN(data.getTime())) return quando
+
+    return data.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    })
 }

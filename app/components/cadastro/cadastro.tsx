@@ -26,7 +26,7 @@ import { MARCA } from "@/app/marca"
 
 const ITENS: ItemMoldura[] = [
     { texto: "Cadastro em dois passos: seus dados e o pagamento da assinatura.", Icone: FiTag },
-    { texto: "Etiqueta com código de barras pronta para imprimir por peça.", Icone: FiPrinter },
+    { texto: "Etiqueta com código de barras pronta para imprimir por unidade.", Icone: FiPrinter },
     { texto: "Assinatura mensal, cancelada por você mesmo quando quiser.", Icone: FiCreditCard },
 ]
 
@@ -256,8 +256,8 @@ export default function Cadastro() {
 
     return (
         <MolduraAuth
-            etiqueta="Gestão de loja de roupas"
-            chamada="Comece a controlar cada peça da sua loja."
+            etiqueta="Gestão de loja"
+            chamada="Comece a controlar cada unidade da sua loja."
             itens={ITENS}
             nota={nota}
         >
@@ -266,19 +266,19 @@ export default function Cadastro() {
 
                 <div className="text-center">
 
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#CDFEE1] text-[#0C5132]">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#CDFEE1] text-[var(--verde)]">
                         <FiCheckCircle className="w-6" aria-hidden />
                     </div>
 
-                    <h1 className="font-display mt-5 text-[1.75rem] leading-tight text-[#303030]">
+                    <h1 className="font-display mt-5 text-[1.75rem] leading-tight text-[var(--ink)]">
                         Conta criada
                     </h1>
 
-                    <p className="mt-3 text-sm leading-relaxed text-[#616161]">
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--ink-2)]">
                         Entre com seus dados para abrir o painel.
                     </p>
 
-                    <p className="mt-6 text-sm font-semibold text-[#8A8A8A]">
+                    <p className="mt-6 text-sm font-semibold text-[var(--ink-3)]">
                         Redirecionando para a identificação...
                     </p>
 
@@ -291,23 +291,23 @@ export default function Cadastro() {
                     <button
                         type="button"
                         onClick={() => { setPasso("dados"); setError(""); setAvisoCodigo("") }}
-                        className="flex items-center gap-1.5 text-sm font-semibold text-[#616161] transition-colors hover:text-[#303030]"
+                        className="flex items-center gap-1.5 text-sm font-semibold text-[var(--ink-2)] transition-colors hover:text-[var(--ink)]"
                     >
                         <FiArrowLeft className="w-4" aria-hidden />
                         Usar outro e-mail
                     </button>
 
-                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[#303030]">
+                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[var(--ink)]">
                         Confirme seu e-mail
                     </h1>
 
-                    <p className="mt-2 text-sm leading-relaxed text-[#616161]">
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--ink-2)]">
                         Enviamos um código de 6 dígitos para{" "}
-                        <span className="font-semibold text-[#303030]">{email}</span>. Ele
+                        <span className="font-semibold text-[var(--ink)]">{email}</span>. Ele
                         vale por 10 minutos.
                     </p>
 
-                    <p className="mt-1 text-sm text-[#8A8A8A]">
+                    <p className="mt-1 text-sm text-[var(--ink-3)]">
                         É o endereço que vai abrir o seu painel — por isso pedimos para
                         conferir agora, e não depois de você já ter pago.
                     </p>
@@ -339,7 +339,7 @@ export default function Cadastro() {
                         />
 
                         {avisoCodigo && !error && (
-                            <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#EAFBF1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                            <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#EAFBF1] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                                 <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                                 <span>{avisoCodigo}</span>
                             </p>
@@ -348,7 +348,7 @@ export default function Cadastro() {
                         {error && (
                             <div
                                 role="alert"
-                                className="mt-3 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                                className="mt-3 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                             >
                                 <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                                 <span>{error}</span>
@@ -369,12 +369,12 @@ export default function Cadastro() {
                         type="button"
                         onClick={pedirOutroCodigo}
                         disabled={reenviando || loading}
-                        className="mt-4 text-sm font-semibold text-[#005BD3] transition-colors hover:text-[#004299] disabled:text-[#8A8A8A]"
+                        className="mt-4 text-sm font-semibold text-[var(--azul)] transition-colors hover:text-[#004299] disabled:text-[var(--ink-3)]"
                     >
                         {reenviando ? "Enviando..." : "Não recebi o código, enviar de novo"}
                     </button>
 
-                    <p className="mt-6 flex items-start gap-2 border-t border-[#EBEBEB] pt-6 text-xs leading-relaxed text-[#8A8A8A]">
+                    <p className="mt-6 flex items-start gap-2 border-t border-[var(--linha-suave)] pt-6 text-xs leading-relaxed text-[var(--ink-3)]">
                         <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                         Nenhuma conta é criada antes desta confirmação. Se o e-mail não
                         chegar, confira a caixa de spam antes de pedir outro.
@@ -389,7 +389,7 @@ export default function Cadastro() {
                     <button
                         type="button"
                         onClick={() => { setPasso("dados"); setError("") }}
-                        className="flex items-center gap-1.5 text-sm font-semibold text-[#616161] transition-colors hover:text-[#303030]"
+                        className="flex items-center gap-1.5 text-sm font-semibold text-[var(--ink-2)] transition-colors hover:text-[var(--ink)]"
                     >
                         <FiArrowLeft className="w-4" aria-hidden />
                         Corrigir meus dados
@@ -399,31 +399,31 @@ export default function Cadastro() {
                         pede confirmação — dizer isso aqui evita a dúvida de
                         quem acabou de digitar o código. */}
 
-                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[#303030]">
+                    <h1 className="font-display mt-4 text-[1.75rem] leading-tight text-[var(--ink)]">
                         Assine para criar a conta
                     </h1>
 
-                    <p className="mt-2 text-sm text-[#616161]">
+                    <p className="mt-2 text-sm text-[var(--ink-2)]">
                         É uma assinatura só, com tudo dentro. A conta é criada assim que
                         o pagamento for confirmado.
                     </p>
 
-                    <p className="mt-1 text-sm text-[#8A8A8A]">
-                        Conta de <span className="font-semibold text-[#616161]">{email}</span>
+                    <p className="mt-1 text-sm text-[var(--ink-3)]">
+                        Conta de <span className="font-semibold text-[var(--ink-2)]">{email}</span>
                     </p>
 
-                    <div className="mt-6 rounded-xl border border-[#EBEBEB] p-5">
+                    <div className="mt-6 rounded-xl border border-[var(--linha-suave)] p-5">
 
                         <div className="flex items-baseline justify-between gap-3">
-                            <h2 className="font-display text-lg text-[#303030]">
+                            <h2 className="font-display text-lg text-[var(--ink)]">
                                 {oferta?.nome ?? MARCA}
                             </h2>
 
                             <p className="shrink-0 text-right">
-                                <span className="font-display text-xl text-[#303030]">
+                                <span className="font-display text-xl text-[var(--ink)]">
                                     {temTeste ? "Grátis" : formatarPreco(oferta?.preco)}
                                 </span>
-                                <span className="block text-xs text-[#8A8A8A]">
+                                <span className="block text-xs text-[var(--ink-3)]">
                                     {temTeste
                                         ? `por ${testeDias} dias, depois ${formatarPreco(oferta?.preco)}/mês`
                                         : "por mês"}
@@ -432,15 +432,15 @@ export default function Cadastro() {
                         </div>
 
                         {oferta?.descricao && (
-                            <p className="mt-1.5 text-sm text-[#616161]">
+                            <p className="mt-1.5 text-sm text-[var(--ink-2)]">
                                 {oferta.descricao}
                             </p>
                         )}
 
                         <ul className="mt-4 space-y-1.5">
                             {(oferta?.recursos ?? []).map((recurso) => (
-                                <li key={recurso} className="flex items-start gap-2 text-sm text-[#616161]">
-                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                                <li key={recurso} className="flex items-start gap-2 text-sm text-[var(--ink-2)]">
+                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[var(--verde)]" aria-hidden />
                                     {recurso}
                                 </li>
                             ))}
@@ -464,14 +464,14 @@ export default function Cadastro() {
                     {error && (
                         <div
                             role="alert"
-                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                         >
                             <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                             <span>{error}</span>
                         </div>
                     )}
 
-                    <p className="mt-6 flex items-start gap-2 border-t border-[#EBEBEB] pt-6 text-xs leading-relaxed text-[#8A8A8A]">
+                    <p className="mt-6 flex items-start gap-2 border-t border-[var(--linha-suave)] pt-6 text-xs leading-relaxed text-[var(--ink-3)]">
                         <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                         {temTeste && !pedeCartao ? (
                             <>
@@ -498,11 +498,11 @@ export default function Cadastro() {
 
                 <form onSubmit={handleSubmit} noValidate>
 
-                    <h1 className="font-display text-[1.75rem] leading-tight text-[#303030]">
+                    <h1 className="font-display text-[1.75rem] leading-tight text-[var(--ink)]">
                         Criar conta
                     </h1>
 
-                    <p className="mt-2 text-sm text-[#616161]">
+                    <p className="mt-2 text-sm text-[var(--ink-2)]">
                         Comece com seu e-mail e uma senha. No próximo passo você
                         assina — é uma assinatura só, com tudo incluído.
                     </p>
@@ -558,7 +558,7 @@ export default function Cadastro() {
                                     type="button"
                                     onClick={() => setMostrarSenha((v) => !v)}
                                     aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                                    className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                                    className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                                 >
                                     {mostrarSenha
                                         ? <FiEyeOff className="w-[1.05rem]" aria-hidden />
@@ -591,11 +591,11 @@ export default function Cadastro() {
 
                         {/* Regras da senha, marcadas conforme vão sendo atendidas. */}
                         {pass.length > 0 && (
-                            <ul className="space-y-1.5 rounded-lg bg-[#F1F1F1] px-4 py-3">
+                            <ul className="space-y-1.5 rounded-lg bg-[var(--fundo)] px-4 py-3">
                                 {regras.map(({ texto, ok }) => (
                                     <li
                                         key={texto}
-                                        className={`flex items-center gap-2 text-xs font-semibold ${ok ? "text-[#0C5132]" : "text-[#616161]"}`}
+                                        className={`flex items-center gap-2 text-xs font-semibold ${ok ? "text-[var(--verde)]" : "text-[var(--ink-2)]"}`}
                                     >
                                         {ok
                                             ? <FiCheck className="w-3.5 shrink-0" aria-hidden />
@@ -612,7 +612,7 @@ export default function Cadastro() {
                     {error && (
                         <div
                             role="alert"
-                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                            className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                         >
                             <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                             <span>{error}</span>
@@ -627,9 +627,9 @@ export default function Cadastro() {
                         {loading ? "Aguarde..." : "Continuar"}
                     </button>
 
-                    <p className="mt-6 border-t border-[#EBEBEB] pt-6 text-center text-sm text-[#616161]">
+                    <p className="mt-6 border-t border-[var(--linha-suave)] pt-6 text-center text-sm text-[var(--ink-2)]">
                         Já tem uma conta?{" "}
-                        <Link href="/login" className="font-semibold text-[#005BD3] hover:underline">
+                        <Link href="/login" className="font-semibold text-[var(--azul)] hover:underline">
                             Entrar
                         </Link>
                     </p>

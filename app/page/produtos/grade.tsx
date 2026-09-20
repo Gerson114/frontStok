@@ -520,30 +520,30 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                 onde o trabalho acontece.
             ========================== */}
 
-            <div className="card grid grid-cols-2 divide-[#EBEBEB] md:grid-cols-4 md:divide-x">
+            <div className="card grid grid-cols-2 divide-[var(--linha-suave)] md:grid-cols-4 md:divide-x">
 
-                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
+                <div className="flex items-center gap-3 border-b border-[var(--linha-suave)] p-4 md:border-b-0">
 
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#005BD3]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-[var(--azul)]">
                         <FiBox className="w-4" aria-hidden />
                     </span>
 
                     <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Produtos</span>
-                        <span className="num block text-xl font-extrabold text-[#303030]">{totalProdutos}</span>
+                        <span className="block text-xs text-[var(--ink-2)]">Produtos</span>
+                        <span className="num block text-xl font-extrabold text-[var(--ink)]">{totalProdutos}</span>
                     </span>
 
                 </div>
 
-                <div className="flex items-center gap-3 border-b border-[#EBEBEB] p-4 md:border-b-0">
+                <div className="flex items-center gap-3 border-b border-[var(--linha-suave)] p-4 md:border-b-0">
 
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#CDFEE1] text-[#0C5132]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--verde-fundo)] text-[var(--verde)]">
                         <FiCheck className="w-4" aria-hidden />
                     </span>
 
                     <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Peças em estoque</span>
-                        <span className="num block text-xl font-extrabold text-[#303030]">{totalEstoque}</span>
+                        <span className="block text-xs text-[var(--ink-2)]">Unidades em estoque</span>
+                        <span className="num block text-xl font-extrabold text-[var(--ink)]">{totalEstoque}</span>
                     </span>
 
                 </div>
@@ -551,15 +551,15 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                 <div className="flex items-center gap-3 p-4">
 
                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                        semEstoque > 0 ? "bg-[#FEE9E8] text-[#8E1F0B]" : "bg-[#F1F1F1] text-[#616161]"
+                        semEstoque > 0 ? "bg-[var(--vermelho-fundo)] text-[var(--vermelho)]" : "bg-[var(--fundo)] text-[var(--ink-2)]"
                     }`}>
                         <FiAlertTriangle className="w-4" aria-hidden />
                     </span>
 
                     <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Sem estoque</span>
+                        <span className="block text-xs text-[var(--ink-2)]">Sem estoque</span>
                         <span className={`num block text-xl font-extrabold ${
-                            semEstoque > 0 ? "text-[#8E1F0B]" : "text-[#303030]"
+                            semEstoque > 0 ? "text-[var(--vermelho)]" : "text-[var(--ink)]"
                         }`}>
                             {semEstoque}
                         </span>
@@ -569,13 +569,13 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
                 <div className="flex items-center gap-3 p-4">
 
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFF1E3] text-[#5E4200]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--amarelo-fundo)] text-[var(--amarelo)]">
                         <FiDollarSign className="w-4" aria-hidden />
                     </span>
 
                     <span className="min-w-0">
-                        <span className="block text-xs text-[#616161]">Valor em estoque</span>
-                        <span className="num block truncate text-xl font-extrabold text-[#005BD3]">
+                        <span className="block text-xs text-[var(--ink-2)]">Valor em estoque</span>
+                        <span className="num block truncate text-xl font-extrabold text-[var(--azul)]">
                             {formatarMoeda(valorEmEstoque)}
                         </span>
                     </span>
@@ -608,13 +608,13 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 onClick={() => aoMudarSituacao(chave)}
                                 className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-bold transition-colors ${
                                     ativo
-                                        ? "border-[#005BD3] bg-[#EAF4FF] text-[#00369B]"
-                                        : "border-[#E1E1E1] bg-white text-[#616161] hover:border-[#8A8A8A] hover:text-[#303030]"
+                                        ? "border-[var(--azul)] bg-[var(--azul-suave)] text-[var(--azul-escuro)]"
+                                        : "border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-2)] hover:border-[var(--ink-3)] hover:text-[var(--ink)]"
                                 }`}
                             >
                                 {nome}
 
-                                <span className={`num text-xs font-extrabold ${ativo ? "text-[#005BD3]" : "text-[#8A8A8A]"}`}>
+                                <span className={`num text-xs font-extrabold ${ativo ? "text-[var(--azul)]" : "text-[var(--ink-3)]"}`}>
                                     {total}
                                 </span>
                             </button>
@@ -625,7 +625,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
                 <div className="relative w-full lg:w-80">
 
-                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                    <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                     <input
                         type="text"
@@ -641,7 +641,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                             type="button"
                             onClick={() => aoMudarBusca("")}
                             aria-label="Limpar busca"
-                            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
@@ -652,7 +652,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
             </div>
 
             {erroSite && (
-                <div role="alert" className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                     {erroSite}
                 </div>
             )}
@@ -664,18 +664,18 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
             {linhasFiltradas.length === 0 ? (
 
-                <div className="mt-6 rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
+                <div className="mt-6 rounded-lg border border-dashed border-[var(--linha)] bg-[var(--superficie)] p-16 text-center">
 
-                    <FiBox className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
+                    <FiBox className="mx-auto w-10 text-[var(--ink-3)]" aria-hidden />
 
-                    <h3 className="font-display mt-5 text-xl text-[#303030]">
+                    <h3 className="font-display mt-5 text-xl text-[var(--ink)]">
                         Nenhum produto encontrado
                     </h3>
 
-                    <p className="mt-2 text-sm text-[#616161]">
+                    <p className="mt-2 text-sm text-[var(--ink-2)]">
                         {totalProdutos === 0
                             ? "Não existem produtos cadastrados."
-                            : "Nenhuma peça corresponde ao filtro ou à busca."}
+                            : "Nenhuma unidade corresponde ao filtro ou à busca."}
                     </p>
 
                     {totalProdutos === 0 ? (
@@ -712,7 +712,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                         <table className="w-full min-w-[52rem] border-collapse text-sm">
 
                             <thead>
-                                <tr className="border-b border-[#E1E1E1] bg-[#F7F7F7] text-left">
+                                <tr className="border-b border-[var(--linha)] bg-[var(--superficie-2)] text-left">
 
                                     <th scope="col" className="px-4 py-2.5">
                                         <Cabecalho ativa={ordem.coluna === "produto"} desc={ordem.desc} aoClicar={() => ordenarPor("produto")}>
@@ -726,7 +726,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                         </Cabecalho>
                                     </th>
 
-                                    <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161] xl:table-cell">
+                                    <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)] xl:table-cell">
                                         Categoria
                                     </th>
 
@@ -742,17 +742,17 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                         </Cabecalho>
                                     </th>
 
-                                    <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                    <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)]">
                                         Situação
                                     </th>
 
                                     {temSite && (
-                                        <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161] lg:table-cell">
+                                        <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)] lg:table-cell">
                                             Site
                                         </th>
                                     )}
 
-                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)]">
                                         Ações
                                     </th>
 
@@ -772,7 +772,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                         <tr
                                             key={unidade ? `unidade-${unidade.id}` : `produto-${produto.id}`}
                                             onClick={() => abrirModal(produto)}
-                                            className="cursor-pointer border-b border-[#EBEBEB] transition-colors last:border-b-0 hover:bg-[#F7F7F7]"
+                                            className="cursor-pointer border-b border-[var(--linha-suave)] transition-colors last:border-b-0 hover:bg-[var(--superficie-2)]"
                                         >
 
                                             {/* PRODUTO */}
@@ -780,7 +780,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
                                                 <div className="flex items-center gap-3">
 
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F1F1F1]">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--fundo)]">
                                                         {produto.imagem_url ? (
                                                             // eslint-disable-next-line @next/next/no-img-element
                                                             <img
@@ -789,18 +789,18 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                                                 className="h-full w-full object-cover"
                                                             />
                                                         ) : (
-                                                            <FiCamera className="w-4 text-[#8A8A8A]" aria-hidden />
+                                                            <FiCamera className="w-4 text-[var(--ink-3)]" aria-hidden />
                                                         )}
                                                     </div>
 
                                                     <div className="min-w-0">
 
-                                                        <p className="truncate font-bold text-[#303030]">
+                                                        <p className="truncate font-bold text-[var(--ink)]">
                                                             {produto.nome}
                                                         </p>
 
                                                         {produto.variacao && (
-                                                            <p className="truncate text-xs text-[#616161]">
+                                                            <p className="truncate text-xs text-[var(--ink-2)]">
                                                                 {produto.variacao_rotulo || "Variação"}: {produto.variacao}
                                                             </p>
                                                         )}
@@ -812,23 +812,23 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                             </td>
 
                                             {/* CÓDIGO */}
-                                            <td className="px-4 py-2.5 font-mono text-xs text-[#616161]">
+                                            <td className="px-4 py-2.5 font-mono text-xs text-[var(--ink-2)]">
                                                 {codigo}
                                             </td>
 
                                             {/* CATEGORIA */}
-                                            <td className="hidden px-4 py-2.5 text-[#616161] xl:table-cell">
+                                            <td className="hidden px-4 py-2.5 text-[var(--ink-2)] xl:table-cell">
                                                 {produto.categoria || "—"}
                                             </td>
 
                                             {/* ENDEREÇO */}
                                             <td className="px-4 py-2.5">
                                                 {unidade?.endereco ? (
-                                                    <span className="font-mono text-xs font-bold text-[#303030]">
+                                                    <span className="font-mono text-xs font-bold text-[var(--ink)]">
                                                         {unidade.endereco}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[#8A8A8A]">—</span>
+                                                    <span className="text-[var(--ink-3)]">—</span>
                                                 )}
                                             </td>
 
@@ -874,8 +874,8 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                                         title="Preço promocional"
                                                         aria-label={`Preço promocional de ${produto.nome}`}
                                                         onClick={(e) => { e.stopPropagation(); abrirModal(produto) }}
-                                                        className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#F1F1F1] ${
-                                                            emPromocao ? "text-[#5E4200]" : "text-[#616161] hover:text-[#303030]"
+                                                        className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[var(--fundo)] ${
+                                                            emPromocao ? "text-[var(--amarelo)]" : "text-[var(--ink-2)] hover:text-[var(--ink)]"
                                                         }`}
                                                     >
                                                         <FiPercent className="w-4" aria-hidden />
@@ -886,7 +886,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                                         title="Editar"
                                                         aria-label={`Editar ${produto.nome}`}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)]"
                                                     >
                                                         <FiEdit2 className="w-4" aria-hidden />
                                                     </Link>
@@ -896,7 +896,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                                         title="Etiqueta"
                                                         aria-label={`Etiqueta de ${produto.nome}`}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)]"
                                                     >
                                                         <FiPrinter className="w-4" aria-hidden />
                                                     </Link>
@@ -918,14 +918,14 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                     {/* RODAPÉ DA GRADE — a contagem fica colada nela e
                         não solta no meio da página: "1–25 de 340" é
                         parte da tabela, não um aviso à parte. */}
-                    <div className="flex flex-col gap-3 border-t border-[#E1E1E1] bg-[#F7F7F7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border-t border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 
-                        <p className="text-xs text-[#616161]">
+                        <p className="text-xs text-[var(--ink-2)]">
                             Mostrando{" "}
-                            <span className="num font-bold text-[#303030]">
+                            <span className="num font-bold text-[var(--ink)]">
                                 {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
                             </span>{" "}
-                            de <span className="num font-bold text-[#303030]">{linhasFiltradas.length}</span>
+                            de <span className="num font-bold text-[var(--ink)]">{linhasFiltradas.length}</span>
                             {linhasFiltradas.length !== linhas.length && (
                                 <> · <span className="num">{linhas.length}</span> no total</>
                             )}
@@ -958,7 +958,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                     className="fixed inset-0 z-50 flex items-center justify-center p-4"
                     onClick={fecharModal}
                 >
-                    <div className="absolute inset-0 bg-[#303030]/50" />
+                    <div className="absolute inset-0 bg-[var(--ink)]/50" />
 
                     <div
                         onClick={(e) => e.stopPropagation()}
@@ -969,14 +969,14 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                             type="button"
                             onClick={fecharModal}
                             aria-label="Fechar"
-                            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
 
                         <div className="flex items-center gap-4 pr-8">
 
-                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
                                 {produtoSelecionado.imagem_url ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -988,10 +988,10 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                             </div>
 
                             <div className="min-w-0">
-                                <h2 className="font-display truncate text-lg text-[#303030]">
+                                <h2 className="font-display truncate text-lg text-[var(--ink)]">
                                     {produtoSelecionado.nome}
                                 </h2>
-                                <p className="text-sm text-[#616161]">
+                                <p className="text-sm text-[var(--ink-2)]">
                                     Preço atual: <span className="num">{formatarMoeda(Number(produtoSelecionado.preco))}</span>
                                 </p>
                             </div>
@@ -1009,19 +1009,19 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 {atributosParaFicha(produtoSelecionado.atributos).map(({ nome, valor }) => (
                                     <span
                                         key={nome}
-                                        className="rounded-full bg-[#F1F1F1] px-2.5 py-1 text-xs text-[#616161]"
+                                        className="rounded-full bg-[var(--fundo)] px-2.5 py-1 text-xs text-[var(--ink-2)]"
                                     >
-                                        {nome}: <span className="font-bold text-[#303030]">{valor}</span>
+                                        {nome}: <span className="font-bold text-[var(--ink)]">{valor}</span>
                                     </span>
                                 ))}
                             </div>
                         )}
 
-                        <div className="mt-5 rounded-lg border border-[#E1E1E1] bg-[#F1F1F1] px-4 py-3">
-                            <p className="text-xs text-[#616161]">
+                        <div className="mt-5 rounded-lg border border-[var(--linha)] bg-[var(--fundo)] px-4 py-3">
+                            <p className="text-xs text-[var(--ink-2)]">
                                 Estoque disponível
                             </p>
-                            <p className="num text-lg font-extrabold text-[#303030]">
+                            <p className="num text-lg font-extrabold text-[var(--ink)]">
                                 {produtoSelecionado.estoque} un.
                             </p>
                         </div>
@@ -1043,7 +1043,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 className="field num"
                             />
 
-                            <p className="text-xs text-[#616161]">
+                            <p className="text-xs text-[var(--ink-2)]">
                                 Escolha um valor menor (desconto) ou maior (reajuste) que o preço atual.
                             </p>
 
@@ -1064,13 +1064,13 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                         )}
 
                         {erroPromo && (
-                            <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                            <div className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                                 {erroPromo}
                             </div>
                         )}
 
                         {erroSite && (
-                            <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                            <div className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                                 {erroSite}
                             </div>
                         )}
@@ -1130,7 +1130,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                         type="button"
                                         onClick={excluirPromocao}
                                         disabled={salvandoPromo}
-                                        className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8] disabled:opacity-50"
+                                        className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)] disabled:opacity-50"
                                     >
                                         Remover promoção
                                     </button>
@@ -1140,7 +1140,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                     type="button"
                                     onClick={fecharModal}
                                     disabled={salvandoPromo}
-                                    className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#616161] transition-colors hover:bg-[#F1F1F1] disabled:opacity-50"
+                                    className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] disabled:opacity-50"
                                 >
                                     Cancelar
                                 </button>
@@ -1151,18 +1151,18 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
                         {/* EXCLUIR PRODUTO */}
 
-                        <div className="mt-4 border-t border-[#E1E1E1] pt-4">
+                        <div className="mt-4 border-t border-[var(--linha)] pt-4">
 
                             {confirmandoExclusao ? (
 
                                 <div className="space-y-2">
 
-                                    <p className="text-sm font-semibold text-[#8E1F0B]">
+                                    <p className="text-sm font-semibold text-[var(--vermelho)]">
                                         Excluir permanentemente &ldquo;{produtoSelecionado.nome}&rdquo;? Essa ação não pode ser desfeita.
                                     </p>
 
                                     {erroExclusao && (
-                                        <div className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                                        <div className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                                             {erroExclusao}
                                         </div>
                                     )}
@@ -1173,7 +1173,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                             type="button"
                                             onClick={() => setConfirmandoExclusao(false)}
                                             disabled={excluindoProduto}
-                                            className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[#616161] transition-colors hover:bg-[#F1F1F1] disabled:opacity-50"
+                                            className="flex-1 rounded-lg px-3 py-2 text-sm font-bold text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] disabled:opacity-50"
                                         >
                                             Cancelar
                                         </button>
@@ -1196,7 +1196,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setConfirmandoExclusao(true)}
-                                    className="w-full rounded-lg px-3 py-2 text-sm font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8]"
+                                    className="w-full rounded-lg px-3 py-2 text-sm font-bold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)]"
                                 >
                                     Excluir produto
                                 </button>

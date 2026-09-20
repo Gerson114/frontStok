@@ -34,7 +34,7 @@ export function Selecao({ children, className = "", ...resto }: SelecaoProps) {
             </select>
 
             <FiChevronDown
-                className="pointer-events-none absolute right-2.5 top-1/2 w-4 -translate-y-1/2 text-[#616161]"
+                className="pointer-events-none absolute right-2.5 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-2)]"
                 aria-hidden
             />
 

@@ -53,6 +53,7 @@ export async function criarFuncionario(dados: {
     password: string
     recursos: string[]
     gerente?: boolean
+    comissao_percentual?: number
 }): Promise<Funcionario & { convite_enviado: boolean }> {
     const resposta = await apiFetch<{ funcionario: Funcionario; convite_enviado?: boolean }>(
         "/api/funcionarios",
@@ -69,7 +70,16 @@ export async function criarFuncionario(dados: {
 
 export async function salvarFuncionario(
     id: number,
-    dados: { nome: string; recursos: string[]; ativo: boolean; gerente?: boolean },
+    dados: {
+        nome: string
+        recursos: string[]
+        ativo: boolean
+        gerente?: boolean
+
+        // Só o dono manda este campo, e só o dono é obedecido: pedido de
+        // gerente o backend ignora em silêncio.
+        comissao_percentual?: number
+    },
 ): Promise<Funcionario> {
     const resposta = await apiFetch<{ funcionario: Funcionario }>(`/api/funcionarios/${id}`, {
         method: "PUT",

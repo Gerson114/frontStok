@@ -10,7 +10,7 @@
  * mesmo motivo e com o mesmo valor — e é de lá que saem o remetente do e-mail
  * e a descrição da assinatura no provedor de cobrança.
  */
-export const MARCA = "TramaSistem"
+export const MARCA = "Chonnostech"
 
 /** O plano de cima, escrito como aparece na página de vendas. */
 export const MARCA_PRO = `${MARCA} Pro`

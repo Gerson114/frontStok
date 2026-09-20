@@ -107,7 +107,7 @@ export default function ImportarProdutos() {
 
             setPronto(
                 `${resultado.criados} produto(s) criado(s), ${resultado.atualizados} atualizado(s)` +
-                (resultado.pecas > 0 ? ` e ${resultado.pecas} peça(s) no estoque.` : ".")
+                (resultado.pecas > 0 ? ` e ${resultado.pecas} unidade(s) no estoque.` : ".")
             )
 
             setConferencia(null)
@@ -137,14 +137,14 @@ export default function ImportarProdutos() {
         >
 
             {erro && (
-                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {pronto && (
-                <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="w-4 shrink-0" aria-hidden />
                     <span>{pronto}</span>
                     <button
@@ -167,17 +167,17 @@ export default function ImportarProdutos() {
                     escolher(e.dataTransfer.files?.[0] ?? null)
                 }}
                 className={`card p-6 text-center transition-colors ${
-                    arrastando ? "border-[#005BD3] bg-[#EAF4FF]" : ""
+                    arrastando ? "border-[var(--azul)] bg-[var(--azul-suave)]" : ""
                 }`}
             >
 
-                <FiUploadCloud className="mx-auto w-8 text-[#8A8A8A]" aria-hidden />
+                <FiUploadCloud className="mx-auto w-8 text-[var(--ink-3)]" aria-hidden />
 
-                <p className="mt-3 text-sm font-medium text-[#303030]">
+                <p className="mt-3 text-sm font-medium text-[var(--ink)]">
                     {arquivo ? arquivo.name : "Arraste a planilha aqui, ou escolha o arquivo"}
                 </p>
 
-                <p className="mx-auto mt-1 max-w-xl text-[0.8125rem] text-[#616161]">
+                <p className="mx-auto mt-1 max-w-xl text-[0.8125rem] text-[var(--ink-2)]">
                     Serve o arquivo do Excel (.xlsx) ou o CSV que sai do sistema antigo. A
                     planilha precisa ter uma linha de cabeçalho com, no mínimo, as colunas de{" "}
                     <strong>nome</strong>, <strong>categoria</strong> e <strong>preço</strong> —
@@ -201,7 +201,7 @@ export default function ImportarProdutos() {
                     </label>
 
                     {conferindo && (
-                        <span className="text-sm text-[#616161]">Lendo a planilha...</span>
+                        <span className="text-sm text-[var(--ink-2)]">Lendo a planilha...</span>
                     )}
 
                 </div>
@@ -218,21 +218,21 @@ export default function ImportarProdutos() {
                         descobre aqui, e não depois de gravar. */}
                     <section className="card mt-4 p-4">
 
-                        <p className="text-[0.8125rem] font-medium text-[#303030]">
+                        <p className="text-[0.8125rem] font-medium text-[var(--ink)]">
                             O que eu entendi das suas colunas
                         </p>
 
                         <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5">
                             {conferencia.colunas.map((coluna) => (
-                                <li key={coluna.campo} className="text-[0.8125rem] text-[#616161]">
+                                <li key={coluna.campo} className="text-[0.8125rem] text-[var(--ink-2)]">
                                     {coluna.campo}:{" "}
-                                    <span className="font-medium text-[#303030]">“{coluna.coluna}”</span>
+                                    <span className="font-medium text-[var(--ink)]">“{coluna.coluna}”</span>
                                 </li>
                             ))}
                         </ul>
 
                         {resumo && resumo.erros > 0 && (
-                            <p className="mt-3 flex items-start gap-2 rounded-lg bg-[#FFF1E3] px-3 py-2 text-[0.8125rem] text-[#5E4200]">
+                            <p className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--amarelo-fundo)] px-3 py-2 text-[0.8125rem] text-[var(--amarelo)]">
                                 <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
                                 <span>
                                     <span className="num font-bold">{resumo.erros}</span> linha(s) não
@@ -277,7 +277,7 @@ export default function ImportarProdutos() {
                                                 <th scope="col">Categoria</th>
                                                 <th scope="col" className="text-right">Preço</th>
                                                 <th scope="col" className="text-right">Custo</th>
-                                                <th scope="col" className="text-right">Peças</th>
+                                                <th scope="col" className="text-right">Unidades</th>
                                                 <th scope="col">O que vai acontecer</th>
                                             </tr>
                                         </thead>
@@ -291,33 +291,33 @@ export default function ImportarProdutos() {
                                                 return (
                                                     <tr key={linha.linha}>
 
-                                                        <td className="num text-right text-[#8A8A8A]">
+                                                        <td className="num text-right text-[var(--ink-3)]">
                                                             {linha.linha}
                                                         </td>
 
                                                         <td>
-                                                            <span className="text-[#303030]">
-                                                                {linha.nome || <span className="text-[#8A8A8A]">(sem nome)</span>}
+                                                            <span className="text-[var(--ink)]">
+                                                                {linha.nome || <span className="text-[var(--ink-3)]">(sem nome)</span>}
                                                             </span>
                                                             {linha.variacao && (
-                                                                <span className="text-[#616161]"> · {linha.variacao}</span>
+                                                                <span className="text-[var(--ink-2)]"> · {linha.variacao}</span>
                                                             )}
                                                         </td>
 
-                                                        <td className="text-[#616161]">{linha.categoria}</td>
+                                                        <td className="text-[var(--ink-2)]">{linha.categoria}</td>
 
                                                         {/* O preço JÁ CONVERTIDO. É esta coluna que
                                                             denuncia "1.500" lido como mil e quinhentos
                                                             quando eram um e meio. */}
-                                                        <td className="num text-right text-[#303030]">
+                                                        <td className="num text-right text-[var(--ink)]">
                                                             {linha.preco > 0 ? moeda(linha.preco) : "—"}
                                                         </td>
 
-                                                        <td className="num text-right text-[#616161]">
+                                                        <td className="num text-right text-[var(--ink-2)]">
                                                             {linha.custo > 0 ? moeda(linha.custo) : "—"}
                                                         </td>
 
-                                                        <td className="num text-right text-[#616161]">
+                                                        <td className="num text-right text-[var(--ink-2)]">
                                                             {linha.situacao === "novo" ? linha.estoque : "—"}
                                                         </td>
 
@@ -327,13 +327,13 @@ export default function ImportarProdutos() {
                                                             </span>
 
                                                             {linha.erro && (
-                                                                <span className="mt-0.5 block text-xs text-[#8E1F0B]">
+                                                                <span className="mt-0.5 block text-xs text-[var(--vermelho)]">
                                                                     {linha.erro}
                                                                 </span>
                                                             )}
 
                                                             {linha.situacao === "atualiza" && (
-                                                                <span className="mt-0.5 block text-xs text-[#616161]">
+                                                                <span className="mt-0.5 block text-xs text-[var(--ink-2)]">
                                                                     preço e custo; o estoque fica como está
                                                                 </span>
                                                             )}
@@ -367,14 +367,14 @@ export default function ImportarProdutos() {
                         número exato do que vai acontecer, não "importar". */}
                     <section className="card mt-4 flex flex-wrap items-center justify-between gap-4 p-4">
 
-                        <p className="text-sm text-[#616161]">
-                            Vai criar <span className="num font-semibold text-[#303030]">{resumo?.novos ?? 0}</span>{" "}
+                        <p className="text-sm text-[var(--ink-2)]">
+                            Vai criar <span className="num font-semibold text-[var(--ink)]">{resumo?.novos ?? 0}</span>{" "}
                             produto(s)
                             {(resumo?.pecas ?? 0) > 0 && (
-                                <> com <span className="num font-semibold text-[#303030]">{resumo?.pecas}</span> peça(s) em estoque</>
+                                <> com <span className="num font-semibold text-[var(--ink)]">{resumo?.pecas}</span> unidade(s) em estoque</>
                             )}
                             {(resumo?.atualiza ?? 0) > 0 && (
-                                <> e atualizar <span className="num font-semibold text-[#303030]">{resumo?.atualiza}</span></>
+                                <> e atualizar <span className="num font-semibold text-[var(--ink)]">{resumo?.atualiza}</span></>
                             )}
                             . Ou tudo entra, ou nada entra.
                         </p>

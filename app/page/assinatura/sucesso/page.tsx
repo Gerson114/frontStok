@@ -129,15 +129,15 @@ export default function AssinaturaSucessoPage() {
 
                 {estado === "liberada" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EAFBF1] text-[#0C5132]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--verde-suave)] text-[var(--verde)]">
                             <FiCheckCircle className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
+                        <h1 className="font-display mt-5 text-2xl text-[var(--ink)]">
                             Pagamento confirmado
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#616161]">
+                        <p className="mt-2 text-sm text-[var(--ink-2)]">
                             Sua assinatura está ativa e o painel foi liberado.
                         </p>
 
@@ -147,29 +147,29 @@ export default function AssinaturaSucessoPage() {
                     </>
                 ) : estado === "entrando" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EAFBF1] text-[#0C5132]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--verde-suave)] text-[var(--verde)]">
                             <FiCheckCircle className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
+                        <h1 className="font-display mt-5 text-2xl text-[var(--ink)]">
                             Conta criada
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#616161]">
+                        <p className="mt-2 text-sm text-[var(--ink-2)]">
                             Tudo certo. Abrindo o seu painel...
                         </p>
                     </>
                 ) : estado === "erro" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE9E8] text-[#8E1F0B]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">
                             <FiAlertCircle className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
+                        <h1 className="font-display mt-5 text-2xl text-[var(--ink)]">
                             Não conseguimos concluir aqui
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#616161]">
+                        <p className="mt-2 text-sm text-[var(--ink-2)]">
                             {erro} Se o pagamento foi aprovado, sua conta existe: entre
                             com o e-mail e a senha que você acabou de cadastrar.
                         </p>
@@ -180,15 +180,15 @@ export default function AssinaturaSucessoPage() {
                     </>
                 ) : estado === "demorou" ? (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1F1F1] text-[#616161]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--fundo)] text-[var(--ink-2)]">
                             <FiClock className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
+                        <h1 className="font-display mt-5 text-2xl text-[var(--ink)]">
                             Ainda confirmando
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#616161]">
+                        <p className="mt-2 text-sm text-[var(--ink-2)]">
                             Recebemos seu pagamento, mas a confirmação do banco está
                             demorando mais que o normal. Isso costuma se resolver em
                             alguns minutos, e nada precisa ser pago de novo.
@@ -200,15 +200,15 @@ export default function AssinaturaSucessoPage() {
                     </>
                 ) : (
                     <>
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F1F1F1] text-[#616161]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--fundo)] text-[var(--ink-2)]">
                             <FiClock className="w-6" aria-hidden />
                         </div>
 
-                        <h1 className="font-display mt-5 text-2xl text-[#303030]">
+                        <h1 className="font-display mt-5 text-2xl text-[var(--ink)]">
                             Confirmando pagamento
                         </h1>
 
-                        <p className="mt-2 text-sm text-[#616161]">
+                        <p className="mt-2 text-sm text-[var(--ink-2)]">
                             Só um instante — estamos aguardando a confirmação.
                         </p>
                     </>

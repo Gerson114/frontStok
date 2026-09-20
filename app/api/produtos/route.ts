@@ -37,6 +37,11 @@ export async function POST(request: Request) {
             loja_id: Number(entrada.loja_id),
             // Em branco é o caso normal: o servidor escolhe onde guardar.
             endereco: sanitizeText(String(entrada.endereco ?? "")),
+
+            // Item que não é contado unidade a unidade (ver o handler de
+            // variantes, onde a mesma linha existe pelo mesmo motivo: este
+            // corpo é montado campo a campo, e o que não é listado some).
+            sem_contagem: entrada.sem_contagem === true,
         }
 
         const erros = validarProduto(produto)

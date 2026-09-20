@@ -223,7 +223,7 @@ export default function EditarProduto() {
   if (carregando) {
     return (
       <Pagina titulo="Editar produto" volta={{ nome: "Produtos", rota: "/page/produtos" }}>
-        <div className="card p-8 text-center text-sm text-[#616161]">Carregando...</div>
+        <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando...</div>
       </Pagina>
     )
   }
@@ -259,8 +259,8 @@ export default function EditarProduto() {
           {/* Bloco 1 */}
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">01</span>
-              <h2 className="font-display text-sm text-[#303030]">Informações básicas</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">01</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Informações básicas</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -321,8 +321,8 @@ export default function EditarProduto() {
           {/* Bloco 2 */}
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">02</span>
-              <h2 className="font-display text-sm text-[#303030]">Variação e ficha técnica</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">02</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Variação e ficha técnica</h2>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -365,16 +365,16 @@ export default function EditarProduto() {
                   placeholder="Ex: P, 220V, 500 g"
                   className="field"
                 />
-                <p className="text-xs text-[#616161]">
+                <p className="text-xs text-[var(--ink-2)]">
                   Cada variação é um produto próprio. Para cadastrar outra, use a
                   tela de cadastro — aqui muda só esta.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-1.5 border-t border-[#EBEBEB] pt-5">
+            <div className="space-y-1.5 border-t border-[var(--linha-suave)] pt-5">
               <label className="rotulo">Ficha técnica</label>
-              <p className="pb-1 text-xs text-[#616161]">
+              <p className="pb-1 text-xs text-[var(--ink-2)]">
                 O que descreve este produto no seu ramo: material, marca, garantia,
                 validade, dimensões.
               </p>
@@ -386,8 +386,8 @@ export default function EditarProduto() {
           {/* Bloco 3 */}
           <section className="card p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
-              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-xs font-bold text-[#00369B]">03</span>
-              <h2 className="font-display text-sm text-[#303030]">Valores e mídia</h2>
+              <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">03</span>
+              <h2 className="font-display text-sm text-[var(--ink)]">Valores e mídia</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -416,8 +416,8 @@ export default function EditarProduto() {
                   placeholder="50"
                   className="field num"
                 />
-                <p className="text-xs text-[#616161]">
-                  Peças novas (estoque maior) entram sem local — guarde-as na tela de Estoque.
+                <p className="text-xs text-[var(--ink-2)]">
+                  Unidades novas (estoque maior) entram sem local — guarde-as na tela de Estoque.
                 </p>
               </div>
 
@@ -439,7 +439,7 @@ export default function EditarProduto() {
           {erros.length > 0 && (
             <div
               role="alert"
-              className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+              className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
             >
               <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
               <div className="space-y-1">
@@ -453,7 +453,7 @@ export default function EditarProduto() {
           {sucesso && (
             <div
               role="status"
-              className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]"
+              className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]"
             >
               <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
               <span>Produto atualizado com sucesso! Redirecionando...</span>
@@ -483,15 +483,15 @@ export default function EditarProduto() {
         {/* Etiqueta / preview ao vivo */}
         <div className="lg:sticky lg:top-10">
           <div className="card relative overflow-hidden p-5">
-            <p className="mb-4 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+            <p className="mb-4 text-[0.68rem] font-bold text-[var(--ink-3)]">
               Pré-visualização da etiqueta
             </p>
 
             {/* Ticket / hang tag */}
-            <div className="rounded-lg bg-[#F1F1F1] p-5">
+            <div className="rounded-lg bg-[var(--fundo)] p-5">
 
               <div className="flex items-start justify-between gap-3">
-                <h3 className="font-display text-xl leading-snug text-[#303030] break-words">
+                <h3 className="font-display text-xl leading-snug text-[var(--ink)] break-words">
                   {formData.nome || "Nome do produto"}
                 </h3>
                 {swatch ? (
@@ -507,7 +507,7 @@ export default function EditarProduto() {
                 ) : null}
               </div>
 
-              <p className="text-xs text-[#616161] mt-1">
+              <p className="text-xs text-[var(--ink-2)] mt-1">
                 {formData.categoria || "Categoria"}
               </p>
 
@@ -515,27 +515,27 @@ export default function EditarProduto() {
                 {precoNumero != null ? (
                   <Preco valor={precoNumero} className="text-2xl" />
                 ) : (
-                  <span className="preco text-2xl text-[#8A8A8A]">R$ —</span>
+                  <span className="preco text-2xl text-[var(--ink-3)]">R$ —</span>
                 )}
               </div>
 
 
               <dl className="grid grid-cols-2 gap-y-2.5 text-xs">
-                <dt className="text-[#616161]">
+                <dt className="text-[var(--ink-2)]">
                   {formData.variacao_rotulo.trim() || "Variação"}
                 </dt>
-                <dd className="text-right font-semibold text-[#303030] break-words">
+                <dd className="text-right font-semibold text-[var(--ink)] break-words">
                   {formData.variacao || "—"}
                 </dd>
-                <dt className="text-[#616161]">Estoque</dt>
-                <dd className="num text-right font-semibold text-[#303030]">
+                <dt className="text-[var(--ink-2)]">Estoque</dt>
+                <dd className="num text-right font-semibold text-[var(--ink)]">
                   {formData.estoque || "—"}
                 </dd>
               </dl>
             </div>
 
             {formData.imagem_url && (
-              <div className="mt-4 rounded-xl overflow-hidden border border-[#E1E1E1] aspect-[4/3] bg-[#F1F1F1]">
+              <div className="mt-4 rounded-xl overflow-hidden border border-[var(--linha)] aspect-[4/3] bg-[var(--fundo)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={urlDaImagem(formData.imagem_url)}

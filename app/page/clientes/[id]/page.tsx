@@ -85,7 +85,7 @@ export default function HistoricoDoClientePage() {
     if (carregando) {
         return (
             <Pagina titulo="Cliente" volta={{ nome: "Clientes", rota: "/page/clientes" }}>
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando o histórico...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando o histórico...</div>
             </Pagina>
         )
     }
@@ -93,7 +93,7 @@ export default function HistoricoDoClientePage() {
     if (erro || !dados) {
         return (
             <Pagina titulo="Cliente" volta={{ nome: "Clientes", rota: "/page/clientes" }}>
-                <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     {erro || "Cliente não encontrado."}
                 </div>
             </Pagina>
@@ -144,12 +144,12 @@ export default function HistoricoDoClientePage() {
                 >
                     <ul className="space-y-2.5">
                         {enderecos.map((endereco, indice) => (
-                            <li key={indice} className="flex items-start gap-2.5 text-sm text-[#303030]">
-                                <FiMapPin className="mt-1 w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
+                            <li key={indice} className="flex items-start gap-2.5 text-sm text-[var(--ink)]">
+                                <FiMapPin className="mt-1 w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
                                 <span>
                                     {endereco.logradouro}, {endereco.numero}
                                     {endereco.complemento ? ` — ${endereco.complemento}` : ""}
-                                    <span className="text-[#616161]">
+                                    <span className="text-[var(--ink-2)]">
                                         {" · "}
                                         {endereco.bairro}, {endereco.cidade}
                                         {endereco.uf ? `/${endereco.uf}` : ""}
@@ -169,16 +169,16 @@ export default function HistoricoDoClientePage() {
                 plano
             >
                 {pedidos.length === 0 ? (
-                    <p className="px-5 py-6 text-center text-sm text-[#8A8A8A]">
+                    <p className="px-5 py-6 text-center text-sm text-[var(--ink-3)]">
                         Esta pessoa ainda não fez nenhum pedido.
                     </p>
                 ) : (
-                    <ul className="divide-y divide-[#EBEBEB]">
+                    <ul className="divide-y divide-[var(--linha-suave)]">
                         {pedidos.map((pedido) => (
                             <li key={pedido.id} className="px-5 py-4">
 
                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                                    <span className="num text-sm font-semibold text-[#303030]">
+                                    <span className="num text-sm font-semibold text-[var(--ink)]">
                                         #{pedido.codigo}
                                     </span>
 
@@ -190,25 +190,25 @@ export default function HistoricoDoClientePage() {
                                         <span className="tag tag-warning">Sem pagamento</span>
                                     )}
 
-                                    <span className="text-xs text-[#8A8A8A]">{dataHora(pedido.created_at)}</span>
+                                    <span className="text-xs text-[var(--ink-3)]">{dataHora(pedido.created_at)}</span>
 
-                                    <span className="text-xs text-[#616161]">
+                                    <span className="text-xs text-[var(--ink-2)]">
                                         {pedido.entrega_tipo === "entrega"
                                             ? `Entrega · ${pedido.cidade}${pedido.uf ? `/${pedido.uf}` : ""}`
                                             : "Retirada na loja"}
                                     </span>
 
-                                    <span className="num ml-auto text-sm font-semibold text-[#303030]">
+                                    <span className="num ml-auto text-sm font-semibold text-[var(--ink)]">
                                         {formatarMoeda(pedido.total)}
                                     </span>
                                 </div>
 
                                 <ul className="mt-2 space-y-0.5">
                                     {pedido.itens.map((item, indice) => (
-                                        <li key={indice} className="text-xs text-[#616161]">
+                                        <li key={indice} className="text-xs text-[var(--ink-2)]">
                                             <span className="num">{item.quantidade}x</span>{" "}
                                             {item.produto_nome || `Produto #${item.produto_id}`}
-                                            <span className="num text-[#8A8A8A]">
+                                            <span className="num text-[var(--ink-3)]">
                                                 {" · "}
                                                 {formatarMoeda(item.preco)} cada
                                             </span>
@@ -229,7 +229,7 @@ export default function HistoricoDoClientePage() {
                     descricao="O que esta pessoa escreveu sobre o que recebeu. Aparece na página do produto, na vitrine."
                     plano
                 >
-                    <ul className="divide-y divide-[#EBEBEB]">
+                    <ul className="divide-y divide-[var(--linha-suave)]">
                         {avaliacoes.map((avaliacao, indice) => (
                             <li key={indice} className="px-5 py-3.5">
 
@@ -241,7 +241,7 @@ export default function HistoricoDoClientePage() {
                                                 aria-hidden
                                                 className={`w-3.5 ${
                                                     valor <= avaliacao.nota
-                                                        ? "fill-current text-[#303030]"
+                                                        ? "fill-current text-[var(--ink)]"
                                                         : "text-[#D1D1D1]"
                                                 }`}
                                             />
@@ -249,17 +249,17 @@ export default function HistoricoDoClientePage() {
                                         <span className="sr-only">nota {avaliacao.nota} de 5</span>
                                     </span>
 
-                                    <span className="text-sm text-[#303030]">
+                                    <span className="text-sm text-[var(--ink)]">
                                         {avaliacao.produto_nome || `Produto #${avaliacao.produto_id}`}
                                     </span>
 
-                                    <span className="num text-xs text-[#8A8A8A]">
+                                    <span className="num text-xs text-[var(--ink-3)]">
                                         {data(avaliacao.criada_em)}
                                     </span>
                                 </div>
 
                                 {avaliacao.comentario && (
-                                    <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[#616161]">
+                                    <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[var(--ink-2)]">
                                         {avaliacao.comentario}
                                     </p>
                                 )}
@@ -279,8 +279,8 @@ export default function HistoricoDoClientePage() {
 function Numero({ rotulo, valor, miudo = false }: { rotulo: string; valor: string; miudo?: boolean }) {
     return (
         <div className="card p-4">
-            <p className="text-xs text-[#8A8A8A]">{rotulo}</p>
-            <p className={`num mt-1 font-bold text-[#303030] ${miudo ? "text-sm" : "text-xl"}`}>
+            <p className="text-xs text-[var(--ink-3)]">{rotulo}</p>
+            <p className={`num mt-1 font-bold text-[var(--ink)] ${miudo ? "text-sm" : "text-xl"}`}>
                 {valor}
             </p>
         </div>

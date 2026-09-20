@@ -134,6 +134,37 @@ export const lojas = {
     trocar: (id: string | number) => `/private/lojas/${id}/abrir`,
 }
 
+/**
+ * A venda no balcão.
+ *
+ * `item` resolve o código lido — e devolve o preço COM a promoção aplicada,
+ * que é o que a venda vai cobrar. A consulta do estoque (`/bipar`) devolve o
+ * de tabela: uma tela de venda que mostrasse um e cobrasse outro estaria
+ * mentindo para o vendedor na frente do cliente.
+ */
+export const balcao = {
+    item: (codigo: string) => `/private/balcao/item?codigo=${encodeURIComponent(codigo)}`,
+    vender: () => "/private/balcao/vender",
+}
+
+/**
+ * O que o cliente escolhe junto do produto: borda, ponto da carne, tamanho.
+ *
+ * Os grupos são da LOJA e ligados aos produtos que os usam — uma pizzaria com
+ * vinte pizzas monta as seis bordas uma vez, e mudar o preço da borda é uma
+ * edição, não vinte.
+ */
+export const adicionais = {
+    catalogo: () => "/private/adicionais",
+    grupos: () => "/private/adicionais/grupos",
+    umGrupo: (id: string | number) => `/private/adicionais/grupos/${id}`,
+    opcoes: () => "/private/adicionais/opcoes",
+    umaOpcao: (id: string | number) => `/private/adicionais/opcoes/${id}`,
+
+    /** Quais perguntas ESTE produto faz. Manda a lista inteira e substitui. */
+    doProduto: (id: string | number) => `/private/produto/${id}/adicionais`,
+}
+
 export const funcionarios = {
     lista: () => "/private/funcionarios",
     um: (id: string | number) => `/private/funcionarios/${id}`,
@@ -143,6 +174,20 @@ export const funcionarios = {
      * O código único da loja, o que a equipe digita para entrar na conversa
      * interna. Só o dono abre — é a única rota que devolve o código aberto.
      */
+}
+
+/**
+ * A comissão do mês de quem vende por percentual.
+ *
+ * O mês vai na consulta como "2026-09"; sem ele o backend responde o mês
+ * PASSADO, que é o que se fecha. Fechar e reabrir são POST porque mudam o
+ * estado do mês — e reabrir não estorna dinheiro nenhum, só devolve o mês à
+ * conta.
+ */
+export const comissoes = {
+    doMes: (mes?: string) => (mes ? `/private/comissoes?mes=${encodeURIComponent(mes)}` : "/private/comissoes"),
+    fechar: (mes: string) => `/private/comissoes/fechar?mes=${encodeURIComponent(mes)}`,
+    reabrir: (mes: string) => `/private/comissoes/reabrir?mes=${encodeURIComponent(mes)}`,
 }
 
 /* ==========================================================================
@@ -236,7 +281,6 @@ export const produtos = {
 
     porId: (id: string) => `/private/produto/${id}`,
     unidades: (id: string) => `/private/produto/${id}/unidades`,
-    vender: (id: string) => `/private/produto/${id}/vender`,
     vitrine: (id: string) => `/private/produto/${id}/vitrine`,
     picking: (id: string) => `/private/produto/${id}/picking`,
 
@@ -324,6 +368,9 @@ export const pedidos = {
 export const paginaDaLoja = {
     /** O desenho da home da vitrine, montado em blocos. */
     home: () => "/private/loja/pagina",
+
+    /** O topo e o rodapé, que aparecem em toda página da loja. */
+    moldura: () => "/private/loja/moldura",
 }
 
 export const clientes = {
@@ -384,4 +431,13 @@ export const whatsapp = {
     situacao: (id: string) => `/whatsapp/conversas/${id}/situacao`,
     foto: (id: string) => `/whatsapp/conversas/${id}/foto`,
     midia: (id: string) => `/whatsapp/midia/${id}`,
+
+    /* O CRM: a etiqueta que classifica o cliente e a nota que a equipe lê e
+       ele não. O catálogo de etiquetas é da LOJA e fica fora de /conversas —
+       ele existe antes de haver cliente marcado com alguma. */
+    etiquetas: () => "/whatsapp/etiquetas",
+    etiqueta: (id: string) => `/whatsapp/etiquetas/${id}`,
+    etiquetasDaConversa: (id: string) => `/whatsapp/conversas/${id}/etiquetas`,
+    notas: (id: string) => `/whatsapp/conversas/${id}/notas`,
+    nota: (id: string, nota: string) => `/whatsapp/conversas/${id}/notas/${nota}`,
 }

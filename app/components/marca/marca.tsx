@@ -1,41 +1,40 @@
 import type { SVGProps } from "react"
 
 /**
- * A marca do TramaSistem.
+ * A marca do Chonnostech.
  *
- * O símbolo é um ponto de cesto visto de cima: quatro tiras iguais, cada uma
- * enfiada por baixo da seguinte, girando em torno de um vazio quadrado no
- * meio. É o desenho do entrelaçado de palha e do azulejo de trama — tecelagem
- * real, não metáfora de software. O giro é o que dá o sentido: nenhuma tira
- * se sustenta sozinha, cada uma prende a próxima, e o vazio do centro é o
- * registro que a trama segura. Estoque, vitrine, venda e conversa são as
- * quatro tiras.
+ * O símbolo é um C de massa com um ponto cheio no centro do vazio: as duas
+ * letras que abrem o nome, o C e o o, em uma forma só. O C é um anel grosso
+ * cortado à direita em corte reto, no raio — não é a letra de uma fonte, é
+ * geometria de grade, e é por isso que ele não parece um "C" digitado dentro
+ * de um quadrado azul. O miolo é o registro que o sistema guarda, e o C é o
+ * sistema fechando em volta dele.
  *
- * O caminho até aqui importa porque poupa refazê-lo. A primeira tentativa foi
- * a trama literal — quatro fios de traço, dois na horizontal e dois na
- * vertical, com falha no cruzamento para mostrar quem passa por baixo.
- * Renderizada, virou cerquilha: linha reta ortogonal lê como "#" antes de ler
- * como tecido, e a falha de 2px que mostraria o entrelaçamento some no
- * tamanho pequeno. Também foram desenhadas e descartadas a versão a 45° (vira
- * floco de neve), a trança de dois fios (vira rabisco) e o T de tiras (vira
- * martelo). O que sobrou funciona por ser MASSA e não linha: forma cheia
- * aguenta 16px, quatro fios finos não aguentam.
+ * O caminho até aqui importa porque poupa refazê-lo. A marca anterior era um
+ * catavento de quatro tiras, e ela era boa — mas nasceu do nome "Trama", de
+ * tecelagem, e com o nome novo virou um ícone de blocos sem razão de ser.
+ * Foram desenhadas e descartadas: o C feito de três tiras do catavento (lê
+ * como peça de Tetris quebrada, o vão da direita não fecha a forma), o C
+ * quadrado em anel (o vão some no tamanho pequeno e o desenho vira monitor) e
+ * o C liso sem miolo (funciona, mas é a letra da fonte — nada nele é seu).
+ * O miolo é o que separa esta marca de qualquer outra que comece com C, e ele
+ * é redondo e não quadrado por escolha: o ponto repete a curva do anel, e o
+ * quadrado brigava com ela no tamanho grande.
  *
- * As referências são de marca tecelã e de produto de infraestrutura, não de
- * aplicativo: o entrelaçado de cestaria e a disciplina geométrica das marcas
- * de sistema — grade fixa, uma forma só repetida, nenhum gradiente, nenhuma
- * sombra, nenhuma seta para cima. Seta de crescimento e degradê roxo são o
- * que faz marca de SaaS parecer gerada, e é justamente o que não se usa aqui.
+ * As referências continuam sendo marca de infraestrutura, não de aplicativo:
+ * grade fixa, forma cheia, nenhum gradiente, nenhuma sombra, nenhuma seta
+ * para cima. Seta de crescimento e degradê roxo são o que faz marca de SaaS
+ * parecer gerada, e é justamente o que não se usa aqui.
  *
- * A geometria é uma tira só, girada 90° quatro vezes — não há quatro desenhos
- * para manter iguais. A folga de 2 unidades entre a ponta de uma tira e o
- * corpo da seguinte é o que mostra que ela passa por baixo; menos que isso
- * some na tela, mais que isso solta as tiras e o quadrado se desmancha em
- * quatro blocos avulsos.
+ * A boca do C abre 64°, entre 328° e 32°. Menos que isso e o anel fecha: a
+ * 16px o vão some e sobra uma rosca. Muito mais e o C se desmancha em duas
+ * vírgulas. O miolo tem 6,8 de diâmetro nas 32 unidades do quadro — a 16px
+ * isso dá 3,4px de massa, que é o mínimo que ainda se enxerga sem virar
+ * sujeira.
  *
- * Ao contrário do símbolo anterior, este é de preenchimento, e usa
- * `currentColor`: azul sobre branco no painel, branco sobre azul no bloco da
- * marca, sem duas versões do arquivo para manter sincronizadas.
+ * Como o símbolo anterior, este é de preenchimento e usa `currentColor`: azul
+ * sobre branco no painel, branco sobre azul no bloco da marca, sem duas
+ * versões do arquivo para manter sincronizadas.
  */
 export function Simbolo({ className = "w-6", ...resto }: SVGProps<SVGSVGElement> & { className?: string }) {
     return (
@@ -46,13 +45,12 @@ export function Simbolo({ className = "w-6", ...resto }: SVGProps<SVGSVGElement>
             className={className}
             {...resto}
         >
-            {/* A mesma tira, quatro vezes, girando em torno do centro. A ponta
-                de cada uma para antes da tira seguinte: é essa folga que se lê
-                como "passa por baixo". */}
-            <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" />
-            <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" transform="rotate(90 16 16)" />
-            <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" transform="rotate(180 16 16)" />
-            <rect x="3.5" y="3.5" width="14" height="9" rx="2.25" transform="rotate(270 16 16)" />
+            {/* O anel, cortado à direita. As pontas são cortes retos no raio,
+                não pontas arredondadas de traço: é o que dá o ar de forma
+                desenhada em vez de letra de fonte. */}
+            <path d="M27.70 23.31A13.8 13.8 0 1 1 27.70 8.69L23.29 11.44A8.6 8.6 0 1 0 23.29 20.56Z" />
+            {/* O miolo: o o do nome, e o registro que o sistema guarda. */}
+            <circle cx="16" cy="16" r="3.4" />
         </svg>
     )
 }
@@ -63,7 +61,7 @@ export function Simbolo({ className = "w-6", ...resto }: SVGProps<SVGSVGElement>
  */
 export function Marca({ className = "h-9 w-9" }: { className?: string }) {
     return (
-        <span className={`flex shrink-0 items-center justify-center rounded-lg bg-[#005BD3] text-white ${className}`}>
+        <span className={`flex shrink-0 items-center justify-center rounded-lg bg-[var(--azul)] text-white ${className}`}>
             <Simbolo className="w-[68%]" />
         </span>
     )

@@ -67,7 +67,7 @@ interface LinhaEstoque extends CartaoUnidade {
 }
 
 /** As colunas por que a grade pode ser ordenada. */
-type Coluna = "endereco" | "produto" | "peca" | "tipo"
+type Coluna = "endereco" | "produto" | "unidade" | "tipo"
 
 /** Os recortes da barra de filtro. */
 type Recorte = "todas" | "sem_local" | "reservadas" | "bloqueadas"
@@ -98,12 +98,12 @@ interface ExclusaoAlvo {
  * apagaria o que importa — o endereço e a situação da peça.
  */
 const CORES_TIPO: Record<string, string> = {
-    picking: "bg-[#EAF4FF] text-[#00369B]",
-    pulmao: "bg-[#F1F1F1] text-[#303030]",
-    recebimento: "bg-[#F1F1F1] text-[#616161]",
-    expedicao: "bg-[#F1F1F1] text-[#616161]",
-    quarentena: "bg-[#FFF1E3] text-[#5E4200]",
-    avaria: "bg-[#FEE9E8] text-[#8E1F0B]",
+    picking: "bg-[var(--azul-suave)] text-[var(--azul-escuro)]",
+    pulmao: "bg-[var(--fundo)] text-[var(--ink)]",
+    recebimento: "bg-[var(--fundo)] text-[var(--ink-2)]",
+    expedicao: "bg-[var(--fundo)] text-[var(--ink-2)]",
+    quarentena: "bg-[var(--amarelo-fundo)] text-[var(--amarelo)]",
+    avaria: "bg-[var(--vermelho-fundo)] text-[var(--vermelho)]",
 }
 
 export default function Estoque() {
@@ -225,7 +225,7 @@ export default function Estoque() {
 
     const termoBusca = busca.trim().toLowerCase()
 
-    function codigoDaPeca(linha: LinhaEstoque): string {
+    function codigoDaUnidade(linha: LinhaEstoque): string {
         return identificarPeca(linha.produto?.codigo, linha.unidade.sequencia)
     }
 
@@ -276,8 +276,8 @@ export default function Estoque() {
                 case "produto":
                     return (a.produto?.nome ?? "").localeCompare(b.produto?.nome ?? "", "pt-BR")
 
-                case "peca":
-                    return codigoDaPeca(a).localeCompare(codigoDaPeca(b), "pt-BR")
+                case "unidade":
+                    return codigoDaUnidade(a).localeCompare(codigoDaUnidade(b), "pt-BR")
 
                 case "tipo":
                     return (a.endereco?.tipo_nome ?? "").localeCompare(b.endereco?.tipo_nome ?? "", "pt-BR")
@@ -344,7 +344,7 @@ export default function Estoque() {
     // ESTATÍSTICAS
     // ==============================
 
-    const totalPecas = linhas.length
+    const totalUnidades = linhas.length
 
     const totalSemLocal = linhas.filter((linha) => !linha.codigo).length
 
@@ -361,7 +361,7 @@ export default function Estoque() {
 
     /** Os recortes da barra de filtro, já com a contagem de cada um. */
     const recortes: { chave: Recorte; nome: string; total: number }[] = [
-        { chave: "todas", nome: "Todas", total: totalPecas },
+        { chave: "todas", nome: "Todas", total: totalUnidades },
         { chave: "sem_local", nome: "Sem local", total: totalSemLocal },
         { chave: "reservadas", nome: "Reservadas", total: totalReservadas },
         { chave: "bloqueadas", nome: "Em lugar bloqueado", total: totalBloqueadas },
@@ -407,7 +407,7 @@ export default function Estoque() {
         const erros = validarTransferencia({ destino })
 
         if (destino && destino === alvo.enderecoAtual) {
-            erros.push("A peça já está neste endereço.")
+            erros.push("A unidade já está neste endereço.")
         }
 
         if (erros.length > 0) {
@@ -608,7 +608,7 @@ export default function Estoque() {
 
         <Pagina
             titulo="Estoque"
-            descricao="Mapa dos endereços do estoque, peça por peça, na ordem em que se anda pelo corredor. Transfira ou marque avaria individualmente."
+            descricao="Mapa dos endereços do estoque, unidade por unidade, na ordem em que se anda pelo corredor. Transfira ou marque avaria individualmente."
             acoes={
                 <Link href="/page/avarias" className="btn btn-neutro">
                     <FiAlertTriangle className="w-4" aria-hidden />
@@ -627,7 +627,7 @@ export default function Estoque() {
 
             <FaixaDeNumeros
                 numeros={[
-                    { rotulo: "Peças em estoque", valor: totalPecas, icone: FiBox },
+                    { rotulo: "Unidades em estoque", valor: totalUnidades, icone: FiBox },
                     { rotulo: "Endereços ocupados", valor: locaisOcupados, icone: FiGrid },
                     { rotulo: "Reservadas", valor: totalReservadas, icone: FiBookmark },
                     {
@@ -639,18 +639,18 @@ export default function Estoque() {
                 ]}
             />
 
-            {/* Peça que chegou e ninguém guardou é trabalho parado, e o aviso
+            {/* Unidade que chegou e ninguém guardou é trabalho parado, e o aviso
                 leva direto para o recorte que mostra só elas — que é o que a
                 pessoa vai fazer em seguida. */}
             {totalSemLocal > 0 && recorte !== "sem_local" && (
 
-                <div className="mt-6 flex flex-col gap-3 rounded-lg border-l-4 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-6 flex flex-col gap-3 rounded-lg border-l-4 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 
-                    <p className="flex items-center gap-2.5 text-sm text-[#616161]">
-                        <FiAlertTriangle className="w-4 shrink-0 text-[#5E4200]" aria-hidden />
+                    <p className="flex items-center gap-2.5 text-sm text-[var(--ink-2)]">
+                        <FiAlertTriangle className="w-4 shrink-0 text-[var(--amarelo)]" aria-hidden />
                         <span>
-                            <span className="num font-bold text-[#303030]">{totalSemLocal}</span>{" "}
-                            peça(s) chegaram e ainda não foram guardadas em nenhum endereço.
+                            <span className="num font-bold text-[var(--ink)]">{totalSemLocal}</span>{" "}
+                            unidade(s) chegaram e ainda não foram guardadas em nenhum endereço.
                         </span>
                     </p>
 
@@ -702,11 +702,11 @@ export default function Estoque() {
                 A GRADE
             ========================== */}
 
-            {totalPecas === 0 ? (
+            {totalUnidades === 0 ? (
 
                 <ListaVazia
                     icone={FiMapPin}
-                    titulo="Nenhuma peça guardada ainda"
+                    titulo="Nenhuma unidade guardada ainda"
                     acao={
                         enderecos.length === 0 ? (
                             <Link href="/page/estoque/enderecos" className="btn btn-primario">
@@ -730,7 +730,7 @@ export default function Estoque() {
 
                 <ListaVazia
                     icone={FiSearch}
-                    titulo="Nenhuma peça corresponde ao filtro"
+                    titulo="Nenhuma unidade corresponde ao filtro"
                     acao={
                         <button
                             type="button"
@@ -751,7 +751,7 @@ export default function Estoque() {
                         <table className="w-full min-w-[56rem] border-collapse text-sm">
 
                             <thead>
-                                <tr className="border-b border-[#E1E1E1] bg-[#F7F7F7] text-left">
+                                <tr className="border-b border-[var(--linha)] bg-[var(--superficie-2)] text-left">
 
                                     <th scope="col" className="px-4 py-2.5">
                                         <Cabecalho
@@ -763,7 +763,7 @@ export default function Estoque() {
                                         </Cabecalho>
                                     </th>
 
-                                    <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161] xl:table-cell">
+                                    <th scope="col" className="hidden px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)] xl:table-cell">
                                         Lugar
                                     </th>
 
@@ -779,11 +779,11 @@ export default function Estoque() {
 
                                     <th scope="col" className="px-4 py-2.5">
                                         <Cabecalho
-                                            ativa={ordem.coluna === "peca"}
+                                            ativa={ordem.coluna === "unidade"}
                                             desc={ordem.desc}
-                                            aoClicar={() => ordenarPor("peca")}
+                                            aoClicar={() => ordenarPor("unidade")}
                                         >
-                                            Peça
+                                            Unidade
                                         </Cabecalho>
                                     </th>
 
@@ -797,11 +797,11 @@ export default function Estoque() {
                                         </Cabecalho>
                                     </th>
 
-                                    <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                    <th scope="col" className="px-4 py-2.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)]">
                                         Situação
                                     </th>
 
-                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)]">
                                         Ações
                                     </th>
 
@@ -819,7 +819,7 @@ export default function Estoque() {
 
                                         <tr
                                             key={unidade.id}
-                                            className="border-b border-[#EBEBEB] transition-colors last:border-b-0 hover:bg-[#F7F7F7]"
+                                            className="border-b border-[var(--linha-suave)] transition-colors last:border-b-0 hover:bg-[var(--superficie-2)]"
                                         >
 
                                             {/* ENDEREÇO — a primeira
@@ -828,7 +828,7 @@ export default function Estoque() {
                                                 onde eu ando. */}
                                             <td className="px-4 py-2.5">
                                                 {linha.codigo ? (
-                                                    <span className="font-mono text-xs font-bold text-[#303030]">
+                                                    <span className="font-mono text-xs font-bold text-[var(--ink)]">
                                                         {linha.codigo}
                                                     </span>
                                                 ) : (
@@ -840,7 +840,7 @@ export default function Estoque() {
                                             </td>
 
                                             {/* LUGAR */}
-                                            <td className="hidden max-w-[14rem] truncate px-4 py-2.5 text-xs text-[#616161] xl:table-cell">
+                                            <td className="hidden max-w-[14rem] truncate px-4 py-2.5 text-xs text-[var(--ink-2)] xl:table-cell">
                                                 {linha.codigo ? linha.nome : SEM_LUGAR}
                                             </td>
 
@@ -849,7 +849,7 @@ export default function Estoque() {
 
                                                 <div className="flex items-center gap-3">
 
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F1F1F1]">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--fundo)]">
                                                         {produto?.imagem_url ? (
                                                             // eslint-disable-next-line @next/next/no-img-element
                                                             <img
@@ -858,18 +858,18 @@ export default function Estoque() {
                                                                 className="h-full w-full object-cover"
                                                             />
                                                         ) : (
-                                                            <FiBox className="w-4 text-[#8A8A8A]" aria-hidden />
+                                                            <FiBox className="w-4 text-[var(--ink-3)]" aria-hidden />
                                                         )}
                                                     </div>
 
                                                     <div className="min-w-0">
 
-                                                        <p className="truncate font-bold text-[#303030]">
+                                                        <p className="truncate font-bold text-[var(--ink)]">
                                                             {produto?.nome ?? `Produto #${unidade.produto_id}`}
                                                         </p>
 
                                                         {produto?.variacao && (
-                                                            <p className="truncate text-xs text-[#616161]">
+                                                            <p className="truncate text-xs text-[var(--ink-2)]">
                                                                 {produto.variacao_rotulo || "Variação"}: {produto.variacao}
                                                             </p>
                                                         )}
@@ -881,20 +881,20 @@ export default function Estoque() {
                                             </td>
 
                                             {/* PEÇA */}
-                                            <td className="px-4 py-2.5 font-mono text-xs text-[#616161]">
+                                            <td className="px-4 py-2.5 font-mono text-xs text-[var(--ink-2)]">
                                                 {identificarPeca(produto?.codigo, unidade.sequencia)}
                                             </td>
 
                                             {/* TIPO DO LUGAR */}
                                             <td className="hidden px-4 py-2.5 lg:table-cell">
                                                 {endereco ? (
-                                                    <span className={`tag ${CORES_TIPO[tipo] ?? "bg-[#F1F1F1] text-[#616161]"}`}>
+                                                    <span className={`tag ${CORES_TIPO[tipo] ?? "bg-[var(--fundo)] text-[var(--ink-2)]"}`}>
                                                         {endereco.tipo_nome}
                                                     </span>
                                                 ) : linha.codigo ? (
                                                     <span className="tag tag-neutral">fora do cadastro</span>
                                                 ) : (
-                                                    <span className="text-[#8A8A8A]">—</span>
+                                                    <span className="text-[var(--ink-3)]">—</span>
                                                 )}
                                             </td>
 
@@ -931,9 +931,9 @@ export default function Estoque() {
                                                     <button
                                                         type="button"
                                                         title="Transferir de lugar"
-                                                        aria-label={`Transferir ${produto?.nome ?? "peça"}`}
+                                                        aria-label={`Transferir ${produto?.nome ?? "unidade"}`}
                                                         onClick={() => abrirTransferencia(linha)}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#00369B]"
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--azul-escuro)]"
                                                     >
                                                         <FiRepeat className="w-4" aria-hidden />
                                                     </button>
@@ -941,19 +941,19 @@ export default function Estoque() {
                                                     <button
                                                         type="button"
                                                         title="Marcar avaria"
-                                                        aria-label={`Avariar ${produto?.nome ?? "peça"}`}
+                                                        aria-label={`Avariar ${produto?.nome ?? "unidade"}`}
                                                         onClick={() => abrirAvaria(linha)}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                                                     >
                                                         <FiAlertTriangle className="w-4" aria-hidden />
                                                     </button>
 
                                                     <button
                                                         type="button"
-                                                        title="Excluir peça"
-                                                        aria-label={`Excluir ${produto?.nome ?? "peça"}`}
+                                                        title="Excluir unidade"
+                                                        aria-label={`Excluir ${produto?.nome ?? "unidade"}`}
                                                         onClick={() => abrirExclusao(linha)}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                        className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                                                     >
                                                         <FiTrash2 className="w-4" aria-hidden />
                                                     </button>
@@ -972,16 +972,16 @@ export default function Estoque() {
 
                     </div>
 
-                    <div className="flex flex-col gap-3 border-t border-[#E1E1E1] bg-[#F7F7F7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border-t border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 
-                        <p className="text-xs text-[#616161]">
+                        <p className="text-xs text-[var(--ink-2)]">
                             Mostrando{" "}
-                            <span className="num font-bold text-[#303030]">
+                            <span className="num font-bold text-[var(--ink)]">
                                 {primeiraDaPagina + 1}–{primeiraDaPagina + linhasDaPagina.length}
                             </span>{" "}
-                            de <span className="num font-bold text-[#303030]">{linhasFiltradas.length}</span>
-                            {linhasFiltradas.length !== totalPecas && (
-                                <> · <span className="num">{totalPecas}</span> no total</>
+                            de <span className="num font-bold text-[var(--ink)]">{linhasFiltradas.length}</span>
+                            {linhasFiltradas.length !== totalUnidades && (
+                                <> · <span className="num">{totalUnidades}</span> no total</>
                             )}
                         </p>
 
@@ -1013,7 +1013,7 @@ export default function Estoque() {
                 onClick={fecharTransferencia}
             >
 
-                <div className="absolute inset-0 bg-[#303030]/50" />
+                <div className="absolute inset-0 bg-[var(--ink)]/50" />
 
                 <div
                     onClick={(e) => e.stopPropagation()}
@@ -1024,26 +1024,26 @@ export default function Estoque() {
                         type="button"
                         onClick={fecharTransferencia}
                         aria-label="Fechar"
-                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
 
                     <div className="flex items-center gap-2 pr-8">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#005BD3]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--azul-suave)] text-[var(--azul)]">
                             <FiRepeat className="w-3.5" aria-hidden />
                         </span>
-                        <h2 className="font-display truncate text-lg text-[#303030]">
+                        <h2 className="font-display truncate text-lg text-[var(--ink)]">
                             Transferir {alvo.produtoNome}
                         </h2>
                     </div>
 
-                    <p className="mt-2 font-mono text-xs text-[#616161]">
+                    <p className="mt-2 font-mono text-xs text-[var(--ink-2)]">
                         {alvo.codigo}
                     </p>
 
-                    <p className="mt-2 text-sm text-[#616161]">
-                        De <span className="num font-medium text-[#303030]">
+                    <p className="mt-2 text-sm text-[var(--ink-2)]">
+                        De <span className="num font-medium text-[var(--ink)]">
                             {alvo.localAtual}
                         </span>
                     </p>
@@ -1056,8 +1056,8 @@ export default function Estoque() {
 
                         {enderecosDisponiveis.length === 0 ? (
 
-                            <p className="rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
-                                Não há endereço liberado para receber esta peça.{" "}
+                            <p className="rounded-lg bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
+                                Não há endereço liberado para receber esta unidade.{" "}
                                 <Link href="/page/estoque/enderecos" className="font-bold underline">
                                     Cadastre um endereço
                                 </Link>{" "}
@@ -1086,15 +1086,15 @@ export default function Estoque() {
 
                         )}
 
-                        <p className="text-xs text-[#616161]">
+                        <p className="text-xs text-[var(--ink-2)]">
                             Só aparecem os endereços liberados. Se o escolhido não couber mais a
-                            peça, quem avisa é o servidor, que tem a ocupação na frente.
+                            unidade, quem avisa é o servidor, que tem a ocupação na frente.
                         </p>
 
                     </div>
 
                     {erroTransferencia && (
-                        <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                        <div className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                             {erroTransferencia}
                         </div>
                     )}
@@ -1139,7 +1139,7 @@ export default function Estoque() {
                 onClick={fecharAvaria}
             >
 
-                <div className="absolute inset-0 bg-[#303030]/50" />
+                <div className="absolute inset-0 bg-[var(--ink)]/50" />
 
                 <div
                     onClick={(e) => e.stopPropagation()}
@@ -1150,34 +1150,34 @@ export default function Estoque() {
                         type="button"
                         onClick={fecharAvaria}
                         aria-label="Fechar"
-                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
 
                     <div className="flex items-center gap-2 pr-8">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FEE9E8] text-[#8E1F0B]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">
                             <FiAlertTriangle className="w-3.5" aria-hidden />
                         </span>
-                        <h2 className="font-display truncate text-lg text-[#303030]">
+                        <h2 className="font-display truncate text-lg text-[var(--ink)]">
                             Registrar avaria
                         </h2>
                     </div>
 
-                    <p className="mt-3 text-sm text-[#303030]">
+                    <p className="mt-3 text-sm text-[var(--ink)]">
                         {alvoAvaria.produtoNome}
                     </p>
 
-                    <p className="mt-1 font-mono text-xs text-[#616161]">
+                    <p className="mt-1 font-mono text-xs text-[var(--ink-2)]">
                         {alvoAvaria.codigo}
                     </p>
 
-                    <p className="mt-3 text-sm text-[#616161]">
+                    <p className="mt-3 text-sm text-[var(--ink-2)]">
                         Essa unidade sai do estoque vendável. Dá pra restaurar depois em &ldquo;Ver avarias&rdquo; se for engano.
                     </p>
 
                     {erroAvaria && (
-                        <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                        <div className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                             {erroAvaria}
                         </div>
                     )}
@@ -1222,7 +1222,7 @@ export default function Estoque() {
                 onClick={fecharExclusao}
             >
 
-                <div className="absolute inset-0 bg-[#303030]/50" />
+                <div className="absolute inset-0 bg-[var(--ink)]/50" />
 
                 <div
                     onClick={(e) => e.stopPropagation()}
@@ -1233,34 +1233,34 @@ export default function Estoque() {
                         type="button"
                         onClick={fecharExclusao}
                         aria-label="Fechar"
-                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
 
                     <div className="flex items-center gap-2 pr-8">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FEE9E8] text-[#8E1F0B]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--vermelho-fundo)] text-[var(--vermelho)]">
                             <FiTrash2 className="w-3.5" aria-hidden />
                         </span>
-                        <h2 className="font-display truncate text-lg text-[#303030]">
+                        <h2 className="font-display truncate text-lg text-[var(--ink)]">
                             Excluir unidade
                         </h2>
                     </div>
 
-                    <p className="mt-3 text-sm text-[#303030]">
+                    <p className="mt-3 text-sm text-[var(--ink)]">
                         {alvoExclusao.produtoNome}
                     </p>
 
-                    <p className="mt-1 font-mono text-xs text-[#616161]">
+                    <p className="mt-1 font-mono text-xs text-[var(--ink-2)]">
                         {alvoExclusao.codigo}
                     </p>
 
-                    <p className="mt-3 text-sm text-[#616161]">
+                    <p className="mt-3 text-sm text-[var(--ink-2)]">
                         Essa unidade é removida permanentemente do estoque. Diferente de uma avaria, essa ação não pode ser desfeita.
                     </p>
 
                     {erroExclusao && (
-                        <div className="mt-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                        <div className="mt-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                             {erroExclusao}
                         </div>
                     )}

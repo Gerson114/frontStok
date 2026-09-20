@@ -196,7 +196,7 @@ export default function Banners() {
                     <span className={`tag ${editandoId ? "tag-warning" : "tag-info"}`}>
                         {editandoId ? "Editar" : "Novo"}
                     </span>
-                    <h3 className="text-sm font-bold text-[#303030]">
+                    <h3 className="text-sm font-bold text-[var(--ink)]">
                         {editandoId ? `Editando banner #${editandoId}` : "Novo banner"}
                     </h3>
                 </div>
@@ -286,7 +286,7 @@ export default function Banners() {
                             />
 
                             {mostrarSugestoes && produtosFiltrados.length > 0 && (
-                                <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-[#E1E1E1] bg-white shadow-lg">
+                                <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-[var(--linha)] bg-[var(--superficie)] shadow-lg">
                                     {produtosFiltrados.map((produto) => (
                                         <button
                                             key={produto.id}
@@ -295,9 +295,9 @@ export default function Banners() {
                                                 e.preventDefault()
                                                 selecionarProduto(produto)
                                             }}
-                                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-[#F1F1F1]"
+                                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-[var(--fundo)]"
                                         >
-                                            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-[#F1F1F1]">
+                                            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-[var(--fundo)]">
                                                 {produto.imagem_url && (
                                                     // eslint-disable-next-line @next/next/no-img-element
                                                     <img
@@ -308,7 +308,7 @@ export default function Banners() {
                                                 )}
                                             </div>
                                             <span className="min-w-0 flex-1 truncate">{produto.nome}</span>
-                                            <span className="num shrink-0 text-xs font-bold text-[#616161]">
+                                            <span className="num shrink-0 text-xs font-bold text-[var(--ink-2)]">
                                                 {formatarMoeda(produto.preco)}
                                             </span>
                                         </button>
@@ -341,20 +341,20 @@ export default function Banners() {
                         />
                     </div>
 
-                    <label className="flex items-center gap-2 self-end pb-2 text-sm text-[#303030]">
+                    <label className="flex items-center gap-2 self-end pb-2 text-sm text-[var(--ink)]">
                         <input
                             type="checkbox"
                             name="ativo"
                             checked={formData.ativo}
                             onChange={handleChange}
-                            className="h-4 w-4 rounded border-[#E1E1E1] accent-[#005BD3]"
+                            className="h-4 w-4 rounded border-[var(--linha)] accent-[var(--azul)]"
                         />
                         Ativo (aparece na loja)
                     </label>
                 </div>
 
                 {errosForm.length > 0 && (
-                    <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                    <div role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                         {errosForm[0]}
                     </div>
                 )}
@@ -381,7 +381,7 @@ export default function Banners() {
             </form>
 
             {erroExclusao && (
-                <div role="alert" className="mb-4 rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="mb-4 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                     {erroExclusao}
                 </div>
             )}
@@ -393,16 +393,16 @@ export default function Banners() {
                     ))}
                 </div>
             ) : erro ? (
-                <p role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-2.5 text-sm font-semibold text-[#8E1F0B]">
+                <p role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-2.5 text-sm font-semibold text-[var(--vermelho)]">
                     {erro}
                 </p>
             ) : banners.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-[#E1E1E1] bg-white p-16 text-center">
-                    <FiImage className="mx-auto w-10 text-[#8A8A8A]" aria-hidden />
-                    <h3 className="font-display mt-5 text-xl text-[#303030]">
+                <div className="rounded-lg border border-dashed border-[var(--linha)] bg-[var(--superficie)] p-16 text-center">
+                    <FiImage className="mx-auto w-10 text-[var(--ink-3)]" aria-hidden />
+                    <h3 className="font-display mt-5 text-xl text-[var(--ink)]">
                         Nenhum banner cadastrado
                     </h3>
-                    <p className="mt-2 text-sm text-[#616161]">
+                    <p className="mt-2 text-sm text-[var(--ink-2)]">
                         Crie o primeiro banner acima pra ele aparecer na loja.
                     </p>
                 </div>
@@ -413,7 +413,7 @@ export default function Banners() {
                             key={banner.id}
                             className="card flex items-center gap-4 overflow-hidden p-4"
                         >
-                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
                                 {banner.imagem_url ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -426,7 +426,7 @@ export default function Banners() {
 
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                    <p className="truncate text-sm font-bold text-[#303030]">
+                                    <p className="truncate text-sm font-bold text-[var(--ink)]">
                                         {banner.titulo}
                                     </p>
                                     <span className={`tag shrink-0 ${banner.ativo ? "tag-success" : "tag-neutral"}`}>
@@ -442,7 +442,7 @@ export default function Banners() {
                                     />
                                 </div>
 
-                                <p className="mt-0.5 truncate text-xs text-[#8A8A8A]">
+                                <p className="mt-0.5 truncate text-xs text-[var(--ink-3)]">
                                     ordem <span className="num">{banner.ordem}</span>
                                     {banner.link ? <> · <span className="font-mono">{banner.link}</span></> : null}
                                 </p>
@@ -452,7 +452,7 @@ export default function Banners() {
                                 <button
                                     type="button"
                                     onClick={() => iniciarEdicao(banner)}
-                                    className="rounded-lg border border-[#E1E1E1] bg-white px-3 py-2 text-xs font-bold text-[#303030] transition-colors hover:bg-[#F1F1F1]"
+                                    className="rounded-lg border border-[var(--linha)] bg-[var(--superficie)] px-3 py-2 text-xs font-bold text-[var(--ink)] transition-colors hover:bg-[var(--fundo)]"
                                 >
                                     Editar
                                 </button>
@@ -460,7 +460,7 @@ export default function Banners() {
                                     type="button"
                                     onClick={() => handleExcluir(banner.id)}
                                     disabled={excluindoId === banner.id}
-                                    className="rounded-lg border border-[#8E1F0B] bg-white px-3 py-2 text-xs font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-lg border border-[var(--vermelho)] bg-[var(--superficie)] px-3 py-2 text-xs font-bold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {excluindoId === banner.id ? "Excluindo..." : "Excluir"}
                                 </button>

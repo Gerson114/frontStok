@@ -78,7 +78,7 @@ export default function EtiquetasPage() {
     if (carregando) {
         return (
             <Pagina titulo="Etiquetas" paraImpressao>
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando etiquetas...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando etiquetas...</div>
             </Pagina>
         )
     }
@@ -88,9 +88,9 @@ export default function EtiquetasPage() {
             titulo="Etiquetas"
             descricao={
                 <>
-                    Uma etiqueta para cada peça dos pedidos confirmados, numeradas 1/3, 2/3, 3/3
+                    Uma etiqueta para cada unidade dos pedidos confirmados, numeradas 1/3, 2/3, 3/3
                     dentro de cada pedido. Confirme o pedido em{" "}
-                    <Link href="/page/pedidos" className="font-semibold text-[#005BD3] hover:underline">
+                    <Link href="/page/pedidos" className="font-semibold text-[var(--azul)] hover:underline">
                         Pedidos
                     </Link>{" "}
                     e ele aparece aqui.
@@ -116,7 +116,7 @@ export default function EtiquetasPage() {
                 {erro && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
@@ -125,11 +125,11 @@ export default function EtiquetasPage() {
 
                 {!erro && etiquetas.length === 0 && (
                     <div className="card mt-6 flex flex-col items-center p-10 text-center">
-                        <FiShoppingCart className="w-8 text-[#B5B5B5]" aria-hidden />
-                        <p className="mt-3 font-display text-lg text-[#303030]">
+                        <FiShoppingCart className="w-8 text-[var(--ink-4)]" aria-hidden />
+                        <p className="mt-3 font-display text-lg text-[var(--ink)]">
                             Nenhuma etiqueta na fila
                         </p>
-                        <p className="mt-1 max-w-sm text-sm text-[#616161]">
+                        <p className="mt-1 max-w-sm text-sm text-[var(--ink-2)]">
                             Assim que um pedido for confirmado, a etiqueta dele aparece
                             aqui pronta para imprimir.
                         </p>
@@ -179,20 +179,20 @@ export default function EtiquetasPage() {
                     <ul className="mt-5 space-y-2">
                         {etiquetas.map((etiqueta) => (
                             <li key={etiqueta.pedido_id}>
-                                <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-white px-4 py-3 text-sm">
+                                <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-[var(--superficie)] px-4 py-3 text-sm">
                                     <input
                                         type="checkbox"
                                         checked={selecionadas.includes(etiqueta.pedido_id)}
                                         onChange={() => alternar(etiqueta.pedido_id)}
                                         className="h-4 w-4"
                                     />
-                                    <span className="num font-bold text-[#303030]">
+                                    <span className="num font-bold text-[var(--ink)]">
                                         {etiqueta.codigo}
                                     </span>
-                                    <span className="truncate text-[#616161]">
+                                    <span className="truncate text-[var(--ink-2)]">
                                         {etiqueta.cliente_nome || "Cliente"} · {etiqueta.pecas} etiqueta(s)
                                     </span>
-                                    <span className="num ml-auto shrink-0 font-bold text-[#303030]">
+                                    <span className="num ml-auto shrink-0 font-bold text-[var(--ink)]">
                                         {formatarMoeda(etiqueta.total)}
                                     </span>
                                 </label>
@@ -206,7 +206,7 @@ export default function EtiquetasPage() {
             </div>
 
         {/* ETIQUETAS — o que efetivamente vai para o papel.
-            Uma por peça: um pedido de três peças imprime três, numeradas
+            Uma por unidade: um pedido de três unidades imprime três, numeradas
             1/3, 2/3 e 3/3, para quem embala saber quando a sacola está
             fechada e quem recebe perceber se chegou volume faltando. */}
         <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 print:mt-0 print:max-w-none print:grid-cols-2">
@@ -216,7 +216,7 @@ export default function EtiquetasPage() {
 
                     <div
                         key={`${etiqueta.pedido_id}-${volume.indice}`}
-                        className="w-full rounded-lg border border-[#E1E1E1] bg-white p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
+                        className="w-full rounded-lg border border-[var(--linha)] bg-[var(--superficie)] p-5 print:break-inside-avoid print:rounded-none print:border print:p-4 print:shadow-none"
                     >
 
                         {/* De quem é o pacote vem primeiro e vem grande:
@@ -226,24 +226,24 @@ export default function EtiquetasPage() {
                             sacola, desceu para o pé. */}
 
                         <div className="flex items-baseline justify-between gap-2">
-                            <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[#616161]">
+                            <p className="text-[0.6rem] font-bold text-[var(--ink-2)]">
                                 {MARCA}
                             </p>
 
                             {/* O número do volume é o que fecha o pacote:
                                 quem embala sabe quando acabou, e quem
                                 recebe percebe se faltou volume. */}
-                            <p className="num text-lg font-extrabold text-[#303030]">
+                            <p className="num text-lg font-extrabold text-[var(--ink)]">
                                 {volume.indice}/{volume.total}
                             </p>
                         </div>
 
-                        <h2 className="font-display mt-2 break-words text-2xl leading-tight text-[#303030]">
+                        <h2 className="font-display mt-2 break-words text-2xl leading-tight text-[var(--ink)]">
                             {etiqueta.cliente_nome || "Cliente"}
                         </h2>
 
                         {etiqueta.cliente_contato && (
-                            <p className="num mt-0.5 text-sm font-bold text-[#616161]">
+                            <p className="num mt-0.5 text-sm font-bold text-[var(--ink-2)]">
                                 {etiqueta.cliente_contato}
                             </p>
                         )}
@@ -251,39 +251,39 @@ export default function EtiquetasPage() {
                         {/* Os dados do pedido, logo abaixo do nome: é o
                             que se confere no balcão quando o cliente
                             chega dizendo "vim buscar o meu". */}
-                        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[#E1E1E1] pt-3 text-xs">
+                        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[var(--linha)] pt-3 text-xs">
 
-                            <dt className="text-[#616161]">Pedido</dt>
-                            <dd className="num text-right font-bold text-[#303030]">{etiqueta.codigo}</dd>
+                            <dt className="text-[var(--ink-2)]">Pedido</dt>
+                            <dd className="num text-right font-bold text-[var(--ink)]">{etiqueta.codigo}</dd>
 
-                            <dt className="text-[#616161]">Data</dt>
-                            <dd className="text-right text-[#303030]">{etiqueta.criado_em}</dd>
+                            <dt className="text-[var(--ink-2)]">Data</dt>
+                            <dd className="text-right text-[var(--ink)]">{etiqueta.criado_em}</dd>
 
-                            <dt className="text-[#616161]">Peças</dt>
-                            <dd className="num text-right text-[#303030]">{etiqueta.pecas}</dd>
+                            <dt className="text-[var(--ink-2)]">Unidades</dt>
+                            <dd className="num text-right text-[var(--ink)]">{etiqueta.pecas}</dd>
 
-                            <dt className="text-[#616161]">Total do pedido</dt>
-                            <dd className="num text-right font-bold text-[#303030]">{formatarMoeda(etiqueta.total)}</dd>
+                            <dt className="text-[var(--ink-2)]">Total do pedido</dt>
+                            <dd className="num text-right font-bold text-[var(--ink)]">{formatarMoeda(etiqueta.total)}</dd>
 
                         </dl>
 
-                        <div className="mt-3 flex justify-center border-t border-[#E1E1E1] pt-3">
+                        <div className="mt-3 flex justify-center border-t border-[var(--linha)] pt-3">
                             <Barcode valor={volume.codigo} className="max-w-full" />
                         </div>
 
-                        {/* A peça deste volume. */}
-                        <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-[#E1E1E1] pt-3">
+                        {/* A unidade deste volume. */}
+                        <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-[var(--linha)] pt-3">
 
                             <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-[#303030]">
+                                <p className="truncate text-sm font-bold text-[var(--ink)]">
                                     {volume.nome}
                                 </p>
-                                <p className="text-xs text-[#616161]">
+                                <p className="text-xs text-[var(--ink-2)]">
                                     {[volume.tamanho, volume.cor].filter(Boolean).join(" · ") || "—"}
                                 </p>
                             </div>
 
-                            <p className="num shrink-0 text-base font-extrabold text-[#303030]">
+                            <p className="num shrink-0 text-base font-extrabold text-[var(--ink)]">
                                 {formatarMoeda(volume.valor)}
                             </p>
 

@@ -277,13 +277,13 @@ export default function MuralDaEquipe({ eu, equipe }: {
                             ))}
                         </select>
 
-                        <span className="flex items-center gap-1 text-xs text-[#8A8A8A]">
+                        <span className="flex items-center gap-1 text-xs text-[var(--ink-3)]">
                             <FiUsers className="w-3.5" aria-hidden />
                             {membros.length === 1 ? "só você" : `${membros.length} pessoas`}
                         </span>
                     </div>
 
-                    <p className="mt-1 text-sm text-[#616161]">
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                         Os recados que ficam à vista. Arraste para organizar — quem está no quadro
                         move qualquer papel.
                     </p>
@@ -326,7 +326,7 @@ export default function MuralDaEquipe({ eu, equipe }: {
             </div>
 
             {erro && (
-                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm font-semibold text-[#8E1F0B]">
+                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </p>
@@ -343,11 +343,11 @@ export default function MuralDaEquipe({ eu, equipe }: {
             )}
 
             {carregando ? (
-                <div className="h-full animate-pulse rounded-xl bg-[#F1F1F1]" />
+                <div className="h-full animate-pulse rounded-xl bg-[var(--fundo)]" />
             ) : (
                 <div
                     ref={area}
-                    className="quadro-do-mural min-h-0 flex-1 overflow-auto rounded-xl border border-[#E1E1E1]"
+                    className="quadro-do-mural min-h-0 flex-1 overflow-auto rounded-xl border border-[var(--linha)]"
                 >
                     {/* A área interna tem o tamanho do quadro, e é ela que
                         rola. As notas são posicionadas em pixels absolutos
@@ -358,7 +358,7 @@ export default function MuralDaEquipe({ eu, equipe }: {
                         style={{ width: quadro.largura, height: quadro.altura }}
                     >
                         {notas.length === 0 && (
-                            <p className="absolute left-8 top-8 max-w-xs text-sm text-[#8A8A8A]">
+                            <p className="absolute left-8 top-8 max-w-xs text-sm text-[var(--ink-3)]">
                                 O quadro está vazio. Pendure o primeiro recado — o que a equipe
                                 precisa ter à vista e não cabe numa mensagem que rola para cima.
                             </p>
@@ -420,30 +420,30 @@ function ChamarPessoas({ equipe, membros, eu, aoChamar, aoFechar }: {
 
             <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFechar} />
 
-            <div className="anim-tela relative w-full max-w-md rounded-xl border border-[#E1E1E1] bg-white p-6 shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+            <div className="anim-tela relative w-full max-w-md rounded-xl border border-[var(--linha)] bg-[var(--superficie)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
 
                 <div className="mb-4 flex items-start justify-between gap-4">
-                    <h2 className="font-display text-lg text-[#303030]">Chamar para o mural</h2>
+                    <h2 className="font-display text-lg text-[var(--ink)]">Chamar para o mural</h2>
 
                     <button
                         type="button"
                         onClick={aoFechar}
                         aria-label="Fechar"
-                        className="rounded-lg p-1 text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        className="rounded-lg p-1 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
                 </div>
 
                 {disponiveis.length === 0 ? (
-                    <p className="text-sm text-[#8A8A8A]">
+                    <p className="text-sm text-[var(--ink-3)]">
                         Todo mundo da conversa já está neste mural.
                     </p>
                 ) : (
                     <ul className="max-h-72 space-y-1 overflow-y-auto">
                         {disponiveis.map((membro) => (
                             <li key={membro.cracha}>
-                                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-[#303030] hover:bg-[#F7F7F7]">
+                                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-[var(--ink)] hover:bg-[var(--superficie-2)]">
                                     <input
                                         type="checkbox"
                                         checked={marcados.includes(membro.cracha)}
@@ -713,7 +713,7 @@ function Papel({
                         rows={5}
                         maxLength={600}
                         autoFocus
-                        className="w-full resize-none rounded-md border border-black/10 bg-white/70 p-2 text-sm text-[#303030] outline-none focus:border-[#005BD3]"
+                        className="w-full resize-none rounded-md border border-black/10 bg-[var(--superficie)]/70 p-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--azul)]"
                     />
 
                     <div className="mt-2 flex items-center gap-1.5">
@@ -730,7 +730,7 @@ function Papel({
                             type="button"
                             onClick={aoCancelar}
                             aria-label="Cancelar"
-                            className="rounded-md p-1 text-[#616161] hover:bg-black/5"
+                            className="rounded-md p-1 text-[var(--ink-2)] hover:bg-black/5"
                         >
                             <FiX className="w-4" aria-hidden />
                         </button>
@@ -738,7 +738,7 @@ function Papel({
                 </>
             ) : (
                 <>
-                    <p className="whitespace-pre-wrap break-words text-sm text-[#303030]">
+                    <p className="whitespace-pre-wrap break-words text-sm text-[var(--ink)]">
                         {nota.texto}
                     </p>
 
@@ -770,7 +770,7 @@ function Papel({
                                 id={`cor-${nota.id}`}
                                 value={nota.cor}
                                 onChange={(e) => aoTrocarCor(e.target.value as CorDaNota)}
-                                className="rounded-md border border-black/10 bg-white/60 px-1 py-0.5 text-[0.6875rem] text-[#303030]"
+                                className="rounded-md border border-black/10 bg-[var(--superficie)]/60 px-1 py-0.5 text-[0.6875rem] text-[var(--ink)]"
                             >
                                 {CORES.map((cor) => (
                                     <option key={cor.chave} value={cor.chave}>{cor.rotulo}</option>
@@ -781,7 +781,7 @@ function Papel({
                                 type="button"
                                 onClick={aoArrancar}
                                 aria-label="Apagar recado"
-                                className="ml-auto rounded-md p-1 text-[#8E1F0B] transition-colors hover:bg-black/10"
+                                className="ml-auto rounded-md p-1 text-[var(--vermelho)] transition-colors hover:bg-black/10"
                             >
                                 <FiTrash2 className="w-3.5" aria-hidden />
                             </button>

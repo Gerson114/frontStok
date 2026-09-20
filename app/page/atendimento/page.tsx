@@ -382,13 +382,13 @@ export default function AtendimentoPage() {
         >
 
             {erro && (
-                <div role="alert" className="rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     {erro}
                 </div>
             )}
 
             {carregando ? (
-                <div className="card p-8 text-center text-sm text-[#616161]">
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">
                     Carregando os atendimentos...
                 </div>
             ) : fios.length === 0 ? (
@@ -410,42 +410,42 @@ export default function AtendimentoPage() {
                         que é o que já tem dono. Separados porque a pergunta é
                         diferente — na fila se pergunta "tem alguém esperando?",
                         na mesa, "o que eu tenho para terminar?". */}
-                    <div className="border-b border-[#E1E1E1] lg:max-h-[36rem] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+                    <div className="border-b border-[var(--linha)] lg:max-h-[36rem] lg:overflow-y-auto lg:border-b-0 lg:border-r">
 
                         {fila.length > 0 && (
-                            <p className="sticky top-0 z-10 border-b border-[#EBEBEB] bg-[#FFF1E3] px-4 py-2 text-[0.7rem] font-bold uppercase tracking-[0.06em] text-[#5E4200]">
+                            <p className="sticky top-0 z-10 border-b border-[var(--linha-suave)] bg-[var(--amarelo-fundo)] px-4 py-2 text-[0.7rem] font-bold text-[var(--amarelo)]">
                                 Na fila · {fila.length}
                             </p>
                         )}
 
-                        <ul className="divide-y divide-[#EBEBEB]">
+                        <ul className="divide-y divide-[var(--linha-suave)]">
                         {fila.map((fio) => (
                             <li key={fio.id}>
                                 <button
                                     type="button"
                                     onClick={() => setEscolhido(fio.id)}
                                     className={`w-full px-4 py-3 text-left transition-colors ${
-                                        fio.id === escolhido ? "bg-[#EAF4FF]" : "hover:bg-[#F7F7F7]"
+                                        fio.id === escolhido ? "bg-[var(--azul-suave)]" : "hover:bg-[var(--superficie-2)]"
                                     }`}
                                 >
                                     <div className="flex items-baseline justify-between gap-2">
-                                        <span className="min-w-0 truncate text-sm font-semibold text-[#303030]">
+                                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--ink)]">
                                             {fio.cliente_nome || "Cliente"}
                                         </span>
 
-                                        <span className="num shrink-0 text-[0.7rem] text-[#8A8A8A]">
+                                        <span className="num shrink-0 text-[0.7rem] text-[var(--ink-3)]">
                                             {quandoDe(fio.ultima_mensagem_em)}
                                         </span>
                                     </div>
 
                                     <div className="mt-1 flex items-center justify-between gap-2">
-                                        <span className="min-w-0 truncate text-xs text-[#616161]">
+                                        <span className="min-w-0 truncate text-xs text-[var(--ink-2)]">
                                             {fio.ultimo_autor === "loja" ? "Você: " : ""}
                                             {fio.ultima_fala || "—"}
                                         </span>
 
                                         {fio.nao_lidas > 0 && (
-                                            <span className="num shrink-0 rounded-full bg-[#005BD3] px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                                            <span className="num shrink-0 rounded-full bg-[var(--azul)] px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
                                                 {fio.nao_lidas}
                                             </span>
                                         )}
@@ -471,51 +471,51 @@ export default function AtendimentoPage() {
                         </ul>
 
                         {naMesa.length > 0 && (
-                            <p className="sticky top-0 z-10 border-y border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2 text-[0.7rem] font-bold uppercase tracking-[0.06em] text-[#616161]">
+                            <p className="sticky top-0 z-10 border-y border-[var(--linha-suave)] bg-[var(--superficie-2)] px-4 py-2 text-[0.7rem] font-bold text-[var(--ink-2)]">
                                 Em atendimento · {naMesa.length}
                             </p>
                         )}
 
-                        <ul className="divide-y divide-[#EBEBEB]">
+                        <ul className="divide-y divide-[var(--linha-suave)]">
                         {naMesa.map((fio) => (
                             <li key={fio.id}>
                                 <button
                                     type="button"
                                     onClick={() => setEscolhido(fio.id)}
                                     className={`w-full px-4 py-3 text-left transition-colors ${
-                                        fio.id === escolhido ? "bg-[#EAF4FF]" : "hover:bg-[#F7F7F7]"
+                                        fio.id === escolhido ? "bg-[var(--azul-suave)]" : "hover:bg-[var(--superficie-2)]"
                                     }`}
                                 >
                                     <div className="flex items-baseline justify-between gap-2">
-                                        <span className="min-w-0 truncate text-sm font-semibold text-[#303030]">
+                                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--ink)]">
                                             {fio.cliente_nome || "Cliente"}
                                         </span>
 
-                                        <span className="num shrink-0 text-[0.7rem] text-[#8A8A8A]">
+                                        <span className="num shrink-0 text-[0.7rem] text-[var(--ink-3)]">
                                             {quandoDe(fio.ultima_mensagem_em)}
                                         </span>
                                     </div>
 
                                     <div className="mt-1 flex items-center justify-between gap-2">
-                                        <span className="min-w-0 truncate text-xs text-[#616161]">
+                                        <span className="min-w-0 truncate text-xs text-[var(--ink-2)]">
                                             {fio.ultimo_autor === "loja" ? "Você: " : ""}
                                             {fio.ultima_fala || "—"}
                                         </span>
 
                                         {fio.nao_lidas > 0 && (
-                                            <span className="num shrink-0 rounded-full bg-[#005BD3] px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+                                            <span className="num shrink-0 rounded-full bg-[var(--azul)] px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
                                                 {fio.nao_lidas}
                                             </span>
                                         )}
                                     </div>
 
-                                    <p className="mt-1 flex items-center gap-1.5 text-[0.7rem] text-[#616161]">
+                                    <p className="mt-1 flex items-center gap-1.5 text-[0.7rem] text-[var(--ink-2)]">
                                         <span className={`inline-block h-1.5 w-1.5 rounded-full ${
                                             fio.situacao === EM_ATENDIMENTO
-                                                ? "bg-[#0C5132]"
+                                                ? "bg-[var(--verde)]"
                                                 : fio.situacao === ENCERRADO
-                                                    ? "bg-[#B5B5B5]"
-                                                    : "bg-[#C7920A]"
+                                                    ? "bg-[var(--ink-4)]"
+                                                    : "bg-[var(--amarelo-forte)]"
                                         }`} aria-hidden />
                                         {fio.situacao === ENCERRADO
                                             ? "Encerrado"
@@ -535,18 +535,18 @@ export default function AtendimentoPage() {
                     <div className="flex min-h-[24rem] flex-col lg:max-h-[36rem]">
 
                         {aberto === null ? (
-                            <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-[#8A8A8A]">
+                            <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-[var(--ink-3)]">
                                 Escolha uma conversa à esquerda.
                             </div>
                         ) : (
                             <>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[#E1E1E1] bg-[#F7F7F7] px-5 py-3">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--linha)] bg-[var(--superficie-2)] px-5 py-3">
 
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-semibold text-[#303030]">
+                                        <p className="text-sm font-semibold text-[var(--ink)]">
                                             {aberto.cliente_nome || "Cliente"}
                                         </p>
-                                        <p className="text-xs text-[#8A8A8A]">{aberto.cliente_contato}</p>
+                                        <p className="text-xs text-[var(--ink-3)]">{aberto.cliente_contato}</p>
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2">
@@ -589,7 +589,7 @@ export default function AtendimentoPage() {
 
                                         {aberto.situacao === ENCERRADO && (
                                             <>
-                                                <span className="text-xs text-[#616161]">
+                                                <span className="text-xs text-[var(--ink-2)]">
                                                     Encerrado
                                                     {aberto.encerrado_em ? ` em ${quandoDe(aberto.encerrado_em)}` : ""}
                                                 </span>
@@ -606,9 +606,9 @@ export default function AtendimentoPage() {
 
                                         {aberto.responsavel_nome && aberto.situacao !== ENCERRADO && (
                                             <>
-                                                <span className="text-xs text-[#616161]">
+                                                <span className="text-xs text-[var(--ink-2)]">
                                                     com{" "}
-                                                    <span className="font-semibold text-[#303030]">
+                                                    <span className="font-semibold text-[var(--ink)]">
                                                         {aberto.responsavel_nome}
                                                     </span>
                                                 </span>
@@ -616,7 +616,7 @@ export default function AtendimentoPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => mudarResponsavel({ liberar: true })}
-                                                    className="text-xs text-[#616161] underline underline-offset-2 hover:text-[#303030]"
+                                                    className="text-xs text-[var(--ink-2)] underline underline-offset-2 hover:text-[var(--ink)]"
                                                 >
                                                     devolver à fila
                                                 </button>
@@ -668,8 +668,8 @@ export default function AtendimentoPage() {
                                                 <div
                                                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                                                         daLoja
-                                                            ? "bg-[#005BD3] text-white"
-                                                            : "bg-[#F1F1F1] text-[#303030]"
+                                                            ? "bg-[var(--azul)] text-white"
+                                                            : "bg-[var(--fundo)] text-[var(--ink)]"
                                                     }`}
                                                 >
                                                     <p className="whitespace-pre-wrap break-words leading-relaxed">
@@ -678,7 +678,7 @@ export default function AtendimentoPage() {
 
                                                     <p
                                                         className={`num mt-1 text-[0.65rem] ${
-                                                            daLoja ? "text-white/70" : "text-[#8A8A8A]"
+                                                            daLoja ? "text-white/70" : "text-[var(--ink-3)]"
                                                         }`}
                                                     >
                                                         {/* Quem escreveu, do lado da loja: numa
@@ -697,7 +697,7 @@ export default function AtendimentoPage() {
                                         do atendente já está. */}
                                     {clienteDigitando ? (
                                         <div className="flex justify-start">
-                                            <div className="rounded-lg bg-[#F1F1F1] px-3.5 py-3 text-[#616161]">
+                                            <div className="rounded-lg bg-[var(--fundo)] px-3.5 py-3 text-[var(--ink-2)]">
                                                 <span className="digitando">
                                                     <span /><span /><span />
                                                 </span>
@@ -709,7 +709,7 @@ export default function AtendimentoPage() {
                                     <div ref={fim} />
                                 </div>
 
-                                <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[#E1E1E1] p-3">
+                                <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[var(--linha)] p-3">
                                     <label className="sr-only" htmlFor="resposta">
                                         Sua resposta
                                     </label>

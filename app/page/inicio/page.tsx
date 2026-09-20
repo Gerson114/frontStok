@@ -84,13 +84,13 @@ function Cartao({ Icone, rotulo, valor, detalhe }: {
 }) {
     return (
         <div className="card p-4">
-            <p className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            <p className="flex items-center gap-2 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                 <Icone className="w-3.5" aria-hidden />
                 {rotulo}
             </p>
 
-            <p className="num mt-2 text-xl font-bold text-[#303030]">{valor}</p>
-            <p className="mt-0.5 text-xs text-[#8A8A8A]">{detalhe}</p>
+            <p className="num mt-2 text-xl font-bold text-[var(--ink)]">{valor}</p>
+            <p className="mt-0.5 text-xs text-[var(--ink-3)]">{detalhe}</p>
         </div>
     )
 }
@@ -121,16 +121,16 @@ function Comparacao({ periodo, rotulo }: { periodo: PeriodoDoPainel; rotulo: str
     return (
         <p className="mt-1.5 flex items-center gap-1.5 text-xs">
             {subiu ? (
-                <FiTrendingUp className="w-3.5 shrink-0 text-[#0C5132]" aria-hidden />
+                <FiTrendingUp className="w-3.5 shrink-0 text-[var(--verde)]" aria-hidden />
             ) : (
-                <FiTrendingDown className="w-3.5 shrink-0 text-[#8E1F0B]" aria-hidden />
+                <FiTrendingDown className="w-3.5 shrink-0 text-[var(--vermelho)]" aria-hidden />
             )}
 
-            <span className={`num font-semibold ${subiu ? "text-[#0C5132]" : "text-[#8E1F0B]"}`}>
+            <span className={`num font-semibold ${subiu ? "text-[var(--verde)]" : "text-[var(--vermelho)]"}`}>
                 {subiu ? "+" : ""}{Math.round(variacao)}%
             </span>
 
-            <span className="text-[#8A8A8A]">
+            <span className="text-[var(--ink-3)]">
                 sobre {contra} ({moeda(antes)})
             </span>
         </p>
@@ -152,7 +152,7 @@ function Numero({ periodo, rotulo }: { periodo: PeriodoDoPainel; rotulo: string 
     return (
         <div className="p-5">
 
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                 {rotulo}
             </p>
 
@@ -165,20 +165,20 @@ function Numero({ periodo, rotulo }: { periodo: PeriodoDoPainel; rotulo: string 
             <dl className="mt-3 space-y-1 text-sm">
 
                 <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-[#616161]">Peças</dt>
-                    <dd className="num font-semibold text-[#303030]">{periodo.pecas}</dd>
+                    <dt className="text-[var(--ink-2)]">Unidades</dt>
+                    <dd className="num font-semibold text-[var(--ink)]">{periodo.pecas}</dd>
                 </div>
 
                 <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-[#616161]">Custo</dt>
-                    <dd className="num font-semibold text-[#303030]">
+                    <dt className="text-[var(--ink-2)]">Custo</dt>
+                    <dd className="num font-semibold text-[var(--ink)]">
                         {periodo.custo.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </dd>
                 </div>
 
-                <div className="flex items-baseline justify-between gap-3 border-t border-[#EBEBEB] pt-1">
-                    <dt className="font-semibold text-[#303030]">Margem</dt>
-                    <dd className={`num font-semibold ${periodo.margem >= 0 ? "text-[#0C5132]" : "text-[#8E1F0B]"}`}>
+                <div className="flex items-baseline justify-between gap-3 border-t border-[var(--linha-suave)] pt-1">
+                    <dt className="font-semibold text-[var(--ink)]">Margem</dt>
+                    <dd className={`num font-semibold ${periodo.margem >= 0 ? "text-[var(--verde)]" : "text-[var(--vermelho)]"}`}>
                         {periodo.margem.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </dd>
                 </div>
@@ -268,14 +268,14 @@ export default async function Inicio() {
         {
             // A mais séria da lista: a peça existe no sistema e ninguém a
             // encontra no corredor. Toda venda dela vira uma procura.
-            rotulo: "Peças sem endereço",
+            rotulo: "Unidades sem endereço",
             quantidade: atencao.pecas_sem_endereco,
             rota: "/page/estoque",
             Icone: FiMapPin,
             urgente: true,
         },
         {
-            rotulo: "Peças avariadas",
+            rotulo: "Unidades avariadas",
             quantidade: atencao.pecas_avariadas,
             rota: "/page/avarias",
             Icone: FiAlertTriangle,
@@ -304,28 +304,28 @@ export default async function Inicio() {
     return (
         <Pagina
             titulo="Início"
-            descricao="O que a sua loja fez hoje e neste mês, somado do que já está no sistema — o preço por que cada peça saiu e o custo com que ela entrou."
+            descricao="O que a sua loja fez hoje e neste mês, somado do que já está no sistema — o preço por que cada unidade saiu e o custo com que ela entrou."
         >
 
             {/* ==========================
                 O DINHEIRO
             ========================== */}
 
-            <div className="card grid grid-cols-1 divide-[#EBEBEB] sm:grid-cols-2 sm:divide-x">
+            <div className="card grid grid-cols-1 divide-[var(--linha-suave)] sm:grid-cols-2 sm:divide-x">
                 <Numero periodo={dia} rotulo="Hoje" />
                 <Numero periodo={mes} rotulo="Este mês" />
             </div>
 
             {!mes.custo_conhecido && mes.pecas > 0 && (
-                <p className="flex items-start gap-2.5 rounded-lg border-l-2 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                <p className="flex items-start gap-2.5 rounded-lg border-l-2 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                     <FiInfo className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
-                        Parte das peças vendidas neste mês saiu sem custo gravado, então a
+                        Parte das unidades vendidas neste mês saiu sem custo gravado, então a
                         margem acima está maior do que a real. O custo entra em{" "}
-                        <Link href="/page/estoque/inserir" className="font-semibold text-[#005BD3] hover:underline">
+                        <Link href="/page/estoque/inserir" className="font-semibold text-[var(--azul)] hover:underline">
                             Entrada de mercadoria
                         </Link>
-                        , e vale para as peças que entrarem daqui em diante.
+                        , e vale para as unidades que entrarem daqui em diante.
                     </span>
                 </p>
             )}
@@ -344,22 +344,22 @@ export default async function Inicio() {
                     <Link
                         key={painel.rota}
                         href={painel.rota}
-                        className="card flex items-start gap-3 p-4 transition-colors hover:border-[#B5B5B5]"
+                        className="card flex items-start gap-3 p-4 transition-colors hover:border-[var(--ink-4)]"
                     >
-                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#00369B]">
+                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-[var(--azul-escuro)]">
                             <painel.Icone className="w-4" aria-hidden />
                         </span>
 
                         <span className="min-w-0">
-                            <span className="block text-sm font-semibold text-[#303030]">
+                            <span className="block text-sm font-semibold text-[var(--ink)]">
                                 {painel.titulo}
                             </span>
-                            <span className="mt-0.5 block text-xs leading-relaxed text-[#616161]">
+                            <span className="mt-0.5 block text-xs leading-relaxed text-[var(--ink-2)]">
                                 {painel.descricao}
                             </span>
                         </span>
 
-                        <FiArrowRight className="ml-auto mt-1 w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
+                        <FiArrowRight className="ml-auto mt-1 w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
                     </Link>
                 ))}
             </div>
@@ -369,14 +369,14 @@ export default async function Inicio() {
 
                 Duas perguntas diferentes, lado a lado de propósito: o que
                 SAIU (mercadoria) e o que ENTROU (dinheiro). Elas não batem, e
-                não deviam: a peça sai num dia e o pagamento entra noutro. É
+                não deviam: a unidade sai num dia e o pagamento entra noutro. É
                 exatamente essa diferença que o lojista precisa enxergar ao
                 fechar o caixa.
             ========================== */}
 
             <Secao
                 titulo="Fechamento de hoje"
-                descricao="Por onde a mercadoria saiu, e quanto dinheiro entrou. São contas diferentes: a peça pode sair num dia e o pagamento cair no outro."
+                descricao="Por onde a mercadoria saiu, e quanto dinheiro entrou. São contas diferentes: a unidade pode sair num dia e o pagamento cair no outro."
             >
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -384,14 +384,14 @@ export default async function Inicio() {
                         Icone={FiShoppingBag}
                         rotulo="Saiu no balcão"
                         valor={moeda(caixa.balcao.faturamento)}
-                        detalhe={`${caixa.balcao.pecas} peça(s)`}
+                        detalhe={`${caixa.balcao.pecas} unidade(s)`}
                     />
 
                     <Cartao
                         Icone={FiPackage}
                         rotulo="Saiu por pedido"
                         valor={moeda(caixa.pedidos.faturamento)}
-                        detalhe={`${caixa.pedidos.pecas} peça(s)`}
+                        detalhe={`${caixa.pedidos.pecas} unidade(s)`}
                     />
 
                     <Cartao
@@ -409,6 +409,42 @@ export default async function Inicio() {
                     />
 
                 </div>
+
+                {/* O balcão aberto por forma de pagamento.
+                
+                    É a linha que faltava para o dia fechar: o total do balcão
+                    sozinho não se confere com nada, e esta quebra é o que se
+                    compara com a gaveta contada e com o extrato da maquininha.
+                
+                    Fica como uma faixa embaixo dos cartões, e não como quatro
+                    cartões a mais: são pedaços de um número que já está na
+                    tela, e cartão de tamanho igual ao "Saiu no balcão" faria
+                    a parte parecer do mesmo peso que o todo.
+                
+                    Some quando não houve venda no balcão hoje — uma faixa de
+                    zeros é linha para ler sem nada a dizer. */}
+                {(caixa.balcao_por_meio ?? []).length > 0 && (
+                    <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[var(--linha-suave)] pt-3">
+
+                        <span className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
+                            Balcão por pagamento
+                        </span>
+
+                        {(caixa.balcao_por_meio ?? []).map((meio) => (
+                            <span key={meio.chave} className="flex items-baseline gap-1.5 text-sm">
+                                <span className="text-[var(--ink-2)]">{meio.nome}</span>
+
+                                <span className="num font-semibold text-[var(--ink)]">
+                                    {moeda(meio.faturamento)}
+                                </span>
+
+                                <span className="num text-xs text-[var(--ink-3)]">
+                                    ({meio.pecas})
+                                </span>
+                            </span>
+                        ))}
+                    </div>
+                )}
             </Secao>
 
             {/* ==========================
@@ -421,35 +457,35 @@ export default async function Inicio() {
                 plano
             >
                 {pendentes.length === 0 ? (
-                    <p className="px-5 py-6 text-sm text-[#616161]">
-                        Nada parado: nenhum pedido esperando, nenhuma peça sem endereço e
+                    <p className="px-5 py-6 text-sm text-[var(--ink-2)]">
+                        Nada parado: nenhum pedido esperando, nenhuma unidade sem endereço e
                         nenhuma tarefa aberta.
                     </p>
                 ) : (
-                    <ul className="divide-y divide-[#EBEBEB]">
+                    <ul className="divide-y divide-[var(--linha-suave)]">
                         {pendentes.map(({ rotulo, quantidade, rota, Icone, urgente }) => (
                             <li key={rotulo}>
                                 <Link
                                     href={rota}
-                                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[#F7F7F7]"
+                                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[var(--superficie-2)]"
                                 >
                                     <span
                                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                                            urgente ? "bg-[#FEE9E8] text-[#8E1F0B]" : "bg-[#F7F7F7] text-[#616161]"
+                                            urgente ? "bg-[var(--vermelho-fundo)] text-[var(--vermelho)]" : "bg-[var(--superficie-2)] text-[var(--ink-2)]"
                                         }`}
                                     >
                                         <Icone className="w-4" aria-hidden />
                                     </span>
 
-                                    <span className="flex-1 text-sm font-medium text-[#303030]">
+                                    <span className="flex-1 text-sm font-medium text-[var(--ink)]">
                                         {rotulo}
                                     </span>
 
-                                    <span className={`num text-sm font-semibold ${urgente ? "text-[#8E1F0B]" : "text-[#303030]"}`}>
+                                    <span className={`num text-sm font-semibold ${urgente ? "text-[var(--vermelho)]" : "text-[var(--ink)]"}`}>
                                         {quantidade}
                                     </span>
 
-                                    <FiArrowRight className="w-4 shrink-0 text-[#B5B5B5]" aria-hidden />
+                                    <FiArrowRight className="w-4 shrink-0 text-[var(--ink-4)]" aria-hidden />
                                 </Link>
                             </li>
                         ))}
@@ -476,7 +512,7 @@ export default async function Inicio() {
 
             <Secao
                 titulo="O que mais sai neste mês"
-                descricao="Pelas peças que deixaram a loja, no balcão e pelo site."
+                descricao="Pelas unidades que deixaram a loja, no balcão e pelo site."
                 acoes={
                     <Link href="/page/vendidos" className="btn btn-neutro">
                         Ver tudo
@@ -485,22 +521,22 @@ export default async function Inicio() {
                 plano
             >
                 {maisSaem.length === 0 ? (
-                    <p className="px-5 py-6 text-sm text-[#616161]">
-                        Nenhuma peça saiu neste mês ainda.
+                    <p className="px-5 py-6 text-sm text-[var(--ink-2)]">
+                        Nenhuma unidade saiu neste mês ainda.
                     </p>
                 ) : (
-                    <ul className="divide-y divide-[#EBEBEB]">
+                    <ul className="divide-y divide-[var(--linha-suave)]">
                         {maisSaem.map((item) => (
                             <li key={item.produto_id} className="px-5 py-3">
 
                                 <div className="flex items-baseline justify-between gap-4">
-                                    <p className="min-w-0 truncate text-sm font-medium text-[#303030]">
+                                    <p className="min-w-0 truncate text-sm font-medium text-[var(--ink)]">
                                         {item.nome}
                                     </p>
 
-                                    <p className="num shrink-0 text-sm text-[#616161]">
-                                        <span className="font-semibold text-[#303030]">{item.pecas}</span>
-                                        {" peça(s) · "}
+                                    <p className="num shrink-0 text-sm text-[var(--ink-2)]">
+                                        <span className="font-semibold text-[var(--ink)]">{item.pecas}</span>
+                                        {" unidade(s) · "}
                                         {item.faturamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                     </p>
                                 </div>
@@ -509,9 +545,9 @@ export default async function Inicio() {
                                     relance. Sem rótulo próprio: o número já está
                                     escrito ao lado, e repeti-lo dentro da barra só
                                     encheria a linha. */}
-                                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EBEBEB]" aria-hidden>
+                                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--linha-suave)]" aria-hidden>
                                     <div
-                                        className="h-full rounded-full bg-[#005BD3]"
+                                        className="h-full rounded-full bg-[var(--azul)]"
                                         style={{ width: `${maiorVenda > 0 ? (item.pecas / maiorVenda) * 100 : 0}%` }}
                                     />
                                 </div>
@@ -545,57 +581,57 @@ export default async function Inicio() {
                         <table className="w-full min-w-[46rem] text-sm">
 
                             <thead>
-                                <tr className="border-b border-[#E1E1E1] text-left text-xs uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                <tr className="border-b border-[var(--linha)] text-left text-xs uppercase tracking-[0.06em] text-[var(--ink-3)]">
                                     <th className="px-5 py-2.5 font-semibold">Pessoa</th>
                                     <th className="px-3 py-2.5 text-right font-semibold">Vendeu hoje</th>
                                     <th className="px-3 py-2.5 text-right font-semibold">Vendeu no mês</th>
-                                    <th className="px-3 py-2.5 text-right font-semibold">Peças</th>
+                                    <th className="px-3 py-2.5 text-right font-semibold">Unidades</th>
                                     <th className="px-3 py-2.5 text-right font-semibold">Pedidos</th>
                                     <th className="px-3 py-2.5 text-right font-semibold">Atendimentos</th>
                                     <th className="px-5 py-2.5 text-right font-semibold">Clientes</th>
                                 </tr>
                             </thead>
 
-                            <tbody className="divide-y divide-[#EBEBEB]">
+                            <tbody className="divide-y divide-[var(--linha-suave)]">
                                 {equipe.map((pessoa) => (
                                     <tr key={`${pessoa.id}-${pessoa.nome}`}>
 
                                         <td className="px-5 py-3">
-                                            <span className="flex items-center gap-2 font-medium text-[#303030]">
-                                                <FiUsers className="w-3.5 shrink-0 text-[#8A8A8A]" aria-hidden />
+                                            <span className="flex items-center gap-2 font-medium text-[var(--ink)]">
+                                                <FiUsers className="w-3.5 shrink-0 text-[var(--ink-3)]" aria-hidden />
                                                 {pessoa.nome}
                                             </span>
                                         </td>
 
-                                        <td className="num px-3 py-3 text-right text-[#616161]">
+                                        <td className="num px-3 py-3 text-right text-[var(--ink-2)]">
                                             {pessoa.faturamento_hoje > 0 ? moeda(pessoa.faturamento_hoje) : "—"}
                                         </td>
 
-                                        <td className="num px-3 py-3 text-right font-semibold text-[#303030]">
+                                        <td className="num px-3 py-3 text-right font-semibold text-[var(--ink)]">
                                             {pessoa.faturamento_no_mes > 0 ? moeda(pessoa.faturamento_no_mes) : "—"}
                                         </td>
 
-                                        <td className="num px-3 py-3 text-right text-[#616161]">
+                                        <td className="num px-3 py-3 text-right text-[var(--ink-2)]">
                                             {pessoa.pecas_no_mes || "—"}
                                         </td>
 
-                                        <td className="num px-3 py-3 text-right text-[#616161]">
+                                        <td className="num px-3 py-3 text-right text-[var(--ink-2)]">
                                             {pessoa.pedidos || "—"}
                                         </td>
 
-                                        <td className="num px-3 py-3 text-right text-[#616161]">
+                                        <td className="num px-3 py-3 text-right text-[var(--ink-2)]">
                                             {pessoa.conversas > 0 ? (
                                                 <span className="inline-flex items-center gap-1.5">
-                                                    <FiMessageSquare className="w-3.5 text-[#8A8A8A]" aria-hidden />
+                                                    <FiMessageSquare className="w-3.5 text-[var(--ink-3)]" aria-hidden />
                                                     {pessoa.conversas}
-                                                    <span className="text-xs text-[#8A8A8A]">
+                                                    <span className="text-xs text-[var(--ink-3)]">
                                                         ({pessoa.mensagens} msg)
                                                     </span>
                                                 </span>
                                             ) : "—"}
                                         </td>
 
-                                        <td className="num px-5 py-3 text-right text-[#616161]">
+                                        <td className="num px-5 py-3 text-right text-[var(--ink-2)]">
                                             {pessoa.clientes_ativos || "—"}
                                         </td>
 
@@ -606,7 +642,7 @@ export default async function Inicio() {
                         </table>
                     </div>
 
-                    <p className="px-5 py-3 text-xs text-[#8A8A8A]">
+                    <p className="px-5 py-3 text-xs text-[var(--ink-3)]">
                         O nome fica gravado na venda e na mensagem no instante em que
                         acontecem. Quem sai da loja continua aparecendo no mês em que
                         trabalhou.
@@ -614,10 +650,10 @@ export default async function Inicio() {
                 </Secao>
             )}
 
-            <p className="flex items-start gap-2 text-xs text-[#8A8A8A]">
+            <p className="flex items-start gap-2 text-xs text-[var(--ink-3)]">
                 <FiPackage className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                 <span>
-                    Peça devolvida sai destas contas: ela foi vendida e voltou, e mantê-la
+                    Unidade devolvida sai destas contas: ela foi vendida e voltou, e mantê-la
                     no faturamento contaria uma venda que se desfez.
                 </span>
             </p>

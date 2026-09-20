@@ -38,7 +38,7 @@ export default function Vendidos() {
 
             console.error("Erro ao buscar vendidos:", error)
 
-            setErro("Não foi possível carregar as peças vendidas.")
+            setErro("Não foi possível carregar as unidades vendidas.")
 
         } finally {
 
@@ -204,15 +204,15 @@ export default function Vendidos() {
                     <div className="flex items-center justify-between">
 
                         <div>
-                            <p className="text-sm text-[#616161]">
-                                Total de peças vendidas
+                            <p className="text-sm text-[var(--ink-2)]">
+                                Total de unidades vendidas
                             </p>
-                            <p className="num mt-2 text-3xl font-bold text-[#303030]">
+                            <p className="num mt-2 text-3xl font-bold text-[var(--ink)]">
                                 {vendidas.length}
                             </p>
                         </div>
 
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAF4FF] text-[#005BD3]">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--azul-suave)] text-[var(--azul)]">
                             <FiCheck className="w-5" aria-hidden />
                         </div>
 
@@ -225,15 +225,15 @@ export default function Vendidos() {
                     <div className="flex items-center justify-between gap-3">
 
                         <div className="min-w-0">
-                            <p className="text-sm text-[#616161]">
+                            <p className="text-sm text-[var(--ink-2)]">
                                 Valor total vendido
                             </p>
-                            <p className="num mt-2 truncate text-2xl font-bold text-[#303030]">
+                            <p className="num mt-2 truncate text-2xl font-bold text-[var(--ink)]">
                                 {formatarMoeda(valorTotal)}
                             </p>
                         </div>
 
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF4FF] text-[#005BD3]">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--azul-suave)] text-[var(--azul)]">
                             <FiDollarSign className="w-5" aria-hidden />
                         </div>
 
@@ -250,7 +250,7 @@ export default function Vendidos() {
 
             <div className="relative w-full sm:w-80">
 
-                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                 <input
                     type="text"
@@ -266,7 +266,7 @@ export default function Vendidos() {
                         type="button"
                         onClick={() => aoMudarBusca("")}
                         aria-label="Limpar busca"
-                        className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#616161] transition hover:bg-[#F1F1F1]"
+                        className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[var(--ink-2)] transition hover:bg-[var(--fundo)]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
@@ -283,17 +283,17 @@ export default function Vendidos() {
 
                 <Estado
                     Icone={FiShoppingBag}
-                    titulo="Nenhuma peça vendida ainda"
+                    titulo="Nenhuma unidade vendida ainda"
                     texto={vendidas.length === 0
-                        ? "Quando uma peça for vendida, ela aparece aqui."
-                        : "Nenhuma peça vendida corresponde à busca."}
+                        ? "Quando uma unidade for vendida, ela aparece aqui."
+                        : "Nenhuma unidade vendida corresponde à busca."}
                 />
 
             ) : (
 
                 <div className="card overflow-hidden">
 
-                    <ul className="divide-y divide-[#E1E1E1] px-5">
+                    <ul className="divide-y divide-[var(--linha)] px-5">
 
                         {vendidasDaPagina.map(({ unidade, produto }) => (
 
@@ -302,7 +302,7 @@ export default function Vendidos() {
                                 className="flex items-center gap-3 py-3.5"
                             >
 
-                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#F1F1F1]">
+                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
                                     {produto?.imagem_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -315,11 +315,11 @@ export default function Vendidos() {
 
                                 <div className="min-w-0 flex-1">
 
-                                    <p className="truncate text-sm font-medium text-[#303030]">
+                                    <p className="truncate text-sm font-medium text-[var(--ink)]">
                                         {produto?.nome ?? `Produto #${unidade.produto_id}`}
                                     </p>
 
-                                    <p className="font-mono text-xs text-[#616161]">
+                                    <p className="font-mono text-xs text-[var(--ink-2)]">
                                         {identificarPeca(produto?.codigo, unidade.sequencia)}
                                         {" · "}
                                         {formatarData(unidade.vendida_em)}

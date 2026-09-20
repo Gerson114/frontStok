@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import Sidebar from "./components/header/header";
 import { MARCA } from "@/app/marca"
@@ -32,12 +33,45 @@ export const metadata: Metadata = {
 // requisição (páginas estáticas são geradas em build, sem acesso a ele).
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// O tema (claro/escuro) é escolhido no cabeçalho (ver header.tsx) e guardado
+// no localStorage — não no cookie, que o proxy já usa para o token, e não na
+// preferência do sistema, que o painel decidiu não seguir (ver o comentário
+// grande em globals.css, "MODO ESCURO").
+//
+// Só vale dentro do painel (/page/*). A landing, o login e o cadastro têm a
+// própria paleta, cheia de cor escrita à mão para o hero e a marca — girar
+// esse conjunto para escuro é outro projeto, e diferente do painel: aqui
+// quem entrou não escolheu tema nenhum, e sem o interruptor (que só existe
+// dentro do painel) ele não teria como voltar ao claro. Nascer sempre claro
+// fora do painel é o que evita a tela ficar presa no escuro sem saída.
+//
+// Este script roda ANTES da primeira pintura, direto no <head>, porque sem
+// ele a página nasceria sempre clara e trocaria de cor um instante depois de
+// carregar o React — o "flash" que todo site com tema escuro mal feito tem.
+// Precisa do nonce da CSP (ver proxy.ts) para não ser bloqueado: o
+// script-src daqui só aceita inline com o nonce da requisição.
+const SCRIPT_TEMA = `
+try {
+  if (
+    localStorage.getItem("tema") === "escuro" &&
+    location.pathname.startsWith("/page/")
+  ) {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+} catch (e) {}
+`;
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="pt-BR"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Sidebar />
         {children}

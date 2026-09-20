@@ -97,7 +97,7 @@ export default function PrivacidadeDoCliente({ id, nome }: { id: number; nome: s
                         type="button"
                         onClick={() => { setErro(""); setConfirmando(true) }}
                         disabled={ocupado !== ""}
-                        className="btn btn-neutro text-[#8E1F0B]"
+                        className="btn btn-neutro text-[var(--vermelho)]"
                     >
                         <FiUserX className="w-4" aria-hidden />
                         Anonimizar cadastro
@@ -106,14 +106,14 @@ export default function PrivacidadeDoCliente({ id, nome }: { id: number; nome: s
             </div>
 
             {confirmando && (
-                <div className="mt-4 border border-[#E0B3B2] bg-[#FEE9E8] p-4">
+                <div className="mt-4 border border-[#E0B3B2] bg-[var(--vermelho-fundo)] p-4">
 
-                    <p className="flex items-center gap-2 text-sm font-bold text-[#8E1F0B]">
+                    <p className="flex items-center gap-2 text-sm font-bold text-[var(--vermelho)]">
                         <FiAlertTriangle className="w-4 shrink-0" aria-hidden />
                         Anonimizar {nome || "este cliente"}?
                     </p>
 
-                    <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-[#303030]">
+                    <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-[var(--ink)]">
                         <li>
                             <strong>Some:</strong> nome, e-mail, telefone e as conversas do
                             chat. A conta dela para de funcionar na hora.
@@ -134,7 +134,7 @@ export default function PrivacidadeDoCliente({ id, nome }: { id: number; nome: s
                             type="button"
                             onClick={anonimizar}
                             disabled={ocupado !== ""}
-                            className="btn bg-[#8E1F0B] text-white"
+                            className="btn bg-[var(--vermelho)] text-white"
                         >
                             {ocupado === "anonimizar" ? "Anonimizando..." : "Sim, anonimizar"}
                         </button>
@@ -152,7 +152,7 @@ export default function PrivacidadeDoCliente({ id, nome }: { id: number; nome: s
             )}
 
             {erro && (
-                <p role="alert" className="mt-3 text-sm font-semibold text-[#8E1F0B]">
+                <p role="alert" className="mt-3 text-sm font-semibold text-[var(--vermelho)]">
                     {erro}
                 </p>
             )}

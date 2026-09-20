@@ -53,10 +53,10 @@ import type {
  * — a borda se enxerga de longe, e é ela que faz a urgente saltar da coluna.
  */
 const PRIORIDADES: { chave: PrioridadeDaTarefa; rotulo: string; tag: string; borda: string }[] = [
-    { chave: "urgente", rotulo: "Urgente", tag: "tag-danger", borda: "border-t-[#8E1F0B]" },
+    { chave: "urgente", rotulo: "Urgente", tag: "tag-danger", borda: "border-t-[var(--vermelho)]" },
     { chave: "alta", rotulo: "Alta", tag: "tag-warning", borda: "border-t-[#B98900]" },
-    { chave: "normal", rotulo: "Normal", tag: "tag-info", borda: "border-t-[#005BD3]" },
-    { chave: "baixa", rotulo: "Quando der", tag: "tag-neutral", borda: "border-t-[#E1E1E1]" },
+    { chave: "normal", rotulo: "Normal", tag: "tag-info", borda: "border-t-[var(--azul)]" },
+    { chave: "baixa", rotulo: "Quando der", tag: "tag-neutral", borda: "border-t-[var(--linha)]" },
 ]
 
 const FILTROS: { chave: "abertas" | "minhas" | "todas"; rotulo: string }[] = [
@@ -159,7 +159,7 @@ export default function TarefasDaEquipe({ membros, eu }: {
             acoes={
                 <div className="flex flex-wrap items-center gap-2">
 
-                    <div className="flex rounded-lg border border-[#E1E1E1] p-0.5" role="group" aria-label="Filtro">
+                    <div className="flex rounded-lg border border-[var(--linha)] p-0.5" role="group" aria-label="Filtro">
                         {FILTROS.map((item) => (
                             <button
                                 key={item.chave}
@@ -168,8 +168,8 @@ export default function TarefasDaEquipe({ membros, eu }: {
                                 aria-pressed={item.chave === filtro}
                                 className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                                     item.chave === filtro
-                                        ? "bg-[#303030] text-white"
-                                        : "text-[#616161] hover:bg-[#F1F1F1]"
+                                        ? "bg-[var(--azul)] text-white"
+                                        : "text-[var(--ink-2)] hover:bg-[var(--fundo)]"
                                 }`}
                             >
                                 {item.rotulo}
@@ -189,7 +189,7 @@ export default function TarefasDaEquipe({ membros, eu }: {
             }
         >
             {erro && (
-                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm font-semibold text-[#8E1F0B]">
+                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </p>
@@ -209,9 +209,9 @@ export default function TarefasDaEquipe({ membros, eu }: {
             )}
 
             {carregando ? (
-                <div className="h-24 animate-pulse rounded-lg bg-[#F1F1F1]" />
+                <div className="h-24 animate-pulse rounded-lg bg-[var(--fundo)]" />
             ) : visiveis.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-[#E1E1E1] px-4 py-8 text-center text-sm text-[#8A8A8A]">
+                <p className="rounded-lg border border-dashed border-[var(--linha)] px-4 py-8 text-center text-sm text-[var(--ink-3)]">
                     {filtro === "minhas"
                         ? "Nada pedido a você por enquanto."
                         : "Nenhuma tarefa em aberto."}
@@ -238,21 +238,21 @@ export default function TarefasDaEquipe({ membros, eu }: {
                         if (coluna.chave === "cancelada" && daColuna.length === 0) return null
 
                         return (
-                            <div key={coluna.chave} className="flex w-[17rem] shrink-0 flex-col rounded-xl bg-[#F7F7F7] p-2">
+                            <div key={coluna.chave} className="flex w-[17rem] shrink-0 flex-col rounded-xl bg-[var(--superficie-2)] p-2">
 
                                 <p className="flex items-center justify-between gap-2 px-1.5 py-1.5">
-                                    <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#616161]">
+                                    <span className="text-[0.6875rem] font-semibold text-[var(--ink-2)]">
                                         {coluna.nome}
                                     </span>
 
-                                    <span className="num text-xs font-semibold text-[#8A8A8A]">
+                                    <span className="num text-xs font-semibold text-[var(--ink-3)]">
                                         {daColuna.length}
                                     </span>
                                 </p>
 
                                 <div className="space-y-2">
                                     {daColuna.length === 0 ? (
-                                        <p className="rounded-lg border border-dashed border-[#E1E1E1] px-3 py-6 text-center text-xs text-[#8A8A8A]">
+                                        <p className="rounded-lg border border-dashed border-[var(--linha)] px-3 py-6 text-center text-xs text-[var(--ink-3)]">
                                             {coluna.vazia}
                                         </p>
                                     ) : daColuna.map((tarefa) => (
@@ -321,19 +321,19 @@ function Linha({ tarefa, eu, ocupada, aoMover, aoApagar }: {
 
            A prioridade vira um FIO no alto do cartão, e não só uma etiqueta:
            numa pilha de oito, a cor da borda é o que se enxerga de longe. */
-        <article className={`rounded-lg border border-[#E1E1E1] border-t-2 bg-white p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] ${prioridade.borda}`}>
+        <article className={`rounded-lg border border-[var(--linha)] border-t-2 bg-[var(--superficie)] p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] ${prioridade.borda}`}>
 
             <div className="min-w-0">
 
-                <p className={`text-sm font-medium ${fechada ? "text-[#8A8A8A] line-through" : "text-[#303030]"}`}>
+                <p className={`text-sm font-medium ${fechada ? "text-[var(--ink-3)] line-through" : "text-[var(--ink)]"}`}>
                     {tarefa.titulo}
                 </p>
 
                 {tarefa.descricao && (
-                    <p className="mt-0.5 line-clamp-3 text-sm text-[#616161]">{tarefa.descricao}</p>
+                    <p className="mt-0.5 line-clamp-3 text-sm text-[var(--ink-2)]">{tarefa.descricao}</p>
                 )}
 
-                <p className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[#8A8A8A]">
+                <p className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[var(--ink-3)]">
 
                     <span className={`tag ${prioridade.tag}`}>{prioridade.rotulo}</span>
 
@@ -346,7 +346,7 @@ function Linha({ tarefa, eu, ocupada, aoMover, aoApagar }: {
                 </p>
 
                 {tarefa.criada_por !== tarefa.para && (
-                    <p className="mt-1 text-xs text-[#8A8A8A]">
+                    <p className="mt-1 text-xs text-[var(--ink-3)]">
                         pedida por {tarefa.criada_por}
                     </p>
                 )}
@@ -355,13 +355,13 @@ function Linha({ tarefa, eu, ocupada, aoMover, aoApagar }: {
                     acha que a tela está quebrada. A ausência do botão precisa
                     vir com o motivo. */}
                 {!faz && !fechada && (
-                    <p className="mt-1 text-xs text-[#8A8A8A]">
+                    <p className="mt-1 text-xs text-[var(--ink-3)]">
                         Só {tarefa.para} pode mover esta tarefa
                     </p>
                 )}
             </div>
 
-            <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[#F1F1F1] pt-2.5 empty:mt-0 empty:border-0 empty:pt-0">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[var(--fundo)] pt-2.5 empty:mt-0 empty:border-0 empty:pt-0">
 
                 {/* Só os botões que fazem sentido no estado atual: oferecer
                     "concluir" numa tarefa já concluída é oferecer um clique
@@ -423,7 +423,7 @@ function Linha({ tarefa, eu, ocupada, aoMover, aoApagar }: {
                         onClick={() => aoApagar(tarefa)}
                         disabled={ocupada}
                         aria-label="Apagar tarefa"
-                        className="rounded-lg p-1.5 text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8]"
+                        className="rounded-lg p-1.5 text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)]"
                     >
                         <FiTrash2 className="w-4" aria-hidden />
                     </button>
@@ -446,7 +446,7 @@ function Prazo({ tarefa, fechada }: { tarefa: TarefaDaEquipe; fechada: boolean }
     const atrasada = !fechada && venceu(tarefa.termina_em)
 
     return (
-        <span className={`flex items-center gap-1 ${atrasada ? "font-semibold text-[#8E1F0B]" : ""}`}>
+        <span className={`flex items-center gap-1 ${atrasada ? "font-semibold text-[var(--vermelho)]" : ""}`}>
             <FiCalendar className="w-3.5" aria-hidden />
 
             {tarefa.comeca_em && <span>{dia(tarefa.comeca_em)}</span>}
@@ -511,9 +511,9 @@ function NovaTarefa({ membros, eu, aoCriar, aoFechar }: {
     }
 
     return (
-        <form onSubmit={salvar} className="mb-5 rounded-xl border border-[#E1E1E1] bg-[#F7F7F7] p-4">
+        <form onSubmit={salvar} className="mb-5 rounded-xl border border-[var(--linha)] bg-[var(--superficie-2)] p-4">
 
-            <label htmlFor="titulo" className="mb-1.5 block text-sm font-semibold text-[#303030]">
+            <label htmlFor="titulo" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
                 O que precisa ser feito
             </label>
 
@@ -526,8 +526,8 @@ function NovaTarefa({ membros, eu, aoCriar, aoFechar }: {
                 className="field w-full"
             />
 
-            <label htmlFor="descricao" className="mb-1.5 mt-4 block text-sm font-semibold text-[#303030]">
-                Detalhes <span className="font-normal text-[#8A8A8A]">(opcional)</span>
+            <label htmlFor="descricao" className="mb-1.5 mt-4 block text-sm font-semibold text-[var(--ink)]">
+                Detalhes <span className="font-normal text-[var(--ink-3)]">(opcional)</span>
             </label>
 
             <textarea
@@ -542,7 +542,7 @@ function NovaTarefa({ membros, eu, aoCriar, aoFechar }: {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
 
                 <div>
-                    <label htmlFor="para" className="mb-1.5 block text-sm font-semibold text-[#303030]">
+                    <label htmlFor="para" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
                         Para quem
                     </label>
 
@@ -572,7 +572,7 @@ function NovaTarefa({ membros, eu, aoCriar, aoFechar }: {
                 </div>
 
                 <div>
-                    <label htmlFor="prioridade" className="mb-1.5 block text-sm font-semibold text-[#303030]">
+                    <label htmlFor="prioridade" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
                         Prioridade
                     </label>
 
@@ -589,7 +589,7 @@ function NovaTarefa({ membros, eu, aoCriar, aoFechar }: {
                 </div>
 
                 <div>
-                    <label htmlFor="comeca" className="mb-1.5 block text-sm font-semibold text-[#303030]">
+                    <label htmlFor="comeca" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
                         Começa em
                     </label>
 
@@ -603,8 +603,8 @@ function NovaTarefa({ membros, eu, aoCriar, aoFechar }: {
                 </div>
 
                 <div>
-                    <label htmlFor="termina" className="mb-1.5 block text-sm font-semibold text-[#303030]">
-                        Entregar até <span className="font-normal text-[#8A8A8A]">(opcional)</span>
+                    <label htmlFor="termina" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
+                        Entregar até <span className="font-normal text-[var(--ink-3)]">(opcional)</span>
                     </label>
 
                     <input
@@ -650,12 +650,12 @@ function ForaDaConversa({ membros, eu }: { membros: MembroDaEquipe[]; eu: Membro
     if (faltando.length === 0) return null
 
     return (
-        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
             {faltando.map((m) => m.nome).join(", ")}{" "}
             {faltando.length === 1 ? "ainda não entrou" : "ainda não entraram"} na conversa.
             {eu.dono
                 ? " Passe o código da loja e confirme a entrada em Código e acessos."
-                : " Peça ao dono da loja para liberar."}
+                : " Unidade ao dono da loja para liberar."}
         </p>
     )
 }

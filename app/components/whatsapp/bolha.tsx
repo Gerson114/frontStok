@@ -60,7 +60,7 @@ export default function Bolha({ mensagem, abreGrupo = true, fechaGrupo = true }:
         <div className={`flex ${minha ? "justify-end" : "justify-start"} ${fechaGrupo ? "mb-2.5" : "mb-0.5"}`}>
             <div
                 className={`max-w-[85%] overflow-hidden text-sm shadow-sm sm:max-w-[34rem] ${cantos} ${
-                    minha ? "bg-[#005BD3] text-white" : "bg-white text-[#303030] ring-1 ring-[#EBEBEB]"
+                    minha ? "bg-[var(--azul)] text-white" : "bg-[var(--superficie)] text-[var(--ink)] ring-1 ring-[var(--linha-suave)]"
                 }`}
             >
 
@@ -92,7 +92,7 @@ export default function Bolha({ mensagem, abreGrupo = true, fechaGrupo = true }:
                             href={endereco}
                             download
                             className={`mb-1 flex items-center gap-2.5 rounded-lg px-2.5 py-2 ${
-                                minha ? "bg-white/15 hover:bg-white/25" : "bg-[#F1F1F1] hover:bg-[#EBEBEB]"
+                                minha ? "bg-[var(--superficie)]/15 hover:bg-[var(--superficie)]/25" : "bg-[var(--fundo)] hover:bg-[var(--linha-suave)]"
                             }`}
                         >
                             <FiFile className="w-5 shrink-0" aria-hidden />
@@ -102,7 +102,7 @@ export default function Bolha({ mensagem, abreGrupo = true, fechaGrupo = true }:
                                     {mensagem.midia_nome || "Arquivo"}
                                 </span>
                                 {mensagem.midia_tamanho ? (
-                                    <span className={`block text-xs ${minha ? "text-white/75" : "text-[#8A8A8A]"}`}>
+                                    <span className={`block text-xs ${minha ? "text-white/75" : "text-[var(--ink-3)]"}`}>
                                         {tamanhoLegivel(mensagem.midia_tamanho)}
                                     </span>
                                 ) : null}
@@ -124,7 +124,7 @@ export default function Bolha({ mensagem, abreGrupo = true, fechaGrupo = true }:
                     {(fechaGrupo || mensagem.status === "falhou") && (
                         <p
                             className={`mt-1 flex items-center justify-end gap-1 text-[0.68rem] ${
-                                minha ? "text-white/75" : "text-[#8A8A8A]"
+                                minha ? "text-white/75" : "text-[var(--ink-3)]"
                             }`}
                         >
                             <span className="num">{horaExata(mensagem.criada_em)}</span>
@@ -142,7 +142,7 @@ export default function Bolha({ mensagem, abreGrupo = true, fechaGrupo = true }:
                     )}
 
                     {mensagem.status === "falhou" && mensagem.erro && (
-                        <p className="mt-1 rounded bg-[#FEE9E8] px-2 py-1 text-[0.7rem] font-semibold text-[#8E1F0B]">
+                        <p className="mt-1 rounded bg-[var(--vermelho-fundo)] px-2 py-1 text-[0.7rem] font-semibold text-[var(--vermelho)]">
                             {mensagem.erro}
                         </p>
                     )}

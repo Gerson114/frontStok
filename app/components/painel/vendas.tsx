@@ -73,7 +73,7 @@ export default function GraficoDeVendas() {
             { rotulo: "Faturamento", valor: moeda(ponto.faturamento) },
             { rotulo: "Balcão", valor: moeda(ponto.balcao), cor: "var(--serie-1)" },
             { rotulo: "Pedidos", valor: moeda(ponto.pedidos), cor: "var(--serie-2)" },
-            { rotulo: "Peças", valor: String(ponto.pecas) },
+            { rotulo: "Unidades", valor: String(ponto.pecas) },
         ],
     }))
 
@@ -100,7 +100,7 @@ export default function GraficoDeVendas() {
             titulo="Vendas ao longo do tempo"
             descricao={`${escolhida?.descricao ?? ""} O que saiu pelo balcão e o que saiu por pedido, somado do preço gravado em cada baixa.`}
             acoes={
-                <div className="flex rounded-lg border border-[#E1E1E1] p-0.5" role="group" aria-label="Régua do gráfico">
+                <div className="flex rounded-lg border border-[var(--linha)] p-0.5" role="group" aria-label="Régua do gráfico">
                     {REGUAS.map((item) => (
                         <button
                             key={item.chave}
@@ -109,8 +109,8 @@ export default function GraficoDeVendas() {
                             aria-pressed={item.chave === regua}
                             className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                                 item.chave === regua
-                                    ? "bg-[#303030] text-white"
-                                    : "text-[#616161] hover:bg-[#F1F1F1]"
+                                    ? "bg-[var(--azul)] text-white"
+                                    : "text-[var(--ink-2)] hover:bg-[var(--fundo)]"
                             }`}
                         >
                             {item.rotulo}
@@ -120,7 +120,7 @@ export default function GraficoDeVendas() {
             }
         >
             {erro && (
-                <p className="mb-3 flex items-center gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p className="mb-3 flex items-center gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertCircle className="w-4 shrink-0" aria-hidden />
                     {erro}
                 </p>
@@ -129,7 +129,7 @@ export default function GraficoDeVendas() {
             {serie && (
                 <div className="mb-4 flex flex-wrap gap-x-8 gap-y-2">
                     <Total rotulo="Faturamento no período" valor={moeda(serie.faturamento)} />
-                    <Total rotulo="Peças" valor={String(serie.pecas)} />
+                    <Total rotulo="Unidades" valor={String(serie.pecas)} />
                     <Total rotulo="Margem" valor={moeda(serie.margem)} />
                 </div>
             )}
@@ -139,7 +139,7 @@ export default function GraficoDeVendas() {
                 faria a tela piscar a cada clique, e o que se está comparando é
                 justamente uma régua com a outra. */}
             {carregando && !serie ? (
-                <div className="h-[220px] animate-pulse rounded-lg bg-[#F1F1F1]" />
+                <div className="h-[220px] animate-pulse rounded-lg bg-[var(--fundo)]" />
             ) : (
                 <div className={carregando ? "opacity-60 transition-opacity" : "transition-opacity"}>
                     <BarrasEmpilhadas
@@ -157,10 +157,10 @@ export default function GraficoDeVendas() {
 function Total({ rotulo, valor }: { rotulo: string; valor: string }) {
     return (
         <p>
-            <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            <span className="block text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                 {rotulo}
             </span>
-            <span className="num text-lg font-bold text-[#303030]">{valor}</span>
+            <span className="num text-lg font-bold text-[var(--ink)]">{valor}</span>
         </p>
     )
 }

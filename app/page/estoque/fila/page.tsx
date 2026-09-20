@@ -62,10 +62,10 @@ import {
  */
 
 const COR_DO_TIPO: Record<string, string> = {
-    armazenagem: "bg-[#005BD3]",
-    ressuprimento: "bg-[#C7920A]",
-    separacao: "bg-[#0C5132]",
-    inventario: "bg-[#8E1F0B]",
+    armazenagem: "bg-[var(--azul)]",
+    ressuprimento: "bg-[var(--amarelo-forte)]",
+    separacao: "bg-[var(--verde)]",
+    inventario: "bg-[var(--vermelho)]",
 }
 
 const TIPOS: { chave: TipoTarefa | ""; nome: string }[] = [
@@ -233,14 +233,14 @@ export default function FilaDoEstoque() {
         >
 
             {erro && (
-                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -287,7 +287,7 @@ export default function FilaDoEstoque() {
 
                 {carregando ? (
 
-                    <p className="px-4 py-14 text-center text-sm text-[#616161]">
+                    <p className="px-4 py-14 text-center text-sm text-[var(--ink-2)]">
                         Carregando a fila...
                     </p>
 
@@ -355,18 +355,18 @@ export default function FilaDoEstoque() {
                                                         cartão. Numa tabela ela vira este traço:
                                                         mesma informação, sem engordar a linha. */}
                                                     <span
-                                                        className={`mt-0.5 h-8 w-1 shrink-0 rounded-full ${COR_DO_TIPO[tarefa.tipo] ?? "bg-[#E1E1E1]"}`}
+                                                        className={`mt-0.5 h-8 w-1 shrink-0 rounded-full ${COR_DO_TIPO[tarefa.tipo] ?? "bg-[var(--linha)]"}`}
                                                         aria-hidden
                                                     />
 
                                                     <div className="min-w-0">
 
-                                                        <p className="font-medium text-[#303030]">
+                                                        <p className="font-medium text-[var(--ink)]">
                                                             {tarefa.tipo_nome}
                                                         </p>
 
                                                         {tarefa.produto_nome ? (
-                                                            <p className="mt-0.5 truncate text-[#616161]">
+                                                            <p className="mt-0.5 truncate text-[var(--ink-2)]">
                                                                 <span className="num">{tarefa.quantidade}x</span>{" "}
                                                                 {tarefa.produto_nome}
                                                                 {tarefa.produto_variacao ? ` · ${tarefa.produto_variacao}` : ""}
@@ -374,7 +374,7 @@ export default function FilaDoEstoque() {
                                                         ) : null}
 
                                                         {tarefa.observacao && (
-                                                            <p className="mt-0.5 truncate text-xs text-[#8A8A8A]">
+                                                            <p className="mt-0.5 truncate text-xs text-[var(--ink-3)]">
                                                                 {tarefa.observacao}
                                                             </p>
                                                         )}
@@ -388,17 +388,17 @@ export default function FilaDoEstoque() {
                                                 {tarefa.origem || tarefa.destino ? (
                                                     <span className="flex items-center gap-1.5 whitespace-nowrap">
                                                         {tarefa.origem && (
-                                                            <span className="num text-[#303030]">{tarefa.origem}</span>
+                                                            <span className="num text-[var(--ink)]">{tarefa.origem}</span>
                                                         )}
                                                         {tarefa.origem && tarefa.destino && (
-                                                            <FiArrowRight className="w-3.5 text-[#8A8A8A]" aria-hidden />
+                                                            <FiArrowRight className="w-3.5 text-[var(--ink-3)]" aria-hidden />
                                                         )}
                                                         {tarefa.destino && (
-                                                            <span className="num text-[#303030]">{tarefa.destino}</span>
+                                                            <span className="num text-[var(--ink)]">{tarefa.destino}</span>
                                                         )}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[#8A8A8A]">sem endereço</span>
+                                                    <span className="text-[var(--ink-3)]">sem endereço</span>
                                                 )}
                                             </td>
 
@@ -443,7 +443,7 @@ export default function FilaDoEstoque() {
                                             </td>
 
                                             <td className="text-right">
-                                                <span className="num inline-flex items-center gap-1 text-[#616161]">
+                                                <span className="num inline-flex items-center gap-1 text-[var(--ink-2)]">
                                                     <FiClock className="w-3.5" aria-hidden />
                                                     {tarefa.prioridade}
                                                 </span>

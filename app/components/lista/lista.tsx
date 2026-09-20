@@ -75,7 +75,7 @@ interface VisoesProps {
 export function Visoes({ visoes, ativa, aoTrocar, aoCriar }: VisoesProps) {
 
     return (
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-[#E1E1E1] px-2 py-1.5">
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--linha)] px-2 py-1.5">
 
             {visoes.map((visao) => {
 
@@ -89,8 +89,8 @@ export function Visoes({ visoes, ativa, aoTrocar, aoCriar }: VisoesProps) {
                         aria-current={escolhida ? "true" : undefined}
                         className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.8125rem] font-medium transition-colors ${
                             escolhida
-                                ? "bg-[#E3E3E3] text-[#303030]"
-                                : "text-[#616161] hover:bg-[#F1F1F1] hover:text-[#303030]"
+                                ? "bg-[#E3E3E3] text-[var(--ink)]"
+                                : "text-[var(--ink-2)] hover:bg-[var(--fundo)] hover:text-[var(--ink)]"
                         }`}
                     >
                         {visao.nome}
@@ -99,7 +99,7 @@ export function Visoes({ visoes, ativa, aoTrocar, aoCriar }: VisoesProps) {
                             // A contagem é da mesma família do rótulo, um tom
                             // mais clara: ela acompanha o nome, não compete
                             // com ele.
-                            <span className={`num text-xs ${escolhida ? "text-[#616161]" : "text-[#8A8A8A]"}`}>
+                            <span className={`num text-xs ${escolhida ? "text-[var(--ink-2)]" : "text-[var(--ink-3)]"}`}>
                                 {visao.contagem}
                             </span>
                         )}
@@ -113,7 +113,7 @@ export function Visoes({ visoes, ativa, aoTrocar, aoCriar }: VisoesProps) {
                     onClick={aoCriar}
                     title="Nova visão"
                     aria-label="Nova visão"
-                    className="ml-0.5 shrink-0 rounded-lg p-1.5 text-[#616161] transition-colors hover:bg-[#F1F1F1] hover:text-[#303030]"
+                    className="ml-0.5 shrink-0 rounded-lg p-1.5 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)]"
                 >
                     <FiPlus className="w-4" aria-hidden />
                 </button>
@@ -159,9 +159,9 @@ export function BarraDaLista({
     if (marcadas > 0) {
 
         return (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[#E1E1E1] bg-[#F1F1F1] px-3 py-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--linha)] bg-[var(--fundo)] px-3 py-2">
 
-                <span className="text-[0.8125rem] font-medium text-[#303030]">
+                <span className="text-[0.8125rem] font-medium text-[var(--ink)]">
                     <span className="num">{marcadas}</span>{" "}
                     {marcadas === 1 ? "selecionada" : "selecionadas"}
                 </span>
@@ -174,7 +174,7 @@ export function BarraDaLista({
                     <button
                         type="button"
                         onClick={aoDesmarcar}
-                        className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#616161] transition-colors hover:bg-[#E3E3E3] hover:text-[#303030]"
+                        className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[var(--ink-2)] transition-colors hover:bg-[#E3E3E3] hover:text-[var(--ink)]"
                     >
                         <FiX className="w-3.5" aria-hidden />
                         Limpar
@@ -186,12 +186,12 @@ export function BarraDaLista({
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-2 border-b border-[#E1E1E1] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--linha)] px-3 py-2">
 
             <div className="relative min-w-56 flex-1">
 
                 <FiSearch
-                    className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]"
+                    className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]"
                     aria-hidden
                 />
 
@@ -238,8 +238,8 @@ export function ControleDaLista({
             type="button"
             className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[0.8125rem] font-medium transition-colors ${
                 ativo
-                    ? "border-[#005BD3] bg-[#EBF5FF] text-[#005BD3]"
-                    : "border-[#E1E1E1] bg-white text-[#616161] hover:border-[#8A8A8A] hover:text-[#303030]"
+                    ? "border-[var(--azul)] bg-[#EBF5FF] text-[var(--azul)]"
+                    : "border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-2)] hover:border-[var(--ink-3)] hover:text-[var(--ink)]"
             }`}
             {...resto}
         >
@@ -285,13 +285,13 @@ export function RodapeDaLista({
     }
 
     return (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E1E1E1] bg-[#FAFAFA] px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--linha)] bg-[#FAFAFA] px-3 py-2">
 
-            <p className="text-xs text-[#616161]">
-                Mostrando <span className="num text-[#303030]">{primeiro}</span>–
-                <span className="num text-[#303030]">{ultimo}</span> de{" "}
-                <span className="num text-[#303030]">{total}</span> {nome}
-                {extra && <span className="text-[#8A8A8A]"> · {extra}</span>}
+            <p className="text-xs text-[var(--ink-2)]">
+                Mostrando <span className="num text-[var(--ink)]">{primeiro}</span>–
+                <span className="num text-[var(--ink)]">{ultimo}</span> de{" "}
+                <span className="num text-[var(--ink)]">{total}</span> {nome}
+                {extra && <span className="text-[var(--ink-3)]"> · {extra}</span>}
             </p>
 
             {(aoVoltar || aoAvancar) && (
@@ -302,7 +302,7 @@ export function RodapeDaLista({
                         onClick={aoVoltar}
                         disabled={!aoVoltar}
                         aria-label="Página anterior"
-                        className="rounded-lg border border-[#E1E1E1] bg-white p-1.5 text-[#616161] transition-colors hover:border-[#8A8A8A] hover:text-[#303030] disabled:cursor-not-allowed disabled:border-[#E1E1E1] disabled:text-[#C9C9C9] disabled:hover:border-[#E1E1E1]"
+                        className="rounded-lg border border-[var(--linha)] bg-[var(--superficie)] p-1.5 text-[var(--ink-2)] transition-colors hover:border-[var(--ink-3)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:border-[var(--linha)] disabled:text-[#C9C9C9] disabled:hover:border-[var(--linha)]"
                     >
                         <FiChevronLeft className="w-4" aria-hidden />
                     </button>
@@ -312,7 +312,7 @@ export function RodapeDaLista({
                         onClick={aoAvancar}
                         disabled={!aoAvancar}
                         aria-label="Próxima página"
-                        className="rounded-lg border border-[#E1E1E1] bg-white p-1.5 text-[#616161] transition-colors hover:border-[#8A8A8A] hover:text-[#303030] disabled:cursor-not-allowed disabled:border-[#E1E1E1] disabled:text-[#C9C9C9] disabled:hover:border-[#E1E1E1]"
+                        className="rounded-lg border border-[var(--linha)] bg-[var(--superficie)] p-1.5 text-[var(--ink-2)] transition-colors hover:border-[var(--ink-3)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:border-[var(--linha)] disabled:text-[#C9C9C9] disabled:hover:border-[var(--linha)]"
                     >
                         <FiChevronRight className="w-4" aria-hidden />
                     </button>
@@ -350,12 +350,12 @@ export function ListaVazia({
     return (
         <div className="px-6 py-14 text-center">
 
-            <Icone className="mx-auto w-6 text-[#8A8A8A]" aria-hidden />
+            <Icone className="mx-auto w-6 text-[var(--ink-3)]" aria-hidden />
 
-            <p className="mt-3 text-sm font-medium text-[#303030]">{titulo}</p>
+            <p className="mt-3 text-sm font-medium text-[var(--ink)]">{titulo}</p>
 
             {children && (
-                <p className="mx-auto mt-1 max-w-md text-[0.8125rem] text-[#616161]">
+                <p className="mx-auto mt-1 max-w-md text-[0.8125rem] text-[var(--ink-2)]">
                     {children}
                 </p>
             )}
@@ -396,7 +396,7 @@ export function FaixaDeNumeros({ numeros }: { numeros: Numero[] }) {
     }
 
     return (
-        <div className="card grid grid-cols-2 divide-x divide-y divide-[#E1E1E1] overflow-hidden sm:grid-cols-4 sm:divide-y-0">
+        <div className="card grid grid-cols-2 divide-x divide-y divide-[var(--linha)] overflow-hidden sm:grid-cols-4 sm:divide-y-0">
 
             {numeros.map((numero) => (
                 <div key={numero.rotulo} className="flex items-center gap-3 px-4 py-3">
@@ -404,7 +404,7 @@ export function FaixaDeNumeros({ numeros }: { numeros: Numero[] }) {
                     {numero.icone && (
                         <span
                             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                                numero.alerta ? "bg-[#FFF0F0] text-[#8E1F0B]" : "bg-[#F1F1F1] text-[#616161]"
+                                numero.alerta ? "bg-[#FFF0F0] text-[var(--vermelho)]" : "bg-[var(--fundo)] text-[var(--ink-2)]"
                             }`}
                         >
                             <numero.icone className="w-4" aria-hidden />
@@ -412,8 +412,8 @@ export function FaixaDeNumeros({ numeros }: { numeros: Numero[] }) {
                     )}
 
                     <div className="min-w-0">
-                        <p className="truncate text-xs text-[#616161]">{numero.rotulo}</p>
-                        <p className={`num text-lg font-semibold ${numero.alerta ? "text-[#8E1F0B]" : "text-[#303030]"}`}>
+                        <p className="truncate text-xs text-[var(--ink-2)]">{numero.rotulo}</p>
+                        <p className={`num text-lg font-semibold ${numero.alerta ? "text-[var(--vermelho)]" : "text-[var(--ink)]"}`}>
                             {numero.valor}
                         </p>
                     </div>

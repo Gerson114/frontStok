@@ -65,7 +65,7 @@ export function Pagina({
 
     return (
         <main
-            className={`com-menu min-h-[calc(100dvh-3.5rem)] bg-[#F1F1F1] text-[#303030] md:border-r md:border-[#E1E1E1] ${
+            className={`com-menu min-h-[calc(100dvh-3.5rem)] bg-[var(--fundo)] text-[var(--ink)] md:border-r md:border-[var(--linha)] ${
                 paraImpressao ? "print:m-0 print:min-h-0 print:border-0 print:bg-white" : ""
             }`}
         >
@@ -73,7 +73,7 @@ export function Pagina({
             {/* Cabeçalho da tela. Gruda logo abaixo da barra superior escura
                 (3.5rem) para que o título e as ações continuem à mão enquanto
                 se rola uma lista longa. */}
-            <header className="sticky top-14 z-30 border-b border-[#E1E1E1] bg-[#F1F1F1]/95 backdrop-blur print:hidden">
+            <header className="sticky top-14 z-30 border-b border-[var(--linha)] bg-[var(--fundo)]/95 backdrop-blur print:hidden">
 
                 {/* O mesmo respiro do conteúdo abaixo: é o que faz o título
                     nascer exatamente na mesma vertical da borda esquerda do
@@ -87,19 +87,19 @@ export function Pagina({
                             {volta && (
                                 <Link
                                     href={volta.rota}
-                                    className="-ml-1 mb-0.5 inline-flex items-center gap-1 text-xs font-medium text-[#616161] transition-colors hover:text-[#005BD3]"
+                                    className="-ml-1 mb-0.5 inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--azul)]"
                                 >
                                     <FiChevronLeft className="w-3.5" aria-hidden />
                                     {volta.nome}
                                 </Link>
                             )}
 
-                            <h1 className="font-display truncate text-2xl text-[#303030]">
+                            <h1 className="font-display truncate text-2xl text-[var(--ink)]">
                                 {titulo}
                             </h1>
 
                             {descricao && (
-                                <p className="mt-0.5 max-w-3xl text-sm text-[#616161]">
+                                <p className="mt-0.5 max-w-3xl text-sm text-[var(--ink-2)]">
                                     {descricao}
                                 </p>
                             )}
@@ -139,7 +139,7 @@ export function Pagina({
  */
 export function PaginaCentrada({ children }: { children: ReactNode }) {
     return (
-        <main className="com-menu flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#F1F1F1] px-4 py-16 text-[#303030]">
+        <main className="com-menu flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[var(--fundo)] px-4 py-16 text-[var(--ink)]">
             <div className="w-full max-w-md">
                 {children}
             </div>
@@ -174,17 +174,17 @@ export function Secao({ titulo, descricao, acoes, plano = false, className = "",
         <section className={`card ${className}`}>
 
             {(titulo || acoes) && (
-                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-[#EBEBEB] px-5 py-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-[var(--linha-suave)] px-5 py-3.5">
 
                     <div className="min-w-0">
                         {titulo && (
-                            <h2 className="font-display text-base text-[#303030]">
+                            <h2 className="font-display text-base text-[var(--ink)]">
                                 {titulo}
                             </h2>
                         )}
 
                         {descricao && (
-                            <p className="mt-0.5 text-sm text-[#616161]">
+                            <p className="mt-0.5 text-sm text-[var(--ink-2)]">
                                 {descricao}
                             </p>
                         )}
@@ -232,18 +232,18 @@ export function Estado({ Icone, titulo, texto, acao, tom = "neutro" }: EstadoPro
 
             <span
                 className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                    tom === "erro" ? "bg-[#FEE9E8] text-[#8E1F0B]" : "bg-[#F7F7F7] text-[#8A8A8A]"
+                    tom === "erro" ? "bg-[var(--vermelho-fundo)] text-[var(--vermelho)]" : "bg-[var(--superficie-2)] text-[var(--ink-3)]"
                 }`}
             >
                 <Icone className="w-5" aria-hidden />
             </span>
 
-            <h2 className="font-display mt-4 text-base text-[#303030]">
+            <h2 className="font-display mt-4 text-base text-[var(--ink)]">
                 {titulo}
             </h2>
 
             {texto && (
-                <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#616161]">
+                <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[var(--ink-2)]">
                     {texto}
                 </p>
             )}

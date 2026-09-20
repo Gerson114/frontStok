@@ -38,7 +38,7 @@ export function SeletorDeRegua({ regua, aoTrocar }: {
     aoTrocar: (nova: GranularidadeDeVendas) => void
 }) {
     return (
-        <div className="flex rounded-lg border border-[#E1E1E1] p-0.5" role="group" aria-label="Régua do painel">
+        <div className="flex rounded-lg border border-[var(--linha)] p-0.5" role="group" aria-label="Régua do painel">
             {REGUAS.map((item) => (
                 <button
                     key={item.chave}
@@ -47,8 +47,8 @@ export function SeletorDeRegua({ regua, aoTrocar }: {
                     aria-pressed={item.chave === regua}
                     className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                         item.chave === regua
-                            ? "bg-[#303030] text-white"
-                            : "text-[#616161] hover:bg-[#F1F1F1]"
+                            ? "bg-[var(--azul)] text-white"
+                            : "text-[var(--ink-2)] hover:bg-[var(--fundo)]"
                     }`}
                 >
                     {item.rotulo}
@@ -70,20 +70,20 @@ export function Cartao({ Icone, rotulo, valor, detalhe, tom }: {
 }) {
     return (
         <div className="card p-4">
-            <p className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            <p className="flex items-center gap-2 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                 <Icone className="w-3.5" aria-hidden />
                 {rotulo}
             </p>
 
             <p
                 className={`num mt-2 text-xl font-bold ${
-                    tom === "bom" ? "text-[#0C5132]" : tom === "ruim" ? "text-[#8E1F0B]" : "text-[#303030]"
+                    tom === "bom" ? "text-[var(--verde)]" : tom === "ruim" ? "text-[var(--vermelho)]" : "text-[var(--ink)]"
                 }`}
             >
                 {valor}
             </p>
 
-            {detalhe ? <p className="mt-0.5 text-xs text-[#8A8A8A]">{detalhe}</p> : null}
+            {detalhe ? <p className="mt-0.5 text-xs text-[var(--ink-3)]">{detalhe}</p> : null}
         </div>
     )
 }
@@ -92,10 +92,10 @@ export function Cartao({ Icone, rotulo, valor, detalhe, tom }: {
 export function Total({ rotulo, valor }: { rotulo: string; valor: string }) {
     return (
         <p>
-            <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+            <span className="block text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                 {rotulo}
             </span>
-            <span className="num text-lg font-bold text-[#303030]">{valor}</span>
+            <span className="num text-lg font-bold text-[var(--ink)]">{valor}</span>
         </p>
     )
 }
@@ -114,7 +114,7 @@ export function Ranking({ linhas, vazio }: {
 
     if (linhas.length === 0) {
         return (
-            <p className="rounded-lg border border-dashed border-[#E1E1E1] px-4 py-8 text-center text-sm text-[#8A8A8A]">
+            <p className="rounded-lg border border-dashed border-[var(--linha)] px-4 py-8 text-center text-sm text-[var(--ink-3)]">
                 {vazio}
             </p>
         )
@@ -127,23 +127,23 @@ export function Ranking({ linhas, vazio }: {
             {linhas.map((linha) => (
                 <li key={linha.chave}>
                     <div className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-sm text-[#303030]" title={linha.nome}>
+                        <span className="truncate text-sm text-[var(--ink)]" title={linha.nome}>
                             {linha.nome}
                             {linha.detalhe ? (
-                                <span className="num ml-1.5 text-xs text-[#8A8A8A]">{linha.detalhe}</span>
+                                <span className="num ml-1.5 text-xs text-[var(--ink-3)]">{linha.detalhe}</span>
                             ) : null}
                         </span>
 
-                        <span className="num shrink-0 text-sm font-semibold text-[#303030]">{linha.valor}</span>
+                        <span className="num shrink-0 text-sm font-semibold text-[var(--ink)]">{linha.valor}</span>
                     </div>
 
                     {/* A barra é a comparação; o número é o valor. Ela fica
                         fina e cinza de propósito — quem lê a lista lê os
                         números, e a barra só diz de relance quem é o dobro de
                         quem. */}
-                    <div className="mt-1 h-1.5 w-full rounded-full bg-[#F1F1F1]" aria-hidden>
+                    <div className="mt-1 h-1.5 w-full rounded-full bg-[var(--fundo)]" aria-hidden>
                         <div
-                            className="h-full rounded-full bg-[#005BD3]"
+                            className="h-full rounded-full bg-[var(--azul)]"
                             style={{ width: `${Math.max(2, (linha.barra / maior) * 100)}%` }}
                         />
                     </div>

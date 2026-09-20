@@ -138,7 +138,7 @@ export default function Ondas() {
 
             setParadas(resultado.paradas)
             setAviso(
-                `Onda ${resultado.onda.codigo} aberta: ${resultado.onda.pecas} peça(s) em ${resultado.onda.paradas} parada(s).`
+                `Onda ${resultado.onda.codigo} aberta: ${resultado.onda.pecas} unidade(s) em ${resultado.onda.paradas} parada(s).`
             )
             setEscolhidos([])
 
@@ -213,14 +213,14 @@ export default function Ondas() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -235,16 +235,16 @@ export default function Ondas() {
                 <div className="flex flex-wrap items-end justify-between gap-4">
 
                     <div>
-                        <h2 className="font-display text-base text-[#303030]">
+                        <h2 className="font-display text-base text-[var(--ink)]">
                             Pedidos prontos para separar
                             {separaveis.length > 0 && (
-                                <span className="num ml-2 text-sm font-bold text-[#616161]">
+                                <span className="num ml-2 text-sm font-bold text-[var(--ink-2)]">
                                     {separaveis.length}
                                 </span>
                             )}
                         </h2>
-                        <p className="mt-1 text-sm text-[#616161]">
-                            Marque <strong className="font-bold text-[#303030]">quantos pedidos quiser</strong>:
+                        <p className="mt-1 text-sm text-[var(--ink-2)]">
+                            Marque <strong className="font-bold text-[var(--ink)]">quantos pedidos quiser</strong>:
                             a onda junta todos numa volta só pelo estoque. Só aparecem os
                             confirmados — antes disso não há o que separar, depois o pacote já
                             saiu da loja.
@@ -289,17 +289,17 @@ export default function Ondas() {
 
                 {carregando ? (
 
-                    <p className="text-[#616161]">Carregando...</p>
+                    <p className="text-[var(--ink-2)]">Carregando...</p>
 
                 ) : separaveis.length === 0 ? (
 
-                    <p className="rounded-lg border border-dashed border-[#E1E1E1] p-8 text-center text-sm text-[#616161]">
+                    <p className="rounded-lg border border-dashed border-[var(--linha)] p-8 text-center text-sm text-[var(--ink-2)]">
                         Nenhum pedido confirmado esperando separação.
                     </p>
 
                 ) : (
 
-                    <ul className="divide-y divide-[#E1E1E1]">
+                    <ul className="divide-y divide-[var(--linha)]">
 
                         {separaveis.map((pedido) => (
 
@@ -311,14 +311,14 @@ export default function Ondas() {
                                         type="checkbox"
                                         checked={escolhidos.includes(pedido.id)}
                                         onChange={() => alternar(pedido.id)}
-                                        className="h-4 w-4 shrink-0 cursor-pointer accent-[#005BD3]"
+                                        className="h-4 w-4 shrink-0 cursor-pointer accent-[var(--azul)]"
                                     />
 
                                     <span className="min-w-0 flex-1">
-                                        <span className="num block text-sm font-medium text-[#303030]">
+                                        <span className="num block text-sm font-medium text-[var(--ink)]">
                                             #{pedido.codigo}
                                         </span>
-                                        <span className="block truncate text-xs text-[#616161]">
+                                        <span className="block truncate text-xs text-[var(--ink-2)]">
                                             {pedido.cliente_nome}
                                         </span>
                                     </span>
@@ -335,10 +335,10 @@ export default function Ondas() {
 
                 {paradas.length > 0 && (
 
-                    <div className="rounded-lg bg-[#EAF4FF] p-4">
+                    <div className="rounded-lg bg-[var(--azul-suave)] p-4">
 
-                        <p className="font-display flex items-center gap-2 text-sm text-[#303030]">
-                            <FiMapPin className="w-4 text-[#005BD3]" aria-hidden />
+                        <p className="font-display flex items-center gap-2 text-sm text-[var(--ink)]">
+                            <FiMapPin className="w-4 text-[var(--azul)]" aria-hidden />
                             A volta, parada a parada
                         </p>
 
@@ -348,13 +348,13 @@ export default function Ondas() {
                                     key={`${parada.endereco_id}-${parada.produto_id}-${indice}`}
                                     className="flex items-center justify-between gap-3 text-sm"
                                 >
-                                    <span className="min-w-0 truncate text-[#303030]">
-                                        <span className="num text-[#616161]">{parada.quantidade}x</span>{" "}
+                                    <span className="min-w-0 truncate text-[var(--ink)]">
+                                        <span className="num text-[var(--ink-2)]">{parada.quantidade}x</span>{" "}
                                         {parada.produto_nome}
                                         {parada.variacao ? ` · ${parada.variacao}` : ""}
                                     </span>
 
-                                    <span className="num shrink-0 font-bold text-[#00369B]">
+                                    <span className="num shrink-0 font-bold text-[var(--azul-escuro)]">
                                         {parada.endereco}
                                     </span>
                                 </li>
@@ -394,7 +394,7 @@ export default function Ondas() {
 
                 {carregando ? (
 
-                    <p className="px-4 py-14 text-center text-sm text-[#616161]">Carregando as ondas...</p>
+                    <p className="px-4 py-14 text-center text-sm text-[var(--ink-2)]">Carregando as ondas...</p>
 
                 ) : ondasVisiveis.length === 0 ? (
 
@@ -418,7 +418,7 @@ export default function Ondas() {
                                     <th scope="col">Onda</th>
                                     <th scope="col">Situação</th>
                                     <th scope="col" className="text-right">Pedidos</th>
-                                    <th scope="col" className="text-right">Peças</th>
+                                    <th scope="col" className="text-right">Unidades</th>
                                     <th scope="col" className="text-right">Paradas</th>
                                     <th scope="col"><span className="sr-only">Ações</span></th>
                                 </tr>
@@ -436,7 +436,7 @@ export default function Ondas() {
 
                                             <tr>
 
-                                                <td className="num font-medium text-[#303030]">
+                                                <td className="num font-medium text-[var(--ink)]">
                                                     {onda.codigo}
                                                 </td>
 
@@ -446,9 +446,9 @@ export default function Ondas() {
                                                     </span>
                                                 </td>
 
-                                                <td className="num text-right text-[#303030]">{onda.pedidos}</td>
-                                                <td className="num text-right text-[#303030]">{onda.pecas}</td>
-                                                <td className="num text-right text-[#616161]">{onda.paradas}</td>
+                                                <td className="num text-right text-[var(--ink)]">{onda.pedidos}</td>
+                                                <td className="num text-right text-[var(--ink)]">{onda.pecas}</td>
+                                                <td className="num text-right text-[var(--ink-2)]">{onda.paradas}</td>
 
                                                 <td>
                                                     <div className="flex justify-end gap-1.5">
@@ -488,16 +488,16 @@ export default function Ondas() {
                                                 <tr>
                                                     <td colSpan={6} className="bg-[#FAFAFA]">
 
-                                                        <p className="text-sm text-[#616161]">
+                                                        <p className="text-sm text-[var(--ink-2)]">
                                                             Pedidos:{" "}
-                                                            <span className="num text-[#303030]">
+                                                            <span className="num text-[var(--ink)]">
                                                                 {detalhada.pedidos.join(", ") || "—"}
                                                             </span>
                                                         </p>
 
                                                         {detalhada.tarefas.length === 0 ? (
 
-                                                            <p className="mt-3 text-sm text-[#616161]">
+                                                            <p className="mt-3 text-sm text-[var(--ink-2)]">
                                                                 Esta onda não tem tarefas na fila.
                                                             </p>
 
@@ -512,15 +512,15 @@ export default function Ondas() {
                                                                         className="flex flex-wrap items-center justify-between gap-2 text-sm"
                                                                     >
 
-                                                                        <span className="min-w-0 truncate text-[#303030]">
-                                                                            <span className="num text-[#616161]">{tarefa.quantidade}x</span>{" "}
+                                                                        <span className="min-w-0 truncate text-[var(--ink)]">
+                                                                            <span className="num text-[var(--ink-2)]">{tarefa.quantidade}x</span>{" "}
                                                                             {tarefa.produto_nome ?? `Produto #${tarefa.produto_id}`}
                                                                         </span>
 
                                                                         <span className="flex shrink-0 items-center gap-2">
 
                                                                             {tarefa.origem && (
-                                                                                <span className="num font-medium text-[#00369B]">
+                                                                                <span className="num font-medium text-[var(--azul-escuro)]">
                                                                                     {tarefa.origem}
                                                                                 </span>
                                                                             )}

@@ -35,6 +35,15 @@ export async function POST(request: Request) {
             loja_id: Number(entrada.loja_id),
             // Em branco é o caso normal: o servidor escolhe onde guardar.
             endereco: sanitizeText(String(entrada.endereco ?? "")),
+
+            // Item que não é contado unidade a unidade: a pizza existe quando
+            // alguém a pede, e não ocupa prateleira nenhuma.
+            //
+            // Precisa estar AQUI, escrito à mão, porque este handler monta o
+            // corpo campo a campo: o que não é listado não chega ao servidor,
+            // sem erro nenhum. Foi assim que os primeiros itens de cardápio
+            // nasceram contados como mercadoria.
+            sem_contagem: entrada.sem_contagem === true,
             variacoes: variacoesEntrada.map((item) => {
                 const registro = item as Record<string, unknown>
                 return {

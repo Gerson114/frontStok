@@ -216,7 +216,7 @@ export default function LancarPedido() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
@@ -230,10 +230,10 @@ export default function LancarPedido() {
                 lançado fica na lista do rodapé. */}
             {lancados.length > 0 && (
 
-                <p role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <p role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
-                        Pedido <span className="num">#{lancados[0].codigo}</span> lançado e peças
+                        Pedido <span className="num">#{lancados[0].codigo}</span> lançado e unidades
                         reservadas. Ele já está na separação.
                     </span>
                 </p>
@@ -246,7 +246,7 @@ export default function LancarPedido() {
 
             <section className="card space-y-4 p-5 sm:p-7">
 
-                <h2 className="font-display text-base text-[#303030]">
+                <h2 className="font-display text-base text-[var(--ink)]">
                     Quem pediu
                 </h2>
 
@@ -287,10 +287,10 @@ export default function LancarPedido() {
             <section className="card space-y-4 p-5 sm:p-7">
 
                 <div>
-                    <h2 className="font-display text-base text-[#303030]">
+                    <h2 className="font-display text-base text-[var(--ink)]">
                         O que ele pediu
                     </h2>
-                    <p className="mt-1 text-sm text-[#616161]">
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                         Busque o produto e diga a quantidade. O preço é o mesmo da vitrine,
                         promoção incluída.
                     </p>
@@ -298,14 +298,14 @@ export default function LancarPedido() {
 
                 {carregando ? (
 
-                    <p className="text-[#616161]">Carregando produtos...</p>
+                    <p className="text-[var(--ink-2)]">Carregando produtos...</p>
 
                 ) : (
 
                     <>
                         {linhas.length > 0 && (
 
-                            <ul className="divide-y divide-[#E1E1E1]">
+                            <ul className="divide-y divide-[var(--linha)]">
 
                                 {linhas.map((linha) => {
 
@@ -318,12 +318,12 @@ export default function LancarPedido() {
 
                                             <div className="min-w-0 flex-1">
 
-                                                <p className="truncate text-sm font-medium text-[#303030]">
+                                                <p className="truncate text-sm font-medium text-[var(--ink)]">
                                                     {produto?.nome ?? `Produto #${linha.produtoId}`}
                                                     {produto?.variacao ? ` · ${produto.variacao}` : ""}
                                                 </p>
 
-                                                <p className="flex items-center gap-2 font-mono text-xs text-[#616161]">
+                                                <p className="flex items-center gap-2 font-mono text-xs text-[var(--ink-2)]">
                                                     <span>{produto?.codigo}</span>
                                                     <span className="font-sans">{formatarMoeda(preco)}</span>
 
@@ -355,7 +355,7 @@ export default function LancarPedido() {
                                                 type="button"
                                                 onClick={() => remover(linha.produtoId)}
                                                 aria-label="Remover item"
-                                                className="shrink-0 rounded-lg border border-[#E1E1E1] px-2.5 py-2 text-xs font-bold text-[#616161] transition-colors hover:border-[#8E1F0B] hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                className="shrink-0 rounded-lg border border-[var(--linha)] px-2.5 py-2 text-xs font-bold text-[var(--ink-2)] transition-colors hover:border-[var(--vermelho)] hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                                             >
                                                 <FiTrash2 className="w-3.5" aria-hidden />
                                             </button>
@@ -370,7 +370,7 @@ export default function LancarPedido() {
 
                         <div className="relative">
 
-                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                            <FiSearch className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                             <input
                                 type="text"
@@ -385,11 +385,11 @@ export default function LancarPedido() {
 
                         {termo && (
 
-                            <ul className="divide-y divide-[#E1E1E1] rounded-lg border border-[#E1E1E1]">
+                            <ul className="divide-y divide-[var(--linha)] rounded-lg border border-[var(--linha)]">
 
                                 {disponiveisParaAdicionar.length === 0 ? (
 
-                                    <li className="px-4 py-3 text-sm text-[#616161]">
+                                    <li className="px-4 py-3 text-sm text-[var(--ink-2)]">
                                         Nenhum produto encontrado.
                                     </li>
 
@@ -399,19 +399,19 @@ export default function LancarPedido() {
                                         <button
                                             type="button"
                                             onClick={() => adicionar(produto.id)}
-                                            className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[#F1F1F1]"
+                                            className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--fundo)]"
                                         >
                                             <span className="min-w-0">
-                                                <span className="block truncate text-sm text-[#303030]">
+                                                <span className="block truncate text-sm text-[var(--ink)]">
                                                     {produto.nome}
                                                     {produto.variacao ? ` · ${produto.variacao}` : ""}
                                                 </span>
-                                                <span className="block font-mono text-xs text-[#616161]">
+                                                <span className="block font-mono text-xs text-[var(--ink-2)]">
                                                     {produto.codigo}
                                                 </span>
                                             </span>
 
-                                            <FiPlus className="w-4 shrink-0 text-[#005BD3]" aria-hidden />
+                                            <FiPlus className="w-4 shrink-0 text-[var(--azul)]" aria-hidden />
                                         </button>
                                     </li>
 
@@ -426,9 +426,9 @@ export default function LancarPedido() {
 
                 {itens.length > 0 && (
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F1F1F1] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--fundo)] p-4">
 
-                        <p className="text-sm text-[#303030]">
+                        <p className="text-sm text-[var(--ink)]">
                             <span className="num font-bold">{itens.length}</span> produto(s) ·{" "}
                             <span className="num font-bold">{formatarMoeda(total)}</span>
                         </p>
@@ -459,7 +459,7 @@ export default function LancarPedido() {
                     {faltaAlgo ? (
 
                         <>
-                            <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                            <div className="flex items-start gap-2.5 rounded-lg border-l-4 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                                 <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
                                 <span>
                                     O estoque não cobre a lista inteira. Ou você lança só o que há
@@ -468,16 +468,16 @@ export default function LancarPedido() {
                                 </span>
                             </div>
 
-                            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[#303030]">
+                            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--ink)]">
                                 <input
                                     type="checkbox"
                                     checked={parcial}
                                     onChange={(e) => setParcial(e.target.checked)}
-                                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#005BD3]"
+                                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[var(--azul)]"
                                 />
                                 <span>
                                     Lançar só o que há em estoque.{" "}
-                                    <span className="text-[#616161]">
+                                    <span className="text-[var(--ink-2)]">
                                         O que faltar não entra no pedido, e a diferença aparece na
                                         confirmação.
                                     </span>
@@ -487,17 +487,17 @@ export default function LancarPedido() {
 
                     ) : (
 
-                        <p className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                        <p className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                             <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
-                            <span>Tem peça para tudo. Pode lançar.</span>
+                            <span>Tem unidade para tudo. Pode lançar.</span>
                         </p>
 
                     )}
 
                     <div className="flex flex-wrap items-center justify-between gap-3">
 
-                        <p className="text-sm text-[#616161]">
-                            O pedido nasce confirmado e reserva as peças na hora.
+                        <p className="text-sm text-[var(--ink-2)]">
+                            O pedido nasce confirmado e reserva as unidades na hora.
                         </p>
 
                         <button
@@ -512,7 +512,7 @@ export default function LancarPedido() {
                     </div>
 
                     {!nome.trim() && (
-                        <p className="text-xs text-[#8E1F0B]">
+                        <p className="text-xs text-[var(--vermelho)]">
                             Informe o nome de quem fez o pedido.
                         </p>
                     )}
@@ -534,22 +534,22 @@ export default function LancarPedido() {
 
                 <section className="card overflow-hidden">
 
-                    <div className="flex items-center justify-between gap-3 border-b border-[#E1E1E1] px-5 py-3.5">
+                    <div className="flex items-center justify-between gap-3 border-b border-[var(--linha)] px-5 py-3.5">
 
-                        <h2 className="font-display text-base text-[#303030]">
+                        <h2 className="font-display text-base text-[var(--ink)]">
                             Lançados agora
-                            <span className="num ml-2 text-sm font-bold text-[#616161]">
+                            <span className="num ml-2 text-sm font-bold text-[var(--ink-2)]">
                                 {lancados.length}
                             </span>
                         </h2>
 
-                        <Link href="/page/pedidos" className="text-sm font-bold text-[#005BD3] hover:underline">
+                        <Link href="/page/pedidos" className="text-sm font-bold text-[var(--azul)] hover:underline">
                             Ver todos os pedidos
                         </Link>
 
                     </div>
 
-                    <ul className="divide-y divide-[#EBEBEB]">
+                    <ul className="divide-y divide-[var(--linha-suave)]">
 
                         {lancados.map((pedido) => (
 
@@ -557,15 +557,15 @@ export default function LancarPedido() {
 
                                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 
-                                    <p className="font-bold text-[#303030]">
+                                    <p className="font-bold text-[var(--ink)]">
                                         {pedido.cliente}
-                                        <span className="font-mono ml-2 text-xs font-normal text-[#616161]">
+                                        <span className="font-mono ml-2 text-xs font-normal text-[var(--ink-2)]">
                                             #{pedido.codigo}
                                         </span>
                                     </p>
 
-                                    <p className="text-xs text-[#616161]">
-                                        <span className="num">{pedido.pecas}</span> peça(s) ·{" "}
+                                    <p className="text-xs text-[var(--ink-2)]">
+                                        <span className="num">{pedido.pecas}</span> unidade(s) ·{" "}
                                         {pedido.quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                     </p>
 
@@ -573,7 +573,7 @@ export default function LancarPedido() {
 
                                 {pedido.faltas.length > 0 && (
 
-                                    <p className="mt-1.5 text-xs text-[#5E4200]">
+                                    <p className="mt-1.5 text-xs text-[var(--amarelo)]">
                                         Foi lançado só o que havia:{" "}
                                         {pedido.faltas.map((falta, indice) => (
                                             <span key={falta.produto_id}>

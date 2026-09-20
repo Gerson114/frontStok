@@ -132,6 +132,51 @@ export function cabeEmColuna(tipo: string): boolean {
     return !["secao", "banner", "atalhos", "grade"].includes(tipo)
 }
 
+/**
+ * Onde um bloco está agora, para quem só tem o id — a prévia, por exemplo,
+ * que mostra o bloco sem saber (nem precisar saber) de que coluna ele é
+ * filho. Sem isto, mover ou duplicar a partir da prévia exigiria que ela
+ * carregasse a mesma contabilidade de índice que a lista "Estrutura" já
+ * carrega, e as duas acabariam divergindo um dia.
+ */
+export function localizarNaArvore(blocos: Bloco[], id: string): Caminho | null {
+
+    const indicePagina = blocos.findIndex((bloco) => bloco.id === id)
+
+    if (indicePagina !== -1) return { secao: null, coluna: 0, indice: indicePagina }
+
+    for (const bloco of blocos) {
+        for (const [coluna, filhos] of (bloco.colunas ?? []).entries()) {
+
+            const indice = filhos.findIndex((filho) => filho.id === id)
+
+            if (indice !== -1) return { secao: bloco.id, coluna, indice }
+        }
+    }
+
+    return null
+}
+
+/**
+ * Uma cópia do bloco, com um id novo — e, se ele for uma seção, um id novo
+ * para cada filho das colunas também. Sem isto, duplicar uma seção criaria
+ * dois blocos com o MESMO id um ao lado do outro, e mexer num moveria os
+ * dois juntos (é o id que o React e o resto do editor usam para saber qual é
+ * qual).
+ */
+export function clonarBloco(bloco: Bloco): Bloco {
+
+    const id = `${bloco.tipo}-${Math.random().toString(36).slice(2, 8)}`
+
+    if (!bloco.colunas) return { ...bloco, id }
+
+    return {
+        ...bloco,
+        id,
+        colunas: bloco.colunas.map((coluna) => coluna.map(clonarBloco)),
+    }
+}
+
 /** Todos os blocos da árvore, achatados — para procurar um por id. */
 export function achatar(blocos: Bloco[]): Bloco[] {
 

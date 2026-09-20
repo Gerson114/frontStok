@@ -55,7 +55,7 @@ export default function Error({
                 // quando pedir ajuda — e a única com que achamos a linha
                 // certa no log.
                 error.digest ? (
-                    <p className="text-xs text-[#8A8A8A]">
+                    <p className="text-xs text-[var(--ink-3)]">
                         Código do erro: <span className="num font-bold">{error.digest}</span>
                     </p>
                 ) : undefined

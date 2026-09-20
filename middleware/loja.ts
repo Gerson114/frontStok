@@ -190,6 +190,125 @@ export async function salvarTema(tema: TemaLoja): Promise<void> {
     })
 }
 
+/* ==========================================================================
+   O CABEÇALHO E O RODAPÉ
+
+   O mesmo desenho da home (ver PaginaDaLoja acima), mas para o topo e o
+   rodapé — faixas com três áreas (esquerda, centro, direita), cada área uma
+   lista de peças de um catálogo fechado. Os nomes dos campos batem com o que
+   o servidor manda (ver services/paginas/moldura.go): não há tradução no
+   meio, porque o meio é só um servidor de HTTP repassando JSON.
+   ========================================================================== */
+
+/** Um elemento do topo ou do rodapé — o selo, o link, o ícone da sacola. */
+export interface PecaDaMoldura {
+    id: string
+    tipo: string
+    texto?: string
+    link?: string
+    icone?: string
+    /** Só nas peças que podem crescer — a marca e a busca. */
+    tamanho?: string
+    /** "sempre" | "so-desktop" | "so-celular". */
+    aparicao?: string
+}
+
+/** Uma linha horizontal do topo, com o que está à esquerda, no meio e à direita. */
+export interface FaixaDoTopo {
+    id: string
+    tipo: string
+    ligada: boolean
+    fundo?: string
+    esquerda: PecaDaMoldura[]
+    centro: PecaDaMoldura[]
+    direita: PecaDaMoldura[]
+}
+
+/** Uma coluna do rodapé, com o título dela. */
+export interface ColunaDoRodape {
+    id: string
+    titulo?: string
+    largura?: string
+    pecas: PecaDaMoldura[]
+}
+
+export interface Cabecalho {
+    faixas: FaixaDoTopo[]
+}
+
+export interface Rodape {
+    ligado: boolean
+    colunas: ColunaDoRodape[]
+    /** A linha de baixo, na cor da marca: direitos autorais e privacidade. */
+    barra: PecaDaMoldura[]
+}
+
+/**
+ * O que dá para pôr em cada lugar do topo e do rodapé — a mesma ideia do
+ * catálogo de blocos da home: vem do servidor, com rótulo e regra de onde
+ * cabe, para o editor não guardar uma segunda cópia da mesma lista.
+ */
+export interface CatalogoDaMoldura {
+    /** Chave da faixa ("servico", "marca", "navegacao") → tipos que cabem nela. */
+    pecas_da_faixa: Record<string, Record<string, boolean>>
+    pecas_do_rodape: string[]
+    pecas_da_barra: string[]
+    fundos: string[]
+    tamanhos: string[]
+    aparicoes: string[]
+    larguras_da_coluna: string[]
+    icones: string[]
+}
+
+export interface MolduraDaLoja {
+    cabecalho: Cabecalho
+    rodape: Rodape
+    catalogo: CatalogoDaMoldura
+    /** O de fábrica, para o botão de "voltar ao padrão" de cada peça. */
+    padrao: { cabecalho: Cabecalho; rodape: Rodape }
+}
+
+export async function consultarMoldura(): Promise<MolduraDaLoja> {
+
+    const dados = await apiFetch<Partial<MolduraDaLoja>>("/api/loja/moldura")
+
+    const catalogoVazio: CatalogoDaMoldura = {
+        pecas_da_faixa: {}, pecas_do_rodape: [], pecas_da_barra: [],
+        fundos: [], tamanhos: [], aparicoes: [], larguras_da_coluna: [], icones: [],
+    }
+
+    const cabecalhoVazio: Cabecalho = { faixas: [] }
+    const rodapeVazio: Rodape = { ligado: true, colunas: [], barra: [] }
+
+    return {
+        cabecalho: dados.cabecalho ?? cabecalhoVazio,
+        rodape: dados.rodape ?? rodapeVazio,
+        catalogo: dados.catalogo ?? catalogoVazio,
+        padrao: dados.padrao ?? { cabecalho: cabecalhoVazio, rodape: rodapeVazio },
+    }
+}
+
+/**
+ * Grava o topo, o rodapé, ou os dois — um ponteiro que falta é "não mexi
+ * nisto" para o servidor (ver entradaMoldura em moldura.go), então só manda
+ * quem de fato mudou.
+ */
+export async function salvarMoldura(mudancas: {
+    cabecalho?: Cabecalho
+    rodape?: Rodape
+}): Promise<{ cabecalho: Cabecalho; rodape: Rodape }> {
+
+    const dados = await apiFetch<{ cabecalho?: Cabecalho; rodape?: Rodape }>("/api/loja/moldura", {
+        method: "PUT",
+        body: mudancas,
+    })
+
+    return {
+        cabecalho: dados.cabecalho ?? { faixas: [] },
+        rodape: dados.rodape ?? { ligado: true, colunas: [], barra: [] },
+    }
+}
+
 /**
  * A luminância relativa de uma cor, na fórmula da WCAG — a mesma conta que a
  * vitrine faz (ver vendas/frontp/lib/tema.ts). Está repetida aqui de

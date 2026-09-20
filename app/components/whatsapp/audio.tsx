@@ -87,8 +87,8 @@ export default function Audio({ src, minha }: { src: string; minha: boolean }) {
                 aria-label={tocando ? "Pausar" : "Tocar"}
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
                     minha
-                        ? "bg-white/20 text-white hover:bg-white/30"
-                        : "bg-[#005BD3] text-white hover:bg-[#00369B]"
+                        ? "bg-[var(--superficie)]/20 text-white hover:bg-[var(--superficie)]/30"
+                        : "bg-[var(--azul)] text-white hover:bg-[var(--azul-escuro)]"
                 }`}
             >
                 {tocando
@@ -112,16 +112,16 @@ export default function Audio({ src, minha }: { src: string; minha: boolean }) {
                         // O preenchido à esquerda do cursor: é o que dá a
                         // leitura de "quanto já passou" sem um segundo elemento.
                         background: `linear-gradient(to right, ${
-                            minha ? "#ffffff" : "#005BD3"
+                            minha ? "#ffffff" : "var(--azul)"
                         } ${total ? (posicao / total) * 100 : 0}%, ${
-                            minha ? "rgba(255,255,255,0.3)" : "#E1E1E1"
+                            minha ? "rgba(255,255,255,0.3)" : "var(--linha)"
                         } ${total ? (posicao / total) * 100 : 0}%)`,
                     }}
                 />
 
                 <span
                     className={`num mt-1 block text-[0.68rem] ${
-                        minha ? "text-white/75" : "text-[#8A8A8A]"
+                        minha ? "text-white/75" : "text-[var(--ink-3)]"
                     }`}
                 >
                     {total > 0 ? relogio(tocando || posicao > 0 ? restante : total) : "--:--"}

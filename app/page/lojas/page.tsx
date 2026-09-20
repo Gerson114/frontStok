@@ -228,7 +228,7 @@ export default function Lojas() {
     if (carregando) {
         return (
             <Pagina titulo="Minhas lojas">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando as suas lojas...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando as suas lojas...</div>
             </Pagina>
         )
     }
@@ -256,7 +256,7 @@ export default function Lojas() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
@@ -266,7 +266,7 @@ export default function Lojas() {
                 botão: quem não pode abrir precisa saber POR QUE, senão procura
                 o botão que não existe. */}
             {!podeAbrir && (
-                <p className="rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                <p className="rounded-lg bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                     O seu plano comporta {limite} loja{limite > 1 ? "s" : ""}.
                     O plano Pro abre mais unidades na mesma conta, com o mesmo login e a mesma equipe.
                 </p>
@@ -282,9 +282,9 @@ export default function Lojas() {
                     {/* A busca só aparece quando há o que buscar: numa rede de
                         duas lojas ela é um campo a mais para ler. */}
                     {lojas.length > 4 && (
-                        <div className="border-b border-[#EBEBEB] p-3">
+                        <div className="border-b border-[var(--linha-suave)] p-3">
                             <div className="relative">
-                                <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[#8A8A8A]" aria-hidden />
+                                <FiSearch className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]" aria-hidden />
 
                                 <input
                                     type="search"
@@ -301,7 +301,7 @@ export default function Lojas() {
                     <div className="min-h-0 flex-1 overflow-y-auto">
 
                         {listadas.length === 0 && (
-                            <p className="px-4 py-6 text-center text-sm text-[#616161]">
+                            <p className="px-4 py-6 text-center text-sm text-[var(--ink-2)]">
                                 Nenhuma loja com esse nome.
                             </p>
                         )}
@@ -316,22 +316,22 @@ export default function Lojas() {
                                     type="button"
                                     onClick={() => abrirFicha(uma)}
                                     aria-current={ativa ? "true" : undefined}
-                                    className={`flex w-full items-center gap-3 border-b border-[#F1F1F1] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
-                                        ativa ? "bg-[#F1F1F1]" : "hover:bg-[#F7F7F7]"
+                                    className={`flex w-full items-center gap-3 border-b border-[var(--fundo)] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
+                                        ativa ? "bg-[var(--fundo)]" : "hover:bg-[var(--superficie-2)]"
                                     }`}
                                 >
                                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                                        uma.ativa ? "bg-[#303030] text-white" : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                        uma.ativa ? "bg-[var(--azul)] text-white" : "bg-[var(--linha)] text-[var(--ink-3)]"
                                     }`}>
                                         <FiHome className="w-4" aria-hidden />
                                     </span>
 
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-sm font-semibold text-[#303030]">
+                                        <span className="block truncate text-sm font-semibold text-[var(--ink)]">
                                             {uma.nome}
                                         </span>
 
-                                        <span className="block truncate text-xs text-[#616161]">
+                                        <span className="block truncate text-xs text-[var(--ink-2)]">
                                             {uma.principal ? "Matriz" : "Filial"}
                                             {!uma.ativa && " · fechada"}
                                             {uma.equipe && uma.equipe.length > 0 &&
@@ -356,9 +356,9 @@ export default function Lojas() {
 
                             <div className="flex items-start justify-between gap-3">
                                 <div>
-                                    <p className="font-display text-lg text-[#303030]">Nova loja</p>
+                                    <p className="font-display text-lg text-[var(--ink)]">Nova loja</p>
 
-                                    <p className="mt-1 text-sm text-[#616161]">
+                                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                                         Ela nasce vazia e separada: estoque, vitrine, caixa e equipe
                                         próprios. Nada da loja principal é copiado nem alterado.
                                     </p>
@@ -368,7 +368,7 @@ export default function Lojas() {
                                     type="button"
                                     onClick={() => setEscolhida(null)}
                                     aria-label="Cancelar"
-                                    className="rounded-lg p-1.5 text-[#616161] hover:bg-[#F1F1F1]"
+                                    className="rounded-lg p-1.5 text-[var(--ink-2)] hover:bg-[var(--fundo)]"
                                 >
                                     <FiX className="w-4" aria-hidden />
                                 </button>
@@ -388,7 +388,7 @@ export default function Lojas() {
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-2 border-t border-[#EBEBEB] pt-4">
+                            <div className="flex justify-end gap-2 border-t border-[var(--linha-suave)] pt-4">
                                 <button type="button" onClick={() => setEscolhida(null)} className="btn btn-neutro">
                                     Cancelar
                                 </button>
@@ -406,13 +406,13 @@ export default function Lojas() {
 
                     {escolhida === null && (
                         <div className="flex min-h-[18rem] flex-col items-center justify-center text-center">
-                            <FiHome className="w-8 text-[#B5B5B5]" aria-hidden />
+                            <FiHome className="w-8 text-[var(--ink-4)]" aria-hidden />
 
-                            <p className="mt-3 font-display text-base text-[#303030]">
+                            <p className="mt-3 font-display text-base text-[var(--ink)]">
                                 Escolha uma loja na lista
                             </p>
 
-                            <p className="mt-1 max-w-sm text-sm text-[#616161]">
+                            <p className="mt-1 max-w-sm text-sm text-[var(--ink-2)]">
                                 A ficha mostra o endereço da vitrine, quem gerencia a unidade e
                                 quem trabalha nela.
                             </p>
@@ -425,7 +425,7 @@ export default function Lojas() {
                             {/* Identidade e situação */}
                             <div className="flex items-start gap-3">
                                 <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
-                                    loja.ativa ? "bg-[#303030] text-white" : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                    loja.ativa ? "bg-[var(--azul)] text-white" : "bg-[var(--linha)] text-[var(--ink-3)]"
                                 }`}>
                                     <FiHome className="w-5" aria-hidden />
                                 </span>
@@ -442,11 +442,11 @@ export default function Lojas() {
                                         />
 
                                         {ocupada === loja.id && (
-                                            <span className="text-xs text-[#616161]">salvando…</span>
+                                            <span className="text-xs text-[var(--ink-2)]">salvando…</span>
                                         )}
                                     </div>
 
-                                    <p className="mt-1.5 text-sm text-[#616161]">
+                                    <p className="mt-1.5 text-sm text-[var(--ink-2)]">
                                         {loja.slug ? (
                                             <span className="inline-flex items-center gap-1">
                                                 <FiExternalLink className="w-3.5" aria-hidden />
@@ -476,27 +476,27 @@ export default function Lojas() {
                                 A EQUIPE DESTA UNIDADE
                                 ------------------------------------------------ */}
                             <div>
-                                <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                                     Quem trabalha aqui
                                 </p>
 
                                 {loja.equipe && loja.equipe.length > 0 ? (
-                                    <ul className="mt-2 divide-y divide-[#EBEBEB] border-y border-[#EBEBEB]">
+                                    <ul className="mt-2 divide-y divide-[var(--linha-suave)] border-y border-[var(--linha-suave)]">
                                         {loja.equipe.map((pessoa) => (
                                             <li key={pessoa.email} className="flex items-center gap-3 py-2.5">
 
                                                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                                    pessoa.ativo ? "bg-[#303030] text-white" : "bg-[#E1E1E1] text-[#8A8A8A]"
+                                                    pessoa.ativo ? "bg-[var(--azul)] text-white" : "bg-[var(--linha)] text-[var(--ink-3)]"
                                                 }`}>
                                                     {inicial(pessoa.nome)}
                                                 </span>
 
                                                 <span className="min-w-0 flex-1">
-                                                    <span className="block truncate text-sm font-semibold text-[#303030]">
+                                                    <span className="block truncate text-sm font-semibold text-[var(--ink)]">
                                                         {pessoa.nome}
                                                     </span>
 
-                                                    <span className="block truncate text-xs text-[#616161]">
+                                                    <span className="block truncate text-xs text-[var(--ink-2)]">
                                                         {pessoa.email}
                                                     </span>
                                                 </span>
@@ -515,7 +515,7 @@ export default function Lojas() {
                                         ))}
                                     </ul>
                                 ) : (
-                                    <p className="mt-2 rounded-lg bg-[#F1F1F1] px-4 py-3 text-sm text-[#616161]">
+                                    <p className="mt-2 rounded-lg bg-[var(--fundo)] px-4 py-3 text-sm text-[var(--ink-2)]">
                                         Ninguém cadastrado nesta loja — só você a administra.
                                     </p>
                                 )}
@@ -524,11 +524,11 @@ export default function Lojas() {
                                     regra do servidor, e dizê-la aqui evita a
                                     volta mais cara desta tela — cadastrar o
                                     gerente da filial dentro da matriz. */}
-                                <p className="mt-2 text-xs text-[#8A8A8A]">
+                                <p className="mt-2 text-xs text-[var(--ink-3)]">
                                     {loja.aberta ? (
                                         <>
                                             Esta é a loja aberta no painel, então{" "}
-                                            <Link href="/page/funcionarios" className="font-semibold text-[#005BD3] hover:underline">
+                                            <Link href="/page/funcionarios" className="font-semibold text-[var(--azul)] hover:underline">
                                                 Funcionários
                                             </Link>{" "}
                                             cadastra gente aqui dentro.
@@ -542,7 +542,7 @@ export default function Lojas() {
                             {/* ------------------------------------------------
                                 O QUE DÁ PARA FAZER COM A UNIDADE
                                 ------------------------------------------------ */}
-                            <div className="flex flex-wrap gap-2 border-t border-[#EBEBEB] pt-5">
+                            <div className="flex flex-wrap gap-2 border-t border-[var(--linha-suave)] pt-5">
 
                                 {!loja.aberta && loja.ativa && (
                                     <button
@@ -566,7 +566,7 @@ export default function Lojas() {
                                         type="button"
                                         onClick={() => ligar(loja)}
                                         disabled={ocupada === loja.id}
-                                        className={`btn btn-neutro ${loja.ativa ? "text-[#8E1F0B]" : "text-[#0C5132]"}`}
+                                        className={`btn btn-neutro ${loja.ativa ? "text-[var(--vermelho)]" : "text-[var(--verde)]"}`}
                                     >
                                         <FiPower className="w-4" aria-hidden />
                                         <span>{loja.ativa ? "Fechar loja" : "Reabrir loja"}</span>
@@ -574,7 +574,7 @@ export default function Lojas() {
                                 )}
                             </div>
 
-                            <p className="text-xs text-[#8A8A8A]">
+                            <p className="text-xs text-[var(--ink-3)]">
                                 Fechar não apaga nada: a vitrine sai do ar, a loja some do seletor e
                                 libera a vaga do plano — o estoque, os pedidos e o histórico
                                 continuam onde estão.

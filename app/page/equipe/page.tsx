@@ -374,7 +374,7 @@ export default function ConversaDaEquipe() {
     if (carregando) {
         return (
             <Vestibulo>
-                <p className="card p-8 text-center text-sm text-[#616161]">
+                <p className="card p-8 text-center text-sm text-[var(--ink-2)]">
                     Abrindo a conversa…
                 </p>
             </Vestibulo>
@@ -412,10 +412,10 @@ export default function ConversaDaEquipe() {
                 eu={estado.eu}
             />
 
-            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[#F1F1F1] px-4 pb-4 pt-4 md:ml-[19rem] md:px-6">
+            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
 
                 {erro && (
-                    <div role="alert" className="mb-3 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                    <div role="alert" className="mb-3 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
                     </div>
@@ -435,9 +435,9 @@ export default function ConversaDaEquipe() {
                     A sala continua escolhida à esquerda; o que se faz com ela
                     se escolhe aqui em cima.
                 ========================================================== */}
-                <div className="mb-3 flex flex-wrap items-center gap-x-1 border-b border-[#E1E1E1]">
+                <div className="mb-3 flex flex-wrap items-center gap-x-1 border-b border-[var(--linha)]">
 
-                    <span className="mr-3 flex items-center gap-2 py-2 font-display text-base text-[#303030]">
+                    <span className="mr-3 flex items-center gap-2 py-2 font-display text-base text-[var(--ink)]">
                         <IconeDaSala tipo={aberta?.tipo} />
                         {aberta?.nome ?? "Conversa"}
                     </span>
@@ -461,8 +461,8 @@ export default function ConversaDaEquipe() {
                                 aria-current={ativa ? "page" : undefined}
                                 className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
                                     ativa
-                                        ? "border-[#005BD3] text-[#005BD3]"
-                                        : "border-transparent text-[#616161] hover:text-[#303030]"
+                                        ? "border-[var(--azul)] text-[var(--azul)]"
+                                        : "border-transparent text-[var(--ink-2)] hover:text-[var(--ink)]"
                                 }`}
                             >
                                 <Icone className="w-4 shrink-0" aria-hidden />
@@ -498,7 +498,7 @@ export default function ConversaDaEquipe() {
                         abas, logo acima, e repeti-lo gastava uma faixa
                         inteira de altura para dizer de novo o que a linha de
                         cima acabou de dizer. Fica só o que se FAZ na sala. */}
-                    <header className="flex flex-wrap items-center gap-2 border-b border-[#EBEBEB] px-5 py-2.5">
+                    <header className="flex flex-wrap items-center gap-2 border-b border-[var(--linha-suave)] px-5 py-2.5">
 
                         <div className="ml-auto flex items-center gap-2">
 
@@ -540,10 +540,10 @@ export default function ConversaDaEquipe() {
 
                     {chamando && <AvisoDaChamada aoFechar={() => setChamando(false)} />}
 
-                    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#F7F7F7] px-5 py-4">
+                    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[var(--superficie-2)] px-5 py-4">
 
                         {falas.length === 0 && (
-                            <p className="py-10 text-center text-sm text-[#8A8A8A]">
+                            <p className="py-10 text-center text-sm text-[var(--ink-3)]">
                                 Nada dito por aqui ainda.
                             </p>
                         )}
@@ -564,15 +564,15 @@ export default function ConversaDaEquipe() {
                     </div>
 
                     {respondendo && (
-                        <div className="anim-surgir flex items-start gap-2 border-t border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2">
+                        <div className="anim-surgir flex items-start gap-2 border-t border-[var(--linha-suave)] bg-[var(--superficie-2)] px-4 py-2">
 
-                            <span className="mt-0.5 h-full w-0.5 shrink-0 self-stretch rounded-full bg-[#005BD3]" aria-hidden />
+                            <span className="mt-0.5 h-full w-0.5 shrink-0 self-stretch rounded-full bg-[var(--azul)]" aria-hidden />
 
                             <span className="min-w-0 flex-1">
-                                <span className="block text-xs font-semibold text-[#005BD3]">
+                                <span className="block text-xs font-semibold text-[var(--azul)]">
                                     Respondendo {respondendo.autor}
                                 </span>
-                                <span className="block truncate text-xs text-[#616161]">
+                                <span className="block truncate text-xs text-[var(--ink-2)]">
                                     {respondendo.texto}
                                 </span>
                             </span>
@@ -581,14 +581,14 @@ export default function ConversaDaEquipe() {
                                 type="button"
                                 onClick={() => setRespondendo(null)}
                                 aria-label="Cancelar resposta"
-                                className="rounded-lg p-1 text-[#616161] transition-colors hover:bg-[#EBEBEB]"
+                                className="rounded-lg p-1 text-[var(--ink-2)] transition-colors hover:bg-[var(--linha-suave)]"
                             >
                                 <FiX className="w-4" aria-hidden />
                             </button>
                         </div>
                     )}
 
-                    <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[#EBEBEB] px-4 py-3">
+                    <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[var(--linha-suave)] px-4 py-3">
 
                         <label htmlFor="fala" className="sr-only">Escreva para a equipe</label>
 
@@ -649,12 +649,12 @@ export default function ConversaDaEquipe() {
             {saindo && (
                 <Painel titulo="Sair da conversa da empresa" aoFechar={() => setSaindo(false)}>
 
-                    <p className="text-sm text-[#616161]">
+                    <p className="text-sm text-[var(--ink-2)]">
                         Você sai do canal da loja e de todos os grupos de que participa. As
                         mensagens que você escreveu ficam onde estão — a conversa é da loja.
                     </p>
 
-                    <p className="mt-3 rounded-lg bg-[#FFF1E3] px-3 py-2 text-sm text-[#5E4200]">
+                    <p className="mt-3 rounded-lg bg-[var(--amarelo-fundo)] px-3 py-2 text-sm text-[var(--amarelo)]">
                         Para voltar, você precisa digitar o código da loja de novo <strong>e</strong>{" "}
                         o dono precisa confirmar a sua entrada outra vez.
                     </p>
@@ -718,12 +718,16 @@ function MenuDoChat({
     return (
         <aside
             style={{ top: "3.5rem", height: "calc(100dvh - 3.5rem)" }}
-            className="fixed left-[var(--trilho)] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[#E1E1E1] bg-[#F1F1F1] md:flex print:hidden"
+            // left-[4.5rem]: encosta no trilho de áreas do painel (ver
+            // header.tsx), que continua de pé mesmo dentro da conversa —
+            // esta coluna toma só o lugar do painel de telas, não o trilho
+            // inteiro.
+            className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
         >
-            <div className="border-b border-[#E1E1E1] px-3 py-2.5">
+            <div className="border-b border-[var(--linha)] px-3 py-2.5">
                 <Link
                     href="/page/inicio"
-                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8125rem] font-semibold text-[#616161] transition-colors hover:bg-white hover:text-[#303030]"
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8125rem] font-semibold text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)] hover:text-[var(--ink)]"
                 >
                     <FiArrowLeft className="w-4 shrink-0" aria-hidden />
                     Voltar ao painel
@@ -747,7 +751,7 @@ function MenuDoChat({
                     abas no topo do conteúdo (ver ABAS_DA_EQUIPE). */}
 
                 <div className="mt-5 flex items-center justify-between px-2">
-                    <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                    <h2 className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                         Grupos
                     </h2>
 
@@ -755,7 +759,7 @@ function MenuDoChat({
                         type="button"
                         onClick={aoCriarGrupo}
                         aria-label="Criar grupo"
-                        className="rounded-md p-1 text-[#616161] transition-colors hover:bg-white hover:text-[#303030]"
+                        className="rounded-md p-1 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)] hover:text-[var(--ink)]"
                     >
                         <FiPlus className="w-4" aria-hidden />
                     </button>
@@ -763,7 +767,7 @@ function MenuDoChat({
 
                 <div className="mt-1 space-y-0.5">
                     {grupos.length === 0 ? (
-                        <p className="px-2 py-1.5 text-xs text-[#8A8A8A]">
+                        <p className="px-2 py-1.5 text-xs text-[var(--ink-3)]">
                             Nenhum grupo ainda.
                         </p>
                     ) : grupos.map((linha, indice) => (
@@ -777,13 +781,13 @@ function MenuDoChat({
                     ))}
                 </div>
 
-                <h2 className="mt-5 px-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                <h2 className="mt-5 px-2 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                     Pessoas
                 </h2>
 
                 <div className="mt-1 space-y-0.5">
                     {pessoas.length === 0 ? (
-                        <p className="px-2 py-1.5 text-xs text-[#8A8A8A]">
+                        <p className="px-2 py-1.5 text-xs text-[var(--ink-3)]">
                             Você é o único confirmado na conversa até agora.
                         </p>
                     ) : pessoas.map((linha, indice) => (
@@ -798,9 +802,9 @@ function MenuDoChat({
                 </div>
             </nav>
 
-            <div className="border-t border-[#E1E1E1] px-3 py-2.5">
+            <div className="border-t border-[var(--linha)] px-3 py-2.5">
 
-                <p className="truncate px-2 pb-1.5 text-xs text-[#8A8A8A]">
+                <p className="truncate px-2 pb-1.5 text-xs text-[var(--ink-3)]">
                     {eu.nome}
                 </p>
 
@@ -816,7 +820,7 @@ function MenuDoChat({
                     <button
                         type="button"
                         onClick={aoSair}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8125rem] font-semibold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8]"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8125rem] font-semibold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)]"
                     >
                         <FiLogOut className="w-4 shrink-0" aria-hidden />
                         Sair da conversa
@@ -844,10 +848,10 @@ const ABAS_DA_EQUIPE = [
 
 function IconeDaSala({ tipo }: { tipo?: string }) {
 
-    if (tipo === "geral") return <FiUsers className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
-    if (tipo === "grupo") return <FiHash className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
+    if (tipo === "geral") return <FiUsers className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+    if (tipo === "grupo") return <FiHash className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
 
-    return <FiMessageSquare className="w-4 shrink-0 text-[#8A8A8A]" aria-hidden />
+    return <FiMessageSquare className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
 }
 
 /** Uma linha do menu do chat. */
@@ -873,8 +877,8 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0 }: {
             style={{ animationDelay: `${Math.min(ordem, 5) * 30}ms` }}
             className={`anim-item flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.8125rem] transition-colors ${
                 ativa
-                    ? "bg-white font-semibold text-[#303030] shadow-[0_1px_0_rgba(0,0,0,0.05)]"
-                    : "text-[#616161] hover:bg-white/70 hover:text-[#303030]"
+                    ? "bg-[var(--superficie)] font-semibold text-[var(--ink)] shadow-[0_1px_0_rgba(0,0,0,0.05)]"
+                    : "text-[var(--ink-2)] hover:bg-[var(--superficie)]/70 hover:text-[var(--ink)]"
             }`}
         >
             <IconeDaSala tipo={linha.tipo} />
@@ -882,7 +886,7 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0 }: {
             <span className="min-w-0 flex-1 truncate">{linha.nome}</span>
 
             {linha.nao_lidas > 0 && (
-                <span className="num shrink-0 rounded-full bg-[#005BD3] px-1.5 py-0.5 text-[0.625rem] font-bold text-white">
+                <span className="num shrink-0 rounded-full bg-[var(--azul)] px-1.5 py-0.5 text-[0.625rem] font-bold text-white">
                     {linha.nao_lidas > 99 ? "99+" : linha.nao_lidas}
                 </span>
             )}
@@ -897,13 +901,13 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0 }: {
 /** A moldura de quem ainda não entrou — sem menu de chat, que ainda não há. */
 function Vestibulo({ children }: { children: React.ReactNode }) {
     return (
-        <main className="flex min-h-[calc(100dvh-3.5rem)] flex-col bg-[#F1F1F1] px-4 pb-4 pt-6 md:px-6">
+        <main className="flex min-h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-6 md:px-6">
 
             <div className="mx-auto w-full max-w-md">
 
                 <Link
                     href="/page/inicio"
-                    className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#616161] hover:text-[#303030]"
+                    className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--ink)]"
                 >
                     <FiArrowLeft className="w-4" aria-hidden />
                     Voltar ao painel
@@ -935,7 +939,7 @@ function Porta({ estado, codigo, aoDigitar, aoEnviar, entrando, erro }: {
         return (
             <Cartao Icone={FiLock} titulo="Esta loja ainda não tem código">
                 O código da conversa é gerado na conta do dono da loja, na tela de Funcionários.
-                Peça a ele para abri-la — o código aparece lá, e é ele quem passa para a equipe.
+                Unidade a ele para abri-la — o código aparece lá, e é ele quem passa para a equipe.
             </Cartao>
         )
     }
@@ -962,20 +966,20 @@ function Porta({ estado, codigo, aoDigitar, aoEnviar, entrando, erro }: {
     return (
         <div className="anim-tela card p-7">
 
-            <FiLock className="w-6 text-[#8A8A8A]" aria-hidden />
+            <FiLock className="w-6 text-[var(--ink-3)]" aria-hidden />
 
-            <h1 className="mt-3 font-display text-lg text-[#303030]">
+            <h1 className="mt-3 font-display text-lg text-[var(--ink)]">
                 Digite o código da loja
             </h1>
 
-            <p className="mt-1.5 text-sm text-[#616161]">
+            <p className="mt-1.5 text-sm text-[var(--ink-2)]">
                 Estar logado não basta. O código é o do dono da loja, e digitá-lo abre um
                 pedido de entrada — é ele quem confirma que você é da empresa.
             </p>
 
             <form onSubmit={aoEnviar} className="mt-5">
 
-                <label htmlFor="codigo" className="mb-1.5 block text-sm font-semibold text-[#303030]">
+                <label htmlFor="codigo" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
                     Código da loja
                 </label>
 
@@ -990,7 +994,7 @@ function Porta({ estado, codigo, aoDigitar, aoEnviar, entrando, erro }: {
                 />
 
                 {erro && (
-                    <p role="alert" className="mt-2.5 flex items-start gap-2 text-sm font-semibold text-[#8E1F0B]">
+                    <p role="alert" className="mt-2.5 flex items-start gap-2 text-sm font-semibold text-[var(--vermelho)]">
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
                     </p>
@@ -1015,9 +1019,9 @@ function Cartao({ Icone, titulo, children }: {
 }) {
     return (
         <div className="anim-tela card p-7">
-            <Icone className="w-6 text-[#8A8A8A]" aria-hidden />
-            <h1 className="mt-3 font-display text-lg text-[#303030]">{titulo}</h1>
-            <p className="mt-1.5 text-sm text-[#616161]">{children}</p>
+            <Icone className="w-6 text-[var(--ink-3)]" aria-hidden />
+            <h1 className="mt-3 font-display text-lg text-[var(--ink)]">{titulo}</h1>
+            <p className="mt-1.5 text-sm text-[var(--ink-2)]">{children}</p>
         </div>
     )
 }
@@ -1054,7 +1058,7 @@ function NovoGrupo({ membros, aoCriar, aoFechar }: {
         <Painel titulo="Novo grupo" aoFechar={aoFechar}>
             <form onSubmit={salvar}>
 
-                <label htmlFor="nome-do-grupo" className="mb-1.5 block text-sm font-semibold text-[#303030]">
+                <label htmlFor="nome-do-grupo" className="mb-1.5 block text-sm font-semibold text-[var(--ink)]">
                     Nome do grupo
                 </label>
 
@@ -1067,7 +1071,7 @@ function NovoGrupo({ membros, aoCriar, aoFechar }: {
                     className="field w-full"
                 />
 
-                <p className="mb-2 mt-5 text-sm font-semibold text-[#303030]">
+                <p className="mb-2 mt-5 text-sm font-semibold text-[var(--ink)]">
                     Quem entra
                 </p>
 
@@ -1075,7 +1079,7 @@ function NovoGrupo({ membros, aoCriar, aoFechar }: {
                     que ainda não foi admitido seria abrir por dentro a porta
                     que o dono não abriu. Quem cria entra sozinho. */}
                 {membros.length === 0 ? (
-                    <p className="text-sm text-[#8A8A8A]">
+                    <p className="text-sm text-[var(--ink-3)]">
                         Ninguém mais foi confirmado na conversa ainda. O grupo nasce só com você
                         e você pode acrescentar gente depois.
                     </p>
@@ -1083,7 +1087,7 @@ function NovoGrupo({ membros, aoCriar, aoFechar }: {
                     <ul className="max-h-56 space-y-1 overflow-y-auto">
                         {membros.map((membro) => (
                             <li key={membro.cracha}>
-                                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-[#303030] hover:bg-[#F7F7F7]">
+                                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-[var(--ink)] hover:bg-[var(--superficie-2)]">
                                     <input
                                         type="checkbox"
                                         checked={marcados.includes(membro.cracha)}
@@ -1172,7 +1176,7 @@ function GerirGrupo({ grupoID, podeMexer, membros, eu, aoMudar, aoSair }: {
                             .filter((membro) => membro.cracha !== eu.cracha && membro.na_conversa)
                             .map((membro) => (
                                 <li key={membro.cracha}>
-                                    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-[#303030] hover:bg-[#F7F7F7]">
+                                    <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-[var(--ink)] hover:bg-[var(--superficie-2)]">
                                         <input
                                             type="checkbox"
                                             checked={marcados.includes(membro.cracha)}
@@ -1217,16 +1221,16 @@ function Painel({ titulo, children, aoFechar }: {
 
             <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFechar} />
 
-            <div className="anim-tela relative w-full max-w-md rounded-xl border border-[#E1E1E1] bg-white p-6 shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+            <div className="anim-tela relative w-full max-w-md rounded-xl border border-[var(--linha)] bg-[var(--superficie)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
 
                 <div className="mb-4 flex items-start justify-between gap-4">
-                    <h2 className="font-display text-lg text-[#303030]">{titulo}</h2>
+                    <h2 className="font-display text-lg text-[var(--ink)]">{titulo}</h2>
 
                     <button
                         type="button"
                         onClick={aoFechar}
                         aria-label="Fechar"
-                        className="rounded-lg p-1 text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        className="rounded-lg p-1 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                     >
                         <FiX className="w-4" aria-hidden />
                     </button>
@@ -1253,11 +1257,11 @@ function Painel({ titulo, children, aoFechar }: {
  */
 function AvisoDaChamada({ aoFechar }: { aoFechar: () => void }) {
     return (
-        <div className="flex items-start gap-3 border-b border-[#EBEBEB] bg-[#FFF1E3] px-5 py-3">
+        <div className="flex items-start gap-3 border-b border-[var(--linha-suave)] bg-[var(--amarelo-fundo)] px-5 py-3">
 
-            <FiVideo className="mt-0.5 w-4 shrink-0 text-[#5E4200]" aria-hidden />
+            <FiVideo className="mt-0.5 w-4 shrink-0 text-[var(--amarelo)]" aria-hidden />
 
-            <p className="flex-1 text-sm text-[#5E4200]">
+            <p className="flex-1 text-sm text-[var(--amarelo)]">
                 <span className="font-semibold">A chamada de vídeo ainda não está ligada.</span>{" "}
                 Ela precisa de um servidor de mídia próprio para funcionar fora do Wi-Fi da loja
                 e para reunir mais de duas pessoas. O chat de texto e os grupos já funcionam.
@@ -1267,7 +1271,7 @@ function AvisoDaChamada({ aoFechar }: { aoFechar: () => void }) {
                 type="button"
                 onClick={aoFechar}
                 aria-label="Fechar aviso"
-                className="rounded-lg p-1 text-[#5E4200] transition-colors hover:bg-black/5"
+                className="rounded-lg p-1 text-[var(--amarelo)] transition-colors hover:bg-black/5"
             >
                 <FiX className="w-4" aria-hidden />
             </button>
@@ -1305,8 +1309,8 @@ function Bolha({ fala, minha, comVarias, aoResponder }: {
             <div
                 className={`max-w-[min(34rem,80%)] rounded-xl px-3.5 py-2 ${
                     minha
-                        ? "bg-[#303030] text-white"
-                        : "border border-[#E1E1E1] bg-white text-[#303030]"
+                        ? "bg-[var(--azul)] text-white"
+                        : "border border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink)]"
                 }`}
             >
                 {/* O nome, colorido por pessoa como no WhatsApp: a cor é o que
@@ -1324,14 +1328,14 @@ function Bolha({ fala, minha, comVarias, aoResponder }: {
                     <span
                         className={`mb-1 block rounded-md border-l-2 px-2 py-1 ${
                             minha
-                                ? "border-white/50 bg-white/10"
-                                : "border-[#005BD3] bg-[#F7F7F7]"
+                                ? "border-white/50 bg-[var(--superficie)]/10"
+                                : "border-[var(--azul)] bg-[var(--superficie-2)]"
                         }`}
                     >
-                        <span className={`block text-[0.6875rem] font-semibold ${minha ? "text-white/80" : "text-[#005BD3]"}`}>
+                        <span className={`block text-[0.6875rem] font-semibold ${minha ? "text-white/80" : "text-[var(--azul)]"}`}>
                             {fala.responde_autor}
                         </span>
-                        <span className={`block truncate text-xs ${minha ? "text-white/70" : "text-[#616161]"}`}>
+                        <span className={`block truncate text-xs ${minha ? "text-white/70" : "text-[var(--ink-2)]"}`}>
                             {fala.responde_texto}
                         </span>
                     </span>
@@ -1339,7 +1343,7 @@ function Bolha({ fala, minha, comVarias, aoResponder }: {
 
                 <p className="whitespace-pre-wrap break-words text-sm">{fala.texto}</p>
 
-                <p className={`num mt-0.5 text-[0.6875rem] ${minha ? "text-white/60" : "text-[#8A8A8A]"}`}>
+                <p className={`num mt-0.5 text-[0.6875rem] ${minha ? "text-white/60" : "text-[var(--ink-3)]"}`}>
                     {hora(fala.criada_em)}
                 </p>
             </div>
@@ -1363,7 +1367,7 @@ function BotaoResponder({ aoResponder }: { aoResponder: () => void }) {
             onClick={aoResponder}
             aria-label="Responder esta mensagem"
             title="Responder"
-            className="shrink-0 rounded-lg p-1.5 text-[#8A8A8A] opacity-0 transition-opacity hover:bg-[#EBEBEB] hover:text-[#303030] focus:opacity-100 group-hover:opacity-100"
+            className="shrink-0 rounded-lg p-1.5 text-[var(--ink-3)] opacity-0 transition-opacity hover:bg-[var(--linha-suave)] hover:text-[var(--ink)] focus:opacity-100 group-hover:opacity-100"
         >
             <FiCornerUpLeft className="w-4" aria-hidden />
         </button>
@@ -1416,15 +1420,15 @@ function Digitando({ quem }: { quem: string }) {
     return (
         <div className="anim-surgir flex justify-start" aria-live="polite">
 
-            <div className="flex items-center gap-2 rounded-xl border border-[#E1E1E1] bg-white px-3.5 py-2.5">
+            <div className="flex items-center gap-2 rounded-xl border border-[var(--linha)] bg-[var(--superficie)] px-3.5 py-2.5">
 
                 <span className="flex items-end gap-1" aria-hidden>
-                    <span className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[#8A8A8A]" />
-                    <span className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[#8A8A8A]" />
-                    <span className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[#8A8A8A]" />
+                    <span className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[var(--ink-3)]" />
+                    <span className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[var(--ink-3)]" />
+                    <span className="bolinha-digitando h-1.5 w-1.5 rounded-full bg-[var(--ink-3)]" />
                 </span>
 
-                <span className="text-xs text-[#616161]">
+                <span className="text-xs text-[var(--ink-2)]">
                     {quem} está digitando
                 </span>
             </div>

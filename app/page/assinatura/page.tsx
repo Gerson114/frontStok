@@ -137,7 +137,7 @@ export default function AssinaturaPage() {
     if (carregando) {
         return (
             <Pagina titulo="Assinatura">
-                <div className="card p-8 text-center text-sm text-[#616161]">
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">
                     Carregando assinatura...
                 </div>
             </Pagina>
@@ -170,8 +170,8 @@ export default function AssinaturaPage() {
                     <div
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
                             liberada
-                                ? "bg-[#EAFBF1] text-[#0C5132]"
-                                : "bg-[#FEE9E8] text-[#8E1F0B]"
+                                ? "bg-[var(--verde-suave)] text-[var(--verde)]"
+                                : "bg-[var(--vermelho-fundo)] text-[var(--vermelho)]"
                         }`}
                     >
                         {liberada
@@ -181,11 +181,11 @@ export default function AssinaturaPage() {
 
                     <div className="min-w-0 flex-1">
 
-                        <p className="font-display text-lg text-[#303030]">
+                        <p className="font-display text-lg text-[var(--ink)]">
                             {assinatura ? descreverStatus(assinatura) : "Situação desconhecida"}
                         </p>
 
-                        <p className="mt-1 text-sm text-[#616161]">
+                        <p className="mt-1 text-sm text-[var(--ink-2)]">
                             {emTeste
                                 ? "Seu teste está valendo: o painel abre inteiro e nada foi cobrado até aqui."
                                 : liberada
@@ -197,9 +197,9 @@ export default function AssinaturaPage() {
                             fim do período que já pagou — vale explicar, senão a
                             data parece contradizer o status "cancelada". */}
                         {assinatura?.pago_ate && (
-                            <p className="mt-3 text-sm text-[#616161]">
+                            <p className="mt-3 text-sm text-[var(--ink-2)]">
                                 Período pago até{" "}
-                                <strong className="text-[#303030]">
+                                <strong className="text-[var(--ink)]">
                                     {formatarData(assinatura.pago_ate)}
                                 </strong>
                             </p>
@@ -211,9 +211,9 @@ export default function AssinaturaPage() {
                             se chamou aqui, dizia a quem estava com a fatura
                             vencida que ele tinha o mês inteiro pago. */}
                         {emCobranca && assinatura?.periodo_fim_em && (
-                            <p className="mt-1 text-sm text-[#616161]">
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
                                 {emTeste ? "Teste até" : "Próxima cobrança em"}{" "}
-                                <strong className="text-[#303030]">
+                                <strong className="text-[var(--ink)]">
                                     {formatarData(assinatura.periodo_fim_em)}
                                 </strong>
                                 {emTeste ? " — é nesse dia que a primeira cobrança acontece." : ""}
@@ -221,9 +221,9 @@ export default function AssinaturaPage() {
                         )}
 
                         {assinatura?.tolerancia_ate && (
-                            <p className="mt-1 text-sm text-[#616161]">
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
                                 Prazo para regularizar:{" "}
-                                <strong className="text-[#303030]">
+                                <strong className="text-[var(--ink)]">
                                     {formatarData(assinatura.tolerancia_ate)}
                                 </strong>
                             </p>
@@ -236,7 +236,7 @@ export default function AssinaturaPage() {
                         onClick={carregar}
                         title="Atualizar"
                         aria-label="Atualizar situação da assinatura"
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                     >
                         <FiRefreshCw className="w-4" aria-hidden />
                     </button>
@@ -246,7 +246,7 @@ export default function AssinaturaPage() {
                 {erro && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
@@ -254,7 +254,7 @@ export default function AssinaturaPage() {
                 )}
 
                 {!cobrancaAtiva && (
-                    <p className="mt-5 rounded-lg bg-[#F1F1F1] px-4 py-3 text-sm text-[#616161]">
+                    <p className="mt-5 rounded-lg bg-[var(--fundo)] px-4 py-3 text-sm text-[var(--ink-2)]">
                         Este servidor está rodando sem cobrança configurada, então o
                         painel fica liberado para todos. É o esperado em
                         desenvolvimento.
@@ -292,7 +292,7 @@ export default function AssinaturaPage() {
             {cobrancaAtiva && oferta && (
                 <section>
 
-                    <h2 className="font-display text-lg text-[#303030]">
+                    <h2 className="font-display text-lg text-[var(--ink)]">
                         {emTeste
                             ? "Continuar depois do teste"
                             : liberada
@@ -303,7 +303,7 @@ export default function AssinaturaPage() {
                     <article className="card mt-4 flex flex-col p-6">
 
                         <div className="flex items-start justify-between gap-2">
-                            <p className="font-display text-lg text-[#303030]">
+                            <p className="font-display text-lg text-[var(--ink)]">
                                 {oferta.nome}
                             </p>
 
@@ -314,31 +314,31 @@ export default function AssinaturaPage() {
                             )}
                         </div>
 
-                        <p className="mt-1 text-sm text-[#616161]">
+                        <p className="mt-1 text-sm text-[var(--ink-2)]">
                             {oferta.descricao}
                         </p>
 
-                        <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#EBEBEB] pb-5">
-                            <span className="font-display text-3xl text-[#303030]">
+                        <div className="mt-4 flex items-baseline gap-1.5 border-b border-[var(--linha-suave)] pb-5">
+                            <span className="font-display text-3xl text-[var(--ink)]">
                                 {formatarPreco(oferta.preco)}
                             </span>
-                            <span className="text-sm font-bold text-[#616161]">/mês</span>
+                            <span className="text-sm font-bold text-[var(--ink-2)]">/mês</span>
                         </div>
 
                         <ul className="mt-5 mb-6 grid gap-2 sm:grid-cols-2">
                             {oferta.recursos.map((item) => (
                                 <li
                                     key={item}
-                                    className="flex items-start gap-2 text-sm text-[#303030]"
+                                    className="flex items-start gap-2 text-sm text-[var(--ink)]"
                                 >
-                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[var(--verde)]" aria-hidden />
                                     {item}
                                 </li>
                             ))}
                         </ul>
 
                         {liberada && !emTeste ? (
-                            <p className="mt-auto rounded-lg bg-[#F1F1F1] px-4 py-3 text-center text-sm font-semibold text-[#616161]">
+                            <p className="mt-auto rounded-lg bg-[var(--fundo)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-2)]">
                                 Você já tem tudo isso liberado
                             </p>
                         ) : (
@@ -374,7 +374,7 @@ export default function AssinaturaPage() {
                         <article className="card mt-4 flex flex-col p-6">
 
                             <div className="flex items-start justify-between gap-2">
-                                <p className="font-display text-lg text-[#303030]">
+                                <p className="font-display text-lg text-[var(--ink)]">
                                     {oferta.nome} Pro
                                 </p>
 
@@ -383,32 +383,32 @@ export default function AssinaturaPage() {
                                 )}
                             </div>
 
-                            <p className="mt-1 text-sm text-[#616161]">
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
                                 Tudo do {oferta.nome}, mais a sua equipe dentro do painel
                                 e até {oferta.pro.lojas} lojas na mesma conta.
                             </p>
 
-                            <div className="mt-4 flex items-baseline gap-1.5 border-b border-[#EBEBEB] pb-5">
-                                <span className="font-display text-3xl text-[#303030]">
+                            <div className="mt-4 flex items-baseline gap-1.5 border-b border-[var(--linha-suave)] pb-5">
+                                <span className="font-display text-3xl text-[var(--ink)]">
                                     {formatarPreco(oferta.pro.preco)}
                                 </span>
-                                <span className="text-sm font-bold text-[#616161]">/mês</span>
+                                <span className="text-sm font-bold text-[var(--ink-2)]">/mês</span>
                             </div>
 
                             <ul className="mt-5 mb-6 grid gap-2 sm:grid-cols-2">
                                 {oferta.pro.recursos.map((item) => (
                                     <li
                                         key={item}
-                                        className="flex items-start gap-2 text-sm text-[#303030]"
+                                        className="flex items-start gap-2 text-sm text-[var(--ink)]"
                                     >
-                                        <FiPlus className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                                        <FiPlus className="mt-0.5 w-4 shrink-0 text-[var(--verde)]" aria-hidden />
                                         {item}
                                     </li>
                                 ))}
                             </ul>
 
                             {noPro ? (
-                                <p className="mt-auto rounded-lg bg-[#F1F1F1] px-4 py-3 text-center text-sm font-semibold text-[#616161]">
+                                <p className="mt-auto rounded-lg bg-[var(--fundo)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-2)]">
                                     Você já está no Pro
                                 </p>
                             ) : (
@@ -451,7 +451,7 @@ export default function AssinaturaPage() {
                 está prestes a sair do domínio do painel e ver outra marca na
                 barra de endereço, e sem aviso isso parece golpe. */}
             {cobrancaAtiva && (
-                <p className="flex items-start gap-2 text-xs text-[#616161]">
+                <p className="flex items-start gap-2 text-xs text-[var(--ink-2)]">
                     <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                     <span>
                         Os dados do seu cartão são digitados numa página segura do

@@ -98,12 +98,12 @@ export default function PagamentoPorWhatsApp() {
         >
 
             {!temNumero && (
-                <p className="mb-4 flex items-start gap-2.5 rounded-lg border-l-2 border-[#C7920A] bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                <p className="mb-4 flex items-start gap-2.5 rounded-lg border-l-2 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
                         Esta loja não tem WhatsApp cadastrado, então não há para onde mandar o
                         cliente — a opção não vai aparecer no site.{" "}
-                        <Link href="/page/loja" className="font-semibold text-[#005BD3] hover:underline">
+                        <Link href="/page/loja" className="font-semibold text-[var(--azul)] hover:underline">
                             Cadastre o número em Meu site
                         </Link>.
                     </span>
@@ -111,14 +111,14 @@ export default function PagamentoPorWhatsApp() {
             )}
 
             {erro && (
-                <p role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertCircle className="w-4 shrink-0" aria-hidden />
                     {erro}
                 </p>
             )}
 
             {aviso && (
-                <p role="status" className="mb-4 flex items-center gap-2 rounded-lg bg-[#EAFBF1] px-3 py-2 text-sm text-[#0C5132]">
+                <p role="status" className="mb-4 flex items-center gap-2 rounded-lg bg-[var(--verde-suave)] px-3 py-2 text-sm text-[var(--verde)]">
                     <FiCheckCircle className="w-4 shrink-0" aria-hidden />
                     {aviso}
                 </p>
@@ -134,25 +134,25 @@ export default function PagamentoPorWhatsApp() {
                 />
 
                 <span>
-                    <span className="flex items-center gap-2 text-sm font-medium text-[#303030]">
-                        <FiMessageSquare className="w-4 text-[#616161]" aria-hidden />
+                    <span className="flex items-center gap-2 text-sm font-medium text-[var(--ink)]">
+                        <FiMessageSquare className="w-4 text-[var(--ink-2)]" aria-hidden />
                         Oferecer &ldquo;combinar o pagamento no WhatsApp&rdquo; no site
                     </span>
 
-                    <span className="mt-0.5 block text-xs leading-relaxed text-[#616161]">
+                    <span className="mt-0.5 block text-xs leading-relaxed text-[var(--ink-2)]">
                         Ao escolher essa forma, o cliente é levado à sua conversa com o número do
                         pedido e o total já escritos. O pedido entra na sua lista marcado como
-                        <strong className="font-semibold"> combinando</strong>, e as peças ficam
+                        <strong className="font-semibold"> combinando</strong>, e as unidades ficam
                         reservadas — ele não conta como venda até você confirmar que recebeu.
                     </span>
                 </span>
             </label>
 
             {config.pagar_pelo_whatsapp && (
-                <div className="mt-5 border-t border-[#EBEBEB] pt-5">
+                <div className="mt-5 border-t border-[var(--linha-suave)] pt-5">
 
                     <label className="rotulo" htmlFor="horas_para_combinar">
-                        Horas segurando as peças enquanto vocês combinam
+                        Horas segurando as unidades enquanto vocês combinam
                     </label>
 
                     <div className="mt-1.5 flex items-center gap-2">
@@ -168,13 +168,13 @@ export default function PagamentoPorWhatsApp() {
                             className="field num w-24"
                         />
 
-                        <span className="text-sm text-[#616161]">horas</span>
-                        <span className="num text-xs text-[#8A8A8A]">entre 1 e 168</span>
+                        <span className="text-sm text-[var(--ink-2)]">horas</span>
+                        <span className="num text-xs text-[var(--ink-3)]">entre 1 e 168</span>
                     </div>
 
-                    <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-[#616161]">
+                    <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-[var(--ink-2)]">
                         Passado esse tempo sem você confirmar o recebimento, o pedido é desfeito e
-                        as peças voltam para a prateleira. É bem mais que os minutos do carrinho
+                        as unidades voltam para a prateleira. É bem mais que os minutos do carrinho
                         porque aqui há uma conversa acontecendo — mas não é sem fim: pedido
                         abandonado no meio da conversa não pode segurar mercadoria para sempre.
                     </p>

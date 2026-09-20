@@ -20,8 +20,8 @@ import {
 import MolduraAuth, { type ItemMoldura } from "../auth/moldura"
 
 const ITENS: ItemMoldura[] = [
-    { texto: "Cada peça com código próprio e etiqueta de código de barras.", Icone: FiBox },
-    { texto: "Endereço de guarda de cada peça, com transferência.", Icone: FiMapPin },
+    { texto: "Cada unidade com código próprio e etiqueta de código de barras.", Icone: FiBox },
+    { texto: "Endereço de guarda de cada unidade, com transferência.", Icone: FiMapPin },
     { texto: "Pedidos da vitrine, vendidos, cancelados e avarias, cada um na sua tela.", Icone: FiShoppingCart },
 ]
 
@@ -77,8 +77,8 @@ export default function Login() {
 
     // Sem resposta do servidor, a nota fica sem preço em vez de chutar um.
     const nota = oferta?.preco
-        ? `Painel de gestão para lojas de roupa. Uma assinatura só, de ${formatarPreco(oferta.preco)} por mês, com tudo incluído e cancelamento quando você quiser.`
-        : "Painel de gestão para lojas de roupa. Uma assinatura mensal só, com tudo incluído e cancelamento quando você quiser."
+        ? `Painel de gestão para lojas de qualquer ramo. Uma assinatura só, de ${formatarPreco(oferta.preco)} por mês, com tudo incluído e cancelamento quando você quiser.`
+        : "Painel de gestão para lojas de qualquer ramo. Uma assinatura mensal só, com tudo incluído e cancelamento quando você quiser."
 
     const router = useRouter()
 
@@ -221,7 +221,7 @@ export default function Login() {
     return (
         <MolduraAuth
             etiqueta="Acesso ao painel"
-            chamada="O estoque da sua loja, peça a peça."
+            chamada="O estoque da sua loja, unidade a unidade."
             itens={ITENS}
             nota={nota}
         >
@@ -231,7 +231,7 @@ export default function Login() {
                 noValidate
             >
 
-                <h1 className="font-display text-[1.75rem] leading-tight text-[#303030]">
+                <h1 className="font-display text-[1.75rem] leading-tight text-[var(--ink)]">
                     {modo === "entrar"
                         ? "Entrar na sua conta"
                         : modo === "pedir"
@@ -239,7 +239,7 @@ export default function Login() {
                             : "Crie uma senha nova"}
                 </h1>
 
-                <p className="mt-2 text-sm text-[#616161]">
+                <p className="mt-2 text-sm text-[var(--ink-2)]">
                     {modo === "entrar"
                         ? "Use o e-mail e a senha cadastrados para abrir o painel da loja."
                         : modo === "pedir"
@@ -289,7 +289,7 @@ export default function Login() {
                                     setError("")
                                     setRecado("")
                                 }}
-                                className="text-xs font-semibold text-[#005BD3] hover:underline"
+                                className="text-xs font-semibold text-[var(--azul)] hover:underline"
                             >
                                 esqueci minha senha
                             </button>
@@ -316,7 +316,7 @@ export default function Login() {
                                 type="button"
                                 onClick={() => setMostrarSenha((v) => !v)}
                                 aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                             >
                                 {mostrarSenha
                                     ? <FiEyeOff className="w-[1.05rem]" aria-hidden />
@@ -371,7 +371,7 @@ export default function Login() {
                 {error && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#FCC5C0] bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{error}</span>
@@ -379,7 +379,7 @@ export default function Login() {
                 )}
 
                 {recado && !error && (
-                    <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                    <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                         <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{recado}</span>
                     </div>
@@ -400,14 +400,14 @@ export default function Login() {
                 </button>
 
                 {modo === "entrar" ? (
-                    <p className="mt-6 border-t border-[#EBEBEB] pt-6 text-center text-sm text-[#616161]">
+                    <p className="mt-6 border-t border-[var(--linha-suave)] pt-6 text-center text-sm text-[var(--ink-2)]">
                         Ainda não tem uma conta?{" "}
-                        <Link href="/cadastro" className="font-semibold text-[#005BD3] hover:underline">
+                        <Link href="/cadastro" className="font-semibold text-[var(--azul)] hover:underline">
                             Criar conta
                         </Link>
                     </p>
                 ) : (
-                    <div className="mt-6 border-t border-[#EBEBEB] pt-6 text-center">
+                    <div className="mt-6 border-t border-[var(--linha-suave)] pt-6 text-center">
                         <button
                             type="button"
                             onClick={() => {
@@ -415,14 +415,14 @@ export default function Login() {
                                 setError("")
                                 setRecado("")
                             }}
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#005BD3] hover:underline"
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--azul)] hover:underline"
                         >
                             <FiArrowLeft className="w-3.5" aria-hidden />
                             voltar para entrar
                         </button>
 
                         {modo === "trocar" && (
-                            <p className="mt-3 text-xs text-[#8A8A8A]">
+                            <p className="mt-3 text-xs text-[var(--ink-3)]">
                                 Não chegou? Volte e peça outro código — há um minuto de espera
                                 entre dois pedidos.
                             </p>

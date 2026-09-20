@@ -69,6 +69,15 @@ export interface NovoProduto {
      * alguém decida, caixa por caixa, em que prateleira ela cabe.
      */
     endereco: string
+
+    /**
+     * Este item NÃO é contado unidade a unidade: ele é feito quando alguém
+     * pede (ver dto.CadastroProduto.SemContagem no servidor).
+     */
+    sem_contagem?: boolean
+
+    /** O "tem hoje?" de quem não conta estoque. */
+    disponivel?: boolean
 }
 
 /**
@@ -165,6 +174,17 @@ export interface NovoProdutoVariantes {
     /** Onde guardar o que entrar; em branco, o servidor escolhe. */
     endereco: string
     variacoes: VariacaoProduto[]
+
+    /**
+     * Este item NÃO é contado unidade a unidade: ele é feito quando alguém
+     * pede.
+     *
+     * É o que separa cadastrar comida de cadastrar mercadoria. Com ele
+     * ligado, nada é endereçado na prateleira, nada é reservado no pedido e
+     * não há número de estoque a informar — a pizza existe quando o cliente
+     * a pede.
+     */
+    sem_contagem?: boolean
 }
 
 /** Retorna a lista de erros encontrados (vazia se o cadastro for válido). */
@@ -213,7 +233,9 @@ export function validarProdutoVariantes(produto: NovoProdutoVariantes): string[]
                 break
             }
 
-            if (!Number.isFinite(variacao.estoque) || variacao.estoque < 0) {
+            // Item que não se conta não tem estoque a informar: cobrar um
+            // número aqui faria o lojista de comida inventar um.
+            if (!produto.sem_contagem && (!Number.isFinite(variacao.estoque) || variacao.estoque < 0)) {
                 erros.push(`Informe um estoque válido para ${rotulo} ${variacao.variacao}.`)
                 break
             }
@@ -249,6 +271,15 @@ export interface ProdutoEditavel {
     atributos: Atributos
     imagem_url: string
     loja_id: number
+
+    /**
+     * Este item NÃO é contado unidade a unidade: ele é feito quando alguém
+     * pede (ver dto.CadastroProduto.SemContagem no servidor).
+     */
+    sem_contagem?: boolean
+
+    /** O "tem hoje?" de quem não conta estoque. */
+    disponivel?: boolean
 }
 
 /** Retorna a lista de erros encontrados (vazia se o produto for válido). */

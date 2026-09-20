@@ -92,13 +92,13 @@ export default function PainelDeProdutos() {
     return (
         <Pagina
             titulo="Mercadoria"
-            descricao="O que chegou e o que saiu da loja, peça por peça. A entrada é o que a loja comprou; a saída é o que foi vendido e não voltou."
+            descricao="O que chegou e o que saiu da loja, unidade por unidade. A entrada é o que a loja comprou; a saída é o que foi vendido e não voltou."
             volta={{ nome: "Início", rota: "/page/inicio" }}
             acoes={<SeletorDeRegua regua={regua} aoTrocar={setRegua} />}
         >
 
             {erro && (
-                <p className="flex items-center gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p className="flex items-center gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertCircle className="w-4 shrink-0" aria-hidden />
                     {erro}
                 </p>
@@ -108,13 +108,13 @@ export default function PainelDeProdutos() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <Cartao
                     Icone={FiArrowDown}
-                    rotulo="Peças que entraram"
+                    rotulo="Unidades que entraram"
                     valor={inteiro(resumo?.pecas_entraram ?? 0)}
                     detalhe={`${moeda(resumo?.custo_entrada ?? 0)} de custo`}
                 />
                 <Cartao
                     Icone={FiArrowUp}
-                    rotulo="Peças que saíram"
+                    rotulo="Unidades que saíram"
                     valor={inteiro(resumo?.pecas_sairam ?? 0)}
                     detalhe={`${moeda(resumo?.receita_saida ?? 0)} de receita`}
                 />
@@ -128,17 +128,17 @@ export default function PainelDeProdutos() {
                     Icone={FiDollarSign}
                     rotulo="Parado na prateleira"
                     valor={moeda(resumo?.custo_parado ?? 0)}
-                    detalhe={`${inteiro(resumo?.em_estoque ?? 0)} peças à venda`}
+                    detalhe={`${inteiro(resumo?.em_estoque ?? 0)} unidades à venda`}
                 />
             </div>
 
             {/* PEÇAS AO LONGO DO TEMPO */}
             <Secao
-                titulo="Peças que entraram e saíram"
+                titulo="Unidades que entraram e saíram"
                 descricao={`${escolhida?.descricao ?? ""} Duas contagens da mesma medida, no mesmo eixo — é a distância entre as linhas que diz se a loja está enchendo ou esvaziando.`}
             >
                 {carregando && !dados ? (
-                    <div className="h-[200px] animate-pulse rounded-lg bg-[#F1F1F1]" />
+                    <div className="h-[200px] animate-pulse rounded-lg bg-[var(--fundo)]" />
                 ) : (
                     <div className={carregando ? "opacity-60 transition-opacity" : "transition-opacity"}>
                         <Linhas
@@ -158,10 +158,10 @@ export default function PainelDeProdutos() {
             {/* DINHEIRO AO LONGO DO TEMPO */}
             <Secao
                 titulo="Custo e receita"
-                descricao="O que a loja pagou pelas peças que chegaram e o que recebeu pelas que saíram. As duas quase nunca acontecem no mesmo dia: a peça chega em março e sai em maio."
+                descricao="O que a loja pagou pelas unidades que chegaram e o que recebeu pelas que saíram. As duas quase nunca acontecem no mesmo dia: a unidade chega em março e sai em maio."
             >
                 {carregando && !dados ? (
-                    <div className="h-[200px] animate-pulse rounded-lg bg-[#F1F1F1]" />
+                    <div className="h-[200px] animate-pulse rounded-lg bg-[var(--fundo)]" />
                 ) : (
                     <div className={carregando ? "opacity-60 transition-opacity" : "transition-opacity"}>
                         <div className="mb-4 flex flex-wrap gap-x-8 gap-y-2">
@@ -193,7 +193,7 @@ export default function PainelDeProdutos() {
                         Icone={FiPackage}
                         rotulo="À venda"
                         valor={inteiro(resumo?.em_estoque ?? 0)}
-                        detalhe="peças vendáveis"
+                        detalhe="unidades vendáveis"
                     />
                     <Cartao
                         Icone={FiClock}
@@ -220,7 +220,7 @@ export default function PainelDeProdutos() {
             {/* AS LISTAS */}
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 
-                <Secao titulo="O que mais saiu" descricao="As peças que a loja vendeu no período.">
+                <Secao titulo="O que mais saiu" descricao="As unidades que a loja vendeu no período.">
                     <Ranking
                         vazio="Nada saiu no período."
                         linhas={(dados?.mais_sairam ?? []).map((linha) => ({
@@ -233,7 +233,7 @@ export default function PainelDeProdutos() {
                     />
                 </Secao>
 
-                <Secao titulo="O que mais entrou" descricao="As peças que a loja comprou no período.">
+                <Secao titulo="O que mais entrou" descricao="As unidades que a loja comprou no período.">
                     <Ranking
                         vazio="Nada entrou no período."
                         linhas={(dados?.mais_entraram ?? []).map((linha) => ({
@@ -263,7 +263,7 @@ export default function PainelDeProdutos() {
 
                 <Secao
                     titulo="Parado há mais de 30 dias"
-                    descricao="Peça vendável que chegou faz tempo e não saiu. É dinheiro da loja dormindo na arara."
+                    descricao="Unidade vendável que chegou faz tempo e não saiu. É dinheiro da loja dormindo na prateleira."
                 >
                     <Ranking
                         vazio="Nada parado há mais de 30 dias."
@@ -271,7 +271,7 @@ export default function PainelDeProdutos() {
                             chave: linha.produto_id,
                             nome: linha.nome || `Produto #${linha.produto_id}`,
                             detalhe: linha.codigo,
-                            valor: `${linha.pecas} peça(s) · ${linha.dias_paradas} dias`,
+                            valor: `${linha.pecas} unidade(s) · ${linha.dias_paradas} dias`,
                             barra: linha.dias_paradas,
                         }))}
                     />
@@ -279,9 +279,9 @@ export default function PainelDeProdutos() {
 
             </div>
 
-            <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8A8A8A]">
+            <p className="flex items-start gap-2 text-xs leading-relaxed text-[var(--ink-3)]">
                 <FiTruck className="mt-0.5 w-3.5 shrink-0" aria-hidden />
-                Peça devolvida sai da conta da saída: ela foi vendida e voltou, e contá-la aqui
+                Unidade devolvida sai da conta da saída: ela foi vendida e voltou, e contá-la aqui
                 diria que a mercadoria deixou a loja quando ela está de volta na prateleira.
             </p>
 

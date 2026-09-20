@@ -100,7 +100,7 @@ export default function PainelDeEntregas() {
         >
 
             {erro && (
-                <p className="flex items-center gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p className="flex items-center gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertCircle className="w-4 shrink-0" aria-hidden />
                     {erro}
                 </p>
@@ -143,7 +143,7 @@ export default function PainelDeEntregas() {
                 descricao={`${escolhida?.descricao ?? ""} As duas formas somam o total de pedidos de cada janela.`}
             >
                 {carregando && !dados ? (
-                    <div className="h-[220px] animate-pulse rounded-lg bg-[#F1F1F1]" />
+                    <div className="h-[220px] animate-pulse rounded-lg bg-[var(--fundo)]" />
                 ) : (
                     <div className={carregando ? "opacity-60 transition-opacity" : "transition-opacity"}>
                         <BarrasEmpilhadas
@@ -205,7 +205,7 @@ export default function PainelDeEntregas() {
 
             </div>
 
-            <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8A8A8A]">
+            <p className="flex items-start gap-2 text-xs leading-relaxed text-[var(--ink-3)]">
                 <FiPackage className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                 O prazo é contado do despacho (ou do pagamento, enquanto a loja não despachou) mais
                 os dias combinados no fechamento — a mesma conta que o comprador vê na tela dele.
@@ -213,7 +213,7 @@ export default function PainelDeEntregas() {
                 expedição nenhum.
             </p>
 
-            <p className="flex items-start gap-2 text-xs leading-relaxed text-[#8A8A8A]">
+            <p className="flex items-start gap-2 text-xs leading-relaxed text-[var(--ink-3)]">
                 <FiMapPin className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                 <FiDollarSign className="mt-0.5 w-3.5 shrink-0" aria-hidden />
                 O frete cobrado é o que entrou junto da venda, e não lucro: parte dele — ou todo

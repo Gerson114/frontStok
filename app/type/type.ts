@@ -172,6 +172,26 @@ export interface Pedido {
     /** Como o cliente pagou: "pix", "credit_card"… Entra no fechamento. */
     pagamento_metodo?: string
 
+    /**
+     * A hora que o cliente marcou para receber, nas lojas de comida que
+     * agendam.
+     *
+     * Ausente quer dizer "para agora" — e não "sem prazo": o prazo da
+     * transportadora continua sendo `prazo_dias`, que é outra coisa. Um é a
+     * promessa da loja sobre o correio; o outro é a hora que a pessoa
+     * escolheu na tela.
+     */
+    agendado_para?: string | null
+
+    /**
+     * Quanto o cliente combinou pagar ADIANTADO. Zero é o caso comum: pagou
+     * tudo de uma vez.
+     */
+    valor_entrada?: number
+
+    /** Quanto já entrou deste pedido, somando as parcelas. */
+    valor_pago?: number
+
     /** Total somado no servidor, igual ao que o cliente viu ao pagar. */
     total?: number
 
@@ -478,6 +498,8 @@ export interface Cartao {
     titulo?: string
     texto?: string
     link?: string
+    /** "pequeno" | "medio" | "grande" — o destaque deste cartão na faixa. */
+    tamanho?: string
 }
 
 export interface Bloco {
@@ -573,6 +595,16 @@ export interface Funcionario {
      * fabricaria um par para fazer o que ele mesmo não pode.
      */
     gerente: boolean
+
+    /**
+     * Quanto esta pessoa recebe sobre o que vende, em por cento.
+     *
+     * Zero quer dizer "não recebe comissão", que é o caso da maior parte de
+     * uma loja — o conferente do estoque não vende. Só o dono muda este
+     * número: o gerente admite gente e ajusta o que ela abre, mas quanto ela
+     * ganha é de quem paga.
+     */
+    comissao_percentual: number
 
     /** As chaves das telas que esta pessoa pode abrir (as mesmas do menu). */
     recursos: string[]
@@ -675,6 +707,23 @@ export interface CaixaDoPainel {
     /** O que SAIU hoje, por porta. */
     balcao: CanalDoPainel
     pedidos: CanalDoPainel
+
+    /**
+     * O balcão aberto por forma de pagamento — o que se confere contra a
+     * gaveta e contra o extrato da maquininha no fim do expediente.
+     *
+     * Só o balcão: o dinheiro do pedido é do pedido, e ele tem o próprio
+     * registro de como foi pago. Peça vendida antes desta coluna existir cai
+     * em "Outro", e por isso a soma dos meios pode não bater com o total do
+     * balcão num dia antigo.
+     */
+    /**
+     * Opcional na leitura de propósito: um servidor mais antigo que esta tela
+     * não manda o campo, e uma loja que ainda não vendeu no balcão já mandou
+     * `null` — os dois derrubavam a tela inteira num `.length`. Quem lê usa
+     * `?? []`.
+     */
+    balcao_por_meio?: MeioNoCaixa[] | null
 
     /**
      * O que ENTROU hoje: pedidos cujo pagamento foi confirmado hoje. É outra
@@ -1360,7 +1409,54 @@ export interface ConfiguracaoDaLoja {
     /** Quanto tempo o pedido combinado segura as peças antes de ser desfeito. */
     horas_para_combinar: number
 
+    /* ----------------------------------------------------------------------
+       O RAMO DA LOJA
+
+       Quem vende comida não vende como quem vende mercadoria: o prato é feito
+       depois do pedido, o cliente quer saber a que horas fica pronto, e há um
+       valor abaixo do qual não compensa sair para entregar.
+       ---------------------------------------------------------------------- */
+
+    /** "produtos" (o padrão) ou "comida". */
+    ramo: RamoDaLoja
+
+    /** Quando o pedido de comida sai: "na_hora", "agendado" ou "os_dois". */
+    atendimento: AtendimentoDaLoja
+
+    /** Quanto a cozinha leva. É a promessa que a vitrine mostra a quem pede para agora. */
+    minutos_de_preparo: number
+
+    /** O quanto antes o cliente precisa agendar. */
+    minutos_de_antecedencia: number
+
+    /** Até quantos dias à frente o cliente pode marcar. */
+    dias_para_agendar: number
+
+    /** Abaixo disto a loja não fecha pedido pelo site. Zero é "sem mínimo". */
+    pedido_minimo: number
+
+    /**
+     * Oferece, no checkout, pagar uma parte agora e o resto na entrega.
+     *
+     * Desligado por padrão: metade do dinheiro ficando para depois é uma
+     * decisão de risco da loja, não uma facilidade a ser ligada por nós.
+     */
+    aceita_entrada: boolean
+
+    /** Quanto o cliente paga adiantado, em por cento. Cinquenta é o costume. */
+    percentual_da_entrada: number
+
     atualizado_em?: string
+}
+
+export type RamoDaLoja = "produtos" | "comida"
+export type AtendimentoDaLoja = "na_hora" | "agendado" | "os_dois"
+
+/** Uma opção fechada oferecida pelo servidor, com a explicação junto. */
+export interface OpcaoDoRamo {
+    valor: string
+    nome: string
+    explicacao: string
 }
 
 export interface LimiteDeCampo {
@@ -1376,4 +1472,186 @@ export interface RespostaDaConfiguracao {
 
     /** Os fusos que a loja pode escolher. */
     fusos: { valor: string; nome: string }[]
+
+    /** Produtos ou comida, com a explicação de cada um. */
+    ramos: OpcaoDoRamo[]
+
+    /** Na hora, agendado ou os dois. */
+    atendimentos: OpcaoDoRamo[]
+}
+
+/* ==========================================================================
+   A comissão do mês
+   ========================================================================== */
+
+/** Uma pessoa no fechamento do mês. */
+export interface LinhaDeComissao {
+    funcionario_id?: number
+    nome: string
+
+    /** Quem saiu da loja continua aparecendo: a venda dela aconteceu. */
+    cadastrada: boolean
+    ativo: boolean
+
+    pecas: number
+    base: number
+    percentual: number
+    valor: number
+}
+
+/**
+ * O mês inteiro, como o backend o entrega.
+ *
+ * `fechado` muda o sentido de tudo o que está aqui: enquanto for falso, os
+ * números se movem a cada devolução e a cada mudança de percentual; depois de
+ * fechado, eles são o que foi pago e não mudam mais.
+ */
+export interface FechamentoDeComissao {
+    mes: string
+
+    fechado: boolean
+    fechada_em?: string
+    fechada_por?: string
+
+    linhas: LinhaDeComissao[]
+
+    base: number
+    valor: number
+
+    /** O que saiu sem nome gravado, e por isso não é comissão de ninguém. */
+    sem_dono: number
+    sem_dono_valor: number
+}
+
+/* ==========================================================================
+   Como o dinheiro entra
+   ========================================================================== */
+
+/**
+ * As formas de pagamento que a LOJA declara — no balcão, e na confirmação à
+ * mão de um pedido pago por fora.
+ *
+ * Lista fechada, e a mesma do servidor (ver dto.MeiosDePagamento): isto vira
+ * relatório de faturamento, e texto livre produziria "pix", "PIX" e "pics" —
+ * três linhas para a mesma coisa num caixa que precisa fechar.
+ */
+export type MeioDePagamento = "pix" | "dinheiro" | "maquininha" | "transferencia" | "outro"
+
+/** Como cada meio se escreve para gente ler, na ordem em que se oferece. */
+export const MEIOS_DE_PAGAMENTO: { chave: MeioDePagamento; nome: string }[] = [
+    { chave: "pix", nome: "Pix" },
+    { chave: "dinheiro", nome: "Dinheiro" },
+    { chave: "maquininha", nome: "Maquininha" },
+    { chave: "transferencia", nome: "Transferência" },
+    { chave: "outro", nome: "Outro" },
+]
+
+/** Quanto entrou hoje por uma forma de pagamento no balcão. */
+export interface MeioNoCaixa {
+    chave: MeioDePagamento
+    nome: string
+    pecas: number
+    faturamento: number
+}
+
+/* ==========================================================================
+   A venda no balcão
+   ========================================================================== */
+
+/** O que o balcão descobre ao bipar um código. */
+export interface ItemDoBalcao {
+    produto_id: number
+    nome: string
+    codigo: string
+    categoria?: string
+
+    /**
+     * `preco` é o que o cliente PAGA — já com a promoção aplicada.
+     * `preco_de_tabela` vem junto só para a tela mostrar o de antes riscado.
+     */
+    preco: number
+    preco_de_tabela: number
+    em_promocao: boolean
+
+    disponiveis: number
+}
+
+/** Uma linha da venda concluída. */
+export interface ItemVendidoNoBalcao {
+    produto_id: number
+    nome: string
+    codigo: string
+
+    quantidade: number
+    preco_unitario: number
+    subtotal: number
+    em_promocao: boolean
+}
+
+/** A venda concluída, do jeito que se confere em voz alta com o cliente. */
+export interface VendaDoBalcao {
+    itens: ItemVendidoNoBalcao[]
+    pecas: number
+    total: number
+
+    meio: MeioDePagamento
+    meio_nome: string
+
+    vendida_em: string
+    vendida_por: string
+}
+
+/* ==========================================================================
+   Os adicionais: o que o cliente escolhe junto do produto
+   ========================================================================== */
+
+/**
+ * Uma opção: "Catupiry +R$ 8", "Ao ponto", "Sem cebola".
+ *
+ * `ativa` desligada tira a opção da vitrine sem apagá-la — é o que se faz
+ * quando acaba o catupiry às oito da noite, e volta amanhã num clique.
+ */
+export interface OpcaoDeAdicional {
+    id: number
+    grupo_id: number
+    nome: string
+
+    /** Quanto esta opção SOMA ao produto. Zero é o caso comum. */
+    preco: number
+
+    ativa: boolean
+    ordem: number
+}
+
+/**
+ * Um grupo é uma pergunta: "Borda", "Ponto da carne", "Bebida".
+ *
+ * `minimo` e `maximo` dizem tudo o que ele é, sem um campo "obrigatório"
+ * separado: mínimo 1 é obrigatório, máximo 1 é escolha única, máximo maior é
+ * múltipla. Dois jeitos de dizer a mesma coisa divergem.
+ */
+export interface GrupoDeAdicional {
+    id: number
+    nome: string
+    minimo: number
+    maximo: number
+    ordem: number
+    opcoes?: OpcaoDeAdicional[]
+}
+
+/** A ligação entre um grupo e um produto que faz aquela pergunta. */
+export interface LigacaoDeAdicional {
+    produto_id: number
+    grupo_id: number
+}
+
+export interface CatalogoDeAdicionais {
+    grupos: GrupoDeAdicional[]
+    ligacoes: LigacaoDeAdicional[]
+    limites: {
+        grupos_por_loja: number
+        opcoes_por_grupo: number
+        grupos_por_produto: number
+        observacao_do_item: number
+    }
 }

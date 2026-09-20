@@ -40,12 +40,12 @@ import type { GranularidadeDeVendas, PainelDaEquipe } from "@/app/type/type"
  * pouco pode ser justamente quem fecha a fila do estoque.
  */
 
-const SERIE_PECAS = [{ rotulo: "Peças vendidas", cor: "var(--serie-1)" }]
+const SERIE_PECAS = [{ rotulo: "Unidades vendidas", cor: "var(--serie-1)" }]
 
 type Coluna = "pecas_vendidas" | "faturamento" | "pedidos_assumidos" | "conversas_atendidas" | "tarefas_concluidas"
 
 const COLUNAS: { chave: Coluna; rotulo: string; curto: string }[] = [
-    { chave: "pecas_vendidas", rotulo: "Peças vendidas", curto: "Peças" },
+    { chave: "pecas_vendidas", rotulo: "Unidades vendidas", curto: "Unidades" },
     { chave: "faturamento", rotulo: "Faturamento", curto: "Faturamento" },
     { chave: "pedidos_assumidos", rotulo: "Pedidos assumidos", curto: "Pedidos" },
     { chave: "conversas_atendidas", rotulo: "Conversas do site", curto: "Conversas" },
@@ -103,7 +103,7 @@ export default function PainelDaEquipeTela() {
         >
 
             {erro && (
-                <p className="flex items-center gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm text-[#8E1F0B]">
+                <p className="flex items-center gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertCircle className="w-4 shrink-0" aria-hidden />
                     {erro}
                 </p>
@@ -124,7 +124,7 @@ export default function PainelDaEquipeTela() {
                 />
                 <Cartao
                     Icone={FiPackage}
-                    rotulo="Peças vendidas"
+                    rotulo="Unidades vendidas"
                     valor={inteiro(resumo?.pecas_vendidas ?? 0)}
                     detalhe={escolhida?.descricao ?? ""}
                 />
@@ -138,10 +138,10 @@ export default function PainelDaEquipeTela() {
 
             <Secao
                 titulo="Quem vendeu quanto"
-                descricao="Peças baixadas por cada pessoa, com o faturamento escrito na ponta da barra."
+                descricao="Unidades baixadas por cada pessoa, com o faturamento escrito na ponta da barra."
             >
                 {carregando && !dados ? (
-                    <div className="h-[180px] animate-pulse rounded-lg bg-[#F1F1F1]" />
+                    <div className="h-[180px] animate-pulse rounded-lg bg-[var(--fundo)]" />
                 ) : (
                     <BarrasPorPessoa
                         series={SERIE_PECAS}
@@ -161,9 +161,9 @@ export default function PainelDaEquipeTela() {
                     nome de vendedor gravado. Dizer isso é mais barato do que
                     responder à pergunta depois. */}
                 {(resumo?.sem_dono ?? 0) > 0 && (
-                    <p className="mt-4 border-t border-[#EBEBEB] pt-4 text-xs leading-relaxed text-[#8A8A8A]">
-                        <span className="num font-semibold text-[#616161]">{resumo?.sem_dono}</span>{" "}
-                        peça(s) saíram sem nome de quem baixou — venda do site e baixa automática de
+                    <p className="mt-4 border-t border-[var(--linha-suave)] pt-4 text-xs leading-relaxed text-[var(--ink-3)]">
+                        <span className="num font-semibold text-[var(--ink-2)]">{resumo?.sem_dono}</span>{" "}
+                        unidade(s) saíram sem nome de quem baixou — venda do site e baixa automática de
                         pedido não têm vendedor. Elas entram no total da loja e não aparecem em
                         nenhuma barra acima.
                     </p>
@@ -175,9 +175,9 @@ export default function PainelDaEquipeTela() {
                 descricao="Clique no título de uma coluna para ordenar por ela. Quem não vendeu continua aqui: vender não é o único trabalho da loja."
             >
                 {carregando && !dados ? (
-                    <div className="h-[200px] animate-pulse rounded-lg bg-[#F1F1F1]" />
+                    <div className="h-[200px] animate-pulse rounded-lg bg-[var(--fundo)]" />
                 ) : pessoas.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-[#E1E1E1] px-4 py-8 text-center text-sm text-[#8A8A8A]">
+                    <p className="rounded-lg border border-dashed border-[var(--linha)] px-4 py-8 text-center text-sm text-[var(--ink-3)]">
                         Nenhuma pessoa cadastrada nesta loja ainda.
                     </p>
                 ) : (
@@ -193,8 +193,8 @@ export default function PainelDaEquipeTela() {
                                                 type="button"
                                                 onClick={() => setOrdem(coluna.chave)}
                                                 aria-pressed={ordem === coluna.chave}
-                                                className={`transition-colors hover:text-[#303030] ${
-                                                    ordem === coluna.chave ? "text-[#005BD3]" : ""
+                                                className={`transition-colors hover:text-[var(--ink)] ${
+                                                    ordem === coluna.chave ? "text-[var(--azul)]" : ""
                                                 }`}
                                             >
                                                 {coluna.curto}
@@ -208,11 +208,11 @@ export default function PainelDaEquipeTela() {
                                 {pessoas.map((pessoa) => (
                                     <tr key={`${pessoa.id}-${pessoa.nome}`}>
                                         <td>
-                                            <span className="block font-medium text-[#303030]">
+                                            <span className="block font-medium text-[var(--ink)]">
                                                 {pessoa.nome}
                                             </span>
 
-                                            <span className="block text-xs text-[#8A8A8A]">
+                                            <span className="block text-xs text-[var(--ink-3)]">
                                                 {pessoa.dono
                                                     ? "dono da loja"
                                                     : pessoa.gerente

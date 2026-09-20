@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react"
 import {
     FiAlertCircle,
     FiArrowDown,
+    FiArrowLeft,
     FiArrowUp,
     FiCheckCircle,
     FiColumns,
@@ -38,9 +39,11 @@ import Previa from "./previa"
 import {
     achatar,
     cabeEmColuna,
+    clonarBloco,
     contar,
     editarNaArvore,
     inserirNaArvore,
+    localizarNaArvore,
     moverNaArvore,
     removerDaArvore,
     type Caminho,
@@ -313,6 +316,56 @@ export default function EditorDaHome() {
         mover(id, { secao, coluna, indice: destinoIndice })
     }
 
+    /**
+     * A mesma coisa que `empurrar`, para quem só tem o id — a barra
+     * flutuante da prévia, ao estilo Elementor (ver Selecionavel em
+     * previa.tsx), que aparece sobre o bloco escolhido sem saber de que
+     * coluna ele é filho.
+     */
+    function empurrarPeloId(id: string, passo: number) {
+
+        const caminho = localizarNaArvore(blocos, id)
+
+        if (!caminho) return
+
+        empurrar(id, caminho.secao, caminho.coluna, caminho.indice, passo)
+    }
+
+    /**
+     * Duplica um bloco logo depois dele mesmo — o mesmo gesto de "mais um
+     * igual" que qualquer construtor de página tem, para quem já acertou um
+     * bloco e só quer repeti-lo (uma segunda faixa de cartões com outro
+     * texto, por exemplo) em vez de montar de novo do zero.
+     */
+    function duplicar(id: string) {
+
+        const bloco = achatar(blocos).find((umBloco) => umBloco.id === id)
+        const caminho = localizarNaArvore(blocos, id)
+
+        if (!bloco || !caminho) return
+
+        const item = doCatalogo(bloco.tipo)
+
+        // Mesma regra de "adicionar": um bloco único (o carrossel, a grade)
+        // não pode virar dois. Duplicar aqui pareceria funcionar e o salvar
+        // recusaria — pior do que não deixar clicar.
+        if (item?.unico) {
+            setErro(`${item.nome} só pode aparecer uma vez na página.`)
+            return
+        }
+
+        if (contar(blocos) >= 40) {
+            setErro("A página chegou ao limite de 40 blocos.")
+            return
+        }
+
+        const copia = clonarBloco(bloco)
+
+        setBlocos((atuais) => inserirNaArvore(atuais, { ...caminho, indice: caminho.indice + 1 }, copia))
+        setEscolhido(copia.id)
+        mexeu()
+    }
+
     function editar(id: string, campo: keyof Bloco, valor: string | number) {
         setBlocos((atuais) => editarNaArvore(atuais, id, (bloco) => ({ ...bloco, [campo]: valor })))
         mexeu()
@@ -403,10 +456,16 @@ export default function EditorDaHome() {
 
     const selecionado = achatar(blocos).find((bloco) => bloco.id === escolhido) ?? null
 
+    // Uma área de palavras (ver Marcavel em previa.tsx) em vez de um bloco:
+    // "area:topo" vira "topo". null quando o que está escolhido é um bloco,
+    // ou nada.
+    const areaEscolhidaChave = escolhido?.startsWith("area:") ? escolhido.slice("area:".length) : null
+    const areaEscolhida = areaEscolhidaChave ? areas.find((area) => area.chave === areaEscolhidaChave) ?? null : null
+
     if (carregando) {
         return (
             <Pagina titulo="Editor da home" volta={{ nome: "Minha loja", rota: "/page/loja" }}>
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando a página...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando a página...</div>
             </Pagina>
         )
     }
@@ -444,32 +503,82 @@ export default function EditorDaHome() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {salvo && !erro && (
-                <div className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>Página publicada. Recarregue a loja para ver.</span>
                 </div>
             )}
 
-            <div className="grid gap-4 lg:grid-cols-[17rem_minmax(0,1fr)_19rem] lg:items-start">
+            {/* Duas colunas, não três — a mesma anatomia do Elementor: um
+                painel estreito à esquerda que troca de conteúdo (biblioteca
+                de blocos OU ajustes do que está escolhido, nunca os dois ao
+                mesmo tempo) e a prévia ocupando o resto da largura. É a
+                prévia que ganha o espaço que a terceira coluna tomava —
+                o que se está montando fica grande, e o que se pode montar
+                fica a um clique de "‹ Blocos" de distância. */}
+            <div className="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
 
+                <div className="space-y-4 lg:sticky lg:top-4">
+                    {selecionado || areaEscolhida ? (
+                        <section className="card overflow-hidden">
+                            <h2 className="flex items-center gap-2 border-b border-[var(--linha)] bg-[var(--superficie-2)] px-2 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--ink-2)]">
+                                <button
+                                    type="button"
+                                    onClick={() => setEscolhido(null)}
+                                    aria-label="Voltar aos blocos"
+                                    title="Voltar aos blocos"
+                                    className="rounded p-1 normal-case tracking-normal text-[var(--ink-2)] transition-colors hover:bg-[var(--linha-suave)] hover:text-[var(--ink)]"
+                                >
+                                    <FiArrowLeft className="w-3.5" aria-hidden />
+                                </button>
+
+                                <span className="truncate">
+                                    {selecionado
+                                        ? doCatalogo(selecionado.tipo)?.nome ?? "Bloco"
+                                        : areaEscolhida?.nome}
+                                </span>
+                            </h2>
+
+                            <div className="p-4">
+                                {selecionado ? (
+                                    <Ajustes
+                                        bloco={selecionado}
+                                        aoEditar={editar}
+                                        aoMudarColunas={mudarColunas}
+                                        aoMexerNosCartoes={mexerNosCartoes}
+                                        cartoesPadrao={cartoesPadrao}
+                                    />
+                                ) : areaEscolhida ? (
+                                    <div className="space-y-4">
+                                        <PalavrasDaArea
+                                            area={areaEscolhida}
+                                            catalogo={catalogo}
+                                            textos={textos}
+                                            aoEscrever={escreverTexto}
+                                        />
+                                    </div>
+                                ) : null}
+                            </div>
+                        </section>
+                    ) : (
+                <>
                 {/* ==========================
                     O QUE DÁ PARA PÔR, E A ESTRUTURA DA PÁGINA
                 ========================== */}
-                <div className="space-y-4">
 
                     <section className="card overflow-hidden">
-                        <h2 className="border-b border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#616161]">
+                        <h2 className="border-b border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--ink-2)]">
                             Blocos
                         </h2>
 
-                        <ul className="divide-y divide-[#EBEBEB]">
+                        <ul className="divide-y divide-[var(--linha-suave)]">
                             {CATALOGO.map((item) => {
 
                                 const jaTem = item.unico && achatar(blocos).some((bloco) => bloco.tipo === item.tipo)
@@ -480,17 +589,17 @@ export default function EditorDaHome() {
                                             type="button"
                                             onClick={() => adicionar(item.tipo)}
                                             disabled={jaTem}
-                                            className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-[#F7F7F7] disabled:opacity-40 disabled:hover:bg-transparent"
+                                            className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-[var(--superficie-2)] disabled:opacity-40 disabled:hover:bg-transparent"
                                         >
-                                            <item.Icone className="mt-0.5 w-4 shrink-0 text-[#616161]" aria-hidden />
+                                            <item.Icone className="mt-0.5 w-4 shrink-0 text-[var(--ink-2)]" aria-hidden />
 
                                             <span className="min-w-0">
-                                                <span className="flex items-center gap-1.5 text-sm font-medium text-[#303030]">
+                                                <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--ink)]">
                                                     {item.nome}
-                                                    {!jaTem && <FiPlus className="w-3 text-[#8A8A8A]" aria-hidden />}
+                                                    {!jaTem && <FiPlus className="w-3 text-[var(--ink-3)]" aria-hidden />}
                                                 </span>
 
-                                                <span className="mt-0.5 block text-xs leading-relaxed text-[#8A8A8A]">
+                                                <span className="mt-0.5 block text-xs leading-relaxed text-[var(--ink-3)]">
                                                     {jaTem ? "Já está na página." : item.descricao}
                                                 </span>
                                             </span>
@@ -502,16 +611,16 @@ export default function EditorDaHome() {
                     </section>
 
                     <section className="card overflow-hidden">
-                        <h2 className="border-b border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#616161]">
+                        <h2 className="border-b border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--ink-2)]">
                             Estrutura
                         </h2>
 
                         {blocos.length === 0 ? (
-                            <p className="px-4 py-8 text-center text-xs text-[#8A8A8A]">
+                            <p className="px-4 py-8 text-center text-xs text-[var(--ink-3)]">
                                 Escolha um bloco acima para começar.
                             </p>
                         ) : (
-                            <ul className="divide-y divide-[#EBEBEB]">
+                            <ul className="divide-y divide-[var(--linha-suave)]">
                                 {blocos.map((bloco, indice) => (
                                     <li key={bloco.id}>
 
@@ -548,7 +657,7 @@ export default function EditorDaHome() {
                                             bloco para ele ficar lado a lado
                                             com outro. */}
                                         {bloco.colunas ? (
-                                            <div className="space-y-2 border-t border-[#EBEBEB] bg-[#FAFAFA] px-3 py-2.5">
+                                            <div className="space-y-2 border-t border-[var(--linha-suave)] bg-[var(--superficie-2)] px-3 py-2.5">
                                                 {bloco.colunas.map((coluna, indiceColuna) => (
                                                     <div
                                                         key={indiceColuna}
@@ -567,9 +676,9 @@ export default function EditorDaHome() {
                                                             setArrastando(null)
                                                             setAlvo(null)
                                                         }}
-                                                        className="rounded border border-dashed border-[#D1D1D1] p-2"
+                                                        className="rounded border border-dashed border-[var(--linha)] p-2"
                                                     >
-                                                        <p className="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                                        <p className="mb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
                                                             Coluna {indiceColuna + 1}
                                                         </p>
 
@@ -648,24 +757,29 @@ export default function EditorDaHome() {
                             </ul>
                         )}
 
-                        <p className="border-t border-[#EBEBEB] px-4 py-2.5 text-[0.7rem] leading-relaxed text-[#8A8A8A]">
+                        <p className="border-t border-[var(--linha-suave)] px-4 py-2.5 text-[0.7rem] leading-relaxed text-[var(--ink-3)]">
                             Arraste para ordenar, ou use as setas — elas funcionam no
                             teclado e no celular, onde arrastar não funciona.
                         </p>
                     </section>
-
+                </>
+                    )}
                 </div>
 
                 {/* ==========================
                     A PRÉVIA
 
                     O que o cliente vai ver, montando junto com você. Clicar
-                    num bloco aqui abre os ajustes dele à direita.
+                    num bloco, no topo ou no rodapé abre os ajustes dele no
+                    painel à esquerda — a barra flutuante que aparece sobre o
+                    bloco escolhido (ver Selecionavel em previa.tsx) também
+                    resolve subir, descer, duplicar e tirar sem descer o olho
+                    até a lista "Estrutura".
                 ========================== */}
                 <section className="card overflow-hidden">
-                    <h2 className="flex items-center justify-between gap-3 border-b border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#616161]">
+                    <h2 className="flex items-center justify-between gap-3 border-b border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--ink-2)]">
                         Prévia
-                        <span className="font-normal normal-case tracking-normal text-[#8A8A8A]">
+                        <span className="font-normal normal-case tracking-normal text-[var(--ink-3)]">
                             os produtos aparecem como retângulos
                         </span>
                     </h2>
@@ -675,99 +789,22 @@ export default function EditorDaHome() {
                         tema={tema}
                         escolhido={escolhido}
                         aoEscolher={setEscolhido}
+                        nomeDoTipo={(tipo) => doCatalogo(tipo)?.nome ?? tipo}
+                        aoSubir={(id) => empurrarPeloId(id, -1)}
+                        aoDescer={(id) => empurrarPeloId(id, 1)}
+                        aoDuplicar={duplicar}
+                        aoRemover={remover}
                     />
-                </section>
-
-                {/* ==========================
-                    O QUE O BLOCO TEM
-                ========================== */}
-                <section className="card overflow-hidden lg:sticky lg:top-4">
-                    <h2 className="border-b border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#616161]">
-                        {selecionado ? doCatalogo(selecionado.tipo)?.nome ?? "Bloco" : "Ajustes"}
-                    </h2>
-
-                    <div className="p-4">
-                        {selecionado ? (
-                            <Ajustes
-                                bloco={selecionado}
-                                aoEditar={editar}
-                                aoMudarColunas={mudarColunas}
-                                aoMexerNosCartoes={mexerNosCartoes}
-                                cartoesPadrao={cartoesPadrao}
-                            />
-                        ) : (
-                            <p className="py-6 text-center text-sm text-[#8A8A8A]">
-                                Clique num bloco da prévia ou da estrutura para ajustar o
-                                que ele mostra.
-                            </p>
-                        )}
-                    </div>
                 </section>
 
             </div>
 
-            {/* ==========================
-                AS PALAVRAS DA LOJA
-
-                Fica nesta tela, e não numa própria, porque é a mesma pergunta
-                do editor: como a minha loja se apresenta. Numa tela à parte, o
-                lojista teria de lembrar que existe — e sairia daqui achando
-                que "sacola" é palavra do sistema, imutável.
-            ========================== */}
-            <section className="card overflow-hidden">
-
-                <h2 className="border-b border-[#E1E1E1] bg-[#F7F7F7] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-[#616161]">
-                    As palavras da loja
-                </h2>
-
-                <p className="border-b border-[#EBEBEB] px-4 py-3 text-xs leading-relaxed text-[#616161]">
-                    O que a vitrine escreve sozinha — o botão de fechar o pedido, o aviso de
-                    estoque, os títulos do rodapé. Campo vazio quer dizer &quot;escreva por
-                    mim&quot;: fica o texto sugerido, em cinza, e ele acompanha as melhorias do
-                    sistema. Escreveu, é seu.
-                </p>
-
-                {areas.map((area) => {
-
-                    const doGrupo = catalogo.filter((texto) => texto.area === area.chave)
-
-                    if (doGrupo.length === 0) return null
-
-                    return (
-                        <div key={area.chave} className="border-b border-[#EBEBEB] px-4 py-4 last:border-b-0">
-
-                            <p className="rotulo mb-3 text-[#8A8A8A]">{area.nome}</p>
-
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {doGrupo.map((texto) => (
-                                    <Campo key={texto.chave} rotulo={texto.rotulo} ajuda={texto.ajuda}>
-                                        <input
-                                            className="field"
-                                            maxLength={texto.maximo}
-                                            /* O padrão do sistema vai no placeholder, e não
-                                               no valor: assim o campo vazio MOSTRA o que a
-                                               loja está dizendo hoje sem gravar aquilo como
-                                               escolha dela. */
-                                            placeholder={texto.padrao}
-                                            value={textos[texto.chave] ?? ""}
-                                            onChange={(e) => escreverTexto(texto.chave, e.target.value)}
-                                        />
-                                    </Campo>
-                                ))}
-                            </div>
-
-                        </div>
-                    )
-                })}
-
-            </section>
-
             <div className="flex items-center justify-between gap-4">
-                <p className="text-xs leading-relaxed text-[#8A8A8A]">
+                <p className="text-xs leading-relaxed text-[var(--ink-3)]">
                     O editor trabalha com blocos prontos, e não com HTML: é o que
                     garante que nada colocado aqui possa rodar como código na página do
                     seu cliente. Cores e fontes saem do tema da loja, em{" "}
-                    <Link href="/page/loja" className="text-[#005BD3] hover:underline">
+                    <Link href="/page/loja" className="text-[var(--azul)] hover:underline">
                         Minha loja
                     </Link>
                     .
@@ -850,23 +887,23 @@ function Linha({
                 aoSoltar()
             }}
             className={`flex items-center gap-2 transition-colors ${miuda ? "px-2 py-1.5" : "px-4 py-2.5"} ${
-                bloco.id === escolhido ? "bg-[#EAF4FF]" : ""
-            } ${alvo === bloco.id && arrastando !== bloco.id ? "border-t-2 border-t-[#005BD3]" : ""} ${
+                bloco.id === escolhido ? "bg-[var(--azul-suave)]" : ""
+            } ${alvo === bloco.id && arrastando !== bloco.id ? "border-t-2 border-t-[var(--azul)]" : ""} ${
                 arrastando === bloco.id ? "opacity-40" : ""
             }`}
         >
-            <FiMove className="w-3.5 shrink-0 cursor-grab text-[#B5B5B5]" aria-hidden />
+            <FiMove className="w-3.5 shrink-0 cursor-grab text-[var(--ink-4)]" aria-hidden />
 
             <button
                 type="button"
                 onClick={() => aoEscolher(bloco.id)}
                 className="min-w-0 flex-1 text-left"
             >
-                <span className={`block font-medium text-[#303030] ${miuda ? "text-xs" : "text-sm"}`}>
+                <span className={`block font-medium text-[var(--ink)] ${miuda ? "text-xs" : "text-sm"}`}>
                     {item?.nome ?? bloco.tipo}
                 </span>
 
-                <span className="mt-0.5 block truncate text-[0.7rem] text-[#8A8A8A]">
+                <span className="mt-0.5 block truncate text-[0.7rem] text-[var(--ink-3)]">
                     {resumoDoBloco(bloco)}
                 </span>
             </button>
@@ -877,7 +914,7 @@ function Linha({
                     onClick={aoSubir}
                     disabled={!podeSubir}
                     aria-label={`Subir ${item?.nome ?? bloco.tipo}`}
-                    className="p-1 text-[#616161] transition-colors hover:text-[#303030] disabled:opacity-30"
+                    className="p-1 text-[var(--ink-2)] transition-colors hover:text-[var(--ink)] disabled:opacity-30"
                 >
                     <FiArrowUp className="w-3.5" aria-hidden />
                 </button>
@@ -887,7 +924,7 @@ function Linha({
                     onClick={aoDescer}
                     disabled={!podeDescer}
                     aria-label={`Descer ${item?.nome ?? bloco.tipo}`}
-                    className="p-1 text-[#616161] transition-colors hover:text-[#303030] disabled:opacity-30"
+                    className="p-1 text-[var(--ink-2)] transition-colors hover:text-[var(--ink)] disabled:opacity-30"
                 >
                     <FiArrowDown className="w-3.5" aria-hidden />
                 </button>
@@ -896,7 +933,7 @@ function Linha({
                     type="button"
                     onClick={() => aoRemover(bloco.id)}
                     aria-label={`Tirar ${item?.nome ?? bloco.tipo} da página`}
-                    className="p-1 text-[#8A8A8A] transition-colors hover:text-[#8E1F0B]"
+                    className="p-1 text-[var(--ink-3)] transition-colors hover:text-[var(--vermelho)]"
                 >
                     <FiTrash2 className="w-3.5" aria-hidden />
                 </button>
@@ -1008,7 +1045,7 @@ function Ajustes({
                         </select>
                     </Campo>
 
-                    <p className="text-xs leading-relaxed text-[#8A8A8A]">
+                    <p className="text-xs leading-relaxed text-[var(--ink-3)]">
                         Arraste blocos da estrutura para dentro das colunas, ou use o
                         &quot;+ bloco aqui&quot; de cada uma. Banner, atalhos e a grade de
                         produtos não entram em coluna: são de página inteira.
@@ -1110,7 +1147,7 @@ function Ajustes({
                         <img
                             src={bloco.imagem_url}
                             alt=""
-                            className="max-h-40 w-full rounded-lg border border-[#EBEBEB] object-cover"
+                            className="max-h-40 w-full rounded-lg border border-[var(--linha-suave)] object-cover"
                         />
                     ) : null}
 
@@ -1148,10 +1185,10 @@ function Ajustes({
 
                         {cartoes.map((cartao, indice) => (
 
-                            <div key={indice} className="space-y-2.5 rounded-lg border border-[#E1E1E1] bg-[#FAFAFA] p-3">
+                            <div key={indice} className="space-y-2.5 rounded-lg border border-[var(--linha)] bg-[var(--superficie-2)] p-3">
 
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-[#8A8A8A]">
+                                    <span className="text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
                                         Cartão {indice + 1}
                                     </span>
 
@@ -1161,7 +1198,7 @@ function Ajustes({
                                             aria-label={`Subir o cartão ${indice + 1}`}
                                             disabled={indice === 0}
                                             onClick={() => aoMexerNosCartoes(bloco.id, trocar(cartoes, indice, indice - 1))}
-                                            className="p-1 text-[#616161] hover:text-[#303030] disabled:opacity-30"
+                                            className="p-1 text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30"
                                         >
                                             <FiArrowUp className="w-3.5" aria-hidden />
                                         </button>
@@ -1171,7 +1208,7 @@ function Ajustes({
                                             aria-label={`Descer o cartão ${indice + 1}`}
                                             disabled={indice === cartoes.length - 1}
                                             onClick={() => aoMexerNosCartoes(bloco.id, trocar(cartoes, indice, indice + 1))}
-                                            className="p-1 text-[#616161] hover:text-[#303030] disabled:opacity-30"
+                                            className="p-1 text-[var(--ink-2)] hover:text-[var(--ink)] disabled:opacity-30"
                                         >
                                             <FiArrowDown className="w-3.5" aria-hidden />
                                         </button>
@@ -1182,7 +1219,7 @@ function Ajustes({
                                             onClick={() =>
                                                 aoMexerNosCartoes(bloco.id, cartoes.filter((_, i) => i !== indice))
                                             }
-                                            className="p-1 text-[#8A8A8A] hover:text-[#8E1F0B]"
+                                            className="p-1 text-[var(--ink-3)] hover:text-[var(--vermelho)]"
                                         >
                                             <FiTrash2 className="w-3.5" aria-hidden />
                                         </button>
@@ -1231,6 +1268,18 @@ function Ajustes({
                                     />
                                 </Campo>
 
+                                <Campo rotulo="Tamanho" ajuda="Destaca este cartão dos outros da mesma faixa — a frase de uma promoção pede mais espaço que um selo de confiança.">
+                                    <select
+                                        className="field cursor-pointer"
+                                        value={cartao.tamanho ?? "medio"}
+                                        onChange={mudarCartao(indice, "tamanho")}
+                                    >
+                                        <option value="pequeno">Pequeno</option>
+                                        <option value="medio">Médio</option>
+                                        <option value="grande">Grande</option>
+                                    </select>
+                                </Campo>
+
                             </div>
                         ))}
 
@@ -1262,14 +1311,14 @@ function Ajustes({
                         </button>
                     </div>
 
-                    <p className="text-xs leading-relaxed text-[#8A8A8A]">
+                    <p className="text-xs leading-relaxed text-[var(--ink-3)]">
                         Entre chaves, o sistema troca pelo dado real da loja:{" "}
-                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{pagamentos}"}</code>,{" "}
-                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{telefone}"}</code>,{" "}
-                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{whatsapp}"}</code>,{" "}
-                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{endereco}"}</code>,{" "}
-                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{horario}"}</code> e{" "}
-                        <code className="font-mono text-[0.7rem] text-[#303030]">{"{loja}"}</code>. O cartão cujo
+                        <code className="font-mono text-[0.7rem] text-[var(--ink)]">{"{pagamentos}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[var(--ink)]">{"{telefone}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[var(--ink)]">{"{whatsapp}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[var(--ink)]">{"{endereco}"}</code>,{" "}
+                        <code className="font-mono text-[0.7rem] text-[var(--ink)]">{"{horario}"}</code> e{" "}
+                        <code className="font-mono text-[0.7rem] text-[var(--ink)]">{"{loja}"}</code>. O cartão cujo
                         título ficar vazio (a loja sem aquele dado) não aparece na vitrine.
                     </p>
 
@@ -1290,7 +1339,7 @@ function Ajustes({
 
         default:
             return (
-                <p className="py-4 text-sm leading-relaxed text-[#616161]">
+                <p className="py-4 text-sm leading-relaxed text-[var(--ink-2)]">
                     Este bloco não tem ajustes: ele mostra o que já está cadastrado na
                     loja. Use as setas ou arraste para escolher onde ele aparece.
                 </p>
@@ -1332,12 +1381,62 @@ function trocar<T>(lista: T[], de: number, para: number): T[] {
     return copia
 }
 
+/**
+ * Os campos de UMA área de palavras — a mesma lista, servindo tanto os
+ * Ajustes (quando a área foi clicada na prévia) quanto a seção "Mais
+ * palavras da loja" (para as áreas que a prévia da home não desenha).
+ */
+function PalavrasDaArea({
+    area,
+    catalogo,
+    textos,
+    aoEscrever,
+}: {
+    area: { chave: string; nome: string }
+    catalogo: TextoEditavel[]
+    textos: Record<string, string>
+    aoEscrever: (chave: string, valor: string) => void
+}) {
+
+    const doGrupo = catalogo.filter((texto) => texto.area === area.chave)
+
+    if (doGrupo.length === 0) {
+        return (
+            <p className="py-6 text-center text-sm text-[var(--ink-3)]">
+                Esta área ainda não tem palavra própria para reescrever.
+            </p>
+        )
+    }
+
+    // Sem moldura de grade própria: quem chama decide quantas colunas cabem
+    // — a coluna estreita dos Ajustes quer uma só, a seção larga lá embaixo
+    // quer três.
+    return (
+        <>
+            {doGrupo.map((texto) => (
+                <Campo key={texto.chave} rotulo={texto.rotulo} ajuda={texto.ajuda}>
+                    <input
+                        className="field"
+                        maxLength={texto.maximo}
+                        /* O padrão do sistema vai no placeholder, e não no
+                           valor: assim o campo vazio MOSTRA o que a loja está
+                           dizendo hoje sem gravar aquilo como escolha dela. */
+                        placeholder={texto.padrao}
+                        value={textos[texto.chave] ?? ""}
+                        onChange={(e) => aoEscrever(texto.chave, e.target.value)}
+                    />
+                </Campo>
+            ))}
+        </>
+    )
+}
+
 function Campo({ rotulo, ajuda, children }: { rotulo: string; ajuda?: string; children: React.ReactNode }) {
     return (
         <label className="block">
             <span className="rotulo">{rotulo}</span>
             <span className="mt-1 block">{children}</span>
-            {ajuda ? <span className="mt-1 block text-xs text-[#8A8A8A]">{ajuda}</span> : null}
+            {ajuda ? <span className="mt-1 block text-xs text-[var(--ink-3)]">{ajuda}</span> : null}
         </label>
     )
 }

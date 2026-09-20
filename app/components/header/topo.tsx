@@ -35,12 +35,12 @@ export default function Topo() {
     const naLanding = pathname === "/"
 
     return (
-        <header className="sticky top-0 z-40 border-b border-[#E1E1E1] bg-white">
+        <header className="sticky top-0 z-40 border-b border-[var(--linha)] bg-white">
             <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
 
                 <Link href="/" className="flex shrink-0 items-center gap-2.5">
                     <Marca />
-                    <span className="font-display text-lg text-[#303030]">
+                    <span className="font-display text-lg text-[var(--ink)]">
                         {MARCA}
                     </span>
                 </Link>
@@ -50,7 +50,7 @@ export default function Topo() {
                         <Link
                             key={hash}
                             href={naLanding ? hash : `/${hash}`}
-                            className="text-sm font-semibold text-[#616161] hover:text-[#005BD3]"
+                            className="text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--azul)]"
                         >
                             {nome}
                         </Link>

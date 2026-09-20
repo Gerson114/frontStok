@@ -232,14 +232,14 @@ export default function Inventario() {
         >
 
             {erro && (
-                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -300,7 +300,7 @@ export default function Inventario() {
 
                 {carregando ? (
 
-                    <p className="px-4 py-14 text-center text-sm text-[#616161]">Carregando...</p>
+                    <p className="px-4 py-14 text-center text-sm text-[var(--ink-2)]">Carregando...</p>
 
                 ) : visao === "atrasadas" ? (
 
@@ -325,7 +325,7 @@ export default function Inventario() {
                                     <tr>
                                         <th scope="col">Endereço</th>
                                         <th scope="col">Curva</th>
-                                        <th scope="col" className="text-right">Peças</th>
+                                        <th scope="col" className="text-right">Unidades</th>
                                         <th scope="col">Situação</th>
                                         <th scope="col" className="text-right">Última contagem</th>
                                     </tr>
@@ -337,8 +337,8 @@ export default function Inventario() {
                                         <tr key={contagem.endereco_id}>
 
                                             <td>
-                                                <span className="num font-medium text-[#303030]">{contagem.endereco}</span>
-                                                <span className="block text-xs text-[#616161]">{contagem.endereco_nome}</span>
+                                                <span className="num font-medium text-[var(--ink)]">{contagem.endereco}</span>
+                                                <span className="block text-xs text-[var(--ink-2)]">{contagem.endereco_nome}</span>
                                             </td>
 
                                             <td>
@@ -347,19 +347,19 @@ export default function Inventario() {
                                                 </span>
                                             </td>
 
-                                            <td className="num text-right text-[#303030]">{contagem.pecas}</td>
+                                            <td className="num text-right text-[var(--ink)]">{contagem.pecas}</td>
 
                                             <td>
                                                 {contagem.nunca_contado ? (
                                                     <span className="tag tag-warning">nunca contado</span>
                                                 ) : (
-                                                    <span className="num text-[#616161]">
+                                                    <span className="num text-[var(--ink-2)]">
                                                         {contagem.dias_sem_contar} dia(s) sem contar
                                                     </span>
                                                 )}
                                             </td>
 
-                                            <td className="num text-right text-[#616161]">
+                                            <td className="num text-right text-[var(--ink-2)]">
                                                 {formatarData(contagem.ultima_em)}
                                             </td>
 
@@ -405,15 +405,15 @@ export default function Inventario() {
                                     return (
                                         <tr key={conferencia.id}>
 
-                                            <td className="num text-[#303030]">
+                                            <td className="num text-[var(--ink)]">
                                                 {conferencia.endereco || "toda a loja"}
                                             </td>
 
-                                            <td className="num text-[#616161]">
+                                            <td className="num text-[var(--ink-2)]">
                                                 {formatarData(conferencia.created_at)}
                                             </td>
 
-                                            <td className="num text-right text-[#303030]">
+                                            <td className="num text-right text-[var(--ink)]">
                                                 {conferencia.encontradas} de {conferencia.esperadas}
                                             </td>
 
@@ -425,16 +425,16 @@ export default function Inventario() {
 
                                             <td className="text-xs">
                                                 {conferencia.faltando && (
-                                                    <span className="num block text-[#8E1F0B]">
+                                                    <span className="num block text-[var(--vermelho)]">
                                                         faltou: {conferencia.faltando}
                                                     </span>
                                                 )}
                                                 {conferencia.sobrando && (
-                                                    <span className="num block text-[#5E4200]">
+                                                    <span className="num block text-[var(--amarelo)]">
                                                         sobrou: {conferencia.sobrando}
                                                     </span>
                                                 )}
-                                                {bateu && <span className="text-[#8A8A8A]">—</span>}
+                                                {bateu && <span className="text-[var(--ink-3)]">—</span>}
                                             </td>
 
                                         </tr>
@@ -458,7 +458,7 @@ export default function Inventario() {
                         visao === "atrasadas" ? (
                             <>
                                 quem conta pega a tarefa na{" "}
-                                <Link href="/page/estoque/fila" className="font-medium text-[#005BD3] hover:underline">
+                                <Link href="/page/estoque/fila" className="font-medium text-[var(--azul)] hover:underline">
                                     fila de trabalho
                                 </Link>
                             </>
@@ -476,10 +476,10 @@ export default function Inventario() {
             <section className="card space-y-4 p-5 sm:p-7">
 
                 <div>
-                    <h2 className="font-display text-base text-[#303030]">
+                    <h2 className="font-display text-base text-[var(--ink)]">
                         Contar agora
                     </h2>
-                    <p className="mt-1 max-w-2xl text-sm text-[#616161]">
+                    <p className="mt-1 max-w-2xl text-sm text-[var(--ink-2)]">
                         Escolha o trecho e bipe o que está na prateleira. O código é o do
                         produto e se repete: cinco camisetas iguais são o mesmo código cinco
                         vezes, e as cinco leituras contam. Quem compara com o esperado e grava a
@@ -526,11 +526,11 @@ export default function Inventario() {
 
                 {lidos.length > 0 && (
 
-                    <div className="rounded-lg bg-[#F1F1F1] p-4">
+                    <div className="rounded-lg bg-[var(--fundo)] p-4">
 
                         <div className="flex flex-wrap items-center justify-between gap-3">
 
-                            <p className="text-sm text-[#303030]">
+                            <p className="text-sm text-[var(--ink)]">
                                 <span className="num font-bold">{lidos.length}</span> leitura(s) nesta contagem
                             </p>
 
@@ -558,7 +558,7 @@ export default function Inventario() {
 
                         </div>
 
-                        <p className="mt-2 break-words font-mono text-xs text-[#616161]">
+                        <p className="mt-2 break-words font-mono text-xs text-[var(--ink-2)]">
                             {lidos.join(" · ")}
                         </p>
 
@@ -568,17 +568,17 @@ export default function Inventario() {
 
                 {resultado && (
 
-                    <div className={`rounded-lg border-l-4 p-4 ${resultado.bate ? "border-[#0C5132] bg-[#CDFEE1]" : "border-[#8E1F0B] bg-[#FEE9E8]"}`}>
+                    <div className={`rounded-lg border-l-4 p-4 ${resultado.bate ? "border-[var(--verde)] bg-[var(--verde-fundo)]" : "border-[var(--vermelho)] bg-[var(--vermelho-fundo)]"}`}>
 
-                        <p className="text-sm font-semibold text-[#303030]">
+                        <p className="text-sm font-semibold text-[var(--ink)]">
                             Esperadas <span className="num">{resultado.esperadas}</span> · encontradas{" "}
                             <span className="num">{resultado.encontradas}</span>
                         </p>
 
                         {resultado.faltando.length > 0 && (
                             <div className="mt-2">
-                                <p className="text-sm font-semibold text-[#8E1F0B]">Faltou</p>
-                                <ul className="mt-1 space-y-1 text-sm text-[#303030]">
+                                <p className="text-sm font-semibold text-[var(--vermelho)]">Faltou</p>
+                                <ul className="mt-1 space-y-1 text-sm text-[var(--ink)]">
                                     {resultado.faltando.map((item) => (
                                         <li key={`falta-${item.codigo}`}>
                                             <span className="num">{item.quantidade}x</span>{" "}
@@ -592,8 +592,8 @@ export default function Inventario() {
 
                         {resultado.sobrando.length > 0 && (
                             <div className="mt-2">
-                                <p className="text-sm font-semibold text-[#5E4200]">Sobrou</p>
-                                <ul className="mt-1 space-y-1 text-sm text-[#303030]">
+                                <p className="text-sm font-semibold text-[var(--amarelo)]">Sobrou</p>
+                                <ul className="mt-1 space-y-1 text-sm text-[var(--ink)]">
                                     {resultado.sobrando.map((item) => (
                                         <li key={`sobra-${item.codigo}`}>
                                             <span className="num">{item.quantidade}x</span>{" "}
@@ -606,7 +606,7 @@ export default function Inventario() {
                         )}
 
                         {resultado.bate && (
-                            <p className="mt-1 text-sm text-[#303030]">
+                            <p className="mt-1 text-sm text-[var(--ink)]">
                                 Tudo o que o sistema esperava estava lá.
                             </p>
                         )}
@@ -626,11 +626,11 @@ export default function Inventario() {
                 <div className="flex flex-wrap items-end justify-between gap-4">
 
                     <div>
-                        <h2 className="font-display flex items-center gap-2 text-base text-[#303030]">
-                            <FiBarChart2 className="w-4 text-[#005BD3]" aria-hidden />
+                        <h2 className="font-display flex items-center gap-2 text-base text-[var(--ink)]">
+                            <FiBarChart2 className="w-4 text-[var(--azul)]" aria-hidden />
                             Curva ABC
                         </h2>
-                        <p className="mt-1 max-w-lg text-sm text-[#616161]">
+                        <p className="mt-1 max-w-lg text-sm text-[var(--ink-2)]">
                             O giro de cada produto, apurado das vendas. A sai toda hora, B sai de
                             vez em quando, C quase não sai — guarde o A no lugar mais fácil de
                             alcançar. Apurar reclassifica o catálogo inteiro, então é um botão, e
@@ -671,20 +671,20 @@ export default function Inventario() {
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 
-                        <div className="rounded-lg bg-[#F1F1F1] p-4">
-                            <p className="text-xs text-[#616161]">Produtos</p>
-                            <p className="num text-2xl font-bold text-[#303030]">{curva.produtos}</p>
+                        <div className="rounded-lg bg-[var(--fundo)] p-4">
+                            <p className="text-xs text-[var(--ink-2)]">Produtos</p>
+                            <p className="num text-2xl font-bold text-[var(--ink)]">{curva.produtos}</p>
                         </div>
 
-                        <div className="rounded-lg bg-[#F1F1F1] p-4">
-                            <p className="text-xs text-[#616161]">Vendas na janela</p>
-                            <p className="num text-2xl font-bold text-[#303030]">{curva.vendas}</p>
+                        <div className="rounded-lg bg-[var(--fundo)] p-4">
+                            <p className="text-xs text-[var(--ink-2)]">Vendas na janela</p>
+                            <p className="num text-2xl font-bold text-[var(--ink)]">{curva.vendas}</p>
                         </div>
 
                         {["A", "B", "C"].map((letra) => (
-                            <div key={letra} className="rounded-lg bg-[#F1F1F1] p-4">
-                                <p className="text-xs text-[#616161]">Curva {letra}</p>
-                                <p className="num text-2xl font-bold text-[#303030]">
+                            <div key={letra} className="rounded-lg bg-[var(--fundo)] p-4">
+                                <p className="text-xs text-[var(--ink-2)]">Curva {letra}</p>
+                                <p className="num text-2xl font-bold text-[var(--ink)]">
                                     {curva.por_curva?.[letra] ?? 0}
                                 </p>
                             </div>

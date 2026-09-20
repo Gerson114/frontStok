@@ -86,6 +86,12 @@ export async function PUT(
             imagem_url: sanitizeUrl(String(entrada.imagem_url ?? "")),
             preco: Number(entrada.preco),
             estoque: Number(entrada.estoque),
+
+            // Se este item é contado unidade a unidade, e o "tem hoje?" de
+            // quem não é. Escritos à mão porque este corpo é montado campo a
+            // campo — o que não está listado não chega ao servidor.
+            sem_contagem: entrada.sem_contagem === true,
+            disponivel: entrada.disponivel !== false,
             loja_id: Number(entrada.loja_id),
         }
 

@@ -112,16 +112,16 @@ export default function ConectarPorQR({ aoConectar }: Props) {
 
             <div className="flex items-start gap-3">
 
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#CDFEE1] text-[#0C5132]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--verde-fundo)] text-[var(--verde)]">
                     <FiSmartphone className="w-5" aria-hidden />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <h2 className="font-display text-lg text-[#303030]">
+                    <h2 className="font-display text-lg text-[var(--ink)]">
                         Conectar lendo o QR
                     </h2>
 
-                    <p className="mt-1 text-sm text-[#616161]">
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
                         Usa o WhatsApp que você já tem no celular. Sem conta Business,
                         sem token e sem custo por conversa.
                     </p>
@@ -130,7 +130,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
             </div>
 
             {aparelho?.conectado && (
-                <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
                         Conectado{aparelho.numero ? ` no número ${aparelho.numero}` : ""}.
@@ -142,7 +142,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
                 Ele está apostando o número da loja: tem de saber disso agora,
                 e não depois. */}
             {!aparelho?.conectado && (
-                <div className="mt-5 rounded-lg bg-[#FFF1E3] px-4 py-3 text-sm text-[#5E4200]">
+                <div className="mt-5 rounded-lg bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
                     <p className="flex items-center gap-2 font-semibold">
                         <FiAlertTriangle className="w-4 shrink-0" aria-hidden />
                         Antes de ler, saiba de duas coisas
@@ -174,10 +174,10 @@ export default function ConectarPorQR({ aoConectar }: Props) {
                     <img
                         src={aparelho.qr}
                         alt="Código QR para conectar o WhatsApp"
-                        className="h-64 w-64 rounded-lg border border-[#E1E1E1] bg-white p-2"
+                        className="h-64 w-64 rounded-lg border border-[var(--linha)] bg-[var(--superficie)] p-2"
                     />
 
-                    <ol className="mt-5 max-w-sm list-decimal space-y-1.5 pl-5 text-sm text-[#616161]">
+                    <ol className="mt-5 max-w-sm list-decimal space-y-1.5 pl-5 text-sm text-[var(--ink-2)]">
                         <li>Abra o WhatsApp no celular da loja.</li>
                         <li>
                             Toque em <strong>Mais opções</strong> (ou <strong>Ajustes</strong>,
@@ -186,7 +186,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
                         <li>Toque em <strong>Conectar aparelho</strong> e aponte para esta tela.</li>
                     </ol>
 
-                    <p className="mt-3 text-xs text-[#8A8A8A]">
+                    <p className="mt-3 text-xs text-[var(--ink-3)]">
                         O código muda sozinho a cada poucos segundos — não precisa
                         atualizar a página.
                     </p>
@@ -195,7 +195,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
             )}
 
             {esperando && !aparelho?.qr && (
-                <p className="mt-6 text-center text-sm text-[#616161]">
+                <p className="mt-6 text-center text-sm text-[var(--ink-2)]">
                     Gerando o código...
                 </p>
             )}
@@ -203,7 +203,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
             {aparelho?.estado === "erro" && aparelho.erro && (
                 <div
                     role="alert"
-                    className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aparelho.erro}</span>
@@ -213,7 +213,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
             {erro && (
                 <div
                     role="alert"
-                    className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
@@ -243,7 +243,7 @@ export default function ConectarPorQR({ aoConectar }: Props) {
                         type="button"
                         onClick={desvincular}
                         disabled={desvinculando}
-                        className="ml-auto rounded-lg px-3 py-2 text-sm font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8] disabled:opacity-50"
+                        className="ml-auto rounded-lg px-3 py-2 text-sm font-bold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)] disabled:opacity-50"
                     >
                         {desvinculando ? "Desvinculando..." : "Desvincular"}
                     </button>

@@ -102,20 +102,20 @@ export default function AcessosDaConversa() {
             }
         >
             {erro && (
-                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[#FEE9E8] px-3 py-2 text-sm font-semibold text-[#8E1F0B]">
+                <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-[var(--vermelho-fundo)] px-3 py-2 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </p>
             )}
 
             {carregando ? (
-                <div className="h-16 animate-pulse rounded-lg bg-[#F1F1F1]" />
+                <div className="h-16 animate-pulse rounded-lg bg-[var(--fundo)]" />
             ) : pedidos.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-[#E1E1E1] px-4 py-6 text-center text-sm text-[#8A8A8A]">
+                <p className="rounded-lg border border-dashed border-[var(--linha)] px-4 py-6 text-center text-sm text-[var(--ink-3)]">
                     Você ainda não cadastrou ninguém na equipe.
                 </p>
             ) : (
-                <ul className="divide-y divide-[#EBEBEB]">
+                <ul className="divide-y divide-[var(--linha-suave)]">
 
                     {[...pendentes, ...decididos].map((pedido) => (
                         <li
@@ -123,14 +123,14 @@ export default function AcessosDaConversa() {
                             className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
                         >
                             <span className="min-w-0">
-                                <span className="block truncate text-sm font-medium text-[#303030]">
+                                <span className="block truncate text-sm font-medium text-[var(--ink)]">
                                     {pedido.nome || "Sem nome"}
                                     {pedido.dono && (
-                                        <span className="ml-2 text-xs font-normal text-[#8A8A8A]">dono</span>
+                                        <span className="ml-2 text-xs font-normal text-[var(--ink-3)]">dono</span>
                                     )}
                                 </span>
 
-                                <span className="text-xs text-[#8A8A8A]">
+                                <span className="text-xs text-[var(--ink-3)]">
                                     {estadoEmTexto(pedido)}
                                 </span>
                             </span>

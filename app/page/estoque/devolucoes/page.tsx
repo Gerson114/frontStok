@@ -138,7 +138,7 @@ export default function DevolucoesPage() {
         }
 
         if (!Number.isFinite(quantas) || quantas <= 0) {
-            setErro("Informe quantas peças voltaram.")
+            setErro("Informe quantas unidades voltaram.")
             return
         }
 
@@ -157,7 +157,7 @@ export default function DevolucoesPage() {
                 observacao: observacao.trim(),
             })
 
-            setAviso("Devolução registrada: a peça está isolada, fora do estoque vendável.")
+            setAviso("Devolução registrada: a unidade está isolada, fora do estoque vendável.")
             setProdutoId("")
             setQuantidade("1")
             setMotivo("")
@@ -206,7 +206,7 @@ export default function DevolucoesPage() {
     if (carregando) {
         return (
             <Pagina titulo="Devoluções">
-                <div className="card p-8 text-center text-sm text-[#616161]">Carregando devoluções...</div>
+                <div className="card p-8 text-center text-sm text-[var(--ink-2)]">Carregando devoluções...</div>
             </Pagina>
         )
     }
@@ -228,13 +228,13 @@ export default function DevolucoesPage() {
     return (
         <Pagina
             titulo="Devoluções"
-            descricao="O que voltou fica isolado aqui: fora do estoque vendável, sem endereço na prateleira, até você decidir o destino. Nenhuma peça devolvida volta para a venda sozinha."
+            descricao="O que voltou fica isolado aqui: fora do estoque vendável, sem endereço na prateleira, até você decidir o destino. Nenhuma unidade devolvida volta para a venda sozinha."
         >
 
             {erro && (
                 <div
                     role="alert"
-                    className="flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                    className="flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                 >
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
@@ -244,7 +244,7 @@ export default function DevolucoesPage() {
             {aviso && (
                 <div
                     role="status"
-                    className="flex items-start gap-2.5 rounded-lg bg-[#EAFBF1] px-4 py-3 text-sm font-semibold text-[#0C5132]"
+                    className="flex items-start gap-2.5 rounded-lg bg-[var(--verde-suave)] px-4 py-3 text-sm font-semibold text-[var(--verde)]"
                 >
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
@@ -254,7 +254,7 @@ export default function DevolucoesPage() {
             {/* O QUE OS CLIENTES PEDIRAM
 
                 Vem antes de tudo porque é o que tem gente esperando: do
-                outro lado há alguém sem a peça e sem o dinheiro. O
+                outro lado há alguém sem a unidade e sem o dinheiro. O
                 componente se esconde sozinho quando não há pedido nenhum —
                 loja sem devolução não precisa de uma caixa vazia dizendo
                 isso todo dia. */}
@@ -264,10 +264,10 @@ export default function DevolucoesPage() {
             <section className="card p-5 sm:p-7">
 
                 <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF] text-[#00369B]">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-[var(--azul-escuro)]">
                         <FiCornerUpLeft className="w-4" aria-hidden />
                     </span>
-                    <h2 className="font-display text-base text-[#303030]">Receber devolução</h2>
+                    <h2 className="font-display text-base text-[var(--ink)]">Receber devolução</h2>
                 </div>
 
                 <form onSubmit={registrar} className="mt-5 space-y-4">
@@ -297,7 +297,7 @@ export default function DevolucoesPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="rotulo" htmlFor="quantidade">Peças</label>
+                            <label className="rotulo" htmlFor="quantidade">Unidades</label>
                             <input
                                 id="quantidade"
                                 type="number"
@@ -318,7 +318,7 @@ export default function DevolucoesPage() {
                             list="motivos-devolucao"
                             value={motivo}
                             onChange={(e) => setMotivo(e.target.value)}
-                            placeholder="Por que a peça voltou?"
+                            placeholder="Por que a unidade voltou?"
                             className="field"
                         />
                         <datalist id="motivos-devolucao">
@@ -326,9 +326,9 @@ export default function DevolucoesPage() {
                                 <option key={item} value={item} />
                             ))}
                         </datalist>
-                        <p className="text-xs text-[#616161]">
+                        <p className="text-xs text-[var(--ink-2)]">
                             É o motivo que transforma esta fila em informação: sem ele, ninguém
-                            descobre que um fornecedor manda peça com defeito.
+                            descobre que um fornecedor manda unidade com defeito.
                         </p>
                     </div>
 
@@ -339,7 +339,7 @@ export default function DevolucoesPage() {
                             type="text"
                             value={observacao}
                             onChange={(e) => setObservacao(e.target.value)}
-                            placeholder="Detalhes do estado da peça, nome do cliente, nº do pedido..."
+                            placeholder="Detalhes do estado da unidade, nome do cliente, nº do pedido..."
                             className="field"
                         />
                     </div>
@@ -378,12 +378,12 @@ export default function DevolucoesPage() {
                             busca
                                 ? "Nada com esse texto"
                                 : visao === "aguardando"
-                                    ? "Nenhuma peça em quarentena"
-                                    : "Nenhuma peça resolvida ainda"
+                                    ? "Nenhuma unidade em quarentena"
+                                    : "Nenhuma unidade resolvida ainda"
                         }
                     >
                         {busca
-                            ? "Nenhuma peça casa com o que você digitou."
+                            ? "Nenhuma unidade casa com o que você digitou."
                             : visao === "aguardando"
                                 ? "Tudo que voltou já teve destino."
                                 : "O que for tratado aparece aqui, com o destino que recebeu."}
@@ -422,19 +422,19 @@ export default function DevolucoesPage() {
                                             <tr>
 
                                                 <td>
-                                                    <p className="font-medium text-[#303030]">
+                                                    <p className="font-medium text-[var(--ink)]">
                                                         {devolucao.produto_nome || `Produto #${devolucao.produto_id}`}
                                                     </p>
-                                                    <p className="num text-xs text-[#8A8A8A]">
+                                                    <p className="num text-xs text-[var(--ink-3)]">
                                                         {devolucao.produto_codigo}
                                                         {variacao ? ` · ${variacao}` : ""}
                                                     </p>
                                                 </td>
 
                                                 <td>
-                                                    <span className="text-[#303030]">{devolucao.motivo}</span>
+                                                    <span className="text-[var(--ink)]">{devolucao.motivo}</span>
                                                     {devolucao.observacao && (
-                                                        <span className="block text-xs text-[#616161]">
+                                                        <span className="block text-xs text-[var(--ink-2)]">
                                                             {devolucao.observacao}
                                                         </span>
                                                     )}
@@ -450,7 +450,7 @@ export default function DevolucoesPage() {
                                                     </span>
 
                                                     {devolucao.agendada_para && (
-                                                        <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-[#00369B]">
+                                                        <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-[var(--azul-escuro)]">
                                                             <FiCalendar className="w-3.5" aria-hidden />
                                                             {new Date(devolucao.agendada_para).toLocaleDateString("pt-BR")}
                                                         </span>
@@ -458,7 +458,7 @@ export default function DevolucoesPage() {
                                                 </td>
 
                                                 <td className="text-right">
-                                                    <span className="num inline-flex items-center gap-1.5 text-[#616161]">
+                                                    <span className="num inline-flex items-center gap-1.5 text-[var(--ink-2)]">
                                                         <FiClock className="w-3.5" aria-hidden />
                                                         {devolucao.dias_parada === 0
                                                             ? "hoje"
@@ -487,14 +487,14 @@ export default function DevolucoesPage() {
 
                                             {/* A tratativa abre NA LINHA, e não numa janela por
                                                 cima: a decisão depende do motivo e de quantos dias
-                                                a peça está parada, que são as colunas ao lado — e
+                                                a unidade está parada, que são as colunas ao lado — e
                                                 um modal esconderia justamente isso. */}
                                             {aberta && (
                                                 <tr>
                                                     <td colSpan={5} className="bg-[#FAFAFA]">
 
-                                                        <p className="text-sm font-semibold text-[#303030]">
-                                                            O que fazer com esta peça?
+                                                        <p className="text-sm font-semibold text-[var(--ink)]">
+                                                            O que fazer com esta unidade?
                                                         </p>
 
                                                         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -503,19 +503,19 @@ export default function DevolucoesPage() {
                                                                     key={destino.chave}
                                                                     type="button"
                                                                     onClick={() => tratar(devolucao, destino.chave)}
-                                                                    className="rounded-lg border border-[#E1E1E1] bg-white p-3 text-left transition-colors hover:border-[#005BD3]"
+                                                                    className="rounded-lg border border-[var(--linha)] bg-[var(--superficie)] p-3 text-left transition-colors hover:border-[var(--azul)]"
                                                                 >
-                                                                    <span className="block text-sm font-bold text-[#303030]">
+                                                                    <span className="block text-sm font-bold text-[var(--ink)]">
                                                                         {destino.rotulo}
                                                                     </span>
-                                                                    <span className="mt-0.5 block text-xs text-[#616161]">
+                                                                    <span className="mt-0.5 block text-xs text-[var(--ink-2)]">
                                                                         {destino.descricao}
                                                                     </span>
                                                                 </button>
                                                             ))}
                                                         </div>
 
-                                                        {/* Agendar não decide nada: só tira a peça da fila de
+                                                        {/* Agendar não decide nada: só tira a unidade da fila de
                                                             "ninguém olhou" e põe dia para olhar. */}
                                                         <div className="mt-3 flex flex-wrap items-end gap-3">
 
@@ -577,11 +577,11 @@ export default function DevolucoesPage() {
                                 {listaVisivel.map((devolucao) => (
                                     <tr key={devolucao.id}>
 
-                                        <td className="text-[#303030]">
+                                        <td className="text-[var(--ink)]">
                                             {devolucao.produto_nome || `Produto #${devolucao.produto_id}`}
                                         </td>
 
-                                        <td className="text-[#616161]">{devolucao.motivo}</td>
+                                        <td className="text-[var(--ink-2)]">{devolucao.motivo}</td>
 
                                         <td>
                                             <span className="tag tag-neutral">
@@ -590,7 +590,7 @@ export default function DevolucoesPage() {
                                             </span>
                                         </td>
 
-                                        <td className="num text-right text-[#616161]">
+                                        <td className="num text-right text-[var(--ink-2)]">
                                             {devolucao.resolvida_em
                                                 ? new Date(devolucao.resolvida_em).toLocaleDateString("pt-BR")
                                                 : "—"}
@@ -611,7 +611,7 @@ export default function DevolucoesPage() {
                     primeiro={1}
                     ultimo={listaVisivel.length}
                     total={listaVisivel.length}
-                    nome={visao === "aguardando" ? "peças em quarentena" : "peças resolvidas"}
+                    nome={visao === "aguardando" ? "unidades em quarentena" : "unidades resolvidas"}
                 />
 
             </ListaDeRecursos>

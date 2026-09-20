@@ -93,9 +93,9 @@ function estaCheio(endereco: EnderecoEstoque): boolean {
 }
 
 function corDaOcupacao(percentual: number): string {
-    if (percentual >= 100) return "bg-[#8E1F0B]"
-    if (percentual >= 80) return "bg-[#C7920A]"
-    return "bg-[#0C5132]"
+    if (percentual >= 100) return "bg-[var(--vermelho)]"
+    if (percentual >= 80) return "bg-[var(--amarelo-forte)]"
+    return "bg-[var(--verde)]"
 }
 
 export default function EnderecosPage() {
@@ -146,7 +146,7 @@ export default function EnderecosPage() {
     // ==========================
 
     const totalRuas = new Set(enderecos.map((endereco) => endereco.rua)).size
-    const totalPecas = enderecos.reduce((soma, endereco) => soma + endereco.ocupacao, 0)
+    const totalUnidades = enderecos.reduce((soma, endereco) => soma + endereco.ocupacao, 0)
     const totalCheios = enderecos.filter(estaCheio).length
     const totalBloqueados = enderecos.filter((endereco) => endereco.bloqueado).length
 
@@ -319,14 +319,14 @@ export default function EnderecosPage() {
         >
 
             {erro && (
-                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]">
+                <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
                     <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{erro}</span>
                 </div>
             )}
 
             {aviso && (
-                <div role="status" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[#CDFEE1] px-4 py-3 text-sm font-semibold text-[#0C5132]">
+                <div role="status" className="mb-4 flex items-start gap-2.5 rounded-lg bg-[var(--verde-fundo)] px-4 py-3 text-sm font-semibold text-[var(--verde)]">
                     <FiCheckCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>{aviso}</span>
                 </div>
@@ -338,11 +338,11 @@ export default function EnderecosPage() {
                 interessa de relance, no caminho para a grade.
             ========================== */}
 
-            <div className="card grid grid-cols-2 divide-[#EBEBEB] md:grid-cols-4 md:divide-x">
+            <div className="card grid grid-cols-2 divide-[var(--linha-suave)] md:grid-cols-4 md:divide-x">
 
                 <Indicador
                     icone={<FiMapPin className="w-4" aria-hidden />}
-                    cor="bg-[#EAF4FF] text-[#005BD3]"
+                    cor="bg-[var(--azul-suave)] text-[var(--azul)]"
                     rotulo="Endereços"
                     valor={enderecos.length}
                     borda
@@ -350,7 +350,7 @@ export default function EnderecosPage() {
 
                 <Indicador
                     icone={<FiGrid className="w-4" aria-hidden />}
-                    cor="bg-[#EAF4FF] text-[#005BD3]"
+                    cor="bg-[var(--azul-suave)] text-[var(--azul)]"
                     rotulo="Ruas"
                     valor={totalRuas}
                     borda
@@ -358,24 +358,24 @@ export default function EnderecosPage() {
 
                 <Indicador
                     icone={<FiCheckCircle className="w-4" aria-hidden />}
-                    cor={totalCheios > 0 ? "bg-[#FFF1E3] text-[#5E4200]" : "bg-[#F1F1F1] text-[#616161]"}
+                    cor={totalCheios > 0 ? "bg-[var(--amarelo-fundo)] text-[var(--amarelo)]" : "bg-[var(--fundo)] text-[var(--ink-2)]"}
                     rotulo="Cheios"
                     valor={totalCheios}
-                    destaque={totalCheios > 0 ? "text-[#5E4200]" : ""}
+                    destaque={totalCheios > 0 ? "text-[var(--amarelo)]" : ""}
                 />
 
                 <Indicador
                     icone={<FiLock className="w-4" aria-hidden />}
-                    cor={totalBloqueados > 0 ? "bg-[#FEE9E8] text-[#8E1F0B]" : "bg-[#F1F1F1] text-[#616161]"}
+                    cor={totalBloqueados > 0 ? "bg-[var(--vermelho-fundo)] text-[var(--vermelho)]" : "bg-[var(--fundo)] text-[var(--ink-2)]"}
                     rotulo="Bloqueados"
                     valor={totalBloqueados}
-                    destaque={totalBloqueados > 0 ? "text-[#8E1F0B]" : ""}
+                    destaque={totalBloqueados > 0 ? "text-[var(--vermelho)]" : ""}
                 />
 
             </div>
 
-            <p className="mt-2 text-xs text-[#616161]">
-                <span className="num font-bold text-[#303030]">{totalPecas}</span> peça(s)
+            <p className="mt-2 text-xs text-[var(--ink-2)]">
+                <span className="num font-bold text-[var(--ink)]">{totalUnidades}</span> unidade(s)
                 guardada(s) nestes endereços.
             </p>
 
@@ -472,7 +472,7 @@ export default function EnderecosPage() {
 
             {carregando ? (
 
-                <p className="px-4 py-14 text-center text-sm text-[#616161]">Carregando endereços...</p>
+                <p className="px-4 py-14 text-center text-sm text-[var(--ink-2)]">Carregando endereços...</p>
 
             ) : ordenados.length === 0 ? (
 
@@ -514,7 +514,7 @@ export default function EnderecosPage() {
                         <table className="w-full min-w-[56rem] border-collapse text-sm">
 
                             <thead>
-                                <tr className="border-b border-[#E1E1E1] bg-[#F7F7F7] text-left">
+                                <tr className="border-b border-[var(--linha)] bg-[var(--superficie-2)] text-left">
 
                                     <th scope="col" className="w-10 px-4 py-2.5">
                                         <input
@@ -522,7 +522,7 @@ export default function EnderecosPage() {
                                             checked={paginaToda}
                                             onChange={alternarPagina}
                                             aria-label="Marcar os endereços desta página"
-                                            className="h-4 w-4 cursor-pointer accent-[#005BD3]"
+                                            className="h-4 w-4 cursor-pointer accent-[var(--azul)]"
                                         />
                                     </th>
 
@@ -556,7 +556,7 @@ export default function EnderecosPage() {
                                         </Cabecalho>
                                     </th>
 
-                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[#616161]">
+                                    <th scope="col" className="px-4 py-2.5 text-right text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-2)]">
                                         Ações
                                     </th>
 
@@ -574,7 +574,7 @@ export default function EnderecosPage() {
 
                                         <Fragment key={endereco.id}>
 
-                                            <tr className={`border-b border-[#EBEBEB] transition-colors hover:bg-[#F7F7F7] ${marcado ? "bg-[#EAF4FF]" : ""}`}>
+                                            <tr className={`border-b border-[var(--linha-suave)] transition-colors hover:bg-[var(--superficie-2)] ${marcado ? "bg-[var(--azul-suave)]" : ""}`}>
 
                                                 {/* MARCAÇÃO */}
                                                 <td className="px-4 py-2.5">
@@ -583,15 +583,15 @@ export default function EnderecosPage() {
                                                         checked={marcado}
                                                         onChange={() => alternarLinha(endereco.id)}
                                                         aria-label={`Marcar ${endereco.codigo}`}
-                                                        className="h-4 w-4 cursor-pointer accent-[#005BD3]"
+                                                        className="h-4 w-4 cursor-pointer accent-[var(--azul)]"
                                                     />
                                                 </td>
 
                                                 {/* ENDEREÇO */}
                                                 <td className="px-4 py-2.5">
-                                                    <span className="num font-bold text-[#303030]">{endereco.codigo}</span>
+                                                    <span className="num font-bold text-[var(--ink)]">{endereco.codigo}</span>
                                                     {endereco.descricao && (
-                                                        <span className="block max-w-[16rem] truncate text-xs text-[#8A8A8A]">
+                                                        <span className="block max-w-[16rem] truncate text-xs text-[var(--ink-3)]">
                                                             {endereco.descricao}
                                                         </span>
                                                     )}
@@ -599,8 +599,8 @@ export default function EnderecosPage() {
 
                                                 {/* ONDE FICA */}
                                                 <td className="px-4 py-2.5">
-                                                    <span className="block text-[#303030]">{endereco.nome}</span>
-                                                    <span className="block text-xs text-[#8A8A8A]">
+                                                    <span className="block text-[var(--ink)]">{endereco.nome}</span>
+                                                    <span className="block text-xs text-[var(--ink-3)]">
                                                         {endereco.zona || "Sem zona"}
                                                     </span>
                                                 </td>
@@ -615,15 +615,15 @@ export default function EnderecosPage() {
                                                 {/* OCUPAÇÃO */}
                                                 <td className="px-4 py-2.5 text-right">
 
-                                                    <span className="num font-bold text-[#303030]">
+                                                    <span className="num font-bold text-[var(--ink)]">
                                                         {endereco.ocupacao}
-                                                        <span className="font-normal text-[#8A8A8A]">
+                                                        <span className="font-normal text-[var(--ink-3)]">
                                                             {endereco.capacidade > 0 ? ` / ${endereco.capacidade}` : " / —"}
                                                         </span>
                                                     </span>
 
                                                     {typeof endereco.ocupacao_percentual === "number" && (
-                                                        <span className="ml-auto mt-1 block h-1.5 w-24 overflow-hidden rounded-full bg-[#EBEBEB]">
+                                                        <span className="ml-auto mt-1 block h-1.5 w-24 overflow-hidden rounded-full bg-[var(--linha-suave)]">
                                                             <span
                                                                 className={`block h-full ${corDaOcupacao(endereco.ocupacao_percentual)}`}
                                                                 style={{ width: `${Math.min(endereco.ocupacao_percentual, 100)}%` }}
@@ -648,7 +648,7 @@ export default function EnderecosPage() {
                                                     )}
 
                                                     {endereco.bloqueado && endereco.motivo_bloqueio && (
-                                                        <span className="mt-1 block max-w-[14rem] truncate text-xs text-[#8E1F0B]">
+                                                        <span className="mt-1 block max-w-[14rem] truncate text-xs text-[var(--vermelho)]">
                                                             {endereco.motivo_bloqueio}
                                                         </span>
                                                     )}
@@ -667,7 +667,7 @@ export default function EnderecosPage() {
                                                                 onClick={() => liberar(endereco)}
                                                                 title="Liberar endereço"
                                                                 aria-label={`Liberar ${endereco.codigo}`}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E1E1E1] text-[#0C5132] transition-colors hover:border-[#0C5132] hover:bg-[#CDFEE1]"
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--linha)] text-[var(--verde)] transition-colors hover:border-[var(--verde)] hover:bg-[var(--verde-fundo)]"
                                                             >
                                                                 <FiUnlock className="w-4" aria-hidden />
                                                             </button>
@@ -682,7 +682,7 @@ export default function EnderecosPage() {
                                                                 }}
                                                                 title="Bloquear endereço"
                                                                 aria-label={`Bloquear ${endereco.codigo}`}
-                                                                className="flex h-8 w-8 items-center justify-center rounded-md border border-[#E1E1E1] text-[#616161] transition-colors hover:border-[#8E1F0B] hover:bg-[#FEE9E8] hover:text-[#8E1F0B]"
+                                                                className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--linha)] text-[var(--ink-2)] transition-colors hover:border-[var(--vermelho)] hover:bg-[var(--vermelho-fundo)] hover:text-[var(--vermelho)]"
                                                             >
                                                                 <FiSlash className="w-4" aria-hidden />
                                                             </button>
@@ -696,8 +696,8 @@ export default function EnderecosPage() {
                                                             aria-label={`Marcar a placa de ${endereco.codigo}`}
                                                             className={`flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
                                                                 marcado
-                                                                    ? "border-[#005BD3] bg-[#EAF4FF] text-[#00369B]"
-                                                                    : "border-[#E1E1E1] text-[#616161] hover:border-[#005BD3] hover:bg-[#EAF4FF] hover:text-[#00369B]"
+                                                                    ? "border-[var(--azul)] bg-[var(--azul-suave)] text-[var(--azul-escuro)]"
+                                                                    : "border-[var(--linha)] text-[var(--ink-2)] hover:border-[var(--azul)] hover:bg-[var(--azul-suave)] hover:text-[var(--azul-escuro)]"
                                                             }`}
                                                         >
                                                             <FiPrinter className="w-4" aria-hidden />
@@ -711,7 +711,7 @@ export default function EnderecosPage() {
 
                                             {bloqueando === endereco.id && !endereco.bloqueado && (
 
-                                                <tr className="border-b border-[#EBEBEB] bg-[#F7F7F7]">
+                                                <tr className="border-b border-[var(--linha-suave)] bg-[var(--superficie-2)]">
 
                                                     <td colSpan={7} className="px-4 py-3">
 
@@ -769,14 +769,14 @@ export default function EnderecosPage() {
 
                     {/* RODAPÉ DA GRADE — a contagem fica colada
                         nela e não solta no meio da página. */}
-                    <div className="flex flex-col gap-3 border-t border-[#E1E1E1] bg-[#F7F7F7] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border-t border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 
-                        <p className="text-xs text-[#616161]">
+                        <p className="text-xs text-[var(--ink-2)]">
                             Mostrando{" "}
-                            <span className="num font-bold text-[#303030]">
+                            <span className="num font-bold text-[var(--ink)]">
                                 {primeiraDaPagina + 1}–{primeiraDaPagina + daPagina.length}
                             </span>{" "}
-                            de <span className="num font-bold text-[#303030]">{ordenados.length}</span>
+                            de <span className="num font-bold text-[var(--ink)]">{ordenados.length}</span>
                             {ordenados.length !== enderecos.length && (
                                 <> · <span className="num">{enderecos.length}</span> no total</>
                             )}
@@ -818,11 +818,11 @@ export default function EnderecosPage() {
                             {endereco.codigo}
                         </p>
 
-                        <p className="mt-4 text-lg font-bold uppercase tracking-wide text-black">
+                        <p className="mt-4 text-lg font-bold text-black">
                             {endereco.nome}
                         </p>
 
-                        <p className="mt-1 text-sm uppercase tracking-widest text-black">
+                        <p className="mt-1 text-sm text-black">
                             {endereco.tipo_nome}
                             {endereco.zona ? ` · ${endereco.zona}` : ""}
                         </p>
@@ -857,15 +857,15 @@ function Indicador({
     borda?: boolean
 }) {
     return (
-        <div className={`flex items-center gap-3 p-4 ${borda ? "border-b border-[#EBEBEB] md:border-b-0" : ""}`}>
+        <div className={`flex items-center gap-3 p-4 ${borda ? "border-b border-[var(--linha-suave)] md:border-b-0" : ""}`}>
 
             <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${cor}`}>
                 {icone}
             </span>
 
             <span className="min-w-0">
-                <span className="block text-xs text-[#616161]">{rotulo}</span>
-                <span className={`num block text-xl font-extrabold ${destaque || "text-[#303030]"}`}>{valor}</span>
+                <span className="block text-xs text-[var(--ink-2)]">{rotulo}</span>
+                <span className={`num block text-xl font-extrabold ${destaque || "text-[var(--ink)]"}`}>{valor}</span>
             </span>
 
         </div>
@@ -950,7 +950,7 @@ function FormularioEstrutura({
     return (
         <Painel titulo="Montar a estrutura" aoFechar={aoFechar}>
 
-            <p className="text-sm text-[#616161]">
+            <p className="text-sm text-[var(--ink-2)]">
                 Diga quantos de cada nível o seu estoque tem. O endereço é{" "}
                 <strong>rua · bloco · andar · lado</strong> — a loja pequena usa um bloco, um andar
                 e o lado A, e cresce a estrutura quando o estoque crescer. Rodar de novo é seguro:
@@ -987,12 +987,12 @@ function FormularioEstrutura({
                     <span className="rotulo">Lados de cada andar</span>
                     <div className="flex gap-4 pt-1.5">
                         {LADOS.map((opcao) => (
-                            <label key={opcao} className="flex cursor-pointer items-center gap-2 text-sm text-[#303030]">
+                            <label key={opcao} className="flex cursor-pointer items-center gap-2 text-sm text-[var(--ink)]">
                                 <input
                                     type="checkbox"
                                     checked={lados.includes(opcao)}
                                     onChange={() => alternarLado(opcao)}
-                                    className="h-4 w-4 cursor-pointer accent-[#005BD3]"
+                                    className="h-4 w-4 cursor-pointer accent-[var(--azul)]"
                                 />
                                 Lado {opcao}
                             </label>
@@ -1027,15 +1027,15 @@ function FormularioEstrutura({
                     placeholder="Ex: loja, depósito, mezanino" className="field" />
             </Campo>
 
-            <p className="text-xs text-[#616161]">
+            <p className="text-xs text-[var(--ink-2)]">
                 {TIPOS_ENDERECO.find((item) => item.chave === tipo)?.descricao}
             </p>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#F1F1F1] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[var(--fundo)] p-4">
 
-                <p className="text-sm text-[#303030]">
+                <p className="text-sm text-[var(--ink)]">
                     Vai criar até <span className="num font-bold">{quantidade}</span> endereço(s).{" "}
-                    <span className="text-[#616161]">Os que já existirem ficam como estão.</span>
+                    <span className="text-[var(--ink-2)]">Os que já existirem ficam como estão.</span>
                 </p>
 
                 <button type="button" onClick={montar} disabled={montando || quantidade === 0} className="btn btn-primario">
@@ -1117,7 +1117,7 @@ function FormularioAvulso({
 
             <form onSubmit={cadastrar} className="space-y-5">
 
-                <p className="text-sm text-[#616161]">
+                <p className="text-sm text-[var(--ink-2)]">
                     Só a rua é obrigatória — bloco e andar em branco valem 1 e o lado nasce no A. O
                     código sai daí pronto para a etiqueta (<span className="num">001.005.01.A</span>{" "}
                     é a rua 1, bloco 5, andar 1, lado A).
@@ -1190,7 +1190,7 @@ function FormularioAvulso({
 
                 </div>
 
-                <p className="text-xs text-[#616161]">
+                <p className="text-xs text-[var(--ink-2)]">
                     {TIPOS_ENDERECO.find((item) => item.chave === tipo)?.descricao}
                 </p>
 
@@ -1219,13 +1219,13 @@ function Painel({
 
             <div className="flex items-start justify-between gap-4">
 
-                <h3 className="font-display text-base text-[#303030]">{titulo}</h3>
+                <h3 className="font-display text-base text-[var(--ink)]">{titulo}</h3>
 
                 <button
                     type="button"
                     onClick={aoFechar}
                     aria-label="Fechar"
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-[#616161] transition-colors hover:bg-[#F1F1F1]"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)]"
                 >
                     <FiX className="w-4" aria-hidden />
                 </button>

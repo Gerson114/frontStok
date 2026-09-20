@@ -105,21 +105,21 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
 
     return (
         <>
-            <h1 className="font-display text-2xl text-[#303030]">
+            <h1 className="font-display text-2xl text-[var(--ink)]">
                 {canal?.conectado ? "Conexão do WhatsApp" : "Conectar o WhatsApp da loja"}
             </h1>
 
-            <p className="mt-1 text-sm text-[#616161]">
+            <p className="mt-1 text-sm text-[var(--ink-2)]">
                 O cliente escreve para o número da sua loja e você responde por aqui,
                 sem sair do sistema. Cada loja usa a própria conta — ninguém lê a
                 conversa de ninguém.
             </p>
 
             {canal?.conectado && (
-                <div className="mt-6 flex items-start gap-3 rounded-lg bg-[#CDFEE1] px-4 py-3">
-                    <FiCheckCircle className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                <div className="mt-6 flex items-start gap-3 rounded-lg bg-[var(--verde-fundo)] px-4 py-3">
+                    <FiCheckCircle className="mt-0.5 w-4 shrink-0 text-[var(--verde)]" aria-hidden />
 
-                    <p className="text-sm font-semibold text-[#0C5132]">
+                    <p className="text-sm font-semibold text-[var(--verde)]">
                         WhatsApp conectado
                         {canal.numero_exibicao ? ` no número ${canal.numero_exibicao}` : ""}.
                     </p>
@@ -130,11 +130,11 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                 para quem nunca abriu o painel da Meta — que é a maioria. */}
             <section className="card mt-6 p-6">
 
-                <h2 className="font-display text-lg text-[#303030]">
+                <h2 className="font-display text-lg text-[var(--ink)]">
                     Onde encontrar esses dados
                 </h2>
 
-                <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[#616161]">
+                <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-[var(--ink-2)]">
                     <li>
                         Crie (ou abra) uma conta no <strong>Meta for Developers</strong> e
                         adicione o produto <strong>WhatsApp</strong> ao seu aplicativo.
@@ -157,11 +157,11 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                     </li>
                 </ol>
 
-                <div className="mt-4 rounded-lg bg-[#F1F1F1] px-4 py-3">
-                    <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+                <div className="mt-4 rounded-lg bg-[var(--fundo)] px-4 py-3">
+                    <p className="text-[0.7rem] font-bold text-[var(--ink-3)]">
                         Endereço do webhook
                     </p>
-                    <code className="num mt-1 block break-all font-mono text-sm text-[#303030]">
+                    <code className="num mt-1 block break-all font-mono text-sm text-[var(--ink)]">
                         {`${process.env.NEXT_PUBLIC_API_PUBLICA ?? "https://seu-servidor"}/public/whatsapp/webhook`}
                     </code>
                 </div>
@@ -195,7 +195,7 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                             onChange={(e) => setPhoneNumberId(e.target.value)}
                         />
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Não é o telefone: é o identificador que a Meta dá a ele. É por
                             ele que sabemos que a mensagem que chegou é da sua loja.
                         </p>
@@ -244,7 +244,7 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                             onChange={(e) => setToken(e.target.value)}
                         />
 
-                        <p className="mt-1.5 text-xs text-[#8A8A8A]">
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
                             Guardado cifrado e nunca mostrado de volta. Se precisar trocar,
                             cole o novo aqui; para só corrigir o número, deixe vazio.
                         </p>
@@ -255,7 +255,7 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                 {erro && (
                     <div
                         role="alert"
-                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[#FEE9E8] px-4 py-3 text-sm font-semibold text-[#8E1F0B]"
+                        className="mt-5 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]"
                     >
                         <FiAlertCircle className="mt-0.5 w-4 shrink-0" aria-hidden />
                         <span>{erro}</span>
@@ -280,7 +280,7 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                             type="button"
                             onClick={handleDesconectar}
                             disabled={desconectando}
-                            className="ml-auto rounded-lg px-3 py-2 text-sm font-bold text-[#8E1F0B] transition-colors hover:bg-[#FEE9E8] disabled:opacity-50"
+                            className="ml-auto rounded-lg px-3 py-2 text-sm font-bold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)] disabled:opacity-50"
                         >
                             {desconectando ? "Desconectando..." : "Desconectar"}
                         </button>
@@ -289,7 +289,7 @@ export default function ConectarWhatsApp({ canal, aoConectar, aoCancelar }: Prop
                 </div>
 
                 {canal?.conectado && (
-                    <p className="mt-3 text-xs text-[#8A8A8A]">
+                    <p className="mt-3 text-xs text-[var(--ink-3)]">
                         Desconectar apaga só as credenciais. O histórico das conversas
                         continua aqui.
                     </p>

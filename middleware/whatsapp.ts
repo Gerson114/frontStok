@@ -48,6 +48,37 @@ export interface Conversa {
     responsavel_nome?: string
 
     /**
+     * Se este cliente é de QUEM está olhando a tela.
+     *
+     * Quem responde é o servidor, e não uma comparação feita aqui: o painel
+     * não guarda em lugar nenhum a identidade de quem entrou, e comparar o
+     * `responsavel_nome` com o nome escrito no canto da barra erraria em toda
+     * loja com dois Joões. É este campo que separa as abas "Meus" e "Outros".
+     */
+    meu: boolean
+
+    /** Os ids das etiquetas deste cliente. Vazia, nunca nula. */
+    etiquetas: number[]
+
+    /**
+     * Quem paga esta conversa, segundo a regra da Meta: quem começa, paga.
+     *
+     *   "gratuita"  — o cliente escreveu nas últimas 24h. Responder não custa.
+     *   "paga"      — a janela fechou. Falar de novo abre uma conversa nova,
+     *                 e a Meta cobra pela entrega do modelo aprovado.
+     *   "sem_custo" — a loja fala pelo aparelho vinculado (o QR). A Meta não
+     *                 cobra por ele, e avisar de uma conta que não existe só
+     *                 faria o lojista deixar de responder.
+     *
+     * Quem decide é o servidor: a regra depende da hora certa, e o relógio do
+     * computador do lojista pode estar errado.
+     */
+    cobranca: "gratuita" | "paga" | "sem_custo"
+
+    /** Quando a janela grátis fecha. Só vem quando ela está aberta e cobra. */
+    janela_termina_em?: string | null
+
+    /**
      * Em que pé está o atendimento — os mesmos quatro estados do chat do site:
      * livre (na fila, à vista de todos), atribuido (alguém pegou),
      * em_atendimento (começou) e encerrado (saiu da mesa).
@@ -638,4 +669,131 @@ function desligar() {
     socket?.close()
     socket = null
     tentativas = 0
+}
+
+/* ==========================================================================
+   O CRM: ETIQUETAS E NOTAS
+
+   A etiqueta classifica o cliente e vira filtro na lista; a nota é o recado
+   que a equipe lê e o cliente não. As duas penduram na conversa, que já é o
+   contato — ela é única por (loja, telefone).
+   ========================================================================== */
+
+/** Uma etiqueta do catálogo da loja. */
+export interface Etiqueta {
+    id: number
+    nome: string
+    cor: CorDaEtiqueta
+}
+
+/**
+ * As cores possíveis.
+ *
+ * Lista fechada, e não "#RRGGBB" livre: hexadecimal solto deixa escolher
+ * amarelo claro sobre branco, e a etiqueta some. Quem traduz o nome para o
+ * par de cores que tem contraste é a tela.
+ */
+export type CorDaEtiqueta = "cinza" | "azul" | "verde" | "amarela" | "vermelha" | "roxa"
+
+export const CORES_DA_ETIQUETA: CorDaEtiqueta[] = [
+    "cinza",
+    "azul",
+    "verde",
+    "amarela",
+    "vermelha",
+    "roxa",
+]
+
+/** O par (fundo, texto) de cada cor, com contraste conferido sobre branco. */
+export const TINTA_DA_ETIQUETA: Record<CorDaEtiqueta, { fundo: string; texto: string }> = {
+    cinza: { fundo: "#EBEBEB", texto: "#616161" },
+    azul: { fundo: "#EAF4FF", texto: "#00369B" },
+    verde: { fundo: "#EAFBF1", texto: "#0C5132" },
+    amarela: { fundo: "#FFF1E3", texto: "#5E4200" },
+    vermelha: { fundo: "#FEE9E8", texto: "#8E1F0B" },
+    roxa: { fundo: "#F0EDFB", texto: "#4A3AA7" },
+}
+
+/** Uma nota interna da equipe sobre o cliente. */
+export interface NotaDaConversa {
+    id: number
+    autor_nome: string
+    texto: string
+    criada_em: string
+}
+
+export async function listarEtiquetas(): Promise<Etiqueta[]> {
+    const dados = await apiFetch<{ etiquetas?: Etiqueta[] }>("/api/whatsapp/etiquetas")
+    return Array.isArray(dados.etiquetas) ? dados.etiquetas : []
+}
+
+export async function criarEtiqueta(nome: string, cor: CorDaEtiqueta): Promise<Etiqueta> {
+    const dados = await apiFetch<{ etiqueta: Etiqueta }>("/api/whatsapp/etiquetas", {
+        method: "POST",
+        body: { nome, cor },
+    })
+    return dados.etiqueta
+}
+
+export async function apagarEtiqueta(id: number): Promise<void> {
+    await apiFetch(`/api/whatsapp/etiquetas/${id}`, { method: "DELETE" })
+}
+
+/**
+ * Troca as etiquetas de um cliente pelas que vieram.
+ *
+ * A lista inteira de uma vez, e não "adicione esta" / "tire aquela": marcar e
+ * desmarcar caixinhas gera uma rajada de pedidos que chegam fora de ordem, e
+ * o resultado final passaria a depender de qual chegou por último.
+ */
+export async function marcarEtiquetas(conversaId: number, etiquetas: number[]): Promise<number[]> {
+    const dados = await apiFetch<{ etiquetas?: number[] }>(
+        `/api/whatsapp/conversas/${conversaId}/etiquetas`,
+        { method: "PUT", body: { etiquetas } },
+    )
+    return Array.isArray(dados.etiquetas) ? dados.etiquetas : []
+}
+
+export async function listarNotas(conversaId: number): Promise<NotaDaConversa[]> {
+    const dados = await apiFetch<{ notas?: NotaDaConversa[] }>(
+        `/api/whatsapp/conversas/${conversaId}/notas`,
+    )
+    return Array.isArray(dados.notas) ? dados.notas : []
+}
+
+export async function criarNota(conversaId: number, texto: string): Promise<NotaDaConversa> {
+    const dados = await apiFetch<{ nota: NotaDaConversa }>(
+        `/api/whatsapp/conversas/${conversaId}/notas`,
+        { method: "POST", body: { texto } },
+    )
+    return dados.nota
+}
+
+export async function apagarNota(conversaId: number, notaId: number): Promise<void> {
+    await apiFetch(`/api/whatsapp/conversas/${conversaId}/notas/${notaId}`, { method: "DELETE" })
+}
+
+/**
+ * Quanto falta da janela grátis, em palavras curtas ("3h12", "48min").
+ *
+ * Curto de propósito: isto vive dentro de uma etiqueta ao lado do nome do
+ * cliente, e "3 horas e 12 minutos" empurraria o resto da linha para fora.
+ * Devolve vazio quando não há relógio correndo — o que a tela usa para não
+ * desenhar nada em vez de desenhar um traço.
+ */
+export function faltaDaJanela(terminaEm?: string | null): string {
+
+    if (!terminaEm) return ""
+
+    const restam = new Date(terminaEm).getTime() - Date.now()
+
+    if (!Number.isFinite(restam) || restam <= 0) return ""
+
+    const minutos = Math.floor(restam / 60000)
+
+    if (minutos < 60) return `${minutos}min`
+
+    const horas = Math.floor(minutos / 60)
+
+    return `${horas}h${String(minutos % 60).padStart(2, "0")}`
 }
