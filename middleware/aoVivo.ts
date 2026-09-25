@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 
-import { escutarLoja } from "./whatsapp"
+import { escutarLoja, fioAberto } from "./whatsapp"
 
 /**
  * Recarrega a tela quando o assunto dela mexe no servidor, sem F5.
@@ -66,4 +66,76 @@ export function useAoVivo(tipos: string[], recarregar: () => void) {
 
         return fechar
     }, [])
+}
+
+/* ==========================================================================
+   A varredura de segurança
+   ========================================================================== */
+
+/**
+ * Com o fio de pé, a mensagem chega empurrada em menos de um segundo. Voltar
+ * a perguntar antes de meio minuto é gastar requisição para receber de volta
+ * exatamente o que a tela já tem.
+ */
+const COM_O_FIO_DE_PE = 30_000
+
+/**
+ * Com o fio caído, esta consulta é a ÚNICA entrega que sobra, e o intervalo
+ * dela vira o tempo de resposta do produto inteiro: a pessoa do outro lado
+ * escreve e espera.
+ *
+ * Cinco segundos é o meio-termo. É rápido o bastante para uma conversa não
+ * parecer travada, e devagar o bastante para não virar uma enxurrada no
+ * servidor justamente quando alguma coisa já está errada com ele — que é uma
+ * das razões possíveis de o fio ter caído.
+ */
+const COM_O_FIO_CAIDO = 5_000
+
+/**
+ * Chama `recarregar` de tempos em tempos, no ritmo que o estado do fio pedir.
+ *
+ * Esta é a rede de segurança, não a entrega principal — quem entrega é o
+ * WebSocket, e é por isso que o intervalo muda: os dois mundos pedem ritmos
+ * opostos, e usar o mesmo número nos dois significa escolher o errado em um
+ * deles. Era o que acontecia: meio minuto fixo, tanto com o fio de pé (onde
+ * era desperdício) quanto com ele caído (onde era o atraso que a pessoa
+ * sentia ao mandar mensagem).
+ *
+ * O relógio é um `setTimeout` que se reagenda, e não um `setInterval`: o
+ * período precisa ser decidido A CADA volta, porque o fio pode cair ou voltar
+ * entre uma e outra.
+ *
+ * @param recarregar O que buscar de novo.
+ * @param ativa      Passe `false` enquanto a tela ainda está carregando — a
+ *                   varredura não tem o que cobrir antes da primeira busca.
+ */
+export function useVarredura(recarregar: () => void, ativa = true) {
+
+    // Mesma razão do useAoVivo: a função é recriada a cada render, e nas
+    // dependências do efeito ela derrubaria e recriaria o relógio sem parar.
+    const ultimaFuncao = useRef(recarregar)
+
+    useEffect(() => {
+        ultimaFuncao.current = recarregar
+    })
+
+    useEffect(() => {
+
+        if (!ativa) return
+
+        let relogio: ReturnType<typeof setTimeout> | null = null
+
+        function agendar() {
+            relogio = setTimeout(() => {
+                ultimaFuncao.current()
+                agendar()
+            }, fioAberto() ? COM_O_FIO_DE_PE : COM_O_FIO_CAIDO)
+        }
+
+        agendar()
+
+        return () => {
+            if (relogio) clearTimeout(relogio)
+        }
+    }, [ativa])
 }

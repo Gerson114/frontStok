@@ -35,6 +35,7 @@ import {
     type MensagemWhatsApp,
     type NotaDaConversa,
 } from "@/middleware/whatsapp"
+import { useVarredura } from "@/middleware/aoVivo"
 import { ApiError } from "@/middleware/client"
 import { listarPedidos } from "@/middleware/pedidos"
 import type { Funcionario, Pedido } from "@/app/type/type"
@@ -73,17 +74,6 @@ import {
  * traria reconexão, heartbeat e estado que ninguém quer manter para ganhar
  * dois segundos.
  */
-
-/**
- * A varredura de segurança, não a entrega principal.
- *
- * O que traz a mensagem é o WebSocket, na hora em que ela chega do WhatsApp.
- * Esta consulta lenta existe para o caso de o fio cair sem o navegador
- * perceber — acontece com notebook que dormiu e com proxy que corta conexão
- * calada. Meio minuto é raro o bastante para não pesar e curto o bastante
- * para a tela não ficar mentindo por muito tempo.
- */
-const INTERVALO_SEGURANCA_MS = 30000
 
 /**
  * Até onde a caixa de escrever cresce, em pixels.
@@ -404,14 +394,17 @@ export default function Conversas() {
 
         if (abertaId !== null) atualizarFio(abertaId)
 
-        const timer = setInterval(() => {
-            atualizarConversas()
-            if (abertaId !== null) atualizarFio(abertaId)
-        }, INTERVALO_SEGURANCA_MS)
-
-        return () => clearInterval(timer)
-
     }, [conectado, abertaId, atualizarConversas, atualizarFio])
+
+    // As batidas seguintes ficam com useVarredura, que decide o ritmo pelo
+    // estado do fio ao vivo: meio minuto com ele de pé, porque aí quem
+    // entrega é ele, e cinco segundos com ele caído, porque aí esta consulta
+    // é a única entrega que sobra — e o intervalo dela passa a ser o tempo
+    // que o cliente do outro lado espera pela resposta.
+    useVarredura(() => {
+        atualizarConversas()
+        if (abertaId !== null) atualizarFio(abertaId)
+    }, conectado)
 
     // O fio ao vivo. O servidor avisa "mexeu na conversa 12" no instante em
     // que a mensagem chega do WhatsApp, e a tela busca o que mudou.

@@ -37,6 +37,7 @@ import {
     sairDoGrupo,
 } from "@/middleware/equipe"
 import { escutarLoja } from "@/middleware/whatsapp"
+import { useVarredura } from "@/middleware/aoVivo"
 import CodigoDaEquipe from "@/app/components/equipe/codigo"
 import AcessosDaConversa from "@/app/components/equipe/acessos"
 import TarefasDaEquipe from "@/app/components/equipe/tarefas"
@@ -79,8 +80,6 @@ import type {
  * digitando o código de novo achando que errou.
  */
 
-/** De quanto em quanto tempo a tela confere sozinha. */
-const VARREDURA_MS = 30_000
 
 export default function ConversaDaEquipe() {
 
@@ -252,18 +251,17 @@ export default function ConversaDaEquipe() {
     // A varredura de segurança: cobre o aviso que se perdeu numa queda de
     // rede. É ela que faz a confirmação do dono chegar mesmo com o socket
     // caído, em vez de deixar a pessoa esperando numa tela que parou.
-    useEffect(() => {
+    //
+    // O intervalo é decidido pelo estado do fio (ver useVarredura): meio
+    // minuto quando ele está de pé, porque aí quem entrega é ele; cinco
+    // segundos quando caiu, porque aí esta consulta é a única entrega que
+    // sobra — e o número dela vira o tempo que a pessoa espera depois de
+    // mandar a mensagem.
+    useVarredura(() => {
+        recarregarEstado()
 
-        if (carregando) return
-
-        const relogio = setInterval(() => {
-            recarregarEstado()
-
-            if (estado?.destravado) recarregarSala(sala)
-        }, VARREDURA_MS)
-
-        return () => clearInterval(relogio)
-    }, [carregando, estado?.destravado, sala, recarregarEstado, recarregarSala])
+        if (estado?.destravado) recarregarSala(sala)
+    }, !carregando)
 
     // A conversa nasce no fim, como toda conversa.
     useEffect(() => {

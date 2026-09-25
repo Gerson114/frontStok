@@ -20,6 +20,7 @@ import {
 import { consultarEquipe } from "@/middleware/funcionarios"
 import type { Funcionario } from "@/app/type/type"
 import { escutarLoja } from "@/middleware/whatsapp"
+import { useVarredura } from "@/middleware/aoVivo"
 
 /**
  * O chat do site, do lado de quem atende.
@@ -46,12 +47,11 @@ import { escutarLoja } from "@/middleware/whatsapp"
  * dias — e o funcionário enxerga a fila mais o que é dele.
  *
  * O aviso de mensagem nova chega pelo mesmo socket das conversas: o servidor
- * publica "mexeu no atendimento 12", e a tela vai buscar. A varredura de meio
- * minuto continua por baixo, para o caso de o socket estar caído — é a
- * diferença entre uma conversa atrasar e uma conversa se perder.
+ * publica "mexeu no atendimento 12", e a tela vai buscar. A varredura continua
+ * por baixo, para o caso de o socket estar caído — é a diferença entre uma
+ * conversa atrasar e uma conversa se perder. O intervalo dela muda conforme o
+ * fio esteja de pé ou não (ver useVarredura).
  */
-
-const VARREDURA = 30000
 
 function horaDe(iso: string): string {
     return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
@@ -205,15 +205,19 @@ export default function AtendimentoPage() {
 
         void abrir()
 
-        const relogio = setInterval(() => {
-            void carregarLista()
-        }, VARREDURA)
-
         return () => {
             vivo = false
-            clearInterval(relogio)
         }
     }, [carregarLista])
+
+    // A varredura de segurança, no ritmo que o estado do fio ao vivo pedir:
+    // meio minuto com ele de pé, porque aí quem entrega é ele, e cinco
+    // segundos com ele caído, porque aí esta consulta é a única entrega que
+    // sobra — e o intervalo dela passa a ser o tempo que o visitante do site
+    // espera pela resposta do atendente.
+    useVarredura(() => {
+        void carregarLista()
+    })
 
     // O fio escolhido.
     useEffect(() => {

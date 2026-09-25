@@ -591,6 +591,24 @@ let encerrando: ReturnType<typeof setTimeout> | null = null
 /** Desiste de vez: endereço mal configurado não melhora tentando de novo. */
 let desistiu = false
 
+/**
+ * O fio está aberto E entregando?
+ *
+ * Existe para a varredura de segurança de cada tela saber em que mundo ela
+ * está. As duas situações pedem ritmos opostos: com o fio de pé a mensagem
+ * chega empurrada em menos de um segundo, e perguntar de novo é desperdício;
+ * com o fio caído a varredura é a ÚNICA entrega que sobra, e meio minuto é
+ * uma eternidade no meio de um atendimento.
+ *
+ * `readyState === OPEN` e não `socket !== null`: entre o `new WebSocket` e o
+ * `onopen` existe o estado CONNECTING, e uma conexão que nunca completa —
+ * endereço errado, servidor fora — fica ali sem nunca abrir. Tratar isso como
+ * "de pé" devolveria justamente o caso que este teste existe para pegar.
+ */
+export function fioAberto(): boolean {
+    return socket !== null && socket.readyState === WebSocket.OPEN
+}
+
 async function conectar() {
 
     if (desistiu || socket || ouvintes.size === 0) return
