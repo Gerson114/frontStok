@@ -403,6 +403,54 @@ export default function Sidebar() {
 
     const secoes = useMemo(() => montarSecoes(menu), [menu])
 
+    /* O acordeão: cada área abre e fecha por conta própria, em vez de todas
+       ficarem sempre à vista. O lojista pediu de volta — a lista inteira
+       aberta de uma vez virou comprida demais para ler de relance.
+
+       Nenhum estado guarda "quais áreas estão abertas" diretamente — isso
+       levaria a um efeito reagindo à troca de rota para reabrir a área
+       certa, e setState dentro de efeito é o par de renders a mais que o
+       React pede para evitar. Em vez disso, `secoesAlternadas` guarda só o
+       que o DEDO already tocou: um título aqui inverte o padrão dela. O
+       padrão em si (aberta = "é daqui que a tela atual sai") é conta feita
+       na hora, e muda sozinho quando a rota muda — sem efeito nenhum. */
+    const [secoesAlternadas, setSecoesAlternadas] = useState<Set<string>>(() => new Set())
+
+    const secaoDaRotaAtual = useMemo(() => {
+
+        if (!rotaAtiva) return undefined
+
+        return secoes.find((secao) =>
+            secao.nos.some(
+                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
+            ),
+        )?.titulo
+
+    }, [secoes, rotaAtiva])
+
+    function secaoEstaAberta(titulo: string) {
+
+        const abertaPorPadrao = titulo === secaoDaRotaAtual
+
+        return secoesAlternadas.has(titulo) ? !abertaPorPadrao : abertaPorPadrao
+    }
+
+    function alternarSecao(titulo: string) {
+
+        setSecoesAlternadas((alternadas) => {
+
+            const proximas = new Set(alternadas)
+
+            if (proximas.has(titulo)) {
+                proximas.delete(titulo)
+            } else {
+                proximas.add(titulo)
+            }
+
+            return proximas
+        })
+    }
+
     /* A largura que o menu ocupa, anunciada às telas.
      *
      * Elas leem --menu pela classe .com-menu (ver globals.css) em vez de cada
@@ -844,8 +892,39 @@ export default function Sidebar() {
         )
     }
 
+    /* Uma área do menu, dobrada ou aberta — o mesmo desenho no desktop e no
+       celular, para as duas colunas nunca discordarem sobre o que cada
+       área se chama ou qual ícone leva. O cabeçalho inteiro é o botão (não
+       só a seta), porque um alvo de toque de 12px de seta é o tipo de
+       coisa que só funciona com mouse. */
+    function secaoDoMenu(secao: { titulo: string; nos: No[] }) {
+
+        const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
+        const aberta = secaoEstaAberta(secao.titulo)
+
+        return (
+            <div key={secao.titulo} className="border-t border-[var(--linha-suave)] pt-1 first:border-t-0 first:pt-0">
+                <button
+                    type="button"
+                    onClick={() => alternarSecao(secao.titulo)}
+                    aria-expanded={aberta}
+                    className="flex w-full items-center gap-1.5 px-2.5 py-2 text-left text-[0.6875rem] font-semibold text-[var(--ink-3)] transition-colors hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)]"
+                >
+                    <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
+                    <span className="flex-1 truncate">{secao.titulo}</span>
+                    <FiChevronDown
+                        className={`w-3 shrink-0 transition-transform ${aberta ? "rotate-180" : ""}`}
+                        aria-hidden
+                    />
+                </button>
+
+                {aberta && <div className="space-y-0.5 pb-3">{listaDeNos(secao.nos)}</div>}
+            </div>
+        )
+    }
+
     /* ==================================================================
-       O MENU — uma coluna só, com todas as áreas e todas as telas
+       O MENU — uma coluna só, em acordeão
 
        Foi um trilho de ícones à esquerda (as áreas: Início, Vendas,
        Estoque...) e um painel separado ao lado, com as telas da área que
@@ -855,11 +934,12 @@ export default function Sidebar() {
        qual das cinco áreas ela morava, clicar ali, e só então ler a lista
        — dois passos, dois lugares, para uma linha só.
 
-       Virou uma coluna única: cada área é um cabeçalho, e as telas dela
-       vêm logo abaixo, tudo visível de uma vez, exatamente como a gaveta
-       do celular já fazia (ver `gavetaDoCelular`, que é o molde desta
-       coluna). Achar uma tela passou a ser ler de cima a baixo uma vez,
-       não abrir um trocador e adivinhar antes.
+       Virou uma coluna única, cada área com o seu próprio acordeão (ver
+       `secaoDoMenu`): abre a área em que já está, e o resto fica fechado
+       até ser aberto — a lista inteira sempre aberta de uma vez tinha
+       ficado comprida demais para ler de relance. É o mesmo desenho da
+       gaveta do celular (ver `gavetaDoCelular`, que é o molde desta
+       coluna).
 
        Com o trilho foi embora o trocador de área e os atalhos separados
        dele: a conversa da equipe e as lojas da rede, que moravam ali por
@@ -884,52 +964,19 @@ export default function Sidebar() {
             <nav className="menu-rolagem flex-1 overflow-y-auto px-2 py-3">
                 {carregando && esqueletoDeTelas()}
 
-                {!carregando && secoes.map((secao) => {
-                    const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
-
-                    return (
-                        <div
-                            key={secao.titulo}
-                            className="mb-4 space-y-0.5 border-t border-[var(--linha-suave)] pt-4 first:border-t-0 first:pt-0 last:mb-0"
-                        >
-                            <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                                <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
-                                {secao.titulo}
-                            </p>
-
-                            {listaDeNos(secao.nos)}
-                        </div>
-                    )
-                })}
+                {!carregando && secoes.map(secaoDoMenu)}
             </nav>
         </>
     )
 
     /* A gaveta do celular é o mesmo molde do `menuLateral` de desktop — as
-       duas sempre mostraram tudo de uma vez, com o título de cada área como
-       separador; foi o desktop que copiou este desenho dela, não o
-       contrário. */
+       duas sempre foram o mesmo acordeão; foi o desktop que copiou este
+       desenho dela, não o contrário. */
     const gavetaDoCelular = (
         <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
             {carregando && esqueletoDeTelas()}
 
-            {secoes.map((secao) => {
-                const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
-
-                return (
-                    <div
-                        key={secao.titulo}
-                        className="mb-4 space-y-0.5 border-t border-[var(--linha-suave)] pt-4 first:border-t-0 first:pt-0 last:mb-0"
-                    >
-                        <p className="mb-1.5 flex items-center gap-1.5 px-3 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                            <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
-                            {secao.titulo}
-                        </p>
-
-                        {listaDeNos(secao.nos)}
-                    </div>
-                )
-            })}
+            {secoes.map(secaoDoMenu)}
         </nav>
     )
 
