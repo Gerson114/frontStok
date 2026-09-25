@@ -428,6 +428,35 @@ export default function Sidebar() {
 
     const secoes = useMemo(() => montarSecoes(menu), [menu])
 
+    /* O acordeão: SÓ UMA área aberta por vez — abrir uma fecha a outra
+       sozinha, nunca duas listas competindo por atenção na mesma coluna
+       estreita.
+
+       `undefined` quer dizer "ainda não mexi nisto": a área aberta segue a
+       rota atual, computada na hora (sem efeito, sem setState reagindo à
+       navegação). Assim que o dedo toca um cabeçalho, o valor vira o
+       título escolhido — ou `null`, se era a mesma área já aberta e o
+       clique foi para fechá-la. */
+    const [secaoManual, setSecaoManual] = useState<string | null | undefined>(undefined)
+
+    const secaoDaRotaAtual = useMemo(() => {
+
+        if (!rotaAtiva) return undefined
+
+        return secoes.find((secao) =>
+            secao.nos.some(
+                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
+            ),
+        )?.titulo
+
+    }, [secoes, rotaAtiva])
+
+    const secaoAberta = secaoManual === undefined ? secaoDaRotaAtual : secaoManual
+
+    function alternarSecao(titulo: string) {
+        setSecaoManual(secaoAberta === titulo ? null : titulo)
+    }
+
     /* As telas do trilho, na ordem de CHAVES_DO_TRILHO — e só as que O MENU
      * DESTA LOJA já trouxe, liberadas ou trancadas (trancada ainda mostra
      * o ícone, em cinza com cadeado: é assim que se descobre que o Pro
@@ -889,21 +918,31 @@ export default function Sidebar() {
 
     /* Uma área do menu — o mesmo desenho no desktop e no celular, para as
        duas colunas nunca discordarem sobre o que cada área se chama ou
-       qual ícone leva. Sem dobrar: a área inteira fica sempre à vista,
-       porque abrir uma seção antes de poder ler as telas dela é um clique
-       a mais entre o lojista e o que ele procura. */
+       qual ícone leva. Acordeão EXCLUSIVO: abrir uma fecha a outra
+       sozinha (ver `secaoAberta`, acima) — nunca duas listas competindo
+       por atenção na mesma coluna estreita. */
     function secaoDoMenu(secao: { titulo: string; nos: No[] }) {
 
         const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
+        const aberta = secaoAberta === secao.titulo
 
         return (
-            <div key={secao.titulo} className="mb-4 space-y-0.5 border-t border-[var(--linha-suave)] pt-4 first:border-t-0 first:pt-0 last:mb-0">
-                <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
+            <div key={secao.titulo} className="border-t border-[var(--linha-suave)] pt-1 first:border-t-0 first:pt-0">
+                <button
+                    type="button"
+                    onClick={() => alternarSecao(secao.titulo)}
+                    aria-expanded={aberta}
+                    className="flex w-full items-center gap-1.5 px-2.5 py-2 text-left text-[0.6875rem] font-semibold text-[var(--ink-3)] transition-colors hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)]"
+                >
                     <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
-                    {secao.titulo}
-                </p>
+                    <span className="flex-1 truncate">{secao.titulo}</span>
+                    <FiChevronDown
+                        className={`w-3 shrink-0 transition-transform ${aberta ? "rotate-180" : ""}`}
+                        aria-hidden
+                    />
+                </button>
 
-                {listaDeNos(secao.nos)}
+                {aberta && <div className="space-y-0.5 pb-3">{listaDeNos(secao.nos)}</div>}
             </div>
         )
     }
@@ -974,12 +1013,12 @@ export default function Sidebar() {
        qual das cinco áreas ela morava, clicar ali, e só então ler a lista
        — dois passos, dois lugares, para uma linha só.
 
-       Virou uma coluna única, com toda área e toda tela à vista de uma vez
-       (ver `secaoDoMenu`) — passou por um acordeão no meio do caminho, que
-       saiu de novo: abrir uma seção antes de poder ler as telas dela ainda
-       era um clique a mais. É o mesmo desenho da gaveta do celular (ver
-       `gavetaDoCelular`, que é o molde desta coluna). O trilho, ao lado,
-       cobre os atalhos de todo dia — este menu é para o resto. */
+       Virou uma coluna única, em acordeão EXCLUSIVO (ver `secaoDoMenu`):
+       abrir uma área fecha a outra sozinha, sempre uma lista só por vez —
+       nunca a coluna inteira competindo com ela mesma. É o mesmo desenho
+       da gaveta do celular (ver `gavetaDoCelular`, que é o molde desta
+       coluna). O trilho, ao lado, cobre os atalhos de todo dia — este
+       menu é para o resto. */
     const menuLateral = (
         <>
             <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-[var(--linha)] px-4">
