@@ -81,15 +81,34 @@ const COM_O_FIO_DE_PE = 30_000
 
 /**
  * Com o fio caído, esta consulta é a ÚNICA entrega que sobra, e o intervalo
- * dela vira o tempo de resposta do produto inteiro: a pessoa do outro lado
- * escreve e espera.
+ * dela deixa de ser rede de segurança: vira o tempo de resposta do produto.
+ * Quem escreveu do outro lado está olhando a tela, esperando ser lido.
  *
- * Cinco segundos é o meio-termo. É rápido o bastante para uma conversa não
- * parecer travada, e devagar o bastante para não virar uma enxurrada no
- * servidor justamente quando alguma coisa já está errada com ele — que é uma
- * das razões possíveis de o fio ter caído.
+ * Dois segundos é o teto de uma conversa parecer viva. Custa caro — é a
+ * consulta da tela inteira repetida trinta vezes por minuto — e essa conta é
+ * aceita de propósito: com o fio caído, é este número que decide se alguém
+ * falando com a loja é lido agora ou daqui a meio minuto.
+ *
+ * A trava óbvia seria pausar com a aba em segundo plano. Ela NÃO existe aqui,
+ * e isso é decisão de produto, não esquecimento: é justamente com o painel em
+ * outra aba que a mensagem precisa chegar, porque é dela que sai a contagem
+ * de não lidas e o som de aviso. Uma varredura que dorme junto com a aba faz
+ * o lojista descobrir a conversa quando volta a ela, que é tarde.
  */
-const COM_O_FIO_CAIDO = 5_000
+const COM_O_FIO_CAIDO = 2_000
+
+/**
+ * A aba está à vista?
+ *
+ * Não decide mais o ritmo (ver COM_O_FIO_CAIDO) — serve só para buscar de
+ * imediato no instante em que a pessoa volta para a aba.
+ *
+ * Fora do navegador (renderização no servidor) responde `true`: lá não há
+ * relógio rodando, e responder `false` só tornaria o teste confuso.
+ */
+function abaVisivel(): boolean {
+    return typeof document === "undefined" || document.visibilityState === "visible"
+}
 
 /**
  * Chama `recarregar` de tempos em tempos, no ritmo que o estado do fio pedir.
@@ -103,7 +122,11 @@ const COM_O_FIO_CAIDO = 5_000
  *
  * O relógio é um `setTimeout` que se reagenda, e não um `setInterval`: o
  * período precisa ser decidido A CADA volta, porque o fio pode cair ou voltar
- * entre uma e outra.
+ * entre uma e outra — e a aba pode sair e voltar à vista no meio.
+ *
+ * Voltar para a aba dispara uma busca imediata, sem esperar a próxima volta:
+ * é o instante em que a tela está mais atrasada e é justamente quando alguém
+ * está olhando para ela.
  *
  * @param recarregar O que buscar de novo.
  * @param ativa      Passe `false` enquanto a tela ainda está carregando — a
@@ -125,6 +148,9 @@ export function useVarredura(recarregar: () => void, ativa = true) {
 
         let relogio: ReturnType<typeof setTimeout> | null = null
 
+        // O ritmo olha só para o fio. A aba estar escondida NÃO o afrouxa:
+        // é com o painel em outra aba que a mensagem mais precisa chegar,
+        // porque é dela que saem a contagem de não lidas e o som de aviso.
         function agendar() {
             relogio = setTimeout(() => {
                 ultimaFuncao.current()
@@ -132,10 +158,29 @@ export function useVarredura(recarregar: () => void, ativa = true) {
             }, fioAberto() ? COM_O_FIO_DE_PE : COM_O_FIO_CAIDO)
         }
 
+        // Voltar para a aba busca na hora, sem esperar a volta seguinte: é o
+        // instante em que alguém está olhando para a tela, e o navegador pode
+        // ter segurado o relógio enquanto ela esteve escondida — economia de
+        // bateria que ele faz por conta própria, e que nenhum código daqui
+        // controla.
+        function aoVoltar() {
+
+            if (!abaVisivel()) return
+
+            ultimaFuncao.current()
+
+            if (relogio) clearTimeout(relogio)
+
+            agendar()
+        }
+
         agendar()
+
+        document.addEventListener("visibilitychange", aoVoltar)
 
         return () => {
             if (relogio) clearTimeout(relogio)
+            document.removeEventListener("visibilitychange", aoVoltar)
         }
     }, [ativa])
 }
