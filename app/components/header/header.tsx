@@ -450,11 +450,6 @@ export default function Sidebar() {
        dar nenhuma porta nova. Um item com filhos (como Configurações, que
        abre Assinatura, Funcionários etc.) mantém os filhos na coluna —
        só o link repetido do pai é que some, porque o trilho já leva lá. */
-    const escondidasDaColuna = useMemo(
-        () => new Set(trilhoParaMostrar.map((item) => item.chave)),
-        [trilhoParaMostrar],
-    )
-
     /* A coluna mostra só a ÁREA em que o lojista já está — ela segue a rota,
        nunca pede um clique a mais para escolher. Clicar em Início no
        trilho, ou em qualquer link de Vendas, já é o clique que decide: a
@@ -883,30 +878,18 @@ export default function Sidebar() {
        parecia torta, não subordinada. A ordem continua contando a mesma
        história (a filha vem logo depois da mãe), só que sem empurrar nada
        para o lado. */
-    function listaDeNos(nos: No[], escondidas: Set<string>) {
+    function listaDeNos(nos: No[]) {
         let ordem = 0
         return nos.flatMap((no) => [
-            ...(escondidas.has(no.item.chave)
-                ? []
-                : [
-                    <div key={no.item.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
-                        {linkDoItem(no.item)}
-                    </div>,
-                ]),
+            <div key={no.item.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
+                {linkDoItem(no.item)}
+            </div>,
             ...no.filhos.map((filho) => (
                 <div key={filho.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
                     {linkDoItem(filho, true)}
                 </div>
             )),
         ])
-    }
-
-    /* Se sobra algo para mostrar depois de tirar as linhas que o trilho já
-       cobre. Seção que fica vazia (ex.: só tinha "Início", e "Início" já
-       está no trilho) não desenha título nenhum — um cabeçalho sem lista
-       embaixo é só ruído. */
-    function secaoTemConteudo(secao: { nos: No[] }, escondidas: Set<string>) {
-        return secao.nos.some((no) => !escondidas.has(no.item.chave) || no.filhos.length > 0)
     }
 
     /* O retrato da lista antes dela existir: mesma largura de coluna do ícone
@@ -929,24 +912,14 @@ export default function Sidebar() {
         )
     }
 
-    /* O conteúdo da coluna: só os itens da área ativa (ver `secaoAtiva`,
-       acima). Mesma função para desktop e celular, para as duas nunca
-       discordarem sobre o que aparece. Área cujo único item já mora no
-       trilho (ex.: "Painel" tendo só "Início") fica sem lista — em vez de
-       uma coluna em branco, uma linha diz que já está tudo ao lado. */
+    /* O conteúdo da coluna: os itens da área ativa (ver `secaoAtiva`, acima),
+       mãe e filhas juntas. Mesma função para desktop e celular, para as
+       duas nunca discordarem sobre o que aparece. */
     function conteudoDaColuna() {
 
         if (!secaoAtiva) return null
 
-        if (!secaoTemConteudo(secaoAtiva, escondidasDaColuna)) {
-            return (
-                <p className="px-2.5 py-2 text-xs text-[var(--ink-3)]">
-                    Tudo desta área já está no atalho ao lado.
-                </p>
-            )
-        }
-
-        return <div className="space-y-0.5">{listaDeNos(secaoAtiva.nos, escondidasDaColuna)}</div>
+        return <div className="space-y-0.5">{listaDeNos(secaoAtiva.nos)}</div>
     }
 
     /* O trilho (ver CHAVES_DO_TRILHO, lá em cima): cinco ícones fixos,
@@ -1025,25 +998,39 @@ export default function Sidebar() {
        para confirmar onde se está, não um botão. */
     const IconeDaAreaAtiva = secaoAtiva ? (ICONE_DA_AREA[comparavel(secaoAtiva.titulo)] ?? FiGrid) : FiGrid
 
-    const menuLateral = (
-        <>
-            <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--linha)] px-4">
-                <IconeDaAreaAtiva className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+    /* O cabeçalho da coluna: ícone e nome da área, na mesma tinta do símbolo
+       da marca (--azul, o quadrado da Marca em marca.tsx) — não um chip
+       colorido dentro de uma caixa, que é o mesmo enfeite que qualquer
+       painel gerado usa. O nome não trunca: "Produtos e estoque" é o nome
+       mais comprido que existe, e cortá-lo era pior que deixá-lo quebrar em
+       duas linhas — a coluna já é alta o bastante para sobrar espaço. */
+    function cabecalhoDaColuna(botaoDeRecolher?: React.ReactNode) {
+        return (
+            <div className="flex min-h-[3.75rem] shrink-0 items-start gap-2.5 border-b border-[var(--linha)] px-4 py-3.5">
+                <IconeDaAreaAtiva className="mt-0.5 w-[1.125rem] shrink-0 text-[var(--azul)]" aria-hidden />
 
-                <p className="font-display flex-1 truncate text-[0.9375rem] text-[var(--ink)]">
+                <p className="font-display flex-1 text-[0.9375rem] leading-snug text-[var(--ink)]">
                     {secaoAtiva?.titulo ?? "Menu"}
                 </p>
 
+                {botaoDeRecolher}
+            </div>
+        )
+    }
+
+    const menuLateral = (
+        <>
+            {cabecalhoDaColuna(
                 <button
                     type="button"
                     onClick={() => setPainelRecolhido(true)}
                     aria-label="Recolher o menu"
                     title="Recolher o menu"
-                    className="-mr-1.5 shrink-0 rounded-md p-1.5 text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--azul)]"
+                    className="-mr-1.5 -mt-0.5 shrink-0 rounded-md p-1.5 text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--azul)]"
                 >
                     <FiChevronsLeft className="w-3.5" aria-hidden />
-                </button>
-            </div>
+                </button>,
+            )}
 
             <nav className="menu-rolagem flex-1 overflow-y-auto px-2 py-3">
                 {carregando ? esqueletoDeTelas() : conteudoDaColuna()}
@@ -1052,16 +1039,11 @@ export default function Sidebar() {
     )
 
     /* A gaveta do celular é o mesmo molde do `menuLateral` de desktop — as
-       duas sempre mostram a mesma área ativa, com o mesmo título no alto. */
+       duas sempre mostram a mesma área ativa, com o mesmo título no alto,
+       só sem o botão de recolher, que não existe no celular. */
     const gavetaDoCelular = (
         <>
-            <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--linha)] px-4">
-                <IconeDaAreaAtiva className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
-
-                <p className="font-display truncate text-[0.9375rem] text-[var(--ink)]">
-                    {secaoAtiva?.titulo ?? "Menu"}
-                </p>
-            </div>
+            {cabecalhoDaColuna()}
 
             <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
                 {carregando ? esqueletoDeTelas() : conteudoDaColuna()}

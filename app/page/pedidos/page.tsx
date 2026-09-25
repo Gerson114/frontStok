@@ -1184,11 +1184,8 @@ function FichaDoPedido({
                     </p>
 
                     <p className="mt-1.5 text-xs leading-relaxed text-[var(--ink)]">
-                        O provedor de pagamento não confirmou este pedido. Ao continuar, quem está
-                        afirmando que o dinheiro entrou é você — o sistema grava o seu nome nessa
-                        confirmação e o valor passa a contar no faturamento. Se o cliente pagou pelo
-                        site, tente antes <strong>verificar pagamento</strong>, que pergunta ao
-                        provedor e traz prova.
+                        Você está afirmando que o dinheiro entrou — fica gravado no seu nome. Pagou pelo
+                        site? Tente <strong>verificar pagamento</strong> antes, que traz prova do provedor.
                     </p>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
