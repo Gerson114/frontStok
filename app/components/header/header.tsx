@@ -102,111 +102,31 @@ const ICONES: Record<string, IconType> = {
 }
 
 /* ==========================================================================
-   As ÁREAS, no trilho escuro
+   As ÁREAS, cabeçalho de cada grupo do menu
    ==========================================================================
 
-   O trilho tem uma entrada por seção do menu, e as seções são as que o
-   servidor manda (ver recursos.go): Painel, Vendas, Produtos e estoque, Meu
-   site e Conta. Só o ícone e o rótulo curto moram aqui — o que existe em cada área
-   continua sendo resposta do servidor, porque é lá que se sabe o plano da
-   loja.
-
-   O rótulo é curto porque o trilho tem 64px: "Produtos e estoque" não cabe,
-   e cortado no meio não se lê. Seção nova sem entrada aqui aparece com o
-   ícone genérico e o título inteiro — some do trilho é o que ela não pode
-   fazer. */
+   Uma entrada por seção do menu, e as seções são as que o servidor manda
+   (ver recursos.go): Painel, Vendas, Produtos e estoque, Meu site e Conta.
+   Só o ícone mora aqui — o nome usado é o título que o próprio servidor
+   manda (`secao.titulo`), sem abreviar: a lista tem largura de sobra para
+   o nome inteiro, e uma versão curta ("Estoque" para "Produtos e estoque")
+   colidia com o nome de uma tela de dentro do próprio grupo, que também se
+   chama "Estoque" — o mesmo problema que fez o lojista não achar a tela
+   certa. Seção nova sem entrada aqui aparece com o ícone genérico, e
+   continua com o nome certo do mesmo jeito. */
 const ICONE_DA_AREA: Record<string, IconType> = {
     painel: FiHome,
     vendas: FiShoppingCart,
     "produtos e estoque": FiPackage,
 
     // A loja de comida chama a mesma área de "Cardápio" (ver NoRamoDaLoja no
-    // servidor). O trilho, o título da coluna e o primeiro item precisam dizer
-    // a MESMA palavra — três nomes para o mesmo lugar é o que fazia o padeiro
+    // servidor). O cabeçalho do grupo e o primeiro item precisam dizer a
+    // MESMA palavra — dois nomes para o mesmo lugar é o que fazia o padeiro
     // não achar o cardápio dele.
     cardapio: FiPackage,
 
     "meu site": FiGlobe,
     conta: FiUsers,
-}
-
-const ROTULO_DA_AREA: Record<string, string> = {
-    painel: "Início",
-    vendas: "Vendas",
-    "produtos e estoque": "Estoque",
-    cardapio: "Cardápio",
-    "meu site": "Site",
-    conta: "Conta",
-}
-
-/* ==========================================================================
-   Os ATALHOS: a conversa da equipe e as lojas
-   ==========================================================================
-
-   Duas telas que não são "área da loja" e mesmo assim se usa o dia inteiro.
-   No catálogo do servidor as duas moram em Conta — a conversa como filha de
-   Funcionários, as lojas soltas —, e é lá que elas ficavam: três cliques
-   (abrir Conta, abrir Funcionários, achar a conversa) para uma tela que se
-   abre vinte vezes por dia.
-
-   Moram agora no trocador de área, no topo da coluna do menu — a mesma
-   lista de onde se escolhe Vendas ou Estoque, com um fio separando "lugares
-   de trabalho" de "com quem falar e onde trabalhar". Um clique abre o
-   trocador, o outro leva direto à tela: o mesmo custo de antes, sem precisar
-   de uma coluna extra só para isto ficar sempre à vista.
-
-   E SAEM da lista do menu, no desktop, em vez de aparecer nos dois lugares —
-   a mesma tela com duas portas é o que o painel não deve ter. No celular o
-   trocador não existe, então lá elas continuam na lista, que é a única
-   porta que existe.
-
-   Sair da lista leva junto o que está pendurado nelas, e é por isso que
-   Configurações NÃO está mais aqui. Ela esteve, e saiu no dia em que "Meu
-   site" virou área própria: sem as telas do site, a área "Conta" ficava com
-   Funcionários e mais nada, e a tela que dá nome à área — as regras da loja,
-   com a Assinatura pendurada nela — estava escondida num ícone de 64px.
-   Configurações é a cabeça de "Conta", e cabeça de área se lê na lista.
-
-   Some junto o truque que compensava a ausência dela: a Assinatura precisava
-   reaparecer no dia em que vencia, porque nos outros dias ela sumia com a
-   mãe. Agora ela está sempre à vista, debaixo de Configurações, e não há o
-   que compensar. */
-const ATALHOS: { chave: string; rotulo: string; Icone: IconType }[] = [
-    { chave: "conversas", rotulo: "Conversas", Icone: FiMessageCircle },
-    { chave: "equipe-chat", rotulo: "Equipe", Icone: FiMessageSquare },
-    { chave: "lojas", rotulo: "Lojas", Icone: FiLayers },
-]
-
-/**
- * A lista da área sem o que o trocador JÁ mostra.
- *
- * `chavesDosAtalhos` traz as três chaves sempre, estejam ou não liberadas —
- * e isso importa para a tela que existe mas está trancada. As lojas da rede
- * e a conversa da equipe são do plano Pro: para quem não assinou, elas
- * chegam do servidor como bloqueadas, e é DELIBERADO que apareçam assim, com
- * cadeado, no trocador — é como o lojista descobre que existem. O trocador
- * não leva para dentro delas quando fechadas (ele só leva à tela de
- * assinatura), então elas precisam continuar fora da lista do menu para não
- * duplicar.
- *
- * Escondê-las só quando liberadas, que foi o que esta função fazia primeiro,
- * vendia o Pro só para quem já tinha ido procurar a tela de assinatura.
- */
-function semAtalhos(nos: No[], chavesDosAtalhos: Set<string>): No[] {
-    return nos
-        .filter((no) => !chavesDosAtalhos.has(no.item.chave))
-        .map((no) => ({
-            item: no.item,
-            filhos: no.filhos.filter((filho) => !chavesDosAtalhos.has(filho.chave)),
-        }))
-}
-
-// Quantas telas o painel de uma área mostra, mãe e filhas somadas — para o
-// cabeçalho dizer "8 telas" e não só o nome da área. Útil em áreas grandes
-// (Estoque tem sete só de filhas); numa área de uma tela só o número
-// soa redundante, e por isso o cabeçalho o omite quando dá 1.
-function contarTelas(nos: No[]): number {
-    return nos.reduce((total, no) => total + 1 + no.filhos.length, 0)
 }
 
 // Enquanto o menu não chega — e se ele não chegar —, o lojista fica ao menos
@@ -334,20 +254,7 @@ export default function Sidebar() {
     const [menu, setMenu] = useState<ItemMenu[]>([])
     const [carregando, setCarregando] = useState(true)
 
-    // A área que o lojista escolheu no trocador, e a tela em que ele estava
-    // ao escolhê-la.
-    //
-    // A rota vai junto de propósito: é ela que faz a escolha valer só
-    // enquanto ele não sai do lugar. Quem espia "Conta" e depois abre um
-    // pedido pela busca do topo volta a ver o painel de Vendas, sem que
-    // ninguém precise limpar nada. A alternativa seria um efeito zerando a
-    // escolha a cada troca de tela — um render a mais para dizer o que já dá
-    // para descobrir olhando.
-    //
-    // Nula é "a área da tela em que estou", que é como o painel nasce.
-    const [area, setArea] = useState<{ titulo: string; rota: string } | null>(null)
-
-    // Painel recolhido deixa só uma aba estreita para reabrir — e 15rem a
+    // Menu recolhido deixa só uma aba estreita para reabrir — e 15rem a
     // mais para a tabela.
     const [painelRecolhido, setPainelRecolhido] = useState(false)
 
@@ -496,146 +403,27 @@ export default function Sidebar() {
 
     const secoes = useMemo(() => montarSecoes(menu), [menu])
 
-    // A área da tela em que o lojista está. É o padrão do painel: quem abre
-    // /page/estoque/enderecos por um link vê o painel de Estoque, sem ter
-    // clicado no trilho.
-    const areaDaRota = useMemo(() => {
-
-        if (!rotaAtiva) return undefined
-
-        return secoes.find((secao) =>
-            secao.nos.some(
-                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
-            ),
-        )?.titulo
-
-    }, [secoes, rotaAtiva])
-
-    /* Os atalhos que ESTA loja tem liberados.
-     *
-     * Saem do mesmo menu que o servidor respondeu — e não de uma lista fixa
-     * aqui — porque quem decide o que existe é ele: a conversa da equipe e as
-     * várias lojas são do plano Pro, e um destino fixo ofereceria a quem não
-     * tem uma tela que a API recusaria abrir. Sem o item no menu, o atalho
-     * simplesmente não nasce. */
-    const atalhos = useMemo(() => {
-
-        return ATALHOS.flatMap((atalho) => {
-
-            const item = menu.find((umItem) => umItem.chave === atalho.chave && umItem.liberado)
-
-            return item ? [{ ...atalho, rota: item.rota }] : []
-        })
-
-    }, [menu])
-
-    /* Os atalhos como o servidor os mandou, liberados OU trancados.
-     *
-     * É esta lista, e não `atalhos`, que o trocador de área mostra: um
-     * atalho trancado precisa continuar visível ali, com o cadeado, porque é
-     * assim que quem não assinou o Pro descobre que a conversa da equipe e
-     * as várias lojas existem (ver o comentário grande acima de ATALHOS).
-     * `linkDoItem` já sabe desenhar as duas situações — é a mesma função que
-     * a lista de telas usa. */
-    const atalhosParaMostrar = useMemo(() => {
-
-        return ATALHOS.flatMap((atalho) => {
-
-            const item = menu.find((umItem) => umItem.chave === atalho.chave)
-
-            return item ? [item] : []
-        })
-
-    }, [menu])
-
-    /* O que o menu mostra.
-     *
-     * Três respostas, nesta ordem:
-     *
-     *   1. A ÁREA QUE O LOJISTA ESCOLHEU no trocador — e ela só vale enquanto
-     *      ele não trocou de tela, por isso a escolha guarda a rota em que
-     *      foi feita. É o que dispensa um efeito zerando a escolha a cada
-     *      navegação.
-     *
-     *   2. O ATALHO em que ele está. Esta é a resposta que faltava: Lojas e
-     *      Configurações moram na seção "Conta" do catálogo, então, estando
-     *      numa delas, o menu mostrava a lista de Conta — e os atalhos do
-     *      trocador levavam à mesma lista, como se fossem a mesma coisa.
-     *      Agora a lista é do atalho: Configurações mostra o que abre dentro
-     *      dela (a Assinatura), e Lojas, que não abre nada, não mostra lista
-     *      nenhuma — a tela fica com a largura inteira, como na conversa da
-     *      equipe.
-     *
-     *   3. A área da tela atual, que é o caso comum.
-     */
-    const areaVisivel = useMemo(() => {
-
-        const escolhida = area && area.rota === rotaAtiva ? area.titulo : undefined
-
-        if (!escolhida) {
-
-            const atalhoAberto = atalhos.find((atalho) => atalho.rota === rotaAtiva)
-
-            if (atalhoAberto) {
-
-                const no = secoes
-                    .flatMap((secao) => secao.nos)
-                    .find((umNo) => umNo.item.chave === atalhoAberto.chave)
-
-                // Atalho sem nada dentro não desenha lista: uma coluna de
-                // 15rem com um item só, que é justamente o que já está aceso
-                // no trocador, é espaço tirado da tela de trabalho.
-                if (!no || no.filhos.length === 0) return null
-
-                return {
-                    titulo: no.item.nome,
-                    nos: no.filhos.map((filho) => ({ item: filho, filhos: [] })),
-                }
-            }
-        }
-
-        return secoes.find((secao) => secao.titulo === (escolhida ?? areaDaRota)) ?? secoes[0]
-
-    }, [secoes, atalhos, area, areaDaRota, rotaAtiva])
-
     /* A largura que o menu ocupa, anunciada às telas.
      *
      * Elas leem --menu pela classe .com-menu (ver globals.css) em vez de cada
      * uma saber quanto mede o menu. Por isso o valor é escrito aqui, que é o
-     * único lugar que sabe se o painel de telas está aberto: sem isso,
-     * recolher o painel deixaria 15rem de papel vazio em toda tela do
-     * painel.
+     * único lugar que sabe se o menu está aberto: sem isso, recolhê-lo
+     * deixaria 15rem de papel vazio em toda tela do painel.
      *
-     * O trilho (4.5rem) fica sempre, dentro e fora da conversa da equipe —
-     * só o painel de telas recolhe, e vira uma tira de 2.5rem para reabrir.
-     * 19.5rem = trilho + painel; 7rem = trilho + tira. A conversa não lê
-     * esta variável (o `ml-[19.5rem]` dela é escrito à mão, ver
+     * 15rem aberto; 2.5rem recolhido, só a tira para reabrir. A conversa não
+     * lê esta variável (o `ml-[15rem]` dela é escrito à mão, ver
      * page/equipe/page.tsx), então noChat não entra aqui. */
     useEffect(() => {
 
         if (!noPainel) return
 
-        document.documentElement.style.setProperty("--menu", painelRecolhido ? "7rem" : "19.5rem")
+        document.documentElement.style.setProperty("--menu", painelRecolhido ? "2.5rem" : "15rem")
 
         return () => {
             document.documentElement.style.removeProperty("--menu")
         }
 
     }, [painelRecolhido, noPainel])
-
-
-    // A tela aberta é um dos atalhos? Então a área dela não acende, e o
-    // cabeçalho do menu mostra o nome do atalho em vez do nome da área.
-    const numAtalho = atalhosParaMostrar.some((atalho) => atalho.rota === rotaAtiva)
-
-    // As chaves que o trocador de área já está mostrando (liberadas ou
-    // trancadas). Tela do Pro que esta loja não assinou entra aqui do mesmo
-    // jeito — ela não vira lista, e por isso precisa sair da lista de telas
-    // para não aparecer duas vezes.
-    const chavesDosAtalhos = useMemo(
-        () => new Set(ATALHOS.map((atalho) => atalho.chave)),
-        [],
-    )
 
     /* Quantas coisas esperam NESTA tela.
      *
@@ -660,28 +448,6 @@ export default function Sidebar() {
             default:
                 return 0
         }
-    }
-
-    /* Tem coisa esperando nesta área?
-     *
-     * Só o que o sino já conta, e nada de novo: pedido que chegou e WhatsApp
-     * ou chat sem resposta são de Vendas. A bolinha existe para o lojista não
-     * precisar abrir a área para descobrir que havia algo lá — é o preço de
-     * ter fechado as outras áreas. */
-    function contagemDaArea(secao: { nos: No[] }): number {
-
-        let total = 0
-
-        for (const no of secao.nos) {
-
-            total += contagemDoItem(no.item.chave)
-
-            for (const filho of no.filhos) {
-                total += contagemDoItem(filho.chave)
-            }
-        }
-
-        return total
     }
 
     // O que a busca do topo acha. Ela procura entre as telas que ESTE lojista
@@ -1079,195 +845,70 @@ export default function Sidebar() {
     }
 
     /* ==================================================================
-       O MENU — trilho de áreas à esquerda, painel de telas ao lado
+       O MENU — uma coluna só, com todas as áreas e todas as telas
 
-       Passou por três formas na mesma tarde: um trilho escuro permanente de
-       64px (a anatomia do Slack e do Teams); depois um cabeçalho-botão que
-       abria uma listinha por cima ao ser clicado; depois uma fileira
-       horizontal das cinco áreas espremida no topo de uma coluna só. As
-       duas últimas pareciam mais originais, mas o lojista comparou com os
-       painéis grandes que usa no dia a dia — Meta Business Suite, Slack,
-       Teams — e pediu de volta o desenho deles: um trilho fixo, sempre à
-       vista, do lado de fora da lista de telas. É o desenho que ele já
-       tinha escolhido uma vez (ver histórico), e a fileira horizontal foi
-       quem se desviou dele, não o contrário.
+       Foi um trilho de ícones à esquerda (as áreas: Início, Vendas,
+       Estoque...) e um painel separado ao lado, com as telas da área que
+       se clicava — a anatomia do Slack e do Teams, escolhida (e defendida)
+       mais de uma vez no histórico deste arquivo. Na prática o lojista não
+       estava achando a tela que procurava: precisava primeiro adivinhar em
+       qual das cinco áreas ela morava, clicar ali, e só então ler a lista
+       — dois passos, dois lugares, para uma linha só.
 
-       O trilho agora é permanente e fica de PÉ mesmo dentro da conversa da
-       equipe — antes ele sumia inteiro ali, e a conversa ficava sem
-       nenhuma navegação de área no cromo, só o botão "voltar" perdido na
-       barra de cima. Só o painel de telas ao lado é que a conversa
-       substitui pela lista dela (ver `noChat`, mais abaixo): o trilho
-       continua sendo "onde eu estou no sistema", e isso não muda por
-       estar conversando. */
-    const trilho = (
+       Virou uma coluna única: cada área é um cabeçalho, e as telas dela
+       vêm logo abaixo, tudo visível de uma vez, exatamente como a gaveta
+       do celular já fazia (ver `gavetaDoCelular`, que é o molde desta
+       coluna). Achar uma tela passou a ser ler de cima a baixo uma vez,
+       não abrir um trocador e adivinhar antes.
+
+       Com o trilho foi embora o trocador de área e os atalhos separados
+       dele: a conversa da equipe e as lojas da rede, que moravam ali por
+       um clique só, voltam a aparecer dentro da própria seção "Conta" —
+       uma tela, uma porta, sem lista especial pendurada num ícone. */
+    const menuLateral = (
         <>
-            <nav className="trilho-rolagem flex flex-1 flex-col items-stretch gap-1 overflow-y-auto px-2 py-3">
-                {secoes.map((secao) => {
-
-                    const Icone = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
-                    const ativa = !numAtalho && secao.titulo === (areaVisivel?.titulo ?? "")
-                    const esperando = contagemDaArea(secao)
-                    const porta = secao.nos.find((no) => no.item.liberado)?.item
-
-                    return (
-                        <button
-                            key={secao.titulo}
-                            type="button"
-                            onClick={() => {
-                                setArea({ titulo: secao.titulo, rota: porta?.rota ?? rotaAtiva })
-                                setPainelRecolhido(false)
-
-                                if (porta && porta.rota !== rotaAtiva) router.push(porta.rota)
-                            }}
-                            aria-current={ativa ? "true" : undefined}
-                            title={secao.titulo}
-                            aria-label={esperando > 0 ? `${secao.titulo}, ${esperando} esperando` : secao.titulo}
-                            className="relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
-                        >
-                            {/* O sinal de "é aqui que você está" é o traço à
-                                esquerda, não um selo atrás do ícone — círculo
-                                branco acendendo por trás do ícone é o mesmo
-                                enfeite que qualquer maquete de painel usa.
-                                Aqui é só o ícone mudando de cor, com um traço
-                                fino marcando qual é — e um brilho suave nele,
-                                em vez de aceso/apagado seco, é o que separa
-                                "formal" de "botão de app de celular". */}
-                            {ativa && (
-                                <span
-                                    className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white"
-                                    style={{ boxShadow: "0 0 6px 1px rgba(255,255,255,0.65)" }}
-                                    aria-hidden
-                                />
-                            )}
-
-                            <span className="relative flex h-6 w-6 items-center justify-center">
-                                <Icone className={`w-[1.3rem] ${ativa ? "text-white" : "text-[var(--topo-texto)]"}`} aria-hidden />
-
-                                {esperando > 0 && (
-                                    <span className="num absolute -right-1.5 -top-1.5 min-w-[0.9rem] rounded-full border border-[var(--topo)] bg-[var(--vermelho-forte)] px-0.5 text-center text-[0.5rem] font-bold leading-[0.85rem] text-white">
-                                        {esperando > 99 ? "99+" : esperando}
-                                    </span>
-                                )}
-                            </span>
-
-                            <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${ativa ? "font-bold text-white" : "font-medium text-[var(--topo-texto)]"}`}>
-                                {ROTULO_DA_AREA[comparavel(secao.titulo)] ?? secao.titulo}
-                            </span>
-                        </button>
-                    )
-                })}
-            </nav>
-
-            {/* Os atalhos moram aqui embaixo, separados por um fio: a
-                conversa da equipe e as lojas da rede não são "uma área da
-                loja" (não têm telas penduradas), mas se usam tanto quanto
-                uma — e um atalho de um clique só faz sentido no mesmo trilho
-                de onde se troca de área, não numa barra à parte lá em cima. */}
-            {atalhosParaMostrar.length > 0 && (
-                <div className="flex shrink-0 flex-col items-stretch gap-1 border-t border-[var(--topo-linha)] px-2 py-3">
-                    {atalhosParaMostrar.map((item) => {
-
-                        const Icone = ATALHOS.find((a) => a.chave === item.chave)?.Icone ?? FiGrid
-                        const esperando = contagemDoItem(item.chave)
-                        const aqui = itemAtivo(item.rota)
-
-                        return (
-                            <Link
-                                key={item.chave}
-                                href={destinoDe(item)}
-                                aria-label={
-                                    !item.liberado
-                                        ? `${item.nome} — faz parte do plano Pro`
-                                        : esperando > 0
-                                            ? `${item.nome}, ${esperando} esperando`
-                                            : item.nome
-                                }
-                                title={!item.liberado ? `${item.nome} — faz parte do plano Pro` : item.nome}
-                                aria-current={aqui ? "page" : undefined}
-                                className="relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
-                            >
-                                {aqui && (
-                                    <span
-                                        className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white"
-                                        style={{ boxShadow: "0 0 6px 1px rgba(255,255,255,0.65)" }}
-                                        aria-hidden
-                                    />
-                                )}
-
-                                <span className="relative flex h-6 w-6 items-center justify-center">
-                                    <Icone className={`w-[1.3rem] ${aqui ? "text-white" : "text-[var(--topo-texto)]"}`} aria-hidden />
-
-                                    {!item.liberado ? (
-                                        <FiLock className="absolute -right-1.5 -top-1.5 w-3 rounded-full bg-[var(--topo)] p-px text-white" aria-hidden />
-                                    ) : esperando > 0 ? (
-                                        <span className="num absolute -right-1.5 -top-1.5 min-w-[0.9rem] rounded-full border border-[var(--topo)] bg-[var(--vermelho-forte)] px-0.5 text-center text-[0.5rem] font-bold leading-[0.85rem] text-white">
-                                            {esperando > 99 ? "99+" : esperando}
-                                        </span>
-                                    ) : null}
-                                </span>
-
-                                <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-white" : "font-medium text-[var(--topo-texto)]"}`}>
-                                    {item.nome}
-                                </span>
-                            </Link>
-                        )
-                    })}
-                </div>
-            )}
-        </>
-    )
-
-    /* O painel de telas, ao lado do trilho — só existe fora da conversa da
-       equipe, que desenha a própria lista no lugar dele. O cabeçalho repete
-       o nome da área aberta: sem ele o painel seria uma lista sem título,
-       flutuando ao lado dos ícones que já a explicam uma vez. */
-    const telasDaAreaVisivel = areaVisivel ? semAtalhos(areaVisivel.nos, chavesDosAtalhos) : []
-    const totalDeTelas = contarTelas(telasDaAreaVisivel)
-
-    const painelDeTelas = (
-        <>
-            <div className="flex shrink-0 items-start justify-between gap-2 border-b border-[var(--linha)] px-4 py-2.5">
-                <div className="min-w-0">
-                    <p className="font-display truncate text-[0.9375rem] text-[var(--ink)]">
-                        {areaVisivel?.titulo ?? "Menu"}
-                    </p>
-
-                    {areaVisivel && totalDeTelas > 1 && (
-                        <p className="num text-[0.6875rem] text-[var(--ink-3)]">
-                            {totalDeTelas} telas
-                        </p>
-                    )}
-                </div>
+            <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-[var(--linha)] px-4">
+                <p className="font-display text-[0.9375rem] text-[var(--ink)]">Menu</p>
 
                 <button
                     type="button"
                     onClick={() => setPainelRecolhido(true)}
                     aria-label="Recolher o menu"
                     title="Recolher o menu"
-                    className="-mr-1.5 -mt-0.5 shrink-0 rounded-md p-1.5 text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--azul)]"
+                    className="-mr-1.5 shrink-0 rounded-md p-1.5 text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--azul)]"
                 >
                     <FiChevronsLeft className="w-3.5" aria-hidden />
                 </button>
             </div>
 
-            <nav className="menu-rolagem flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+            <nav className="menu-rolagem flex-1 overflow-y-auto px-2 py-3">
                 {carregando && esqueletoDeTelas()}
 
-                {areaVisivel && listaDeNos(telasDaAreaVisivel)}
+                {!carregando && secoes.map((secao) => {
+                    const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
 
-                {!areaVisivel && !carregando && (
-                    <p className="px-2.5 py-1.5 text-[0.8125rem] text-[var(--ink-3)]">
-                        Esta tela não tem outras telas dentro dela.
-                    </p>
-                )}
+                    return (
+                        <div
+                            key={secao.titulo}
+                            className="mb-4 space-y-0.5 border-t border-[var(--linha-suave)] pt-4 first:border-t-0 first:pt-0 last:mb-0"
+                        >
+                            <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
+                                <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
+                                {secao.titulo}
+                            </p>
+
+                            {listaDeNos(secao.nos)}
+                        </div>
+                    )
+                })}
             </nav>
         </>
     )
 
-    /* No celular não há trocador: a gaveta mostra tudo de uma vez, com o
-       título de cada área como separador. Tela pequena não comporta duas
-       camadas de navegação, e esconder área atrás de um clique a mais seria
-       pior do que a lista. */
+    /* A gaveta do celular é o mesmo molde do `menuLateral` de desktop — as
+       duas sempre mostraram tudo de uma vez, com o título de cada área como
+       separador; foi o desktop que copiou este desenho dela, não o
+       contrário. */
     const gavetaDoCelular = (
         <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
             {carregando && esqueletoDeTelas()}
@@ -1474,13 +1115,6 @@ export default function Sidebar() {
                         </div>
                     )}
 
-                {/* Os atalhos (conversa da equipe, lojas da rede) e o botão
-                    de voltar da conversa saíram desta barra e foram para o
-                    trilho, à esquerda — ver `trilho`, abaixo. O trilho fica
-                    de pé o tempo todo, dentro e fora da conversa, então ele é
-                    quem agora resolve "para onde eu vou", e duas cópias do
-                    mesmo atalho (uma aqui, outra no trilho) seriam a mesma
-                    tela com duas portas. */}
                 <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-0">
 
                     {/* Claro/escuro. Um ícone só, do que ACONTECE ao clicar
@@ -1649,43 +1283,26 @@ export default function Sidebar() {
             </header>
 
             {/* ==============================================================
-                NAVEGAÇÃO — desktop: trilho de áreas + painel de telas
+                NAVEGAÇÃO — desktop: uma coluna só
 
-                A anatomia é a dos painéis grandes que o lojista usa todo dia
-                — Meta Business Suite, Slack, Teams —, e não mais uma coluna
-                só com as áreas espremidas numa fileira no topo (ver o
-                histórico acima de `trilho`). O trilho fica de pé sempre,
-                inclusive dentro da conversa da equipe; só o painel branco ao
-                lado — as telas da área aberta — recolhe ou dá lugar à lista
-                da conversa. */}
-            <aside
-                style={{
-                    top: ALTURA_TOPO,
-                    height: `calc(100dvh - ${ALTURA_TOPO})`,
-                    // Um degradê quase imperceptível, de cima para baixo —
-                    // não é enfeite, é o que faz o azul chapado parecer
-                    // material e não papel de parede. Sutil de propósito:
-                    // um degradê que se nota é o mesmo excesso decorativo
-                    // que o painel já tirou dos cartões.
-                    backgroundImage: "linear-gradient(180deg, var(--topo-hover) 0%, var(--topo) 22%, var(--topo-2) 100%)",
-                }}
-                className="fixed left-0 z-30 hidden w-[4.5rem] flex-col border-r border-[var(--topo-linha)] md:flex print:hidden"
-            >
-                {trilho}
-            </aside>
-
+                Era um trilho de ícones (as áreas) e um painel separado ao
+                lado (as telas da área aberta) — dois lugares para achar uma
+                linha. Virou uma coluna única, sempre à vista, com todas as
+                áreas e todas as telas juntas (ver `menuLateral`, acima). Só
+                dentro da conversa da equipe ela dá lugar à lista de grupos e
+                pessoas, que a própria tela desenha (ver `noChat`). */}
             {!noChat && !painelRecolhido && (
                 <aside
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
+                    className="fixed left-0 z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
                 >
-                    {painelDeTelas}
+                    {menuLateral}
                 </aside>
             )}
 
-            {/* A aba de reabrir, quando o painel de telas está recolhido —
-                só o bastante para lembrar que existe e para reabrir com um
-                clique. Fica encostada no trilho, nunca sozinha na borda. */}
+            {/* A aba de reabrir, quando o menu está recolhido — só o
+                bastante para lembrar que existe e para reabrir com um
+                clique. */}
             {!noChat && painelRecolhido && (
                 <button
                     type="button"
@@ -1693,24 +1310,9 @@ export default function Sidebar() {
                     aria-label="Abrir o menu"
                     title="Abrir o menu"
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-[4.5rem] z-30 hidden w-10 flex-col items-center justify-center gap-3 border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
+                    className="fixed left-0 z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
                 >
                     <FiChevronsRight className="w-3.5 shrink-0" aria-hidden />
-
-                    {/* O nome da área escondida, de lado — para a aba dizer o
-                        que tem atrás dela em vez de só convidar a clicar às
-                        cegas. Trunca pelo alto da faixa: um título comprido
-                        (Endereços do estoque) some antes de esbarrar no
-                        rodapé da tela. */}
-                    {areaVisivel?.titulo && (
-                        <span
-                            className="max-h-[65%] truncate text-[0.6875rem] font-medium tracking-[0.01em] [writing-mode:vertical-rl]"
-                            style={{ transform: "rotate(180deg)" }}
-                            aria-hidden
-                        >
-                            {areaVisivel.titulo}
-                        </span>
-                    )}
                 </button>
             )}
 

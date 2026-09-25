@@ -412,7 +412,7 @@ export default function ConversaDaEquipe() {
                 eu={estado.eu}
             />
 
-            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
+            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[15rem] md:px-6">
 
                 {erro && (
                     <div role="alert" className="mb-3 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
@@ -718,11 +718,10 @@ function MenuDoChat({
     return (
         <aside
             style={{ top: "3.5rem", height: "calc(100dvh - 3.5rem)" }}
-            // left-[4.5rem]: encosta no trilho de áreas do painel (ver
-            // header.tsx), que continua de pé mesmo dentro da conversa —
-            // esta coluna toma só o lugar do painel de telas, não o trilho
-            // inteiro.
-            className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
+            // O menu do painel (ver header.tsx) não tem mais trilho de
+            // áreas — é uma coluna só, e esta lista de conversa toma o
+            // lugar dela por inteiro enquanto a conversa está aberta.
+            className="fixed left-0 z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
         >
             <div className="border-b border-[var(--linha)] px-3 py-2.5">
                 <Link
