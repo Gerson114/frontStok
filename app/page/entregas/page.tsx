@@ -8,6 +8,7 @@ import { formatarMoeda } from "@/app/components/preco/preco"
 import type { Pedido } from "@/app/type/type"
 import { consultarAgenda, marcarDiaDeEnvio } from "@/middleware/pedidos"
 import { ApiError } from "@/middleware/client"
+import { useAoVivo } from "@/middleware/aoVivo"
 
 /**
  * A agenda de entregas.
@@ -266,6 +267,12 @@ export default function Entregas() {
             cancelado = true
         }
     }, [chave, versao])
+
+    // Um pedido pago agora entra em "em preparo", e um cancelado sai da
+    // agenda. Reaproveita o mesmo contador que o marcar() já usa: subir a
+    // versão é o que releva o mês inteiro do servidor, em vez de remendar as
+    // três listas daqui.
+    useAoVivo(["pedido", "separacao"], () => setVersao((atual) => atual + 1))
 
     /**
      * Põe o pedido num dia — é o que o tira do preparo e o bota no calendário.

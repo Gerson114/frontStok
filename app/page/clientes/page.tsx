@@ -8,6 +8,7 @@ import Pagination from "@/app/components/pagination/pagination"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import { telefoneLegivel } from "@/app/components/contato/telefone"
 import { listarClientes, type ClienteResumo } from "@/middleware/clientes"
+import { useAoVivo } from "@/middleware/aoVivo"
 
 /**
  * Clientes.
@@ -48,6 +49,12 @@ export default function ClientesPage() {
     const [ordem, setOrdem] = useState<Ordem>("recentes")
     const [pagina, setPagina] = useState(1)
 
+    // Sobe de um a cada aviso do servidor, e é a única dependência da busca
+    // além da montagem. É o mesmo recurso da agenda de entregas: relê a lista
+    // inteira em vez de tentar encaixar o cliente novo na ordenação e na
+    // paginação atuais daqui.
+    const [versao, setVersao] = useState(0)
+
     useEffect(() => {
 
         let vivo = true
@@ -68,7 +75,12 @@ export default function ClientesPage() {
         return () => {
             vivo = false
         }
-    }, [])
+    }, [versao])
+
+    // O cliente novo chega por fora desta tela: ele se cadastra na vitrine, ou
+    // alguém o lança no balcão. Um pedido também mexe aqui, porque a lista
+    // mostra o quanto cada um já gastou.
+    useAoVivo(["cliente", "pedido"], () => setVersao((atual) => atual + 1))
 
     const filtrados = useMemo(() => {
 

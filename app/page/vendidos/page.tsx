@@ -9,6 +9,7 @@ import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import { FiFileText, FiSearch, FiX, FiAlertTriangle, FiCheck, FiDollarSign, FiShoppingBag } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
+import { useAoVivo } from "@/middleware/aoVivo"
 
 const ITENS_POR_PAGINA = 10
 
@@ -53,6 +54,10 @@ export default function Vendidos() {
         carregar()
 
     }, [])
+
+    // A venda sai do balcão ou do site e a peça muda de dono: os dois avisos
+    // interessam a esta lista.
+    useAoVivo(["estoque", "pedido"], carregar)
 
     const produtosPorId = useMemo(() => {
         const mapa = new Map<number, Produto>()

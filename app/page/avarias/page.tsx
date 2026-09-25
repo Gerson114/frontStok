@@ -5,6 +5,7 @@ import Link from "next/link"
 import type { Produto, Unidade } from "@/app/type/type"
 import { listarProdutos, listarTodasUnidades, restaurarUnidade, identificarPeca } from "@/middleware/produtos"
 import { ApiError } from "@/middleware/client"
+import { useAoVivo } from "@/middleware/aoVivo"
 import { FiMapPin, FiAlertTriangle, FiCheck } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
@@ -50,6 +51,11 @@ export default function Avarias() {
         carregar()
 
     }, [])
+
+    // Uma peça avariada em outro terminal aparece aqui sozinha: quem dá baixa
+    // por avaria costuma estar no corredor, com o conferente olhando esta
+    // tela de outro computador.
+    useAoVivo(["estoque"], carregar)
 
     const produtosPorId = useMemo(() => {
         const mapa = new Map<number, Produto>()

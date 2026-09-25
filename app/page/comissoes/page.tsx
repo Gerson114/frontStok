@@ -6,6 +6,7 @@ import { FiAlertCircle, FiLock, FiUnlock, FiUsers } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import { consultarComissoes, fecharComissoes, reabrirComissoes } from "@/middleware/comissoes"
+import { useAoVivo } from "@/middleware/aoVivo"
 import type { FechamentoDeComissao } from "@/app/type/type"
 
 /**
@@ -118,6 +119,13 @@ export default function Comissoes() {
             cancelado = true
         }
     }, [])
+
+    // A comissão anda a cada venda que o vendedor fecha, e ele fecha no
+    // balcão, não aqui. O mês continua sendo o que está no campo: `buscar`
+    // sem argumento relê o mesmo que a tela já mostra.
+    useAoVivo(["comissao", "pedido"], () => {
+        void buscar(mes || undefined)
+    })
 
     async function fechar() {
 

@@ -24,6 +24,7 @@ import {
     FiPackage,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { useAoVivo } from "@/middleware/aoVivo"
 import { Selecao } from "@/app/components/campo/selecao"
 import {
     BarraDaLista,
@@ -112,6 +113,11 @@ export default function DevolucoesPage() {
     }, [recarregar])
 
     const atualizar = () => setRecarregar((n) => n + 1)
+
+    // A devolução nasce do outro lado: é o cliente que a abre, na loja dele,
+    // e ninguém no balcão vai adivinhar que ela chegou. Reaproveita o mesmo
+    // contador dos botões desta tela.
+    useAoVivo(["devolucao", "estoque"], atualizar)
 
     const aguardando = useMemo(
         () => devolucoes.filter((devolucao) => devolucao.situacao !== "resolvida"),

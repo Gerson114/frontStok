@@ -23,6 +23,7 @@ import {
     FiRepeat,
 } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
+import { useAoVivo } from "@/middleware/aoVivo"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
 import {
     BarraDaLista,
@@ -176,6 +177,13 @@ export default function Estoque() {
         carregar()
 
     }, [])
+
+    // O estoque é o número que mais gente muda ao mesmo tempo: entrada de
+    // mercadoria no depósito, venda no balcão, separação no corredor, baixa
+    // por avaria. Quem está olhando esta tela precisa ver o saldo de agora, e
+    // não o de quando ela abriu — contar peça em cima de número velho é como
+    // o inventário sai errado.
+    useAoVivo(["estoque", "separacao", "pedido"], carregar)
 
     const produtosPorId = useMemo(() => {
         const mapa = new Map<number, Produto>()

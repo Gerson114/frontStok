@@ -13,6 +13,7 @@ import {
 import { listarPedidos } from "@/middleware/pedidos"
 import type { Pedido } from "@/app/type/type"
 import { ApiError } from "@/middleware/client"
+import { useAoVivo } from "@/middleware/aoVivo"
 import {
     FiAlertCircle,
     FiCheckCircle,
@@ -110,6 +111,12 @@ export default function Ondas() {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- busca inicial ao montar a página
         carregar()
     }, [carregar])
+
+    // A onda é montada com os pedidos confirmados do momento. Um pedido que
+    // entra ou é pago enquanto alguém monta a onda precisa aparecer na lista
+    // de separáveis sem recarregar a tela — senão ele fica de fora da onda e
+    // ninguém percebe.
+    useAoVivo(["separacao", "pedido"], carregar)
 
     // Só pedido confirmado entra: antes disso não há o que separar, e depois
     // o pacote já saiu da loja.

@@ -17,6 +17,7 @@ import {
     FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { useAoVivo } from "@/middleware/aoVivo"
 import FluxoDoAtendimento from "@/app/components/painel/fluxo"
 import type { Funcionario, PermissaoConcedivel } from "@/app/type/type"
 import {
@@ -235,6 +236,11 @@ export default function Funcionarios() {
             cancelado = true
         }
     }, [])
+
+    // Duas pessoas mexendo na equipe ao mesmo tempo é o caso comum aqui: o
+    // dono promove alguém de um computador enquanto o gerente olha a lista de
+    // outro. Sem isto, o segundo continua vendo a permissão antiga.
+    useAoVivo(["funcionario"], carregar)
 
     const pessoa = useMemo(
         () => (typeof escolhido === "number" ? equipe.find((f) => f.id === escolhido) ?? null : null),

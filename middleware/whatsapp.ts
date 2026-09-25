@@ -483,7 +483,16 @@ const ESQUEMA_DE_SOCKET = /^wss?:\/\//i
  * variável de ambiente: pode chegar em branco, com http:// no lugar de ws://
  * ou com um endereço colado errado, e um desses viraria uma conexão para
  * onde ninguém quis.
+ *
+ * A variável é a RAIZ do servidor, e o caminho do socket é acrescentado aqui.
+ * Quem a preenche copiando o endereço completo — "wss://api.exemplo.com.br/ws/whatsapp"
+ * — produziria "/ws/whatsapp/ws/whatsapp", que é um 404 do qual o WebSocket
+ * não consegue reclamar: a tela apenas nunca recebe aviso nenhum e volta a
+ * depender do recarregamento manual. Por isso o caminho que vier na variável
+ * é descartado, em vez de concatenado.
  */
+const CAMINHO_DO_FLUXO = "/ws/whatsapp"
+
 function enderecoDoFluxo(bilhete: string): string | null {
 
     let base = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080").trim().replace(/\/+$/, "")
@@ -494,7 +503,21 @@ function enderecoDoFluxo(bilhete: string): string | null {
         base = base.replace(/^ws:\/\//i, "wss://")
     }
 
-    return `${base}/ws/whatsapp?bilhete=${encodeURIComponent(bilhete)}`
+    let raiz: URL
+
+    try {
+        raiz = new URL(base)
+    } catch {
+        return null
+    }
+
+    if (raiz.pathname !== "/" && raiz.pathname !== "") {
+        console.warn(
+            `NEXT_PUBLIC_WS_URL traz um caminho (${raiz.pathname}) que foi descartado: a variável é a raiz do servidor, e ${CAMINHO_DO_FLUXO} é acrescentado pelo painel.`,
+        )
+    }
+
+    return `${raiz.protocol}//${raiz.host}${CAMINHO_DO_FLUXO}?bilhete=${encodeURIComponent(bilhete)}`
 }
 
 async function pedirBilhete(): Promise<string> {
@@ -585,6 +608,9 @@ async function conectar() {
         // varredura de meio minuto de cada tela segura o que falta.
         if (endereco === null) {
             desistiu = true
+            console.error(
+                `Tempo real desligado: NEXT_PUBLIC_WS_URL (${process.env.NEXT_PUBLIC_WS_URL ?? "não definida"}) não é um endereço de WebSocket. O painel só vai se atualizar na varredura de 30 segundos.`,
+            )
             return
         }
 
@@ -640,11 +666,31 @@ async function conectar() {
  * longa não virar uma tentativa por segundo contra um servidor que já está em
  * apuros.
  */
+
+/**
+ * Depois de quantas quedas seguidas o painel reclama no console.
+ *
+ * Existe por causa do modo de falha mais caro que este canal tem: uma
+ * NEXT_PUBLIC_WS_URL sintaticamente correta e apontando para um servidor que
+ * não existe — o endereço de exemplo que ninguém trocou. Não há erro de
+ * digitação para o código recusar, então ele reconecta para sempre, em
+ * silêncio, e a única pista que sobra é o lojista dizendo que precisa
+ * recarregar a tela para ver o pedido. Cinco quedas seguidas nunca acontecem
+ * numa queda de rede comum, que volta na primeira ou na segunda.
+ */
+const QUEDAS_ATE_RECLAMAR = 5
+
 function reagendar() {
 
     if (desistiu || agendado || ouvintes.size === 0) return
 
     tentativas += 1
+
+    if (tentativas === QUEDAS_ATE_RECLAMAR) {
+        console.error(
+            `Tempo real fora do ar: ${QUEDAS_ATE_RECLAMAR} tentativas seguidas de abrir o WebSocket falharam. Confira NEXT_PUBLIC_WS_URL (${process.env.NEXT_PUBLIC_WS_URL ?? "não definida"}) e se a API responde nesse endereço. Enquanto isso o painel depende da varredura de 30 segundos.`,
+        )
+    }
 
     const espera = Math.min(1000 * 2 ** (tentativas - 1), 30000)
 

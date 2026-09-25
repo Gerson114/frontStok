@@ -24,6 +24,7 @@ import {
     FiX,
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
+import { useAoVivo } from "@/middleware/aoVivo"
 import { Selecao } from "@/app/components/campo/selecao"
 import {
     BarraDaLista,
@@ -173,6 +174,17 @@ export default function FilaDoEstoque() {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- contagem das abas, uma vez ao abrir
         contar()
     }, [contar])
+
+    // Esta é a tela mais compartilhada do sistema: várias pessoas no corredor
+    // pegando tarefa da mesma fila. Sem o aviso ao vivo, duas vão atrás da
+    // mesma peça porque a lista de cada uma ficou parada no que era antes.
+    //
+    // A contagem das abas também recarrega: o número em "Pendentes" faz parte
+    // da tela e envelheceria junto.
+    useAoVivo(["separacao", "estoque", "pedido"], () => {
+        carregar()
+        contar()
+    })
 
     async function executar(id: number, acao: () => Promise<unknown>, mensagem: string) {
 
