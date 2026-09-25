@@ -314,11 +314,18 @@ const ORIGENS_SOCKET = origensDoSocket().join(" ")
 const METODOS_SENSIVEIS = ["POST", "PUT", "DELETE", "PATCH"]
 
 function origemConfiavel(request: NextRequest): boolean {
+    // O host que o navegador falou é o cabeçalho Host da requisição, não
+    // request.nextUrl.host: atrás do Cloudflare e do Traefik do Dokploy,
+    // nextUrl.host reflete o socket interno do container, nunca o domínio
+    // público — e a comparação falhava para TODO mundo, dono da loja
+    // incluso, derrubando o login inteiro atrás desses dois proxies.
+    const hostPublico = (request.headers.get("host") ?? "").toLowerCase()
+
     const origin = request.headers.get("origin")
 
     if (origin) {
         try {
-            return new URL(origin).host === request.nextUrl.host
+            return new URL(origin).host.toLowerCase() === hostPublico
         } catch {
             return false
         }
@@ -328,7 +335,7 @@ function origemConfiavel(request: NextRequest): boolean {
 
     if (referer) {
         try {
-            return new URL(referer).host === request.nextUrl.host
+            return new URL(referer).host.toLowerCase() === hostPublico
         } catch {
             return false
         }
