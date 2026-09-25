@@ -428,54 +428,6 @@ export default function Sidebar() {
 
     const secoes = useMemo(() => montarSecoes(menu), [menu])
 
-    /* O acordeão: cada área abre e fecha por conta própria, em vez de todas
-       ficarem sempre à vista. O lojista pediu de volta — a lista inteira
-       aberta de uma vez virou comprida demais para ler de relance.
-
-       Nenhum estado guarda "quais áreas estão abertas" diretamente — isso
-       levaria a um efeito reagindo à troca de rota para reabrir a área
-       certa, e setState dentro de efeito é o par de renders a mais que o
-       React pede para evitar. Em vez disso, `secoesAlternadas` guarda só o
-       que o DEDO already tocou: um título aqui inverte o padrão dela. O
-       padrão em si (aberta = "é daqui que a tela atual sai") é conta feita
-       na hora, e muda sozinho quando a rota muda — sem efeito nenhum. */
-    const [secoesAlternadas, setSecoesAlternadas] = useState<Set<string>>(() => new Set())
-
-    const secaoDaRotaAtual = useMemo(() => {
-
-        if (!rotaAtiva) return undefined
-
-        return secoes.find((secao) =>
-            secao.nos.some(
-                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
-            ),
-        )?.titulo
-
-    }, [secoes, rotaAtiva])
-
-    function secaoEstaAberta(titulo: string) {
-
-        const abertaPorPadrao = titulo === secaoDaRotaAtual
-
-        return secoesAlternadas.has(titulo) ? !abertaPorPadrao : abertaPorPadrao
-    }
-
-    function alternarSecao(titulo: string) {
-
-        setSecoesAlternadas((alternadas) => {
-
-            const proximas = new Set(alternadas)
-
-            if (proximas.has(titulo)) {
-                proximas.delete(titulo)
-            } else {
-                proximas.add(titulo)
-            }
-
-            return proximas
-        })
-    }
-
     /* As telas do trilho, na ordem de CHAVES_DO_TRILHO — e só as que O MENU
      * DESTA LOJA já trouxe, liberadas ou trancadas (trancada ainda mostra
      * o ícone, em cinza com cadeado: é assim que se descobre que o Pro
@@ -935,33 +887,23 @@ export default function Sidebar() {
         )
     }
 
-    /* Uma área do menu, dobrada ou aberta — o mesmo desenho no desktop e no
-       celular, para as duas colunas nunca discordarem sobre o que cada
-       área se chama ou qual ícone leva. O cabeçalho inteiro é o botão (não
-       só a seta), porque um alvo de toque de 12px de seta é o tipo de
-       coisa que só funciona com mouse. */
+    /* Uma área do menu — o mesmo desenho no desktop e no celular, para as
+       duas colunas nunca discordarem sobre o que cada área se chama ou
+       qual ícone leva. Sem dobrar: a área inteira fica sempre à vista,
+       porque abrir uma seção antes de poder ler as telas dela é um clique
+       a mais entre o lojista e o que ele procura. */
     function secaoDoMenu(secao: { titulo: string; nos: No[] }) {
 
         const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
-        const aberta = secaoEstaAberta(secao.titulo)
 
         return (
-            <div key={secao.titulo} className="border-t border-[var(--linha-suave)] pt-1 first:border-t-0 first:pt-0">
-                <button
-                    type="button"
-                    onClick={() => alternarSecao(secao.titulo)}
-                    aria-expanded={aberta}
-                    className="flex w-full items-center gap-1.5 px-2.5 py-2 text-left text-[0.6875rem] font-semibold text-[var(--ink-3)] transition-colors hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)]"
-                >
+            <div key={secao.titulo} className="mb-4 space-y-0.5 border-t border-[var(--linha-suave)] pt-4 first:border-t-0 first:pt-0 last:mb-0">
+                <p className="mb-1.5 flex items-center gap-1.5 px-2.5 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                     <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
-                    <span className="flex-1 truncate">{secao.titulo}</span>
-                    <FiChevronDown
-                        className={`w-3 shrink-0 transition-transform ${aberta ? "rotate-180" : ""}`}
-                        aria-hidden
-                    />
-                </button>
+                    {secao.titulo}
+                </p>
 
-                {aberta && <div className="space-y-0.5 pb-3">{listaDeNos(secao.nos)}</div>}
+                {listaDeNos(secao.nos)}
             </div>
         )
     }
@@ -1023,7 +965,7 @@ export default function Sidebar() {
     )
 
     /* ==================================================================
-       O ACORDEÃO — uma coluna só, ao lado do trilho
+       O MENU — uma coluna só, ao lado do trilho
 
        Foi um painel separado do trilho, mostrando só as telas da área
        clicada — a anatomia do Slack e do Teams, escolhida (e defendida)
@@ -1032,11 +974,12 @@ export default function Sidebar() {
        qual das cinco áreas ela morava, clicar ali, e só então ler a lista
        — dois passos, dois lugares, para uma linha só.
 
-       Virou uma coluna única, cada área com o seu próprio acordeão (ver
-       `secaoDoMenu`): abre a área em que já está, e o resto fica fechado
-       até ser aberto. É o mesmo desenho da gaveta do celular (ver
+       Virou uma coluna única, com toda área e toda tela à vista de uma vez
+       (ver `secaoDoMenu`) — passou por um acordeão no meio do caminho, que
+       saiu de novo: abrir uma seção antes de poder ler as telas dela ainda
+       era um clique a mais. É o mesmo desenho da gaveta do celular (ver
        `gavetaDoCelular`, que é o molde desta coluna). O trilho, ao lado,
-       cobre os atalhos de todo dia — o acordeão é para o resto. */
+       cobre os atalhos de todo dia — este menu é para o resto. */
     const menuLateral = (
         <>
             <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-[var(--linha)] px-4">
