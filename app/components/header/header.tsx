@@ -935,7 +935,14 @@ export default function Sidebar() {
      * contar a mesma coisa duas vezes — uma no pai e outra na linha logo
      * abaixo.
      */
-    function linkDoItem(item: ItemMenu) {
+    // `ehFilho` distingue mãe de filha sem empurrar nada para o lado — a
+    // hierarquia que o recuo dava antes agora é só peso de letra: a mãe (a
+    // tela que abre uma seção) fica em negrito mesmo apagada, a filha fica
+    // no peso normal e um tom mais claro de tinta. A ORDEM continua fazendo
+    // o resto do trabalho (a filha vem logo depois da mãe); o peso só ajuda
+    // o olho a separar "onde começa cada assunto" numa lista comprida sem
+    // reintroduzir o fio de recuo que o lojista já pediu para tirar.
+    function linkDoItem(item: ItemMenu, ehFilho = false) {
 
         const Icone = ICONES[item.chave] ?? FiHome
         const ativo = itemAtivo(item.rota)
@@ -996,7 +1003,9 @@ export default function Sidebar() {
                 className={`flex items-center gap-2.5 py-2 pl-2.5 pr-3 text-[0.8125rem] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] ${
                     ativo
                         ? "font-semibold text-[var(--azul)]"
-                        : "font-medium text-[var(--ink)] hover:bg-[var(--fundo)] focus-visible:bg-[var(--fundo)]"
+                        : ehFilho
+                            ? "font-normal text-[var(--ink-2)] hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)]"
+                            : "font-semibold text-[var(--ink)] hover:bg-[var(--fundo)] focus-visible:bg-[var(--fundo)]"
                 }`}
             >
                 <span className="flex w-1.5 shrink-0 items-center justify-center">
@@ -1043,7 +1052,7 @@ export default function Sidebar() {
             </div>,
             ...no.filhos.map((filho) => (
                 <div key={filho.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
-                    {linkDoItem(filho)}
+                    {linkDoItem(filho, true)}
                 </div>
             )),
         ])
