@@ -1028,10 +1028,37 @@ export default function Sidebar() {
        história (a filha vem logo depois da mãe), só que sem empurrar nada
        para o lado. */
     function listaDeNos(nos: No[]) {
+        let ordem = 0
         return nos.flatMap((no) => [
-            <div key={no.item.chave}>{linkDoItem(no.item)}</div>,
-            ...no.filhos.map((filho) => <div key={filho.chave}>{linkDoItem(filho)}</div>),
+            <div key={no.item.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
+                {linkDoItem(no.item)}
+            </div>,
+            ...no.filhos.map((filho) => (
+                <div key={filho.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
+                    {linkDoItem(filho)}
+                </div>
+            )),
         ])
+    }
+
+    /* O retrato da lista antes dela existir: mesma largura de coluna do ícone
+       e do texto de um item real, para a lista não pular de tamanho quando o
+       servidor responde. Cada barra tem uma largura diferente — de propósito,
+       nomes de tela não têm todos o mesmo tamanho — para não ler como grade. */
+    function esqueletoDeTelas() {
+        const larguras = ["72%", "56%", "64%", "44%"]
+
+        return (
+            <div aria-hidden>
+                {larguras.map((largura, i) => (
+                    <div key={i} className="flex items-center gap-2.5 py-2 pl-2.5 pr-3">
+                        <span className="w-1.5 shrink-0" />
+                        <span className="esqueleto-menu w-4 shrink-0" style={{ animationDelay: `${i * 90}ms` }} />
+                        <span className="esqueleto-menu" style={{ width: largura, animationDelay: `${i * 90}ms` }} />
+                    </div>
+                ))}
+            </div>
+        )
     }
 
     /* ==================================================================
@@ -1057,7 +1084,7 @@ export default function Sidebar() {
        estar conversando. */
     const trilho = (
         <>
-            <nav className="flex flex-1 flex-col items-stretch gap-1 overflow-y-auto px-2 py-3">
+            <nav className="trilho-rolagem flex flex-1 flex-col items-stretch gap-1 overflow-y-auto px-2 py-3">
                 {secoes.map((secao) => {
 
                     const Icone = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
@@ -1195,12 +1222,8 @@ export default function Sidebar() {
                 </button>
             </div>
 
-            <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
-                {carregando && (
-                    <p className="px-2.5 py-1.5 text-[0.8125rem] text-[var(--ink-3)]">
-                        Carregando menu...
-                    </p>
-                )}
+            <nav className="menu-rolagem flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+                {carregando && esqueletoDeTelas()}
 
                 {areaVisivel && listaDeNos(semAtalhos(areaVisivel.nos, chavesDosAtalhos))}
 
@@ -1218,12 +1241,8 @@ export default function Sidebar() {
        camadas de navegação, e esconder área atrás de um clique a mais seria
        pior do que a lista. */
     const gavetaDoCelular = (
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-            {carregando && (
-                <p className="px-2.5 py-1.5 text-[0.8125rem] text-[var(--ink-3)]">
-                    Carregando menu...
-                </p>
-            )}
+        <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
+            {carregando && esqueletoDeTelas()}
 
             {secoes.map((secao) => (
                 <div

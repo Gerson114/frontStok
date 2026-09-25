@@ -401,6 +401,68 @@
 }
 
 /* ==========================================================================
+   MENU LATERAL — trilho e painel de telas
+   ========================================================================== */
+
+/* A barra de rolagem padrão do sistema operacional é a única peça do menu
+   que nenhuma das três telas (trilho azul, painel branco, gaveta do celular)
+   desenhou — ela chega pronta do navegador, cinza-neutra, do tamanho que o
+   Windows ou o Chrome decidirem. Aqui ela fica fina e some quando não há o
+   que rolar, na cor de cada superfície em vez da cor de nenhuma. */
+.menu-rolagem {
+  scrollbar-width: thin;
+  scrollbar-color: var(--linha) transparent;
+}
+
+.menu-rolagem::-webkit-scrollbar {
+  width: 0.375rem;
+}
+
+.menu-rolagem::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menu-rolagem::-webkit-scrollbar-thumb {
+  background: var(--linha);
+}
+
+.menu-rolagem::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+}
+
+/* A mesma barra fina, mas na cor do trilho azul — a cinza do painel branco
+   desapareceria nele. */
+.trilho-rolagem {
+  scrollbar-width: thin;
+  scrollbar-color: var(--topo-linha) transparent;
+}
+
+.trilho-rolagem::-webkit-scrollbar {
+  width: 0.375rem;
+}
+
+.trilho-rolagem::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trilho-rolagem::-webkit-scrollbar-thumb {
+  background: var(--topo-linha);
+}
+
+.trilho-rolagem::-webkit-scrollbar-thumb:hover {
+  background: var(--topo-texto);
+}
+
+/* O tijolo do esqueleto, no lugar de "Carregando menu...": a MESMA largura e
+   altura que uma linha real ocuparia, para a lista não pular de tamanho
+   quando o servidor responde. Canto reto, como todo o resto do painel. */
+.esqueleto-menu {
+  height: 0.75rem;
+  background: var(--linha-suave);
+  animation: pulsar-esqueleto 1.1s ease-in-out infinite;
+}
+
+/* ==========================================================================
    FORMULÁRIO
    O campo do Polaris tem a borda mais escura que a do cartão em que ele
    está. É o que faz o campo parecer operável em vez de decorativo — a
@@ -900,6 +962,18 @@
   }
 }
 
+/* O tijolo do esqueleto do menu, enquanto a lista de telas ainda não chegou
+   do servidor. Respira entre dois tons do mesmo neutro — não pisca, não
+   troca de cor — porque é um lugar-comum, não uma notificação. */
+@keyframes pulsar-esqueleto {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* A mensagem que chega. Sobe um pouco porque é de baixo que a conversa
    cresce — descer contrariaria a direção que o olho já está seguindo. */
 .anim-mensagem {
@@ -1025,6 +1099,11 @@
   }
 
   .bolinha-digitando {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .esqueleto-menu {
     animation: none;
     opacity: 0.6;
   }
