@@ -455,6 +455,25 @@ export default function Sidebar() {
         [trilhoParaMostrar],
     )
 
+    /* A coluna mostra só a ÁREA em que o lojista já está — ela segue a rota,
+       nunca pede um clique a mais para escolher. Clicar em Início no
+       trilho, ou em qualquer link de Vendas, já é o clique que decide: a
+       coluna troca sozinha para a área certa. Sem cabeçalho para abrir,
+       sem lista de outras áreas competindo por espaço — só o que pertence
+       a onde a pessoa está agora. Área que a rota não identifica (recém
+       aberto, antes do menu chegar) cai na primeira da lista. */
+    const secaoAtiva = useMemo(() => {
+
+        if (!rotaAtiva) return secoes[0]
+
+        return secoes.find((secao) =>
+            secao.nos.some(
+                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
+            ),
+        ) ?? secoes[0]
+
+    }, [secoes, rotaAtiva])
+
     /* A largura que o menu ocupa, anunciada às telas.
      *
      * Elas leem --menu pela classe .com-menu (ver globals.css) em vez de cada
@@ -910,28 +929,24 @@ export default function Sidebar() {
         )
     }
 
-    /* Uma área do menu — o mesmo desenho no desktop e no celular, para as
-       duas colunas nunca discordarem sobre o que cada área se chama ou
-       qual ícone leva. Sempre aberta: o acordeão saiu porque abrir uma
-       área para descobrir se a tela procurada estava ali, ver que não
-       estava e abrir outra era o mesmo trabalho que rolar uma lista só —
-       só que com um clique extra a cada tentativa errada. */
-    function secaoDoMenu(secao: { titulo: string; nos: No[] }, escondidas: Set<string>) {
+    /* O conteúdo da coluna: só os itens da área ativa (ver `secaoAtiva`,
+       acima). Mesma função para desktop e celular, para as duas nunca
+       discordarem sobre o que aparece. Área cujo único item já mora no
+       trilho (ex.: "Painel" tendo só "Início") fica sem lista — em vez de
+       uma coluna em branco, uma linha diz que já está tudo ao lado. */
+    function conteudoDaColuna() {
 
-        if (!secaoTemConteudo(secao, escondidas)) return null
+        if (!secaoAtiva) return null
 
-        const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
-
-        return (
-            <div key={secao.titulo} className="border-t border-[var(--linha-suave)] pt-1 first:border-t-0 first:pt-0">
-                <p className="flex items-center gap-1.5 px-2.5 py-2 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                    <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
-                    <span className="flex-1 truncate">{secao.titulo}</span>
+        if (!secaoTemConteudo(secaoAtiva, escondidasDaColuna)) {
+            return (
+                <p className="px-2.5 py-2 text-xs text-[var(--ink-3)]">
+                    Tudo desta área já está no atalho ao lado.
                 </p>
+            )
+        }
 
-                <div className="space-y-0.5 pb-3">{listaDeNos(secao.nos, escondidas)}</div>
-            </div>
-        )
+        return <div className="space-y-0.5">{listaDeNos(secaoAtiva.nos, escondidasDaColuna)}</div>
     }
 
     /* O trilho (ver CHAVES_DO_TRILHO, lá em cima): cinco ícones fixos,
@@ -991,25 +1006,33 @@ export default function Sidebar() {
     )
 
     /* ==================================================================
-       O MENU — uma coluna só, ao lado do trilho
+       O MENU — uma coluna só, ao lado do trilho, sempre na área ativa
 
        Foi um painel separado do trilho, mostrando só as telas da área
-       clicada — a anatomia do Slack e do Teams, escolhida (e defendida)
-       mais de uma vez no histórico deste arquivo. Na prática o lojista não
+       clicada — a anatomia do Slack e do Teams. Na prática o lojista não
        estava achando a tela que procurava: precisava primeiro adivinhar em
-       qual das cinco áreas ela morava, clicar ali, e só então ler a lista
-       — dois passos, dois lugares, para uma linha só.
+       qual das cinco áreas ela morava, clicar num cabeçalho para abri-la, e
+       só então ler a lista — dois passos, dois lugares, para uma linha só.
+       Depois virou acordeão, depois virou lista única com tudo à vista de
+       uma vez — e "tudo à vista" trouxe de volta a bagunça: cinco áreas
+       empilhadas na mesma coluna estreita, a maioria irrelevante para onde
+       o lojista estava.
 
-       Virou uma coluna única, em acordeão EXCLUSIVO (ver `secaoDoMenu`):
-       abrir uma área fecha a outra sozinha, sempre uma lista só por vez —
-       nunca a coluna inteira competindo com ela mesma. É o mesmo desenho
-       da gaveta do celular (ver `gavetaDoCelular`, que é o molde desta
-       coluna). O trilho, ao lado, cobre os atalhos de todo dia — este
-       menu é para o resto. */
+       Esta versão não pede clique nenhum: a coluna segue a ROTA (ver
+       `secaoAtiva`, acima). Entrar em Início mostra a área de Início;
+       entrar em Vendas, a de Vendas — o mesmo clique que já leva à tela
+       troca a coluna sozinho. O título no alto (ícone + nome da área) é só
+       para confirmar onde se está, não um botão. */
+    const IconeDaAreaAtiva = secaoAtiva ? (ICONE_DA_AREA[comparavel(secaoAtiva.titulo)] ?? FiGrid) : FiGrid
+
     const menuLateral = (
         <>
-            <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-[var(--linha)] px-4">
-                <p className="font-display text-[0.9375rem] text-[var(--ink)]">Menu</p>
+            <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--linha)] px-4">
+                <IconeDaAreaAtiva className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+
+                <p className="font-display flex-1 truncate text-[0.9375rem] text-[var(--ink)]">
+                    {secaoAtiva?.titulo ?? "Menu"}
+                </p>
 
                 <button
                     type="button"
@@ -1023,22 +1046,27 @@ export default function Sidebar() {
             </div>
 
             <nav className="menu-rolagem flex-1 overflow-y-auto px-2 py-3">
-                {carregando && esqueletoDeTelas()}
-
-                {!carregando && secoes.map((secao) => secaoDoMenu(secao, escondidasDaColuna))}
+                {carregando ? esqueletoDeTelas() : conteudoDaColuna()}
             </nav>
         </>
     )
 
     /* A gaveta do celular é o mesmo molde do `menuLateral` de desktop — as
-       duas sempre foram o mesmo acordeão; foi o desktop que copiou este
-       desenho dela, não o contrário. */
+       duas sempre mostram a mesma área ativa, com o mesmo título no alto. */
     const gavetaDoCelular = (
-        <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
-            {carregando && esqueletoDeTelas()}
+        <>
+            <div className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--linha)] px-4">
+                <IconeDaAreaAtiva className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
 
-            {secoes.map((secao) => secaoDoMenu(secao, escondidasDaColuna))}
-        </nav>
+                <p className="font-display truncate text-[0.9375rem] text-[var(--ink)]">
+                    {secaoAtiva?.titulo ?? "Menu"}
+                </p>
+            </div>
+
+            <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
+                {carregando ? esqueletoDeTelas() : conteudoDaColuna()}
+            </nav>
+        </>
     )
 
 

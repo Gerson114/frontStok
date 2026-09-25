@@ -237,12 +237,7 @@ export default function PagamentoPage() {
                 <p className="flex items-start gap-2 border-l-2 border-[var(--vermelho)] bg-[var(--vermelho-fundo)] px-3 py-2 text-sm text-[var(--vermelho)]">
                     <FiAlertTriangle className="mt-0.5 w-4 shrink-0" aria-hidden />
                     <span>
-                        O servidor está sem os endereços públicos configurados
-                        (<code className="font-mono text-xs">VITRINE_URL</code> e{" "}
-                        <code className="font-mono text-xs">API_PUBLIC_URL</code>). Enquanto
-                        isso, nenhuma loja consegue cobrar pelo site, mesmo com a conta
-                        conectada aqui. Isso é configuração do sistema, não da sua loja —
-                        fale com quem administra o servidor.
+                        Servidor sem <code className="font-mono text-xs">VITRINE_URL</code>/<code className="font-mono text-xs">API_PUBLIC_URL</code> — nenhuma loja cobra pelo site agora. Fale com quem administra o servidor.
                     </span>
                 </p>
             ) : null}
@@ -257,8 +252,8 @@ export default function PagamentoPage() {
                 <Secao
                     titulo="URL de notificação"
                     descricao={exigeSegredo
-                        ? "Cadastre este endereço no painel do seu provedor, no lugar de webhooks. É por ele que a confirmação de pagamento chega — sem isso, o cliente paga e o pedido não aparece aqui."
-                        : "Este é o endereço por onde a confirmação de pagamento chega. No seu provedor ele vai junto de cada cobrança, automaticamente: não há nada a cadastrar. Ele está aqui para você reconhecê-lo se precisar."}
+                        ? "Cadastre este endereço no painel do seu provedor, no lugar de webhooks."
+                        : "Vai junto de cada cobrança automaticamente — nada para cadastrar."}
                 >
                     <code className="block overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--linha)] bg-[var(--superficie-2)] px-3 py-2 font-mono text-xs text-[var(--ink)]">
                         {situacao.url_webhook}
@@ -299,11 +294,6 @@ export default function PagamentoPage() {
                             )
                         })}
                     </div>
-
-                    <p className="mb-5 text-xs text-[var(--ink-2)]">
-                        A escolha é só da sua loja. Trocar de provedor aqui não muda
-                        nada para as outras lojas do sistema.
-                    </p>
 
                     <label htmlFor="token" className="rotulo">{ajuda?.RotuloChave ?? "Chave secreta"}</label>
                     <input
@@ -361,13 +351,9 @@ export default function PagamentoPage() {
 
                 </form>
 
-                <p className="mt-5 flex items-start gap-2 text-xs text-[var(--ink-2)]">
-                    <FiLock className="mt-0.5 w-3.5 shrink-0" aria-hidden />
-                    <span>
-                        O token é guardado cifrado com uma chave exclusiva da sua loja e
-                        nunca volta para esta tela — nem para nós. Se você o perder,
-                        gere outro no Mercado Pago e cole aqui de novo.
-                    </span>
+                <p className="mt-5 flex items-center gap-2 text-xs text-[var(--ink-2)]">
+                    <FiLock className="w-3.5 shrink-0" aria-hidden />
+                    <span>Cifrado com chave exclusiva da sua loja — nunca volta para a tela.</span>
                 </p>
 
             </Secao>
