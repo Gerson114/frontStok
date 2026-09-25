@@ -89,6 +89,7 @@ const ICONES: Record<string, IconType> = {
     venda: FiShoppingBag,
     pedidos: FiShoppingCart,
     "pedidos-novo": FiFilePlus,
+    "equipe-chat": FiMessageSquare,
     etiquetas: FiTag,
     vendidos: FiCheck,
     loja: FiGlobe,
@@ -127,6 +128,30 @@ const ICONE_DA_AREA: Record<string, IconType> = {
 
     "meu site": FiGlobe,
     conta: FiUsers,
+}
+
+/* ==========================================================================
+   O TRILHO: atalho fixo para o que se abre o dia inteiro
+   ==========================================================================
+
+   Ao lado do acordeão (ver `menuLateral`), sempre à vista — um clique, sem
+   precisar abrir seção nenhuma. É deliberadamente curto: cinco telas, não
+   as dezenas do catálogo inteiro. Início e Pedidos são a rotina do dia;
+   Conversas e Equipe são onde se responde alguém; Configurações é a cabeça
+   da seção "Conta" (assinatura, funcionários, regras da loja), então um
+   atalho para ela já cobre "cadê a Conta" sem precisar listar a seção
+   inteira aqui.
+
+   Uma tela só entra na faixa se o MENU desta loja a trouxer — sem isso um
+   atalho fixo ofereceria uma tela que a API recusaria abrir para quem não a
+   tem (ver como `trilhoParaMostrar` filtra, mais abaixo). */
+const CHAVES_DO_TRILHO = ["inicio", "pedidos", "conversas", "equipe-chat", "config"]
+
+// "Conversa da equipe" não cabe em duas linhas de 64px sem cortar de um
+// jeito estranho — as outras telas do trilho têm nome curto o bastante
+// para não precisar disto.
+const ROTULO_CURTO_DO_TRILHO: Record<string, string> = {
+    "equipe-chat": "Equipe",
 }
 
 // Enquanto o menu não chega — e se ele não chegar —, o lojista fica ao menos
@@ -451,6 +476,22 @@ export default function Sidebar() {
         })
     }
 
+    /* As telas do trilho, na ordem de CHAVES_DO_TRILHO — e só as que O MENU
+     * DESTA LOJA já trouxe, liberadas ou trancadas (trancada ainda mostra
+     * o ícone, em cinza com cadeado: é assim que se descobre que o Pro
+     * existe). Sem o item no menu, o atalho simplesmente não nasce — nunca
+     * oferece uma porta que a API recusaria abrir. */
+    const trilhoParaMostrar = useMemo(() => {
+
+        return CHAVES_DO_TRILHO.flatMap((chave) => {
+
+            const item = menu.find((umItem) => umItem.chave === chave)
+
+            return item ? [item] : []
+        })
+
+    }, [menu])
+
     /* A largura que o menu ocupa, anunciada às telas.
      *
      * Elas leem --menu pela classe .com-menu (ver globals.css) em vez de cada
@@ -458,14 +499,16 @@ export default function Sidebar() {
      * único lugar que sabe se o menu está aberto: sem isso, recolhê-lo
      * deixaria 15rem de papel vazio em toda tela do painel.
      *
-     * 15rem aberto; 2.5rem recolhido, só a tira para reabrir. A conversa não
-     * lê esta variável (o `ml-[15rem]` dela é escrito à mão, ver
-     * page/equipe/page.tsx), então noChat não entra aqui. */
+     * O trilho (4.5rem) fica sempre, dentro e fora da conversa da equipe —
+     * só o acordeão ao lado dele recolhe, e vira uma tira de 2.5rem para
+     * reabrir. 19.5rem = trilho + acordeão; 7rem = trilho + tira. A
+     * conversa não lê esta variável (o `ml-[19.5rem]` dela é escrito à
+     * mão, ver page/equipe/page.tsx), então noChat não entra aqui. */
     useEffect(() => {
 
         if (!noPainel) return
 
-        document.documentElement.style.setProperty("--menu", painelRecolhido ? "2.5rem" : "15rem")
+        document.documentElement.style.setProperty("--menu", painelRecolhido ? "7rem" : "19.5rem")
 
         return () => {
             document.documentElement.style.removeProperty("--menu")
@@ -923,12 +966,67 @@ export default function Sidebar() {
         )
     }
 
-    /* ==================================================================
-       O MENU — uma coluna só, em acordeão
+    /* O trilho (ver CHAVES_DO_TRILHO, lá em cima): cinco ícones fixos,
+       sempre à vista, nunca escondidos atrás de uma seção fechada do
+       acordeão ao lado. Fica de pé mesmo dentro da conversa da equipe — só
+       o acordeão dá lugar à lista dela ali (ver `noChat`, mais abaixo). */
+    const trilho = (
+        <nav className="trilho-rolagem flex flex-1 flex-col items-stretch gap-1 overflow-y-auto px-2 py-3">
+            {trilhoParaMostrar.map((item) => {
 
-       Foi um trilho de ícones à esquerda (as áreas: Início, Vendas,
-       Estoque...) e um painel separado ao lado, com as telas da área que
-       se clicava — a anatomia do Slack e do Teams, escolhida (e defendida)
+                const Icone = ICONES[item.chave] ?? FiHome
+                const esperando = contagemDoItem(item.chave)
+                const aqui = itemAtivo(item.rota)
+
+                return (
+                    <Link
+                        key={item.chave}
+                        href={destinoDe(item)}
+                        aria-label={
+                            !item.liberado
+                                ? `${item.nome} — faz parte do plano Pro`
+                                : esperando > 0
+                                    ? `${item.nome}, ${esperando} esperando`
+                                    : item.nome
+                        }
+                        title={!item.liberado ? `${item.nome} — faz parte do plano Pro` : item.nome}
+                        aria-current={aqui ? "page" : undefined}
+                        className="relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                    >
+                        {aqui && (
+                            <span
+                                className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white"
+                                style={{ boxShadow: "0 0 6px 1px rgba(255,255,255,0.65)" }}
+                                aria-hidden
+                            />
+                        )}
+
+                        <span className="relative flex h-6 w-6 items-center justify-center">
+                            <Icone className={`w-[1.3rem] ${aqui ? "text-white" : "text-[var(--topo-texto)]"}`} aria-hidden />
+
+                            {!item.liberado ? (
+                                <FiLock className="absolute -right-1.5 -top-1.5 w-3 rounded-full bg-[var(--topo)] p-px text-white" aria-hidden />
+                            ) : esperando > 0 ? (
+                                <span className="num absolute -right-1.5 -top-1.5 min-w-[0.9rem] rounded-full border border-[var(--topo)] bg-[var(--vermelho-forte)] px-0.5 text-center text-[0.5rem] font-bold leading-[0.85rem] text-white">
+                                    {esperando > 99 ? "99+" : esperando}
+                                </span>
+                            ) : null}
+                        </span>
+
+                        <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-white" : "font-medium text-[var(--topo-texto)]"}`}>
+                            {ROTULO_CURTO_DO_TRILHO[item.chave] ?? item.nome}
+                        </span>
+                    </Link>
+                )
+            })}
+        </nav>
+    )
+
+    /* ==================================================================
+       O ACORDEÃO — uma coluna só, ao lado do trilho
+
+       Foi um painel separado do trilho, mostrando só as telas da área
+       clicada — a anatomia do Slack e do Teams, escolhida (e defendida)
        mais de uma vez no histórico deste arquivo. Na prática o lojista não
        estava achando a tela que procurava: precisava primeiro adivinhar em
        qual das cinco áreas ela morava, clicar ali, e só então ler a lista
@@ -936,15 +1034,9 @@ export default function Sidebar() {
 
        Virou uma coluna única, cada área com o seu próprio acordeão (ver
        `secaoDoMenu`): abre a área em que já está, e o resto fica fechado
-       até ser aberto — a lista inteira sempre aberta de uma vez tinha
-       ficado comprida demais para ler de relance. É o mesmo desenho da
-       gaveta do celular (ver `gavetaDoCelular`, que é o molde desta
-       coluna).
-
-       Com o trilho foi embora o trocador de área e os atalhos separados
-       dele: a conversa da equipe e as lojas da rede, que moravam ali por
-       um clique só, voltam a aparecer dentro da própria seção "Conta" —
-       uma tela, uma porta, sem lista especial pendurada num ícone. */
+       até ser aberto. É o mesmo desenho da gaveta do celular (ver
+       `gavetaDoCelular`, que é o molde desta coluna). O trilho, ao lado,
+       cobre os atalhos de todo dia — o acordeão é para o resto. */
     const menuLateral = (
         <>
             <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-[var(--linha)] px-4">
@@ -1330,26 +1422,37 @@ export default function Sidebar() {
             </header>
 
             {/* ==============================================================
-                NAVEGAÇÃO — desktop: uma coluna só
+                NAVEGAÇÃO — desktop: trilho de atalhos + acordeão
 
-                Era um trilho de ícones (as áreas) e um painel separado ao
-                lado (as telas da área aberta) — dois lugares para achar uma
-                linha. Virou uma coluna única, sempre à vista, com todas as
-                áreas e todas as telas juntas (ver `menuLateral`, acima). Só
-                dentro da conversa da equipe ela dá lugar à lista de grupos e
-                pessoas, que a própria tela desenha (ver `noChat`). */}
+                O trilho (ver `trilho`, acima) é permanente e fica de PÉ
+                mesmo dentro da conversa da equipe — só o acordeão ao lado
+                dá lugar à lista dela ali (ver `noChat`). */}
+            <aside
+                style={{
+                    top: ALTURA_TOPO,
+                    height: `calc(100dvh - ${ALTURA_TOPO})`,
+                    // Um degradê quase imperceptível, de cima para baixo —
+                    // não é enfeite, é o que faz o fundo chapado parecer
+                    // material e não papel de parede. Sutil de propósito.
+                    backgroundImage: "linear-gradient(180deg, var(--topo-hover) 0%, var(--topo) 22%, var(--topo-2) 100%)",
+                }}
+                className="fixed left-0 z-30 hidden w-[4.5rem] flex-col border-r border-[var(--topo-linha)] md:flex print:hidden"
+            >
+                {trilho}
+            </aside>
+
             {!noChat && !painelRecolhido && (
                 <aside
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-0 z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
+                    className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
                 >
                     {menuLateral}
                 </aside>
             )}
 
-            {/* A aba de reabrir, quando o menu está recolhido — só o
+            {/* A aba de reabrir, quando o acordeão está recolhido — só o
                 bastante para lembrar que existe e para reabrir com um
-                clique. */}
+                clique. Fica encostada no trilho, nunca sozinha na borda. */}
             {!noChat && painelRecolhido && (
                 <button
                     type="button"
@@ -1357,7 +1460,7 @@ export default function Sidebar() {
                     aria-label="Abrir o menu"
                     title="Abrir o menu"
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-0 z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
+                    className="fixed left-[4.5rem] z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
                 >
                     <FiChevronsRight className="w-3.5 shrink-0" aria-hidden />
                 </button>
