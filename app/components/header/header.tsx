@@ -945,13 +945,12 @@ export default function Sidebar() {
                                     ? `${item.nome}, ${esperando} esperando`
                                     : item.nome
                         }
-                        title={!item.liberado ? `${item.nome} — faz parte do plano Pro` : item.nome}
                         aria-current={aqui ? "page" : undefined}
-                        className="relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                        className="group relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
                     >
                         {aqui && (
                             <span
-                                className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white"
+                                className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white transition-[height] duration-150"
                                 aria-hidden
                             />
                         )}
@@ -970,6 +969,18 @@ export default function Sidebar() {
 
                         <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-white" : "font-medium text-[var(--topo-texto)]"}`}>
                             {ROTULO_CURTO_DO_TRILHO[item.chave] ?? item.nome}
+                        </span>
+
+                        {/* A dica com o nome inteiro, para quando o rótulo do trilho
+                            veio abreviado (ver ROTULO_CURTO_DO_TRILHO) ou quando a tela
+                            está trancada — o `title` nativo do navegador some 1s depois
+                            de o dedo parar, essa não some enquanto o dedo estiver ali. */}
+                        <span
+                            role="tooltip"
+                            className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-x-1 -translate-y-1/2 whitespace-nowrap bg-[var(--topo-2)] px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-[0_4px_12px_rgba(0,0,0,0.28)] transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+                        >
+                            {item.nome}
+                            {!item.liberado && " — plano Pro"}
                         </span>
                     </Link>
                 )
@@ -1422,7 +1433,7 @@ export default function Sidebar() {
             {!noChat && !painelRecolhido && (
                 <aside
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
+                    className="anim-surgir fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
                 >
                     {menuLateral}
                 </aside>
@@ -1438,7 +1449,7 @@ export default function Sidebar() {
                     aria-label="Abrir o menu"
                     title="Abrir o menu"
                     style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
-                    className="fixed left-[4.5rem] z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
+                    className="anim-surgir fixed left-[4.5rem] z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
                 >
                     <FiChevronsRight className="w-3.5 shrink-0" aria-hidden />
                 </button>
@@ -1453,11 +1464,11 @@ export default function Sidebar() {
                     className="fixed inset-x-0 bottom-0 z-40 md:hidden print:hidden"
                 >
                     <div
-                        className="absolute inset-0 bg-black/40"
+                        className="anim-surgir absolute inset-0 bg-black/40"
                         onClick={() => setAberto(false)}
                     />
 
-                    <aside className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[var(--linha)] bg-[var(--superficie)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+                    <aside className="anim-gaveta absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[var(--linha)] bg-[var(--superficie)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
                         {gavetaDoCelular}
                     </aside>
                 </div>

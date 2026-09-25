@@ -414,6 +414,22 @@
 .menu-rolagem {
   scrollbar-width: thin;
   scrollbar-color: var(--linha) transparent;
+
+  /* Sombra de rolagem: some quando não há mais tela escondida acima ou
+     abaixo, e aparece sozinha quando há. É o mesmo truque de duas camadas
+     de gradiente — uma presa ao conteúdo (`local`, some ao rolar até a
+     ponta) e outra presa à moldura (`scroll`, o traço fino que a revela).
+     Sem isto, uma lista de telas mais comprida que a coluna terminava sem
+     aviso nenhum, e o lojista só descobria que faltava rolar por acaso. */
+  background:
+    linear-gradient(var(--superficie), transparent) local,
+    linear-gradient(transparent, var(--superficie)) local,
+    linear-gradient(var(--linha-suave), transparent) scroll,
+    linear-gradient(transparent, var(--linha-suave)) scroll;
+  background-repeat: no-repeat;
+  background-color: var(--superficie);
+  background-size: 100% 1.75rem, 100% 1.75rem, 100% 0.5rem, 100% 0.5rem;
+  background-position: top, bottom, top, bottom;
 }
 
 .menu-rolagem::-webkit-scrollbar {
@@ -950,6 +966,23 @@
   }
 }
 
+/* A gaveta do menu no celular: desliza inteira da borda esquerda, de onde
+   ela nasce — diferente do `entrar-da-esquerda` de cima, que é só um leve
+   empurrão de detalhe num item de lista, aqui é a COLUNA que precisa vir
+   de fora da tela. */
+@keyframes deslizar-gaveta {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.anim-gaveta {
+  animation: deslizar-gaveta 220ms ease-out both;
+}
+
 /* A bolinha do "está digitando". A escala não vai a zero: a bolinha que
    desaparece pisca, e três piscando viram um alarme. Ela encolhe e clareia,
    que é como se lê "alguém está no meio de uma frase". */
@@ -1096,7 +1129,8 @@
   .anim-mensagem,
   .anim-tela,
   .anim-surgir,
-  .anim-item {
+  .anim-item,
+  .anim-gaveta {
     animation: surgir 1ms linear both;
   }
 
