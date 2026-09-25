@@ -148,16 +148,17 @@
   --fio-ponto: rgba(0, 0, 0, 0.045);
 
   /* A moldura de marca: o trilho do menu à esquerda. Foi quase-preta, virou
-     azul junto com o botão principal por um tempo, e voltou a ser
-     quase-preta — o mesmo tom quente de --ink, só que como fundo em vez de
-     tinta. O botão principal continua azul (--acao); só o trilho deixou de
-     ser a peça que carrega a cor da marca. O --topo-2 é o tom mais fundo, do
-     item aberto e do estado pressionado. */
-  --topo: #23201B;
-  --topo-2: #17140F;
-  --topo-linha: #3A352C;
-  --topo-hover: #2E2A23;
-  --topo-texto: #C9C3B0;
+     azul junto com o botão principal por um tempo, tentou o tom quente de
+     --ink como fundo — e leu como marrom, não como preto. Agora é neutra de
+     propósito: sem viés de matiz nenhum, nem quente nem fria. O botão
+     principal continua azul (--acao); só o trilho deixou de ser a peça que
+     carrega a cor da marca. O --topo-2 é o tom mais fundo, do item aberto e
+     do estado pressionado. */
+  --topo: #1E1E1E;
+  --topo-2: #141414;
+  --topo-linha: #383838;
+  --topo-hover: #2A2A2A;
+  --topo-texto: #C6C6C6;
 
   --verde: #0C5132;
   --verde-fundo: #CDFEE1;

@@ -952,7 +952,6 @@ export default function Sidebar() {
                         {aqui && (
                             <span
                                 className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white"
-                                style={{ boxShadow: "0 0 6px 1px rgba(255,255,255,0.65)" }}
                                 aria-hidden
                             />
                         )}
