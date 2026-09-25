@@ -428,35 +428,6 @@ export default function Sidebar() {
 
     const secoes = useMemo(() => montarSecoes(menu), [menu])
 
-    /* O acordeão: SÓ UMA área aberta por vez — abrir uma fecha a outra
-       sozinha, nunca duas listas competindo por atenção na mesma coluna
-       estreita.
-
-       `undefined` quer dizer "ainda não mexi nisto": a área aberta segue a
-       rota atual, computada na hora (sem efeito, sem setState reagindo à
-       navegação). Assim que o dedo toca um cabeçalho, o valor vira o
-       título escolhido — ou `null`, se era a mesma área já aberta e o
-       clique foi para fechá-la. */
-    const [secaoManual, setSecaoManual] = useState<string | null | undefined>(undefined)
-
-    const secaoDaRotaAtual = useMemo(() => {
-
-        if (!rotaAtiva) return undefined
-
-        return secoes.find((secao) =>
-            secao.nos.some(
-                (no) => no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva),
-            ),
-        )?.titulo
-
-    }, [secoes, rotaAtiva])
-
-    const secaoAberta = secaoManual === undefined ? secaoDaRotaAtual : secaoManual
-
-    function alternarSecao(titulo: string) {
-        setSecaoManual(secaoAberta === titulo ? null : titulo)
-    }
-
     /* As telas do trilho, na ordem de CHAVES_DO_TRILHO — e só as que O MENU
      * DESTA LOJA já trouxe, liberadas ou trancadas (trancada ainda mostra
      * o ícone, em cinza com cadeado: é assim que se descobre que o Pro
@@ -472,6 +443,17 @@ export default function Sidebar() {
         })
 
     }, [menu])
+
+    /* Chaves que já têm um atalho fixo no trilho — a coluna ao lado não
+       repete a linha delas. Repetir "Início" e "Pedidos" nos dois lugares
+       era a queixa: a mesma tela contada duas vezes inflava a lista sem
+       dar nenhuma porta nova. Um item com filhos (como Configurações, que
+       abre Assinatura, Funcionários etc.) mantém os filhos na coluna —
+       só o link repetido do pai é que some, porque o trilho já leva lá. */
+    const escondidasDaColuna = useMemo(
+        () => new Set(trilhoParaMostrar.map((item) => item.chave)),
+        [trilhoParaMostrar],
+    )
 
     /* A largura que o menu ocupa, anunciada às telas.
      *
@@ -882,18 +864,30 @@ export default function Sidebar() {
        parecia torta, não subordinada. A ordem continua contando a mesma
        história (a filha vem logo depois da mãe), só que sem empurrar nada
        para o lado. */
-    function listaDeNos(nos: No[]) {
+    function listaDeNos(nos: No[], escondidas: Set<string>) {
         let ordem = 0
         return nos.flatMap((no) => [
-            <div key={no.item.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
-                {linkDoItem(no.item)}
-            </div>,
+            ...(escondidas.has(no.item.chave)
+                ? []
+                : [
+                    <div key={no.item.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
+                        {linkDoItem(no.item)}
+                    </div>,
+                ]),
             ...no.filhos.map((filho) => (
                 <div key={filho.chave} className="anim-item" style={{ animationDelay: `${Math.min(ordem++, 6) * 25}ms` }}>
                     {linkDoItem(filho, true)}
                 </div>
             )),
         ])
+    }
+
+    /* Se sobra algo para mostrar depois de tirar as linhas que o trilho já
+       cobre. Seção que fica vazia (ex.: só tinha "Início", e "Início" já
+       está no trilho) não desenha título nenhum — um cabeçalho sem lista
+       embaixo é só ruído. */
+    function secaoTemConteudo(secao: { nos: No[] }, escondidas: Set<string>) {
+        return secao.nos.some((no) => !escondidas.has(no.item.chave) || no.filhos.length > 0)
     }
 
     /* O retrato da lista antes dela existir: mesma largura de coluna do ícone
@@ -918,31 +912,24 @@ export default function Sidebar() {
 
     /* Uma área do menu — o mesmo desenho no desktop e no celular, para as
        duas colunas nunca discordarem sobre o que cada área se chama ou
-       qual ícone leva. Acordeão EXCLUSIVO: abrir uma fecha a outra
-       sozinha (ver `secaoAberta`, acima) — nunca duas listas competindo
-       por atenção na mesma coluna estreita. */
-    function secaoDoMenu(secao: { titulo: string; nos: No[] }) {
+       qual ícone leva. Sempre aberta: o acordeão saiu porque abrir uma
+       área para descobrir se a tela procurada estava ali, ver que não
+       estava e abrir outra era o mesmo trabalho que rolar uma lista só —
+       só que com um clique extra a cada tentativa errada. */
+    function secaoDoMenu(secao: { titulo: string; nos: No[] }, escondidas: Set<string>) {
+
+        if (!secaoTemConteudo(secao, escondidas)) return null
 
         const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
-        const aberta = secaoAberta === secao.titulo
 
         return (
             <div key={secao.titulo} className="border-t border-[var(--linha-suave)] pt-1 first:border-t-0 first:pt-0">
-                <button
-                    type="button"
-                    onClick={() => alternarSecao(secao.titulo)}
-                    aria-expanded={aberta}
-                    className="flex w-full items-center gap-1.5 px-2.5 py-2 text-left text-[0.6875rem] font-semibold text-[var(--ink-3)] transition-colors hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)]"
-                >
+                <p className="flex items-center gap-1.5 px-2.5 py-2 text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                     <IconeDaSecao className="w-3.5 shrink-0" aria-hidden />
                     <span className="flex-1 truncate">{secao.titulo}</span>
-                    <FiChevronDown
-                        className={`w-3 shrink-0 transition-transform ${aberta ? "rotate-180" : ""}`}
-                        aria-hidden
-                    />
-                </button>
+                </p>
 
-                {aberta && <div className="space-y-0.5 pb-3">{listaDeNos(secao.nos)}</div>}
+                <div className="space-y-0.5 pb-3">{listaDeNos(secao.nos, escondidas)}</div>
             </div>
         )
     }
@@ -1038,7 +1025,7 @@ export default function Sidebar() {
             <nav className="menu-rolagem flex-1 overflow-y-auto px-2 py-3">
                 {carregando && esqueletoDeTelas()}
 
-                {!carregando && secoes.map(secaoDoMenu)}
+                {!carregando && secoes.map((secao) => secaoDoMenu(secao, escondidasDaColuna))}
             </nav>
         </>
     )
@@ -1050,7 +1037,7 @@ export default function Sidebar() {
         <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
             {carregando && esqueletoDeTelas()}
 
-            {secoes.map(secaoDoMenu)}
+            {secoes.map((secao) => secaoDoMenu(secao, escondidasDaColuna))}
         </nav>
     )
 
