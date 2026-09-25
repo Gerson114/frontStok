@@ -14,10 +14,9 @@
    frio para um neutro morno, cor de papel de ficha — e trocar o sinal de "é
    aqui que você está" por um símbolo que só esta marca tem: o ponto cheio do
    miolo do C (ver components/marca/marca.tsx), em vez do fio ou da pílula
-   coloridos que qualquer painel usa. O trilho continua azul e o botão
-   principal continua azul — isso é a marca, "azul e branco como no Insta", e
-   não volta a ser preto — mas o AZUL sozinho não é mais o que diz "produto
-   próprio"; é o ponto.
+   coloridos que qualquer painel usa. O botão principal continua azul — isso
+   é a marca —, mas o trilho do menu voltou a ser quase-preto: o AZUL sozinho
+   não é mais o que diz "produto próprio"; é o ponto.
 
    O papel vem do contexto: quem usa este painel roda uma loja de verdade —
    estoque físico com endereço, etiqueta impressa, pedido em ficha, entrega na
@@ -148,15 +147,17 @@
   --fio-fundo: #F7F7F7;
   --fio-ponto: rgba(0, 0, 0, 0.045);
 
-  /* A moldura de marca: o trilho do menu à esquerda. Era quase-preta, e
-     ficou azul junto com o botão principal — é a peça que dá ao painel a
-     cara azul e branca da Chonnostech. O --topo-2 é o tom mais fundo, do
+  /* A moldura de marca: o trilho do menu à esquerda. Foi quase-preta, virou
+     azul junto com o botão principal por um tempo, e voltou a ser
+     quase-preta — o mesmo tom quente de --ink, só que como fundo em vez de
+     tinta. O botão principal continua azul (--acao); só o trilho deixou de
+     ser a peça que carrega a cor da marca. O --topo-2 é o tom mais fundo, do
      item aberto e do estado pressionado. */
-  --topo: #005BD3;
-  --topo-2: #00369B;
-  --topo-linha: #0047A8;
-  --topo-hover: #0051BD;
-  --topo-texto: #BBD6FF;
+  --topo: #23201B;
+  --topo-2: #17140F;
+  --topo-linha: #3A352C;
+  --topo-hover: #2E2A23;
+  --topo-texto: #C9C3B0;
 
   --verde: #0C5132;
   --verde-fundo: #CDFEE1;
@@ -232,9 +233,9 @@
    assim que .card, .btn-*, .field, .tag-*, .tabela e o resto dos componentes
    já escritos em cima destes tokens (ver o resto deste arquivo) mudam de
    cor sozinhos, sem precisar de uma segunda classe "escura" espalhada pelo
-   JSX. O trilho do menu (--topo*) fica de fora de propósito: ele já é a
-   marca azul sobre uma faixa escura, e essa faixa já funciona em cima de um
-   fundo claro ou escuro sem precisar mudar. */
+   JSX. O trilho do menu (--topo*) fica de fora de propósito: ele já é uma
+   faixa quase-preta por conta própria, e essa faixa já funciona em cima de
+   um fundo claro ou escuro sem precisar mudar. */
 :root[data-theme="dark"] {
 
   --background: #1B1B1A;
