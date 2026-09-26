@@ -684,6 +684,25 @@ export default function AtendimentoPage() {
 
                                         const daLoja = mensagem.autor === "loja"
 
+                                        /* O aviso automático não é fala de
+                                           ninguém: nem do cliente, nem de quem
+                                           atende. Desenhá-lo como um balão do
+                                           lado da loja faria o atendente ler
+                                           "você disse" uma frase que ele não
+                                           escreveu — e procurar, no histórico,
+                                           quando foi que disse. Vai no meio da
+                                           conversa, sem balão e sem lado. */
+                                        if (mensagem.autor === "sistema") {
+                                            return (
+                                                <p
+                                                    key={mensagem.id}
+                                                    className="mx-auto max-w-[85%] text-center text-xs italic text-[var(--ink-3)]"
+                                                >
+                                                    {mensagem.texto}
+                                                </p>
+                                            )
+                                        }
+
                                         return (
                                             <div
                                                 key={mensagem.id}

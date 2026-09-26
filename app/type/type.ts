@@ -1470,6 +1470,26 @@ export interface ConfiguracaoDaLoja {
     /** Quanto o cliente paga adiantado, em por cento. Cinquenta é o costume. */
     percentual_da_entrada: number
 
+    /* ----------------------------------------------------------------------
+       OS AVISOS AUTOMÁTICOS DO ATENDIMENTO
+
+       O que o cliente lê sem ninguém ter digitado, nos dois canais: o chat da
+       vitrine e o WhatsApp. No WhatsApp eles saem como mensagem de verdade no
+       celular dele.
+
+       Vazio desliga aquele aviso. `{atendente}` é trocado pelo nome de quem
+       pegou a conversa — num texto sem a marca, nada é trocado.
+       ---------------------------------------------------------------------- */
+
+    /** Sai quando o cliente escreve e ainda não há ninguém com a conversa. */
+    texto_de_boas_vindas: string
+
+    /** Sai quando alguém da loja inicia o atendimento. */
+    texto_ao_iniciar: string
+
+    /** Sai quando o atendimento é encerrado. */
+    texto_ao_encerrar: string
+
     atualizado_em?: string
 }
 
@@ -1490,6 +1510,9 @@ export interface LimiteDeCampo {
 
 export interface RespostaDaConfiguracao {
     configuracao: ConfiguracaoDaLoja
+
+    /** O que o lojista digita para o nome de quem atende entrar no texto. */
+    marca_do_atendente?: string
 
     /** Os limites de cada campo, para a tela mostrá-los ao lado em vez de só recusar. */
     limites: Record<string, LimiteDeCampo>

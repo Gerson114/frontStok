@@ -34,6 +34,20 @@ interface Props {
 
 export default function Bolha({ mensagem, abreGrupo = true, fechaGrupo = true }: Props) {
 
+    /* O aviso que o sistema mandou sozinho não é bolha de ninguém.
+
+       Ele sai pelo mesmo canal e chega ao celular do cliente como qualquer
+       resposta — mas desenhá-lo como fala da loja faria o atendente ler
+       "você disse" uma frase que ele não escreveu, e procurar no histórico
+       quando foi que a disse. Vai no meio da conversa, sem lado. */
+    if (mensagem.automatica) {
+        return (
+            <p className="mx-auto mb-2.5 max-w-[85%] text-center text-xs italic text-[var(--ink-3)] sm:max-w-[34rem]">
+                {mensagem.texto}
+            </p>
+        )
+    }
+
     const minha = mensagem.direcao === "saida"
     const familia = familiaDaMidia(mensagem.midia_mime)
     const endereco = urlDaMidia(mensagem.id)

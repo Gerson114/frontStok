@@ -98,6 +98,15 @@ export interface MensagemWhatsApp {
 
     /** Quem da loja escreveu. Vazio nas mensagens do cliente e nas antigas. */
     ator?: string
+
+    /**
+     * O sistema mandou sozinho: boas-vindas, "fulano assumiu", "atendimento
+     * encerrado" (ver a tela de Configurações → Atendimento).
+     *
+     * Sai no celular do cliente como qualquer resposta, mas no painel é
+     * desenhada sem balão: ninguém da equipe digitou aquilo.
+     */
+    automatica?: boolean
     texto: string
     tipo: string
     status: "enfileirada" | "enviada" | "entregue" | "lida" | "falhou" | "recebida"

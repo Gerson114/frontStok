@@ -7,6 +7,7 @@ import {
     FiAlertCircle,
     FiArrowRight,
     FiBell,
+    FiMessageSquare,
     FiCheckCircle,
     FiCreditCard,
     FiDollarSign,
@@ -56,7 +57,7 @@ import type { AtendimentoDaLoja, ConfiguracaoDaLoja, LimiteDeCampo, OpcaoDoRamo,
  * um sobrescrever o outro.
  */
 
-type IdDoGrupo = "geral" | "venda" | "pagamento" | "entrega" | "estoque" | "notificacoes"
+type IdDoGrupo = "geral" | "venda" | "pagamento" | "entrega" | "estoque" | "atendimento" | "notificacoes"
 
 /** Os grupos do índice, na ordem em que aparecem. */
 const GRUPOS: { id: IdDoGrupo; titulo: string; linha: string; Icone: IconType }[] = [
@@ -89,6 +90,12 @@ const GRUPOS: { id: IdDoGrupo; titulo: string; linha: string; Icone: IconType }[
         titulo: "Estoque",
         linha: "A partir de quantos dias sem sair uma unidade conta como parada.",
         Icone: FiPackage,
+    },
+    {
+        id: "atendimento",
+        titulo: "Atendimento",
+        linha: "O que o cliente lê sozinho: ao escrever, quando alguém assume e ao encerrar.",
+        Icone: FiMessageSquare,
     },
     {
         id: "notificacoes",
@@ -155,6 +162,12 @@ function Configuracoes() {
     const [atendimentos, setAtendimentos] = useState<OpcaoDoRamo[]>([])
     const [fusos, setFusos] = useState<{ valor: string; nome: string }[]>([])
 
+    /* A marca que o lojista digita para o nome de quem atende entrar no
+       texto. Vem do servidor, que é quem a troca — escrevê-la aqui de novo
+       seria uma segunda verdade, e as duas divergiriam no dia em que a de lá
+       mudasse. */
+    const [marcaDoAtendente, setMarcaDoAtendente] = useState("{atendente}")
+
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
     const [erro, setErro] = useState("")
@@ -182,6 +195,7 @@ function Configuracoes() {
                 setFusos(resposta.fusos ?? [])
                 setRamos(resposta.ramos ?? [])
                 setAtendimentos(resposta.atendimentos ?? [])
+                if (resposta.marca_do_atendente) setMarcaDoAtendente(resposta.marca_do_atendente)
             })
             .catch((e: unknown) => {
                 if (valeu) setErro(e instanceof Error ? e.message : "Não foi possível carregar a configuração.")
@@ -259,6 +273,17 @@ function Configuracoes() {
             if (config.pedido_minimo > 0) partes.push(`mínimo de R$ ${config.pedido_minimo}`)
 
             return partes.join(" · ")
+        }
+
+        if (id === "atendimento") {
+
+            const ligados = [
+                config.texto_de_boas_vindas && "ao escrever",
+                config.texto_ao_iniciar && "ao assumir",
+                config.texto_ao_encerrar && "ao encerrar",
+            ].filter(Boolean)
+
+            return ligados.length > 0 ? ligados.join(" · ") : "Nenhum aviso automático"
         }
 
         if (id === "entrega") {
@@ -609,6 +634,45 @@ function Configuracoes() {
                             </>
                         )}
 
+                        {aberto.id === "atendimento" && (
+                            <>
+                                {/* O aviso de cada momento, na ordem em que o
+                                    cliente os lê. Campo vazio desliga aquele
+                                    aviso — é assim que quem não quer resposta
+                                    automática nenhuma se livra dela, sem
+                                    precisar de uma chave separada só para
+                                    isso. */}
+                                <Texto
+                                    id="texto_de_boas_vindas"
+                                    nome="Quando o cliente escreve"
+                                    dica="Sai sozinho enquanto ninguém pegou a conversa. Vazio não manda nada."
+                                    valor={config.texto_de_boas_vindas}
+                                    aoMudar={(valor) => mudar("texto_de_boas_vindas", valor)}
+                                />
+
+                                <Texto
+                                    id="texto_ao_iniciar"
+                                    nome="Quando alguém assume"
+                                    dica={`Use ${marcaDoAtendente} para entrar o nome de quem está atendendo.`}
+                                    valor={config.texto_ao_iniciar}
+                                    aoMudar={(valor) => mudar("texto_ao_iniciar", valor)}
+                                />
+
+                                <Texto
+                                    id="texto_ao_encerrar"
+                                    nome="Quando o atendimento encerra"
+                                    dica={`${marcaDoAtendente} vale aqui também.`}
+                                    valor={config.texto_ao_encerrar}
+                                    aoMudar={(valor) => mudar("texto_ao_encerrar", valor)}
+                                />
+
+                                <p className="text-xs text-[var(--ink-3)]">
+                                    Valem no chat do site e no WhatsApp. No WhatsApp o cliente recebe a
+                                    mensagem no celular, como qualquer resposta da loja.
+                                </p>
+                            </>
+                        )}
+
                         {aberto.id === "estoque" && (
                             <Numero
                                 id="dias_para_considerar_parado"
@@ -636,6 +700,41 @@ function Configuracoes() {
                 </form>
             )}
         </Pagina>
+    )
+}
+
+/**
+ * Um ajuste que é uma FRASE, e não um número ou uma chave.
+ *
+ * Fica de fora do molde de `Linha` (nome à esquerda, controle à direita) por
+ * uma razão de tamanho: a frase que o cliente vai ler precisa aparecer
+ * inteira enquanto é escrita, e espremê-la numa coluna de um terço da tela
+ * faria o lojista revisar o texto três palavras por vez.
+ */
+function Texto({ id, nome, dica, valor, aoMudar }: {
+    id: string
+    nome: string
+    dica?: string
+    valor: string
+    aoMudar: (valor: string) => void
+}) {
+    return (
+        <div className="border-b border-[var(--linha)] py-3 last:border-b-0">
+            <label htmlFor={id} className="font-display block text-sm text-[var(--ink)]">
+                {nome}
+            </label>
+
+            {dica && <p className="mt-0.5 text-xs text-[var(--ink-3)]">{dica}</p>}
+
+            <textarea
+                id={id}
+                value={valor}
+                onChange={(evento) => aoMudar(evento.target.value)}
+                rows={2}
+                maxLength={300}
+                className="campo mt-2 w-full resize-y"
+            />
+        </div>
     )
 }
 
