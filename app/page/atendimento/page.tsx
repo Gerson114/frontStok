@@ -5,6 +5,7 @@ import { FiChevronLeft, FiMessageSquare, FiSend } from "react-icons/fi"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
 import {
     definirResponsavel,
+    responderTransferencia,
     listarAtendimentos,
     mensagensDoAtendimento,
     mudarSituacao,
@@ -318,6 +319,29 @@ export default function AtendimentoPage() {
         }
     }
 
+    /**
+     * Responde ao convite: aceita a conversa, ou a manda para a fila.
+     *
+     * Recusar não devolve para quem passou. Se as duas pessoas já disseram
+     * que não é com elas, quem decide é a equipe inteira olhando a fila.
+     */
+    async function responderConvite(id: number, acao: "aceitar" | "recusar") {
+
+        try {
+            await responderTransferencia(id, acao)
+            await carregarLista()
+            setErro("")
+
+            // Recusada, a conversa sai da mesa de quem recusou: ela volta a
+            // ser da fila, e continuar com ela aberta ofereceria um campo de
+            // resposta para um cliente que não é mais seu.
+            if (acao === "recusar") setEscolhido(null)
+
+        } catch (e) {
+            setErro(e instanceof Error ? e.message : "Não foi possível responder.")
+        }
+    }
+
     /** Começa ou termina o atendimento do fio aberto. */
     async function moverSituacao(acao: "iniciar" | "encerrar") {
 
@@ -535,6 +559,16 @@ export default function AtendimentoPage() {
                                                 : "Pegou, não iniciou"}
                                         {fio.responsavel_nome ? ` · ${fio.responsavel_nome}` : ""}
                                     </p>
+
+                                    {/* O convite aparece já na lista: quem
+                                        recebeu precisa achar a conversa sem
+                                        abrir uma por uma para descobrir qual
+                                        está esperando resposta dele. */}
+                                    {fio.transferido_para_id ? (
+                                        <p className="mt-0.5 text-[0.7rem] font-semibold text-[var(--azul)]">
+                                            passada para {fio.transferido_para} · esperando resposta
+                                        </p>
+                                    ) : null}
                                 </button>
                             </li>
                         ))}
@@ -574,6 +608,49 @@ export default function AtendimentoPage() {
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2">
+
+                                        {/* O convite pendurado nesta conversa.
+
+                                            Vem antes de qualquer outro botão
+                                            porque é a única coisa que importa
+                                            enquanto ele está de pé: aceitar ou
+                                            recusar decide de quem é o cliente,
+                                            e os passos de atender só fazem
+                                            sentido depois disso. */}
+                                        {aberto.transferido_para_id && (
+                                            <div className="flex w-full flex-wrap items-center gap-2 rounded-md bg-[var(--azul-suave)] px-3 py-2">
+                                                <span className="text-xs text-[var(--ink)]">
+                                                    {aberto.transferido_por ? (
+                                                        <>
+                                                            <span className="font-semibold">{aberto.transferido_por}</span>
+                                                            {" passou esta conversa para "}
+                                                        </>
+                                                    ) : (
+                                                        "Esta conversa foi passada para "
+                                                    )}
+                                                    <span className="font-semibold">{aberto.transferido_para}</span>
+                                                    {". Enquanto ninguém responde, ela continua com quem passou."}
+                                                </span>
+
+                                                <span className="ml-auto flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => responderConvite(aberto.id, "aceitar")}
+                                                        className="btn btn-primario px-3 py-1.5 text-xs"
+                                                    >
+                                                        aceitar
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => responderConvite(aberto.id, "recusar")}
+                                                        className="btn btn-neutro px-3 py-1.5 text-xs"
+                                                    >
+                                                        recusar
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        )}
 
                                         {/* Um passo de cada vez, e sempre o
                                             próximo: na fila só se pega; pego,
@@ -637,10 +714,18 @@ export default function AtendimentoPage() {
                                                     </span>
                                                 </span>
 
+                                                {/* Botão, e não link sublinhado:
+                                                    devolver é o par de pegar, e
+                                                    estava escondido como nota de
+                                                    rodapé ao lado de dois botões
+                                                    de verdade — quem procurava
+                                                    como largar a conversa
+                                                    concluía que só dava para
+                                                    passar para alguém. */}
                                                 <button
                                                     type="button"
                                                     onClick={() => mudarResponsavel({ liberar: true })}
-                                                    className="text-xs text-[var(--ink-2)] underline underline-offset-2 hover:text-[var(--ink)]"
+                                                    className="btn btn-neutro px-3 py-1.5 text-xs"
                                                 >
                                                     devolver à fila
                                                 </button>

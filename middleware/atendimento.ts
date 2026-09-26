@@ -36,6 +36,21 @@ export interface Atendimento {
     situacao: string
     iniciado_em?: string | null
     encerrado_em?: string | null
+
+    /* ----------------------------------------------------------------------
+       O CONVITE DE TRANSFERÊNCIA
+
+       Passar um cliente não muda a conversa de mão sozinho: ela fica
+       oferecida a alguém, e só troca de dono quando essa pessoa aceita. Até
+       lá o fio continua com quem passou, para o cliente não ficar esperando
+       alguém que ainda não viu nada.
+
+       Vazio é "não há convite aberto".
+       ---------------------------------------------------------------------- */
+    transferido_para_id?: number | null
+    transferido_para?: string
+    transferido_por?: string
+    transferido_em?: string | null
 }
 
 /** Os quatro estados de um atendimento, como o servidor os nomeia. */
@@ -141,4 +156,16 @@ export async function definirResponsavel(
             liberar: opcoes.liberar ?? false,
         },
     })
+}
+
+/**
+ * A resposta de quem recebeu a conversa.
+ *
+ * Aceitar põe o fio na mão de quem aceitou, ainda sem começar — sentar para
+ * atender é o clique seguinte, e é ele que avisa o cliente com o nome certo.
+ * Recusar manda o fio para a FILA, e não de volta para quem passou: se as
+ * duas pessoas já disseram que não é com elas, quem resolve é a equipe.
+ */
+export async function responderTransferencia(id: number, acao: "aceitar" | "recusar"): Promise<void> {
+    await apiFetch(`/api/atendimentos/${id}/transferencia`, { method: "POST", body: { acao } })
 }
