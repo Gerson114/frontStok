@@ -49,6 +49,7 @@ import { Pagina } from "@/app/components/pagina/pagina"
 import {
     FiAlertCircle,
     FiAlertTriangle,
+    FiArrowLeft,
     FiBox,
     FiCheckCircle,
     FiMessageCircle,
@@ -58,6 +59,7 @@ import {
     FiSettings,
     FiShoppingCart,
     FiTrash2,
+    FiUser,
     FiX,
 } from "react-icons/fi"
 
@@ -97,6 +99,12 @@ export default function Conversas() {
     const [abertaId, setAbertaId] = useState<number | null>(null)
     const [aberta, setAberta] = useState<Conversa | null>(null)
     const [mensagens, setMensagens] = useState<MensagemWhatsApp[]>([])
+
+    // A ficha do contato (situação, etiquetas, notas) só vira coluna fixa a
+    // partir de xl (1280px) — antes disso ela é uma gaveta que se abre por
+    // cima, porque abaixo de xl não sobra régua nenhuma para uma terceira
+    // coluna ao lado da lista e do fio.
+    const [painelContatoAberto, setPainelContatoAberto] = useState(false)
 
     const [texto, setTexto] = useState("")
     const [enviando, setEnviando] = useState(false)
@@ -459,6 +467,7 @@ export default function Conversas() {
 
         setAbertaId(conversa.id)
         setAberta(conversa)
+        setPainelContatoAberto(false)
 
         // O fio de antes entra na hora, e a busca o corrige logo atrás.
         // Conversa nunca aberta cai no vazio mesmo — aí não há o que mostrar.
@@ -965,17 +974,30 @@ export default function Conversas() {
 
             {/* Três colunas, a anatomia do Atendimento do helenaCRM: a lista
                 de conversas, o fio aberto e os dados de quem está do outro
-                lado. A terceira só entra em tela larga — abaixo disso ela
-                comeria a largura do fio, que é onde o trabalho acontece, e o
-                que ela mostra (pedidos do cliente) já está resumido na
-                etiqueta ao lado do nome, no topo do fio. */}
+                lado. A terceira só vira COLUNA em tela larga (xl) — abaixo
+                disso ela comeria a largura do fio, que é onde o trabalho
+                acontece. Ela continua alcançável (botão de contato no
+                cabeçalho do fio, ver FiUser abaixo), só que como gaveta em
+                vez de coluna fixa.
+
+                Abaixo de md, a lista e o fio nem cabem lado a lado: só um
+                aparece de cada vez (ver abertaId), como no próprio
+                WhatsApp — escolher uma conversa troca a tela inteira para
+                ela, e o botão de voltar no cabeçalho do fio troca de volta. */}
             <div className="card mt-4 grid min-h-0 flex-1 overflow-hidden md:grid-cols-[20rem_1fr] lg:grid-cols-[22rem_1fr] xl:grid-cols-[22rem_1fr_19rem]">
 
                 {/* ==========================
                     LISTA
                 ========================== */}
 
-                <div className="flex min-h-0 flex-col border-b border-[var(--linha-suave)] md:border-b-0 md:border-r">
+                {/* No celular as duas colunas não cabem lado a lado: sem
+                    grid-cols nenhum abaixo de md, elas empilhavam uma sobre
+                    a outra dentro do mesmo card de altura fixa — a lista
+                    media a altura que sobrava do conteúdo, não a tela
+                    inteira, e o fio ficava espremido embaixo dela. Agora só
+                    uma aparece de cada vez: a lista até escolher uma
+                    conversa, o fio depois — o padrão do próprio WhatsApp. */}
+                <div className={`min-h-0 flex-col border-b border-[var(--linha-suave)] md:flex md:border-b-0 md:border-r ${abertaId === null ? "flex" : "hidden"}`}>
 
                     <div className="border-b border-[var(--linha-suave)] p-3">
                         <div className="relative">
@@ -1023,6 +1045,7 @@ export default function Conversas() {
                                         setAba(uma.id)
                                         setAbertaId(null)
                                         setAberta(null)
+                                        setPainelContatoAberto(false)
                                     }}
                                     className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 px-1 py-2.5 text-xs transition-colors ${
                                         nesta
@@ -1238,7 +1261,7 @@ export default function Conversas() {
                     FIO
                 ========================== */}
 
-                <div className="flex min-h-0 min-w-0 flex-col">
+                <div className={`min-h-0 min-w-0 flex-col md:flex ${abertaId === null ? "hidden" : "flex"}`}>
 
                     {aberta === null ? (
 
@@ -1251,7 +1274,29 @@ export default function Conversas() {
 
                     ) : (
                         <>
-                            <div className="flex items-center gap-3 border-b border-[var(--linha-suave)] bg-[var(--superficie)] px-5 py-3">
+                            {/* flex-wrap: no celular Iniciar/Concluir/Transferir e
+                                "Gerar pedido" moravam atrás de um `hidden sm:flex`
+                                — cabiam na régua só a partir de 640px, e sumiam
+                                inteiros no telefone. Aqui elas quebram para uma
+                                segunda linha em vez de sumir: o trabalho da
+                                conversa continua alcançável, só mais alto. */}
+                            <div className="flex flex-wrap items-center gap-3 border-b border-[var(--linha-suave)] bg-[var(--superficie)] px-5 py-3">
+
+                                {/* Só no celular: é a única lista de novo — sem
+                                    coluna ao lado para clicar, este é o
+                                    caminho de volta. */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAbertaId(null)
+                                        setAberta(null)
+                                        setPainelContatoAberto(false)
+                                    }}
+                                    aria-label="Voltar às conversas"
+                                    className="-ml-1.5 shrink-0 rounded-lg p-1.5 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] md:hidden"
+                                >
+                                    <FiArrowLeft className="w-4" aria-hidden />
+                                </button>
 
                                 <Avatar
                                     conversaId={aberta.id}
@@ -1304,7 +1349,7 @@ export default function Conversas() {
                                     respondem ao mesmo tempo dizendo coisas
                                     diferentes. Tirar cliente da mão de outro é
                                     decisão do dono, e é o servidor que recusa. */}
-                                <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                                <div className="flex shrink-0 flex-wrap items-center gap-2">
 
                                     {/* Um passo de cada vez, e sempre o
                                         próximo: na fila se inicia; iniciada,
@@ -1399,10 +1444,22 @@ export default function Conversas() {
                                         setModoCaixa("pedido")
                                         setCaixaAberta(true)
                                     }}
-                                    className="btn btn-secundario hidden shrink-0 sm:inline-flex"
+                                    className="btn btn-secundario shrink-0 inline-flex"
                                 >
                                     <FiShoppingCart className="w-4" aria-hidden />
                                     <span>Gerar pedido</span>
+                                </button>
+
+                                {/* Abaixo de xl a ficha do contato (situação,
+                                    etiquetas, notas) não tem coluna própria —
+                                    este botão é o único caminho até ela. */}
+                                <button
+                                    type="button"
+                                    onClick={() => setPainelContatoAberto(true)}
+                                    aria-label="Dados do contato"
+                                    className="btn btn-neutro shrink-0 px-2.5 xl:hidden"
+                                >
+                                    <FiUser className="w-4" aria-hidden />
                                 </button>
 
                                 {/* QUEM PAGA, no topo e não escondido num relatório.
@@ -1425,7 +1482,7 @@ export default function Conversas() {
                                                 ? "O cliente escreveu primeiro, então esta conversa não é cobrada pela Meta."
                                                 : "A janela grátis fechou. Falar de novo abre uma conversa nova, e a Meta cobra por ela."
                                         }
-                                        className={`hidden shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold sm:inline-flex ${
+                                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold ${
                                             cobrancaDa(aberta) === "gratuita"
                                                 ? "bg-[var(--verde-suave)] text-[var(--verde)]"
                                                 : "bg-[var(--amarelo-fundo)] text-[var(--amarelo)]"
@@ -1687,7 +1744,35 @@ export default function Conversas() {
                     DADOS DO CONTATO
                 ========================== */}
 
-                <aside className="hidden min-h-0 flex-col overflow-y-auto border-l border-[var(--linha-suave)] bg-[var(--superficie-2)] xl:flex">
+                {/* O fundo que fecha a gaveta ao tocar fora — só existe
+                    abaixo de xl, onde a ficha é sobreposição e não coluna. */}
+                {painelContatoAberto && (
+                    <div
+                        className="anim-surgir fixed inset-0 z-40 bg-black/40 xl:hidden"
+                        onClick={() => setPainelContatoAberto(false)}
+                    />
+                )}
+
+                <aside
+                    className={`z-50 min-h-0 flex-col overflow-y-auto border-l border-[var(--linha-suave)] bg-[var(--superficie-2)] xl:static xl:z-auto xl:flex xl:w-auto xl:max-w-none xl:shadow-none ${
+                        painelContatoAberto
+                            ? "anim-tela fixed inset-y-0 right-0 flex w-full max-w-sm shadow-[-4px_0_16px_rgba(0,0,0,0.16)]"
+                            : "hidden"
+                    }`}
+                >
+
+                    <div className="flex shrink-0 items-center justify-between border-b border-[var(--linha-suave)] px-4 py-2.5 xl:hidden">
+                        <span className="text-sm font-semibold text-[var(--ink)]">Dados do contato</span>
+
+                        <button
+                            type="button"
+                            onClick={() => setPainelContatoAberto(false)}
+                            aria-label="Fechar"
+                            className="rounded-lg p-1.5 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)]"
+                        >
+                            <FiX className="w-4" aria-hidden />
+                        </button>
+                    </div>
 
                     {aberta === null ? (
                         <p className="p-6 text-center text-xs text-[var(--ink-3)]">

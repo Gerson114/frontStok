@@ -188,7 +188,7 @@ export default function PainelDeProdutos() {
                 titulo="Na loja agora"
                 descricao="Independe da régua acima: é o que está na prateleira neste momento."
             >
-                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <Cartao
                         Icone={FiPackage}
                         rotulo="À venda"

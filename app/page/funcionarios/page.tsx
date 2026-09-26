@@ -445,17 +445,22 @@ export default function Funcionarios() {
                                     type="button"
                                     onClick={() => setAbertas((a) => ({ ...a, [secao]: !aberta }))}
                                     aria-expanded={aberta}
-                                    className="flex flex-1 items-center gap-2 py-3 text-left transition-colors hover:bg-[var(--superficie-2)]"
+                                    className="flex min-w-0 flex-1 items-center gap-2 py-3 text-left transition-colors hover:bg-[var(--superficie-2)]"
                                 >
                                     {aberta
                                         ? <FiChevronDown className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
                                         : <FiChevronRight className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />}
 
-                                    <span className="flex-1 text-sm font-semibold text-[var(--ink)]">
+                                    {/* min-w-0 + truncate: sem eles, um nome de
+                                        seção comprido ("Produtos e estoque")
+                                        empurra a conta e o botão "Marcar tudo"
+                                        para fora da tela no celular, em vez de
+                                        cortar o texto. */}
+                                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--ink)]">
                                         {secao}
                                     </span>
 
-                                    <span className={`num text-xs ${
+                                    <span className={`num shrink-0 text-xs ${
                                         marcadasAqui > 0 ? "font-semibold text-[var(--ink)]" : "text-[var(--ink-3)]"
                                     }`}>
                                         {marcadasAqui} de {chaves.length}
@@ -860,7 +865,7 @@ export default function Funcionarios() {
                                     <p className="mt-1 truncate text-sm text-[var(--ink-2)]">{pessoa.email}</p>
                                 </div>
 
-                                <span className={pessoa.ativo ? "tag tag-success" : "tag tag-neutral"}>
+                                <span className={`shrink-0 ${pessoa.ativo ? "tag tag-success" : "tag tag-neutral"}`}>
                                     {pessoa.ativo ? "Ativo" : "Sem acesso"}
                                 </span>
                             </div>

@@ -422,43 +422,51 @@ export default function Lojas() {
                     {loja && (
                         <div className="space-y-6">
 
-                            {/* Identidade e situação */}
-                            <div className="flex items-start gap-3">
-                                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
-                                    loja.ativa ? "bg-[var(--azul)] text-white" : "bg-[var(--linha)] text-[var(--ink-3)]"
-                                }`}>
-                                    <FiHome className="w-5" aria-hidden />
-                                </span>
+                            {/* Identidade e situação.
 
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <input
-                                            value={nome}
-                                            onChange={(e) => setNome(e.target.value)}
-                                            onBlur={() => renomear(loja)}
-                                            maxLength={120}
-                                            aria-label="Nome da loja"
-                                            className="field w-full sm:max-w-sm"
-                                        />
+                                Em duas linhas no celular, e não uma só: a
+                                unidade pode ter três marcas ao mesmo tempo
+                                (Matriz, No painel agora, Fechada), e com
+                                `shrink-0` nelas o campo de nome era o que
+                                sobrava — numa tela estreita, quase nada. */}
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <div className="flex min-w-0 flex-1 items-start gap-3">
+                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+                                        loja.ativa ? "bg-[var(--azul)] text-white" : "bg-[var(--linha)] text-[var(--ink-3)]"
+                                    }`}>
+                                        <FiHome className="w-5" aria-hidden />
+                                    </span>
 
-                                        {ocupada === loja.id && (
-                                            <span className="text-xs text-[var(--ink-2)]">salvando…</span>
-                                        )}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <input
+                                                value={nome}
+                                                onChange={(e) => setNome(e.target.value)}
+                                                onBlur={() => renomear(loja)}
+                                                maxLength={120}
+                                                aria-label="Nome da loja"
+                                                className="field w-full sm:max-w-sm"
+                                            />
+
+                                            {ocupada === loja.id && (
+                                                <span className="text-xs text-[var(--ink-2)]">salvando…</span>
+                                            )}
+                                        </div>
+
+                                        <p className="mt-1.5 text-sm text-[var(--ink-2)]">
+                                            {loja.slug ? (
+                                                <span className="inline-flex items-center gap-1">
+                                                    <FiExternalLink className="w-3.5" aria-hidden />
+                                                    /{loja.slug}
+                                                </span>
+                                            ) : (
+                                                "Sem endereço de vitrine ainda"
+                                            )}
+                                        </p>
                                     </div>
-
-                                    <p className="mt-1.5 text-sm text-[var(--ink-2)]">
-                                        {loja.slug ? (
-                                            <span className="inline-flex items-center gap-1">
-                                                <FiExternalLink className="w-3.5" aria-hidden />
-                                                /{loja.slug}
-                                            </span>
-                                        ) : (
-                                            "Sem endereço de vitrine ainda"
-                                        )}
-                                    </p>
                                 </div>
 
-                                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                                <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
                                     {loja.principal && <span className="tag tag-neutral">Matriz</span>}
 
                                     {loja.aberta && (

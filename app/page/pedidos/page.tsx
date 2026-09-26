@@ -10,7 +10,7 @@ import { ApiError } from "@/middleware/client"
 import Pagination from "@/app/components/pagination/pagination"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import {
-    FiCalendar, FiFileText, FiSearch, FiAlertTriangle, FiFilePlus } from "react-icons/fi"
+    FiCalendar, FiFileText, FiSearch, FiAlertTriangle, FiFilePlus, FiArrowLeft } from "react-icons/fi"
 import { urlDaImagem } from "@/security/imagem"
 import { telefoneLegivel } from "@/app/components/contato/telefone"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
@@ -714,8 +714,21 @@ function PedidosInterno() {
 
                     {/* ---------------------------------------------------
                         A LISTA
+
+                        Abaixo de lg, lista e ficha não cabem lado a lado —
+                        e empilhadas, a lista virava uma caixa de rolagem
+                        presa dentro de outra (o cartão com altura fixa,
+                        pensado para a coluna ficar do tamanho da tela ao
+                        lado da ficha). No celular é uma tela de cada vez,
+                        como a lista de salas da conversa da equipe: a
+                        lista SOME assim que um pedido é escolhido, e a
+                        ficha ocupa a tela inteira, com um jeito de voltar.
                         --------------------------------------------------- */}
-                    <section className="card flex max-h-[calc(100dvh-18rem)] flex-col overflow-hidden p-0">
+                    <section
+                        className={`card flex-col overflow-hidden p-0 lg:flex lg:max-h-[calc(100dvh-18rem)] ${
+                            selecionado !== null ? "hidden" : "flex"
+                        }`}
+                    >
 
                         <div className="border-b border-[var(--linha-suave)] p-3">
                             <div className="relative">
@@ -797,8 +810,21 @@ function PedidosInterno() {
 
                     {/* ---------------------------------------------------
                         A FICHA — todos os dados do pedido escolhido
+
+                        Some no celular até um pedido ser escolhido (ver a
+                        lista, acima) — as duas juntas não cabem, e mostrar
+                        a ficha vazia primeiro escondia a lista atrás dela.
                         --------------------------------------------------- */}
-                    <section className="card p-6">
+                    <section className={`card p-6 lg:block ${selecionado !== null ? "block" : "hidden"}`}>
+
+                        <button
+                            type="button"
+                            onClick={() => setSelecionado(null)}
+                            className="mb-4 -ml-1 flex items-center gap-1.5 text-sm font-semibold text-[var(--ink-2)] transition-colors hover:text-[var(--ink)] lg:hidden"
+                        >
+                            <FiArrowLeft className="w-4" aria-hidden />
+                            Voltar à lista
+                        </button>
 
                         {!pedidoAberto ? (
                             <div className="flex min-h-[18rem] flex-col items-center justify-center text-center">
