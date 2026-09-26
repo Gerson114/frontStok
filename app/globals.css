@@ -147,18 +147,25 @@
   --fio-fundo: #F7F7F7;
   --fio-ponto: rgba(0, 0, 0, 0.045);
 
-  /* A moldura de marca: o trilho do menu à esquerda. Foi quase-preta, virou
-     azul junto com o botão principal por um tempo, tentou o tom quente de
-     --ink como fundo — e leu como marrom, não como preto. Agora é neutra de
-     propósito: sem viés de matiz nenhum, nem quente nem fria. O botão
-     principal continua azul (--acao); só o trilho deixou de ser a peça que
-     carrega a cor da marca. O --topo-2 é o tom mais fundo, do item aberto e
-     do estado pressionado. */
-  --topo: #1E1E1E;
-  --topo-2: #141414;
-  --topo-linha: #383838;
-  --topo-hover: #2A2A2A;
-  --topo-texto: #C6C6C6;
+  /* O trilho do menu à esquerda. Foi quase-preto por muito tempo, como
+     moldura de marca — e no claro ficava uma tarja escura colada numa tela
+     inteira de papel branco, o único pedaço do painel que não acompanhava o
+     tema. Agora é branco como a coluna ao lado: o menu inteiro lê como uma
+     peça só, e não como duas faixas de cores diferentes encostadas.
+
+     O tom escuro não sumiu — mudou de lugar: ele é o que o bloco
+     [data-theme="dark"] devolve a estas mesmas variáveis, mais abaixo neste
+     arquivo. O --topo-2 é o tom mais fundo do degradê e do estado
+     pressionado; --topo-ativo é a tinta do item em que se está (o ícone, o
+     rótulo em negrito e a barrinha na borda), que precisa contrastar com o
+     fundo do trilho nos DOIS temas — por isso é variável, e não `text-white`
+     escrito no JSX, que era o que prendia o trilho ao fundo escuro. */
+  --topo: #FFFFFF;
+  --topo-2: #F7F6F4;
+  --topo-linha: #DDDDD8;
+  --topo-hover: #F1F1EE;
+  --topo-texto: #5C5648;
+  --topo-ativo: #005BD3;
 
   --verde: #0C5132;
   /* O verde vivo, para quando o verde É a informação e não o fundo dela: a
@@ -240,9 +247,10 @@
    assim que .card, .btn-*, .field, .tag-*, .tabela e o resto dos componentes
    já escritos em cima destes tokens (ver o resto deste arquivo) mudam de
    cor sozinhos, sem precisar de uma segunda classe "escura" espalhada pelo
-   JSX. O trilho do menu (--topo*) fica de fora de propósito: ele já é uma
-   faixa quase-preta por conta própria, e essa faixa já funciona em cima de
-   um fundo claro ou escuro sem precisar mudar. */
+   JSX. O trilho do menu (--topo*) já ficou de fora desta lista, quando era
+   uma faixa quase-preta em qualquer tema; agora que ele é branco no claro,
+   entra aqui como todo o resto — senão o tema escuro ganharia uma tarja
+   branca no lugar exato onde a tarja escura incomodava no claro. */
 :root[data-theme="dark"] {
 
   --background: #1B1B1A;
@@ -271,6 +279,16 @@
   --cinza-tag: #3A3935;
   --fio-fundo: #202020;
   --fio-ponto: rgba(255, 255, 255, 0.06);
+
+  /* O trilho no escuro: os mesmos tons quase-pretos que ele teve nos dois
+     temas até agora. O ativo é branco porque aqui o fundo é escuro — no
+     claro a mesma variável é o azul da ação. */
+  --topo: #1E1E1E;
+  --topo-2: #141414;
+  --topo-linha: #383838;
+  --topo-hover: #2A2A2A;
+  --topo-texto: #C6C6C6;
+  --topo-ativo: #FFFFFF;
 
   --verde: #6FE3A5;
   /* No escuro o papel se inverte: aqui o --verde já é claro, e o "forte" é um

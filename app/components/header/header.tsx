@@ -152,12 +152,22 @@ const ICONE_DA_AREA: Record<string, IconType> = {
    ponto de venda é trabalho de todo dia para quem administra mais de uma
    loja — não é ajuste raro para deixar escondido.
 
+   Estoque entrou pelo mesmo motivo, e depois de sumir da vista: ele mora na
+   área "Produtos e estoque", e a coluna ao lado só mostra a área da rota
+   atual — quem passava o dia em Pedidos não via a palavra "Estoque" em
+   lugar nenhum da tela e concluía que ela tinha sumido do sistema. Conferir
+   o que tem na prateleira é rotina de todo dia, no mesmo pé que atender um
+   pedido; fica ao lado de Pedidos, que é de onde se costuma sair para
+   conferir. O atalho leva à tela mãe de Estoque, e a coluna ao lado troca
+   sozinha para a área dele, com as telas de dentro (inserir, consultar,
+   endereços, inventário) à vista.
+
    Uma tela só entra na faixa se o MENU desta loja a trouxer — sem isso um
    atalho fixo ofereceria uma tela que a API recusaria abrir para quem não a
    tem (ver como `trilhoParaMostrar` filtra, mais abaixo). Quem não é dono
    (ou a loja não tem plano Pro) continua vendo o ícone em cinza com
    cadeado, e não uma faixa manca com menos posições. */
-const CHAVES_DO_TRILHO = ["inicio", "pedidos", "conversas", "equipe-chat", "funcionarios", "lojas", "config"]
+const CHAVES_DO_TRILHO = ["inicio", "pedidos", "estoque", "conversas", "equipe-chat", "funcionarios", "lojas", "config"]
 
 // "Conversa da equipe" não cabe em duas linhas de 64px sem cortar de um
 // jeito estranho — as outras telas do trilho têm nome curto o bastante
@@ -1152,20 +1162,20 @@ export default function Sidebar() {
                                     : item.nome
                         }
                         aria-current={aqui ? "page" : undefined}
-                        className="group relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                        className="group relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--topo-ativo)]"
                     >
                         {aqui && (
                             <span
-                                className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-white transition-[height] duration-150"
+                                className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-sm bg-[var(--topo-ativo)] transition-[height] duration-150"
                                 aria-hidden
                             />
                         )}
 
                         <span className="relative flex h-6 w-6 items-center justify-center">
-                            <Icone className={`w-[1.3rem] ${aqui ? "text-white" : "text-[var(--topo-texto)]"}`} aria-hidden />
+                            <Icone className={`w-[1.3rem] ${aqui ? "text-[var(--topo-ativo)]" : "text-[var(--topo-texto)]"}`} aria-hidden />
 
                             {!item.liberado ? (
-                                <FiLock className="absolute -right-1.5 -top-1.5 w-3 rounded-full bg-[var(--topo)] p-px text-white" aria-hidden />
+                                <FiLock className="absolute -right-1.5 -top-1.5 w-3 rounded-full bg-[var(--topo)] p-px text-[var(--topo-texto)]" aria-hidden />
                             ) : esperando > 0 ? (
                                 <span className="num absolute -right-1.5 -top-1.5 min-w-[0.9rem] rounded-full border border-[var(--topo)] bg-[var(--vermelho-forte)] px-0.5 text-center text-[0.5rem] font-bold leading-[0.85rem] text-white">
                                     {esperando > 99 ? "99+" : esperando}
@@ -1173,7 +1183,7 @@ export default function Sidebar() {
                             ) : null}
                         </span>
 
-                        <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-white" : "font-medium text-[var(--topo-texto)]"}`}>
+                        <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-[var(--topo-ativo)]" : "font-medium text-[var(--topo-texto)]"}`}>
                             {ROTULO_CURTO_DO_TRILHO[item.chave] ?? item.nome}
                         </span>
 
@@ -1183,7 +1193,7 @@ export default function Sidebar() {
                             de o dedo parar, essa não some enquanto o dedo estiver ali. */}
                         <span
                             role="tooltip"
-                            className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-x-1 -translate-y-1/2 whitespace-nowrap bg-[var(--topo-2)] px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-[0_4px_12px_rgba(0,0,0,0.28)] transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
+                            className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-x-1 -translate-y-1/2 whitespace-nowrap bg-[var(--ink)] px-2.5 py-1.5 text-xs font-medium text-[var(--superficie)] opacity-0 shadow-[0_4px_12px_rgba(0,0,0,0.28)] transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
                         >
                             {item.nome}
                             {!item.liberado && " — plano Pro"}
@@ -1678,17 +1688,18 @@ export default function Sidebar() {
 
                 O trilho (ver `trilho`, acima) é permanente e fica de PÉ
                 mesmo dentro da conversa da equipe — só o acordeão ao lado
-                dá lugar à lista dela ali (ver `noChat`). */}
+                dá lugar à lista dela ali (ver `noChat`).
+
+                O fundo é chapado (bg-[var(--topo)]), sem degradê. O degradê
+                existia para dar materialidade à faixa quase-preta; sobre
+                branco ele só sujava o alto da coluna com um cinza sem
+                motivo — a borda da direita já separa o trilho do resto. */}
             <aside
                 style={{
                     top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
                     height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
-                    // Um degradê quase imperceptível, de cima para baixo —
-                    // não é enfeite, é o que faz o fundo chapado parecer
-                    // material e não papel de parede. Sutil de propósito.
-                    backgroundImage: "linear-gradient(180deg, var(--topo-hover) 0%, var(--topo) 22%, var(--topo-2) 100%)",
                 }}
-                className="fixed left-0 z-30 hidden w-[4.5rem] flex-col border-r border-[var(--topo-linha)] md:flex print:hidden"
+                className="fixed left-0 z-30 hidden w-[4.5rem] flex-col border-r border-[var(--topo-linha)] bg-[var(--topo)] md:flex print:hidden"
             >
                 {trilho}
             </aside>
