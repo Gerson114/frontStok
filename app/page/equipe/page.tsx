@@ -451,7 +451,10 @@ export default function ConversaDaEquipe() {
                 aoFecharMenu={() => setSalaMenuAberta(false)}
             />
 
-            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
+            {/* No celular a conversa dá lugar à lista de salas enquanto ela
+                está aberta — uma tela de cada vez, sem gaveta por cima. De md
+                para cima as duas convivem: a lista é a coluna da esquerda. */}
+            <main className={`h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:flex md:px-6 ${salaMenuAberta ? "hidden" : "flex"}`}>
 
                 {/* A faixa do celular: sem a coluna de salas ao lado (ela só
                     aparece a partir de md), esta é a única maneira de voltar
@@ -984,32 +987,31 @@ function MenuDoChat({
                 {conteudo}
             </aside>
 
-            {/* A gaveta do celular: mesmo molde do header.tsx (fundo que
-                fecha ao tocar fora, coluna que desliza da esquerda) — a
-                lista de salas é navegação de verdade aqui dentro, e merece
-                a mesma gaveta que o resto do painel já usa. */}
+            {/* A lista de salas no celular: um bloco no FLUXO da página, não
+                uma gaveta por cima. Era uma gaveta `fixed` com fundo
+                escurecido, do mesmo molde do header.tsx — e no celular ela
+                cobria a tela enquanto estivesse aberta. Aqui ela toma o lugar
+                da conversa (ver o `main` da tela, que some enquanto esta
+                lista está aberta): uma coisa de cada vez, e nada preso ao
+                vidro. */}
             {menuAberto && (
-                <div style={{ top: "3.5rem" }} className="fixed inset-x-0 bottom-0 z-40 md:hidden">
-                    <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFecharMenu} />
+                <nav className="anim-surgir flex flex-col border-b border-[var(--linha)] bg-[var(--fundo)] md:hidden print:hidden">
 
-                    <aside className="anim-gaveta absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[var(--linha)] bg-[var(--fundo)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+                    <div className="flex items-center justify-between border-b border-[var(--linha)] px-3 py-2.5">
+                        <span className="text-sm font-semibold text-[var(--ink)]">Conversas</span>
 
-                        <div className="flex items-center justify-between border-b border-[var(--linha)] px-3 py-2.5">
-                            <span className="text-sm font-semibold text-[var(--ink)]">Conversas</span>
+                        <button
+                            type="button"
+                            onClick={aoFecharMenu}
+                            aria-label="Fechar"
+                            className="rounded-lg p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)]"
+                        >
+                            <FiX className="w-4" aria-hidden />
+                        </button>
+                    </div>
 
-                            <button
-                                type="button"
-                                onClick={aoFecharMenu}
-                                aria-label="Fechar"
-                                className="rounded-lg p-1.5 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)]"
-                            >
-                                <FiX className="w-4" aria-hidden />
-                            </button>
-                        </div>
-
-                        {conteudo}
-                    </aside>
-                </div>
+                    {conteudo}
+                </nav>
             )}
         </>
     )
@@ -1444,7 +1446,10 @@ function Painel({ titulo, children, aoFechar }: {
 
             <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFechar} />
 
-            <div className="anim-tela relative w-full max-w-md rounded-xl border border-[var(--linha)] bg-[var(--superficie)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+            {/* max-h + rolagem: com o teclado do Android aberto sobra menos
+                de metade da tela, e um formulário mais alto que isso ficava
+                com o botão de confirmar cortado fora da janela. */}
+            <div className="anim-tela relative max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-xl border border-[var(--linha)] bg-[var(--superficie)] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.12)] sm:p-6">
 
                 <div className="mb-4 flex items-start justify-between gap-4">
                     <h2 className="font-display text-lg text-[var(--ink)]">{titulo}</h2>

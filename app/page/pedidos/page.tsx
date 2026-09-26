@@ -815,7 +815,7 @@ function PedidosInterno() {
                         lista, acima) — as duas juntas não cabem, e mostrar
                         a ficha vazia primeiro escondia a lista atrás dela.
                         --------------------------------------------------- */}
-                    <section className={`card p-6 lg:block ${selecionado !== null ? "block" : "hidden"}`}>
+                    <section className={`card p-4 sm:p-6 lg:block ${selecionado !== null ? "block" : "hidden"}`}>
 
                         <button
                             type="button"

@@ -264,7 +264,7 @@ export default function Produto() {
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
           {/* Bloco 1 */}
-          <section className="card p-5 sm:p-7 space-y-5">
+          <section className="card p-4 sm:p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
               <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">01</span>
               <h2 className="font-display text-sm text-[var(--ink)]">Informações básicas</h2>
@@ -329,7 +329,7 @@ export default function Produto() {
           </section>
 
           {/* Bloco 2 */}
-          <section className="card p-5 sm:p-7 space-y-5">
+          <section className="card p-4 sm:p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
               <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">02</span>
               <h2 className="font-display text-sm text-[var(--ink)]">Variações e ficha técnica</h2>
@@ -354,7 +354,7 @@ export default function Produto() {
           </section>
 
           {/* Bloco 3 */}
-          <section className="card p-5 sm:p-7 space-y-5">
+          <section className="card p-4 sm:p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
               <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">03</span>
               <h2 className="font-display text-sm text-[var(--ink)]">Valores e mídia</h2>
@@ -394,7 +394,7 @@ export default function Produto() {
               Numa cozinha ele seria uma pergunta sem resposta possível: não
               há prateleira onde guardar a pizza que ainda não foi feita. */}
           {!semContagem && (
-          <section className="card p-5 sm:p-7 space-y-5">
+          <section className="card p-4 sm:p-5 sm:p-7 space-y-5">
             <div className="flex items-center gap-3">
               <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-xs font-bold text-[var(--azul-escuro)]">04</span>
               <h2 className="font-display text-sm text-[var(--ink)]">Local no estoque</h2>

@@ -183,7 +183,7 @@ export default function Avarias() {
         >
             {/* ESTATÍSTICA */}
 
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
 
                 <div className="flex items-center justify-between">
 
@@ -228,13 +228,19 @@ export default function Avarias() {
 
                 <div className="card overflow-hidden">
 
-                    <ul className="divide-y divide-[var(--linha-suave)] px-5">
+                    <ul className="divide-y divide-[var(--linha-suave)] px-4 sm:px-5">
 
                         {avariadas.map(({ unidade, produto }) => (
 
+                            /* flex-wrap: "Restaurar ao estoque" mede uns
+                               150px, e ao lado da foto e do nome da peça não
+                               sobrava largura nenhuma num telefone de 360px
+                               — o nome truncava em duas palavras. No celular
+                               o botão desce para a linha de baixo e ocupa a
+                               largura toda; de sm para cima volta ao lado. */
                             <li
                                 key={unidade.id}
-                                className="flex items-center gap-3 py-3.5"
+                                className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3.5"
                             >
 
                                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[var(--fundo)]">
@@ -268,7 +274,7 @@ export default function Avarias() {
                                     type="button"
                                     onClick={() => handleRestaurar(unidade.id)}
                                     disabled={restaurando === unidade.id}
-                                    className="shrink-0 rounded-lg border border-[var(--linha)] bg-[var(--superficie)] px-3.5 py-2 text-xs font-bold text-[var(--ink)] transition-colors hover:bg-[var(--fundo)] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="w-full shrink-0 rounded-lg border border-[var(--linha)] bg-[var(--superficie)] px-3.5 py-2 text-xs font-bold text-[var(--ink)] transition-colors hover:bg-[var(--fundo)] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                                 >
                                     {restaurando === unidade.id ? "Restaurando..." : "Restaurar ao estoque"}
                                 </button>

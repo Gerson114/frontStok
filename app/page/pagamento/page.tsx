@@ -199,7 +199,7 @@ export default function PagamentoPage() {
         >
 
             {/* Estado atual */}
-            <section className="card p-6">
+            <section className="card p-4 sm:p-6">
                 <div className="flex items-start gap-3">
                     <span className={conectado ? "text-[var(--verde)]" : "text-[var(--ink-3)]"}>
                         {conectado

@@ -807,7 +807,7 @@ export default function Conversas() {
                     }}
                 />
 
-                <details className="card p-6 sm:p-7">
+                <details className="card p-4 sm:p-6 sm:p-7">
                     <summary className="cursor-pointer font-display text-lg text-[var(--ink)]">
                         Ou conectar pela API oficial da Meta
                     </summary>

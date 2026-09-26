@@ -293,6 +293,25 @@ export default function Sidebar() {
     // mais para a tabela.
     const [painelRecolhido, setPainelRecolhido] = useState(false)
 
+    /* A área ABERTA na gaveta do celular — e só no celular.
+     *
+     * No desktop não há acordeão nenhum: a coluna segue a rota e mostra a
+     * área ativa inteira (ver `conteudoDaColuna`). No celular não existe
+     * trilho ao lado para trocar de área, então a gaveta precisa oferecer
+     * todas elas — e as cinco áreas abertas de uma vez dão uma lista de
+     * quase trinta linhas num vidro de 640px de altura: achar "Banners"
+     * exigia rolar a gaveta inteira de cima a baixo. O acordeão devolve o
+     * catálogo completo em cinco linhas de cabeçalho.
+     *
+     * Uma por vez, e não várias: abrir a segunda fecha a primeira, senão
+     * duas áreas abertas já empurram a terceira para fora da tela e o
+     * ganho de ter o catálogo em cinco linhas se perde.
+     *
+     * `null` significa "ainda não escolheram nada" — nesse caso vale a área
+     * da rota atual (ver `areaAbertaNoCelular`), para a gaveta abrir já
+     * mostrando onde a pessoa está. */
+    const [areaTocada, setAreaTocada] = useState<string | null>(null)
+
 
     // Busca de tela e menu da conta, os dois controles da barra superior.
     const [busca, setBusca] = useState("")
@@ -478,6 +497,20 @@ export default function Sidebar() {
         ) ?? secoes[0]
 
     }, [secoes, rotaAtiva])
+
+    /* Qual área a gaveta do celular mostra aberta: a que foi tocada, ou — se
+     * ninguém tocou em nada — a da tela em que se está. */
+    const areaAbertaNoCelular = areaTocada ?? secaoAtiva?.titulo ?? null
+
+    /* Abrir a gaveta esquece a área tocada na vez anterior, para a abertura
+     * voltar a seguir a rota. Sem isto, quem abriu "Meu site" numa tela de
+     * Vendas encontraria "Meu site" aberto para sempre, inclusive depois de
+     * trocar de tela. */
+    function alternarGaveta() {
+        if (!aberto) setAreaTocada(null)
+
+        setAberto(!aberto)
+    }
 
     /* A largura que o menu ocupa, anunciada às telas.
      *
@@ -938,29 +971,86 @@ export default function Sidebar() {
     }
 
     /* O conteúdo da gaveta do CELULAR: todas as áreas, uma debaixo da outra,
-       cada uma com o próprio título — a mesma decisão que tirou o acordeão
-       do desktop (nada atrás de um clique a mais), só que aplicada aqui
-       porque é aqui que ela falta: sem o trilho ao lado, um celular que
-       visse só a área ativa nunca teria como abrir "Produtos e estoque" ou
-       "Meu site", por exemplo, a não ser tropeçando num link solto. */
+       e cada uma abre e fecha no toque do próprio título.
+
+       O catálogo inteiro precisa estar aqui, e não só a área ativa: sem o
+       trilho ao lado (ele é `hidden md:flex`), um celular que visse só a
+       área da rota nunca teria como abrir "Produtos e estoque" ou "Meu
+       site" a não ser tropeçando num link solto.
+
+       O acordeão é a diferença em relação ao desktop, e existe só aqui: no
+       desktop a coluna é alta e mostra UMA área, então não há nada a
+       dobrar; no celular são as cinco áreas na mesma gaveta, quase trinta
+       linhas numa tela que mostra dez — a pessoa rolava a gaveta inteira
+       para achar uma tela. Fechadas, as cinco áreas caibem na primeira
+       tela, e a da rota atual já vem aberta.
+
+       Só uma aberta por vez (ver `areaTocada`): abrir a segunda fecha a
+       primeira, senão duas áreas já derrubam o ganho. */
     function conteudoCompletoDoCelular() {
 
         return (
-            <div className="space-y-5">
+            <div className="space-y-1">
                 {secoes.map((secao) => {
 
                     const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
+                    const abertaAqui = secao.titulo === areaAbertaNoCelular
+
+                    // O identificador liga o cabeçalho à lista que ele abre,
+                    // para o leitor de tela anunciar as duas como uma peça.
+                    const idDaLista = `area-${comparavel(secao.titulo).replace(/[^a-z0-9]+/g, "-")}`
+
+                    /* Quantas telas desta área têm algo esperando. Fechada, a
+                       área ainda precisa dizer que tem trabalho dentro —
+                       senão o acordeão esconderia justamente o pedido novo
+                       que é o motivo de abrir o menu. */
+                    const esperandoNaArea = secao.nos.reduce(
+                        (total, no) =>
+                            total
+                            + contagemDoItem(no.item.chave)
+                            + no.filhos.reduce((soma, filho) => soma + contagemDoItem(filho.chave), 0),
+                        0,
+                    )
 
                     return (
                         <div key={secao.titulo}>
-                            <p className="mb-1.5 flex items-center gap-2 px-2 font-display text-[0.8125rem] text-[var(--ink)]">
+                            <button
+                                type="button"
+                                onClick={() => setAreaTocada(abertaAqui ? "" : secao.titulo)}
+                                aria-expanded={abertaAqui}
+                                aria-controls={idDaLista}
+                                /* min-h-11: o alvo do dedo. Um cabeçalho de
+                                   duas linhas de texto dá 36px, abaixo do
+                                   mínimo de 44px que o dedo acerta sem
+                                   pegar a linha vizinha. */
+                                className="flex min-h-11 w-full items-center gap-2 px-2 py-2 text-left transition-colors hover:bg-[var(--fundo)] focus-visible:bg-[var(--fundo)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)]"
+                            >
                                 <IconeDaSecao className="w-4 shrink-0 text-[var(--azul)]" aria-hidden />
-                                {secao.titulo}
-                            </p>
 
-                            <div className="space-y-0.5">
-                                {listaDeNos(secao.nos)}
-                            </div>
+                                <span className="font-display flex-1 text-[0.8125rem] leading-snug text-[var(--ink)]">
+                                    {secao.titulo}
+                                </span>
+
+                                {!abertaAqui && esperandoNaArea > 0 && (
+                                    <span
+                                        className="num shrink-0 rounded-full bg-[var(--vermelho-forte)] px-1.5 text-[0.6875rem] font-bold leading-[1.05rem] text-white"
+                                        aria-label={`${esperandoNaArea} esperando nesta área`}
+                                    >
+                                        {esperandoNaArea > 99 ? "99+" : esperandoNaArea}
+                                    </span>
+                                )}
+
+                                <FiChevronDown
+                                    className={`w-4 shrink-0 text-[var(--ink-3)] transition-transform duration-150 ${abertaAqui ? "" : "-rotate-90"}`}
+                                    aria-hidden
+                                />
+                            </button>
+
+                            {abertaAqui && (
+                                <div id={idDaLista} className="space-y-0.5 pb-1">
+                                    {listaDeNos(secao.nos)}
+                                </div>
+                            )}
                         </div>
                     )
                 })}
@@ -1094,32 +1184,33 @@ export default function Sidebar() {
         </>
     )
 
-    /* A gaveta do celular NÃO é o mesmo molde do `menuLateral` de desktop
-       — de propósito. No desktop o trilho ao lado troca de área com um
-       clique, então a coluna só precisa da área ativa; no celular não há
-       trilho nenhum (ele também é `hidden md:flex`), e uma gaveta presa
-       numa área só deixaria o resto do catálogo sem porta nenhuma. Por
-       isso ela mostra TODAS as áreas (ver `conteudoCompletoDoCelular`). */
-    const gavetaDoCelular = (
-        <>
-            {/* Sem o título de UMA área: a gaveta mostra o catálogo
-                inteiro (ver `conteudoCompletoDoCelular`), então um nome de
-                área no alto seria a única coisa ali que não bate com o que
-                vem embaixo. */}
-            <div className="flex min-h-[3.75rem] shrink-0 items-center gap-2.5 border-b border-[var(--linha)] px-4 py-3.5">
-                <FiGrid className="w-[1.125rem] shrink-0 text-[var(--azul)]" aria-hidden />
+    /* O MENU DO CELULAR não é o mesmo molde do `menuLateral` de desktop — de
+       propósito, e por dois motivos.
 
-                <p className="font-display flex-1 text-[0.9375rem] leading-snug text-[var(--ink)]">
-                    Menu
-                </p>
-            </div>
+       O primeiro é o catálogo: no desktop o trilho ao lado troca de área com
+       um clique, então a coluna só precisa da área ativa; no celular não há
+       trilho nenhum (ele também é `hidden md:flex`), e um menu preso numa
+       área só deixaria o resto do catálogo sem porta nenhuma. Por isso
+       mostra TODAS as áreas, em acordeão (ver `conteudoCompletoDoCelular`).
 
-            <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
-                {carregando ? esqueletoDeTelas() : conteudoCompletoDoCelular()}
-            </nav>
-        </>
+       O segundo é o lugar na tela. Isto já foi uma gaveta `fixed` por cima
+       do conteúdo, com fundo escurecido — e no celular ela cobria a tela
+       inteira enquanto estivesse aberta. Agora o menu é um bloco no FLUXO
+       da página, logo abaixo da barra: abrir empurra o conteúdo para baixo,
+       fechar devolve o lugar, e a rolagem é uma só. Nada fica preso à tela,
+       que é o que o celular pede — a tela é pequena demais para ceder uma
+       faixa permanente a navegação. */
+    const menuDoCelular = (
+        /* `[&_a]:min-h-11`: no dedo cada link precisa dos 44px de alvo que o
+           mouse não exige. Vale só aqui, e não no `linkDoItem` em si, porque
+           no desktop a mesma altura esticaria a coluna inteira sem motivo. */
+        <nav
+            id="menu-do-celular"
+            className="anim-surgir border-b border-[var(--linha)] bg-[var(--superficie)] px-3 py-3 print:hidden md:hidden [&_a]:min-h-11"
+        >
+            {carregando ? esqueletoDeTelas() : conteudoCompletoDoCelular()}
+        </nav>
     )
-
 
     return (
         <>
@@ -1130,12 +1221,16 @@ export default function Sidebar() {
                 começa embaixo dela, e a tela do lojista fica só com o que é
                 daquela tela.
                 ============================================================== */}
-            <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--linha)] bg-[var(--superficie)] px-3 print:hidden">
+            {/* No celular a barra aperta o respiro: com px-3 e gap-2 em todos
+                os lados, os sete controles dela (gaveta, marca, seletor de
+                loja, tema, sino, conta) somavam mais de 360px e o último era
+                empurrado para fora da tela. */}
+            <header className="z-50 flex h-14 shrink-0 items-center gap-1 border-b border-[var(--linha)] bg-[var(--superficie)] px-2 print:hidden sm:gap-2 sm:px-3 md:sticky md:top-0">
 
                 {/* Marca. No desktop ela ocupa a largura da barra lateral, de
                     modo que o começo da busca cai exatamente onde começa o
                     conteúdo da tela. */}
-                <div className="flex items-center gap-2 md:w-[var(--menu)] md:shrink-0 md:pl-2">
+                <div className="flex min-w-0 items-center gap-2 md:w-[var(--menu)] md:shrink-0 md:pl-2">
                     {/* Some dentro da conversa da equipe: a gaveta que este
                         botão abriria é justamente a que `noChat` desliga (a
                         tela tem a própria, com as salas — ver equipe/page.tsx),
@@ -1144,18 +1239,24 @@ export default function Sidebar() {
                     {!noChat && (
                         <button
                             type="button"
-                            onClick={() => setAberto((v) => !v)}
+                            onClick={alternarGaveta}
                             aria-label={aberto ? "Fechar menu" : "Abrir menu"}
                             aria-expanded={aberto}
+                            aria-controls="menu-do-celular"
                             className="-ml-1 p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] md:hidden"
                         >
                             {aberto ? <FiX className="w-5" aria-hidden /> : <FiMenu className="w-5" aria-hidden />}
                         </button>
                     )}
 
-                    <Link href="/page/produtos" className="flex items-center gap-2 text-[var(--ink)]">
+                    <Link href="/page/produtos" className="flex min-w-0 items-center gap-2 text-[var(--ink)]">
                         <Simbolo className="w-5 shrink-0" />
-                        <span className="font-display text-[0.9375rem] tracking-normal">
+
+                        {/* O nome trunca em vez de empurrar: numa tela estreita
+                            é melhor ler "Chonnos…" ao lado do símbolo — que já
+                            identifica a marca — do que perder o botão da conta
+                            na borda. */}
+                        <span className="font-display truncate text-[0.9375rem] tracking-normal">
                             {MARCA}
                         </span>
                     </Link>
@@ -1524,21 +1625,7 @@ export default function Sidebar() {
             {/* ==============================================================
                 NAVEGAÇÃO — celular
                 ============================================================== */}
-            {aberto && !noChat && (
-                <div
-                    style={{ top: ALTURA_TOPO }}
-                    className="fixed inset-x-0 bottom-0 z-40 md:hidden print:hidden"
-                >
-                    <div
-                        className="anim-surgir absolute inset-0 bg-black/40"
-                        onClick={() => setAberto(false)}
-                    />
-
-                    <aside className="anim-gaveta absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[var(--linha)] bg-[var(--superficie)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
-                        {gavetaDoCelular}
-                    </aside>
-                </div>
-            )}
+            {aberto && !noChat && menuDoCelular}
         </>
     )
 }

@@ -188,7 +188,7 @@ export function BarraDaLista({
     return (
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--linha)] px-3 py-2">
 
-            <div className="relative min-w-56 flex-1">
+            <div className="relative w-full flex-1 sm:min-w-56">
 
                 <FiSearch
                     className="pointer-events-none absolute left-2.5 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]"
@@ -205,8 +205,12 @@ export function BarraDaLista({
 
             </div>
 
+            {/* No celular os controles ocupam a linha inteira, abaixo da
+                busca, e podem quebrar entre si: `shrink-0` numa régua de
+                360px empurrava o último filtro para fora do cartão, onde o
+                `overflow-hidden` da moldura o cortava sem deixar rastro. */}
             {controles && (
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
                     {controles}
                 </div>
             )}

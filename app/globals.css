@@ -779,8 +779,6 @@
 }
 
 .tabela thead th {
-  position: sticky;
-  top: 0;
   z-index: 1;
   background: var(--superficie-2);
   color: var(--ink-2);
@@ -789,6 +787,18 @@
   white-space: nowrap;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--linha);
+}
+
+/* O cabeçalho da tabela gruda no topo só a partir de 768px.
+ *
+ * No celular a tabela já rola de lado dentro da própria caixa, e uma linha
+ * de cabeçalho presa ao topo da tela enquanto se rola a página é mais uma
+ * faixa roubando altura de um vidro que já é curto. */
+@media (min-width: 768px) {
+  .tabela thead th {
+    position: sticky;
+    top: 0;
+  }
 }
 
 .tabela tbody td {
@@ -976,23 +986,6 @@
   }
 }
 
-/* A gaveta do menu no celular: desliza inteira da borda esquerda, de onde
-   ela nasce — diferente do `entrar-da-esquerda` de cima, que é só um leve
-   empurrão de detalhe num item de lista, aqui é a COLUNA que precisa vir
-   de fora da tela. */
-@keyframes deslizar-gaveta {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.anim-gaveta {
-  animation: deslizar-gaveta 220ms ease-out both;
-}
-
 /* A bolinha do "está digitando". A escala não vai a zero: a bolinha que
    desaparece pisca, e três piscando viram um alarme. Ela encolhe e clareia,
    que é como se lê "alguém está no meio de uma frase". */
@@ -1139,8 +1132,7 @@
   .anim-mensagem,
   .anim-tela,
   .anim-surgir,
-  .anim-item,
-  .anim-gaveta {
+  .anim-item {
     animation: surgir 1ms linear both;
   }
 

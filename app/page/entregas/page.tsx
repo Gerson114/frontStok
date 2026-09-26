@@ -365,12 +365,17 @@ export default function Entregas() {
             titulo="Agenda de entregas"
             descricao="O que a loja tem de fazer em cada dia. Quem vem buscar cai no dia da compra; quem pediu entrega entra no calendário quando você marcar o dia em que ele sai."
             acoes={
-                <div className="flex items-center gap-1">
+                // flex-wrap: quatro controles (anterior, mês, seguinte, Hoje)
+                // numa régua só não sobrava espaço nos telefones mais
+                // estreitos — o rótulo do mês (min-w fixo, para não pular de
+                // tamanho de mês para mês) empurrava "Hoje" para fora da
+                // tela. Encolhe no celular e quebra linha se ainda faltar.
+                <div className="flex flex-wrap items-center gap-1">
                     <button type="button" onClick={() => andar(-1)} aria-label="Mês anterior" className="btn btn-neutro">
                         <FiChevronLeft className="w-4" aria-hidden />
                     </button>
 
-                    <span className="min-w-[10rem] px-2 text-center text-sm font-semibold text-[var(--ink)]">
+                    <span className="min-w-[7rem] px-2 text-center text-sm font-semibold text-[var(--ink)] sm:min-w-[10rem]">
                         {MESES[mes.getMonth()]} de {mes.getFullYear()}
                     </span>
 
@@ -455,7 +460,7 @@ export default function Entregas() {
 
                         <div className="grid grid-cols-7 border-b border-[var(--linha)] bg-[var(--superficie-2)]">
                             {DIAS.map((dia) => (
-                                <div key={dia} className="px-2 py-2 text-center text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
+                                <div key={dia} className="px-0.5 py-2 text-center text-[0.625rem] font-semibold uppercase tracking-[0.04em] text-[var(--ink-3)] sm:px-2 sm:text-[0.6875rem] sm:tracking-[0.06em]">
                                     {dia}
                                 </div>
                             ))}
@@ -467,7 +472,7 @@ export default function Entregas() {
                                 // As casas antes do dia 1º existem só para
                                 // empurrar a primeira semana até a coluna certa.
                                 if (!data) {
-                                    return <div key={`vazio-${indice}`} className="min-h-[5rem] border-b border-r border-[var(--linha-suave)] bg-[var(--superficie-2)]" />
+                                    return <div key={`vazio-${indice}`} className="min-h-[3.25rem] border-b border-r border-[var(--linha-suave)] bg-[var(--superficie-2)] sm:min-h-[5rem]" />
                                 }
 
                                 const dia = chaveDoDia(data)
@@ -484,7 +489,13 @@ export default function Entregas() {
                                         type="button"
                                         onClick={() => { setDiaAberto(dia); setPainel("dia") }}
                                         aria-current={aberto ? "true" : undefined}
-                                        className={`min-h-[5rem] border-b border-r border-[var(--linha-suave)] p-1.5 text-left transition-colors ${
+                                        /* Casa mais baixa no celular: sete
+                                           colunas em 360px dão 46px de largura
+                                           cada, e 5rem de altura numa casa tão
+                                           estreita fazia o mês ocupar duas
+                                           telas de rolagem antes de a ficha do
+                                           dia aparecer. */
+                                        className={`min-h-[3.25rem] border-b border-r border-[var(--linha-suave)] p-1 text-left transition-colors sm:min-h-[5rem] sm:p-1.5 ${
                                             aberto
                                                 ? "bg-[var(--azul-suave)] ring-1 ring-inset ring-[var(--azul)]"
                                                 : ehHoje ? "bg-[var(--azul-suave)]" : "hover:bg-[var(--superficie-2)]"
@@ -498,7 +509,7 @@ export default function Entregas() {
                                             </span>
 
                                             {doDia.length > 0 && (
-                                                <span className="num text-[0.625rem] font-semibold text-[var(--ink-2)]">
+                                                <span className="num hidden text-[0.625rem] font-semibold text-[var(--ink-2)] sm:inline">
                                                     {doDia.length}
                                                 </span>
                                             )}
@@ -510,19 +521,49 @@ export default function Entregas() {
                                             saber onde está cheio. O detalhe
                                             está a um clique, na ficha. */}
                                         {doDia.length > 0 && (
-                                            <span className="mt-1 block space-y-0.5">
-                                                {envios > 0 && (
-                                                    <span className="block truncate rounded bg-[#FFE4C4] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[var(--amarelo)]">
-                                                        {envios} para despachar
-                                                    </span>
-                                                )}
+                                            <>
+                                                {/* No celular a casa tem 46px de
+                                                    largura: "3 para despachar"
+                                                    truncava em "3 pa…", que não
+                                                    informa nada. Em vez do
+                                                    texto, o número na cor do
+                                                    tipo — laranja é despacho,
+                                                    azul é retirada, a mesma cor
+                                                    das pílulas de cima de sm. */}
+                                                <span className="mt-0.5 flex gap-1 sm:hidden">
+                                                    {envios > 0 && (
+                                                        <span
+                                                            className="num rounded bg-[#FFE4C4] px-1 text-[0.625rem] font-bold leading-[0.95rem] text-[var(--amarelo)]"
+                                                            aria-label={`${envios} para despachar`}
+                                                        >
+                                                            {envios}
+                                                        </span>
+                                                    )}
 
-                                                {retiradas > 0 && (
-                                                    <span className="block truncate rounded bg-[var(--azul-suave)] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[var(--azul)]">
-                                                        {retiradas} para retirar
-                                                    </span>
-                                                )}
-                                            </span>
+                                                    {retiradas > 0 && (
+                                                        <span
+                                                            className="num rounded bg-[var(--azul-suave)] px-1 text-[0.625rem] font-bold leading-[0.95rem] text-[var(--azul)]"
+                                                            aria-label={`${retiradas} para retirar`}
+                                                        >
+                                                            {retiradas}
+                                                        </span>
+                                                    )}
+                                                </span>
+
+                                                <span className="mt-1 hidden space-y-0.5 sm:block">
+                                                    {envios > 0 && (
+                                                        <span className="block truncate rounded bg-[#FFE4C4] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[var(--amarelo)]">
+                                                            {envios} para despachar
+                                                        </span>
+                                                    )}
+
+                                                    {retiradas > 0 && (
+                                                        <span className="block truncate rounded bg-[var(--azul-suave)] px-1.5 py-0.5 text-[0.625rem] font-semibold text-[var(--azul)]">
+                                                            {retiradas} para retirar
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </>
                                         )}
                                     </button>
                                 )
@@ -533,7 +574,11 @@ export default function Entregas() {
                     {/* ---------------------------------------------------
                         A FICHA — o dia escolhido, ou os que não têm dia
                         --------------------------------------------------- */}
-                    <section className="card flex max-h-[calc(100dvh-16rem)] flex-col overflow-hidden p-0">
+                    {/* No celular a ficha é a última coisa da tela e rola com
+                        a página: uma caixa de rolagem dentro de outra obriga o
+                        dedo a acertar qual das duas quer mover. De xl para
+                        cima ela volta a ser a coluna fixa ao lado do mês. */}
+                    <section className="card flex flex-col overflow-hidden p-0 xl:max-h-[calc(100dvh-16rem)]">
 
                         <div className="flex border-b border-[var(--linha-suave)]">
                             <button

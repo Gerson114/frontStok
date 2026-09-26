@@ -70,15 +70,27 @@ export function Pagina({
             }`}
         >
 
-            {/* Cabeçalho da tela. Gruda logo abaixo da barra superior escura
-                (3.5rem) para que o título e as ações continuem à mão enquanto
-                se rola uma lista longa. */}
-            <header className="sticky top-14 z-30 border-b border-[var(--linha)] bg-[var(--fundo)]/95 backdrop-blur print:hidden">
+            {/* Cabeçalho da tela. Do md para cima ele gruda logo abaixo da
+                barra superior (3.5rem), para o título e as ações continuarem à
+                mão enquanto se rola uma lista longa.
+
+                No celular ele rola junto com o resto. Preso, somava-se à barra
+                de cima: duas faixas fixas tomavam quase um terço da altura de
+                um telefone, e o que sobrava para a lista era uma janelinha.
+                Numa tela pequena o lugar do título é no começo da página, não
+                colado ao vidro. */}
+            <header className="z-30 border-b border-[var(--linha)] bg-[var(--fundo)]/95 backdrop-blur print:hidden md:sticky md:top-14">
 
                 {/* O mesmo respiro do conteúdo abaixo: é o que faz o título
                     nascer exatamente na mesma vertical da borda esquerda do
-                    primeiro cartão. */}
-                <div className="px-6 md:px-10">
+                    primeiro cartão.
+
+                    px-4 no celular: 24px de cada lado tiravam 48 dos 360px
+                    de um telefone comum, e a conta aparecia no conteúdo —
+                    tabela apertada, botão de ação quebrando em duas linhas.
+                    16px continuam separando o texto da borda sem cobrar
+                    isso da largura útil. */}
+                <div className="px-4 sm:px-6 md:px-10">
 
                     <div className="flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-3 py-3">
 
@@ -94,7 +106,11 @@ export function Pagina({
                                 </Link>
                             )}
 
-                            <h1 className="font-display truncate text-2xl text-[var(--ink)]">
+                            {/* text-xl no celular: "Agenda de entregas" e
+                                "Conferência de pedidos" não cabem em 2xl
+                                numa tela de 360px, e o `truncate` cortava o
+                                nome da própria tela. */}
+                            <h1 className="font-display truncate text-xl text-[var(--ink)] sm:text-2xl">
                                 {titulo}
                             </h1>
 
@@ -106,8 +122,13 @@ export function Pagina({
 
                         </div>
 
+                        {/* No celular as ações ganham a linha inteira, abaixo
+                            do título (o `flex-wrap` do pai já as manda para
+                            baixo) — e `shrink-0` sai de cena, porque um
+                            botão que não encolhe nem quebra é o que vazava
+                            para fora da tela. */}
                         {acoes && (
-                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
                                 {acoes}
                             </div>
                         )}
@@ -118,7 +139,7 @@ export function Pagina({
 
             </header>
 
-            <div className={paraImpressao ? "px-6 py-6 md:px-10 md:py-8 print:p-0" : "px-6 py-6 md:px-10 md:py-8"}>
+            <div className={paraImpressao ? "px-4 py-5 sm:px-6 sm:py-6 md:px-10 md:py-8 print:p-0" : "px-4 py-5 sm:px-6 sm:py-6 md:px-10 md:py-8"}>
                 <div className="space-y-6">
                     {children}
                 </div>
@@ -174,7 +195,7 @@ export function Secao({ titulo, descricao, acoes, plano = false, className = "",
         <section className={`card ${className}`}>
 
             {(titulo || acoes) && (
-                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-[var(--linha-suave)] px-5 py-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-[var(--linha-suave)] px-4 py-3.5 sm:px-5">
 
                     <div className="min-w-0">
                         {titulo && (
@@ -199,7 +220,7 @@ export function Secao({ titulo, descricao, acoes, plano = false, className = "",
                 </div>
             )}
 
-            <div className={plano ? "" : "p-5"}>
+            <div className={plano ? "" : "p-4 sm:p-5"}>
                 {children}
             </div>
 

@@ -277,7 +277,7 @@ export default function Lojas() {
                 {/* ---------------------------------------------------------
                     A REDE
                     --------------------------------------------------------- */}
-                <section className="card flex max-h-[calc(100dvh-14rem)] flex-col overflow-hidden p-0">
+                <section className="card flex flex-col overflow-hidden p-0 lg:max-h-[calc(100dvh-14rem)]">
 
                     {/* A busca só aparece quando há o que buscar: numa rede de
                         duas lojas ela é um campo a mais para ler. */}
@@ -349,7 +349,7 @@ export default function Lojas() {
                 {/* ---------------------------------------------------------
                     A FICHA
                     --------------------------------------------------------- */}
-                <section className="card p-6">
+                <section className="card p-4 sm:p-6">
 
                     {escolhida === "nova" && (
                         <form onSubmit={criar} className="space-y-5">

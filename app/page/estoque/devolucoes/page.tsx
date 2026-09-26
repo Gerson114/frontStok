@@ -267,7 +267,7 @@ export default function DevolucoesPage() {
             <DevolucoesPedidas aoDecidir={atualizar} />
 
             {/* RECEBER UMA DEVOLUÇÃO */}
-            <section className="card p-5 sm:p-7">
+            <section className="card p-4 sm:p-5 sm:p-7">
 
                 <div className="flex items-center gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-[var(--azul-escuro)]">

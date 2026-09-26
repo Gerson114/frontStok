@@ -163,7 +163,7 @@ export default function AssinaturaPage() {
         >
 
             {/* SITUAÇÃO ATUAL */}
-            <section className="card p-6 sm:p-7">
+            <section className="card p-4 sm:p-6 sm:p-7">
 
                 <div className="flex items-start gap-3">
 

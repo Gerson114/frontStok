@@ -204,7 +204,7 @@ export default function Vendidos() {
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 
-                <div className="card p-6">
+                <div className="card p-4 sm:p-6">
 
                     <div className="flex items-center justify-between">
 
@@ -225,7 +225,7 @@ export default function Vendidos() {
 
                 </div>
 
-                <div className="card p-6">
+                <div className="card p-4 sm:p-6">
 
                     <div className="flex items-center justify-between gap-3">
 

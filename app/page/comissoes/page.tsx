@@ -208,7 +208,10 @@ export default function Comissoes() {
 
             <div className="card flex flex-wrap items-end justify-between gap-4 p-4">
 
-                <div>
+                {/* No celular o mês ocupa a linha inteira: o campo `month`
+                    nativo do Android mede uns 200px, e ao lado do valor a
+                    pagar as duas colunas ficavam de 150px cada. */}
+                <div className="w-full sm:w-auto">
                     <label htmlFor="mes" className="rotulo">Mês de competência</label>
 
                     <input
@@ -229,8 +232,11 @@ export default function Comissoes() {
                     />
                 </div>
 
+                {/* Alinhado à esquerda no celular, onde este bloco está numa
+                    linha só sua — texto à direita sem nada ao lado lê como
+                    erro de alinhamento. */}
                 {dados && (
-                    <div className="text-right">
+                    <div className="w-full sm:w-auto sm:text-right">
                         <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
                             A pagar em {porExtenso(dados.mes)}
                         </p>

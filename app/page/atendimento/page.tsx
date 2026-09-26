@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { FiMessageSquare, FiSend } from "react-icons/fi"
+import { FiChevronLeft, FiMessageSquare, FiSend } from "react-icons/fi"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
 import {
     definirResponsavel,
@@ -406,6 +406,13 @@ export default function AtendimentoPage() {
                     }
                 />
             ) : (
+                /* Abaixo de lg a lista e o fio não cabem lado a lado, e
+                   empilhados davam o pior dos dois: a lista inteira primeiro,
+                   o fio só depois de rolar tudo. Então só um aparece de cada
+                   vez — a lista até escolher uma conversa, o fio depois, com
+                   um botão de voltar no cabeçalho dele. É o mesmo desenho da
+                   caixa do WhatsApp (ver conversas/page.tsx) e do próprio
+                   aplicativo de mensagem que o lojista já usa. */
                 <div className="card grid min-h-[32rem] grid-cols-1 overflow-hidden lg:grid-cols-[20rem_minmax(0,1fr)]">
 
                     {/* QUEM ESCREVEU
@@ -414,10 +421,10 @@ export default function AtendimentoPage() {
                         que é o que já tem dono. Separados porque a pergunta é
                         diferente — na fila se pergunta "tem alguém esperando?",
                         na mesa, "o que eu tenho para terminar?". */}
-                    <div className="border-b border-[var(--linha)] lg:max-h-[36rem] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+                    <div className={`border-b border-[var(--linha)] lg:block lg:max-h-[36rem] lg:overflow-y-auto lg:border-b-0 lg:border-r ${escolhido === null ? "block" : "hidden"}`}>
 
                         {fila.length > 0 && (
-                            <p className="sticky top-0 z-10 border-b border-[var(--linha-suave)] bg-[var(--amarelo-fundo)] px-4 py-2 text-[0.7rem] font-bold text-[var(--amarelo)]">
+                            <p className="z-10 border-b border-[var(--linha-suave)] bg-[var(--amarelo-fundo)] px-4 py-2 text-[0.7rem] font-bold text-[var(--amarelo)] lg:sticky lg:top-0">
                                 Na fila · {fila.length}
                             </p>
                         )}
@@ -475,7 +482,7 @@ export default function AtendimentoPage() {
                         </ul>
 
                         {naMesa.length > 0 && (
-                            <p className="sticky top-0 z-10 border-y border-[var(--linha-suave)] bg-[var(--superficie-2)] px-4 py-2 text-[0.7rem] font-bold text-[var(--ink-2)]">
+                            <p className="z-10 border-y border-[var(--linha-suave)] bg-[var(--superficie-2)] px-4 py-2 text-[0.7rem] font-bold text-[var(--ink-2)] lg:sticky lg:top-0">
                                 Em atendimento · {naMesa.length}
                             </p>
                         )}
@@ -536,7 +543,7 @@ export default function AtendimentoPage() {
                     </div>
 
                     {/* O FIO */}
-                    <div className="flex min-h-[24rem] flex-col lg:max-h-[36rem]">
+                    <div className={`min-h-[24rem] flex-col lg:flex lg:max-h-[36rem] ${escolhido === null ? "hidden" : "flex"}`}>
 
                         {aberto === null ? (
                             <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-[var(--ink-3)]">
@@ -544,7 +551,20 @@ export default function AtendimentoPage() {
                             </div>
                         ) : (
                             <>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--linha)] bg-[var(--superficie-2)] px-5 py-3">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[var(--linha)] bg-[var(--superficie-2)] px-4 py-3 sm:px-5">
+
+                                    {/* A porta de volta para a lista. Existe só
+                                        abaixo de lg, que é onde a lista some
+                                        para o fio caber: com as duas colunas
+                                        à vista ela não teria o que fazer. */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setEscolhido(null)}
+                                        aria-label="Voltar à lista de conversas"
+                                        className="-ml-1.5 shrink-0 rounded-lg p-1.5 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] lg:hidden"
+                                    >
+                                        <FiChevronLeft className="w-5" aria-hidden />
+                                    </button>
 
                                     <div className="min-w-0 flex-1">
                                         <p className="text-sm font-semibold text-[var(--ink)]">

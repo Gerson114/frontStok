@@ -226,10 +226,10 @@ export default function ClientesPage() {
                                     <li key={cliente.id}>
                                         <Link
                                             href={`/page/clientes/${cliente.id}`}
-                                            className="flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3.5 transition-colors hover:bg-[var(--superficie-2)]"
+                                            className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3.5 transition-colors hover:bg-[var(--superficie-2)] sm:px-5"
                                         >
 
-                                            <div className="min-w-[12rem] flex-1">
+                                            <div className="w-full min-w-0 sm:min-w-[12rem] sm:flex-1">
                                                 <p className="flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
                                                     {cliente.nome || "Cliente"}
 
@@ -252,27 +252,41 @@ export default function ClientesPage() {
                                                 </p>
                                             </div>
 
-                                            <div className="w-20 text-right">
-                                                <p className="num text-sm font-semibold text-[var(--ink)]">
-                                                    {cliente.pedidos}
-                                                </p>
-                                                <p className="text-[0.7rem] text-[var(--ink-3)]">
-                                                    {cliente.pedidos === 1 ? "pedido" : "pedidos"}
-                                                </p>
-                                            </div>
+                                            {/* Pedidos, total e último dia: 320px
+                                                de colunas fixas não cabem nos
+                                                288px que sobram num telefone de
+                                                360px — elas quebravam uma a uma
+                                                para baixo, cada linha com um
+                                                número perdido à direita. No
+                                                celular são uma régua só, os três
+                                                lado a lado sob o nome; `sm:contents`
+                                                devolve cada uma ao lugar de coluna
+                                                da linha a partir de sm. */}
+                                            <div className="flex w-full items-start justify-between gap-3 sm:contents">
 
-                                            <div className="w-32 text-right">
-                                                <p className="num text-sm font-semibold text-[var(--ink)]">
-                                                    {formatarMoeda(cliente.total_gasto)}
-                                                </p>
-                                                <p className="text-[0.7rem] text-[var(--ink-3)]">comprado</p>
-                                            </div>
+                                                <div className="text-right sm:w-20">
+                                                    <p className="num text-sm font-semibold text-[var(--ink)]">
+                                                        {cliente.pedidos}
+                                                    </p>
+                                                    <p className="text-[0.7rem] text-[var(--ink-3)]">
+                                                        {cliente.pedidos === 1 ? "pedido" : "pedidos"}
+                                                    </p>
+                                                </div>
 
-                                            <div className="w-28 text-right">
-                                                <p className="num text-sm text-[var(--ink-2)]">
-                                                    {data(cliente.ultimo_pedido)}
-                                                </p>
-                                                <p className="text-[0.7rem] text-[var(--ink-3)]">último</p>
+                                                <div className="text-right sm:w-32">
+                                                    <p className="num text-sm font-semibold text-[var(--ink)]">
+                                                        {formatarMoeda(cliente.total_gasto)}
+                                                    </p>
+                                                    <p className="text-[0.7rem] text-[var(--ink-3)]">comprado</p>
+                                                </div>
+
+                                                <div className="text-right sm:w-28">
+                                                    <p className="num text-sm text-[var(--ink-2)]">
+                                                        {data(cliente.ultimo_pedido)}
+                                                    </p>
+                                                    <p className="text-[0.7rem] text-[var(--ink-3)]">último</p>
+                                                </div>
+
                                             </div>
 
                                         </Link>

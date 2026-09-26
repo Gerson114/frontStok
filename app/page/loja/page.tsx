@@ -295,7 +295,7 @@ function LojaConteudo() {
                 {erro && <Alerta tipo="erro">{erro}</Alerta>}
 
                 {/* SITUAÇÃO DA VITRINE */}
-                <section className="card p-6">
+                <section className="card p-4 sm:p-6">
                     <div className="flex items-start gap-3">
                         <div
                             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
@@ -475,8 +475,13 @@ function LojaConteudo() {
                         <div>
                             <label htmlFor="slug" className="rotulo">Endereço da vitrine</label>
 
-                            <div className="flex items-stretch">
-                                <span className="flex items-center rounded-l-lg border border-r-0 border-[var(--linha)] bg-[var(--fundo)] px-3 font-mono text-sm text-[var(--ink-2)]">
+                            {/* Em pé no celular, lado a lado a partir de sm: o
+                                domínio inteiro ("https://vitrine.seudominio.com/")
+                                não cabe ao lado do campo numa tela de 360px —
+                                o campo ficava espremido a quase nada, ou a
+                                linha vazava para fora do cartão. */}
+                            <div className="flex flex-col sm:flex-row sm:items-stretch">
+                                <span className="break-all rounded-t-lg border border-b-0 border-[var(--linha)] bg-[var(--fundo)] px-3 py-2 font-mono text-sm text-[var(--ink-2)] sm:rounded-l-lg sm:rounded-t-none sm:border-b sm:border-r-0 sm:py-0">
                                     {urlDaVitrine("")}
                                 </span>
 
@@ -485,7 +490,7 @@ function LojaConteudo() {
                                     type="text"
                                     maxLength={40}
                                     placeholder="maria-modas"
-                                    className="field rounded-l-none font-mono"
+                                    className="field min-w-0 flex-1 rounded-t-none sm:rounded-l-none sm:rounded-t-lg font-mono"
                                     value={slug}
                                     onChange={(e) => aoDigitarSlug(e.target.value)}
                                 />

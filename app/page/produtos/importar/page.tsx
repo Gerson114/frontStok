@@ -166,7 +166,7 @@ export default function ImportarProdutos() {
                     setArrastando(false)
                     escolher(e.dataTransfer.files?.[0] ?? null)
                 }}
-                className={`card p-6 text-center transition-colors ${
+                className={`card p-4 sm:p-6 text-center transition-colors ${
                     arrastando ? "border-[var(--azul)] bg-[var(--azul-suave)]" : ""
                 }`}
             >

@@ -267,11 +267,21 @@ export default function FilaDoEstoque() {
                     aoBuscar={setBusca}
                     placeholder="Buscar por produto, endereço ou responsável"
                     controles={
-                        <>
+                        // w-full sm:w-* nos dois: esta é a tela de quem está
+                        // no chão da loja com o celular na mão (ver o
+                        // comentário grande no topo do arquivo) — e a régua
+                        // do BarraDaLista não quebra o que está dentro de
+                        // `controles` (ele não tem flex-wrap próprio, só o
+                        // contêiner da busca tem). Sem empilhar aqui, o tipo
+                        // e o campo de responsável ficavam espremidos ou
+                        // cortados pelo `overflow-hidden` da lista, num
+                        // telefone estreito.
+                        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+
                             {/* O tipo fica como controle da lista, e não como
                                 campo de formulário: ele recorta o que já está
                                 na tela, como o filtro do Shopify. */}
-                            <div className="w-52">
+                            <div className="w-full sm:w-52">
                                 <Selecao
                                     aria-label="Tipo de tarefa"
                                     value={tipo}
@@ -283,7 +293,7 @@ export default function FilaDoEstoque() {
                                 </Selecao>
                             </div>
 
-                            <div className="w-44">
+                            <div className="w-full sm:w-44">
                                 <input
                                     type="text"
                                     value={responsavel}
@@ -293,7 +303,7 @@ export default function FilaDoEstoque() {
                                     className="field"
                                 />
                             </div>
-                        </>
+                        </div>
                     }
                 />
 

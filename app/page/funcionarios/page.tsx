@@ -638,7 +638,7 @@ export default function Funcionarios() {
                 {/* ---------------------------------------------------------
                     A LISTA
                     --------------------------------------------------------- */}
-                <section className="card flex max-h-[calc(100dvh-14rem)] flex-col overflow-hidden p-0">
+                <section className="card flex flex-col overflow-hidden p-0 lg:max-h-[calc(100dvh-14rem)]">
 
                     <div className="border-b border-[var(--linha-suave)] p-3">
                         <div className="relative">
@@ -740,7 +740,7 @@ export default function Funcionarios() {
                 {/* ---------------------------------------------------------
                     A FICHA
                     --------------------------------------------------------- */}
-                <section className="card p-6">
+                <section className="card p-4 sm:p-6">
 
                     {escolhido === null && (
                         <div className="flex min-h-[18rem] flex-col items-center justify-center text-center">

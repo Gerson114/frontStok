@@ -420,7 +420,10 @@ function ChamarPessoas({ equipe, membros, eu, aoChamar, aoFechar }: {
 
             <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFechar} />
 
-            <div className="anim-tela relative w-full max-w-md rounded-xl border border-[var(--linha)] bg-[var(--superficie)] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+            {/* Teto de altura com rolagem: a lista de quem chamar cresce com
+                o tamanho da equipe, e num celular ela passava da tela — o
+                botão de confirmar ficava fora, sem como alcançá-lo. */}
+            <div className="anim-tela relative max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-xl border border-[var(--linha)] bg-[var(--superficie)] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.12)] sm:p-6">
 
                 <div className="mb-4 flex items-start justify-between gap-4">
                     <h2 className="font-display text-lg text-[var(--ink)]">Chamar para o mural</h2>

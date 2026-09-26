@@ -962,7 +962,7 @@ export default function Grade({ produtos, unidades, temSite }: Props) {
 
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className="card relative w-full max-w-md p-6"
+                        className="card relative max-h-[85dvh] w-full max-w-md overflow-y-auto p-4 sm:p-6"
                     >
 
                         <button
