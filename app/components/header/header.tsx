@@ -922,14 +922,50 @@ export default function Sidebar() {
         )
     }
 
-    /* O conteúdo da coluna: os itens da área ativa (ver `secaoAtiva`, acima),
-       mãe e filhas juntas. Mesma função para desktop e celular, para as
-       duas nunca discordarem sobre o que aparece. */
+    /* O conteúdo da coluna do DESKTOP: só os itens da área ativa (ver
+       `secaoAtiva`, acima), mãe e filhas juntas. Ao lado dela o trilho
+       continua de pé, e é ele que troca de área com um clique — por isso a
+       coluna não precisa mostrar as outras.
+       Ver `conteudoCompletoDoCelular`, logo abaixo, para o celular: lá não
+       há trilho nenhum ao lado para trocar de área, então a gaveta precisa
+       mostrar TODAS elas, ou o resto do menu vira uma tela que existe mas
+       que ninguém no celular consegue abrir. */
     function conteudoDaColuna() {
 
         if (!secaoAtiva) return null
 
         return <div className="space-y-0.5">{listaDeNos(secaoAtiva.nos)}</div>
+    }
+
+    /* O conteúdo da gaveta do CELULAR: todas as áreas, uma debaixo da outra,
+       cada uma com o próprio título — a mesma decisão que tirou o acordeão
+       do desktop (nada atrás de um clique a mais), só que aplicada aqui
+       porque é aqui que ela falta: sem o trilho ao lado, um celular que
+       visse só a área ativa nunca teria como abrir "Produtos e estoque" ou
+       "Meu site", por exemplo, a não ser tropeçando num link solto. */
+    function conteudoCompletoDoCelular() {
+
+        return (
+            <div className="space-y-5">
+                {secoes.map((secao) => {
+
+                    const IconeDaSecao = ICONE_DA_AREA[comparavel(secao.titulo)] ?? FiGrid
+
+                    return (
+                        <div key={secao.titulo}>
+                            <p className="mb-1.5 flex items-center gap-2 px-2 font-display text-[0.8125rem] text-[var(--ink)]">
+                                <IconeDaSecao className="w-4 shrink-0 text-[var(--azul)]" aria-hidden />
+                                {secao.titulo}
+                            </p>
+
+                            <div className="space-y-0.5">
+                                {listaDeNos(secao.nos)}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        )
     }
 
     /* O trilho (ver CHAVES_DO_TRILHO, lá em cima): cinco ícones fixos,
@@ -1058,15 +1094,28 @@ export default function Sidebar() {
         </>
     )
 
-    /* A gaveta do celular é o mesmo molde do `menuLateral` de desktop — as
-       duas sempre mostram a mesma área ativa, com o mesmo título no alto,
-       só sem o botão de recolher, que não existe no celular. */
+    /* A gaveta do celular NÃO é o mesmo molde do `menuLateral` de desktop
+       — de propósito. No desktop o trilho ao lado troca de área com um
+       clique, então a coluna só precisa da área ativa; no celular não há
+       trilho nenhum (ele também é `hidden md:flex`), e uma gaveta presa
+       numa área só deixaria o resto do catálogo sem porta nenhuma. Por
+       isso ela mostra TODAS as áreas (ver `conteudoCompletoDoCelular`). */
     const gavetaDoCelular = (
         <>
-            {cabecalhoDaColuna()}
+            {/* Sem o título de UMA área: a gaveta mostra o catálogo
+                inteiro (ver `conteudoCompletoDoCelular`), então um nome de
+                área no alto seria a única coisa ali que não bate com o que
+                vem embaixo. */}
+            <div className="flex min-h-[3.75rem] shrink-0 items-center gap-2.5 border-b border-[var(--linha)] px-4 py-3.5">
+                <FiGrid className="w-[1.125rem] shrink-0 text-[var(--azul)]" aria-hidden />
+
+                <p className="font-display flex-1 text-[0.9375rem] leading-snug text-[var(--ink)]">
+                    Menu
+                </p>
+            </div>
 
             <nav className="menu-rolagem flex-1 overflow-y-auto px-3 py-4">
-                {carregando ? esqueletoDeTelas() : conteudoDaColuna()}
+                {carregando ? esqueletoDeTelas() : conteudoCompletoDoCelular()}
             </nav>
         </>
     )
