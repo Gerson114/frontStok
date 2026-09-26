@@ -195,6 +195,19 @@ export const comissoes = {
    ========================================================================== */
 
 /**
+ * A própria conta, seja ela do dono ou de um funcionário.
+ *
+ * Nenhum caminho aqui leva id, e isso é a regra de segurança destas rotas: a
+ * pessoa alterada é sempre a da sessão. Um id no caminho seria a porta para
+ * trocar a foto de outra pessoa, e não existe pedido legítimo que precise
+ * dele — cargo e permissões, que são decisão de quem contrata, ficam em
+ * /funcionarios/:id.
+ */
+export const eu = {
+    foto: () => "/private/eu/foto",
+}
+
+/**
  * O chat entre quem trabalha na loja.
  *
  * Nenhum destes caminhos leva o id da loja nem o de quem está falando: quem

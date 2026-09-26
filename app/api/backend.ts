@@ -241,7 +241,21 @@ export function idValido(id: string): boolean {
  * grava (ver handlers/cadastroProduto/produtos/importar.go). Repetir o número
  * nos dois lados criaria dois limites para divergir.
  */
-export async function repassarArquivo(caminho: string, request: Request): Promise<Response> {
+export async function repassarArquivo(
+    caminho: string,
+    request: Request,
+
+    /**
+     * O nome do campo no FormData, e a frase de quando ele vem vazio.
+     *
+     * Existem porque esta função nasceu servindo só à planilha de importação e
+     * agora serve também à foto de perfil, que usa outro nome de campo. O
+     * padrão continua sendo o da planilha para as rotas que já a chamavam não
+     * precisarem mudar.
+     */
+    campo = "arquivo",
+    vazio = "Escolha uma planilha para enviar.",
+): Promise<Response> {
     try {
         const cabecalhos = await cabecalhosDaSessao()
 
@@ -250,14 +264,14 @@ export async function repassarArquivo(caminho: string, request: Request): Promis
         }
 
         const recebido = await request.formData().catch(() => null)
-        const arquivo = recebido?.get("arquivo")
+        const arquivo = recebido?.get(campo)
 
         if (!(arquivo instanceof File) || arquivo.size === 0) {
-            return Response.json({ erro: "Escolha uma planilha para enviar." }, { status: 400 })
+            return Response.json({ erro: vazio }, { status: 400 })
         }
 
         const envio = new FormData()
-        envio.append("arquivo", arquivo, arquivo.name)
+        envio.append(campo, arquivo, arquivo.name)
 
         const response = await fetch(`${API_BASE}${caminho}`, {
             method: "POST",

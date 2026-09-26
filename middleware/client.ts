@@ -27,12 +27,28 @@ interface ApiFetchOptions {
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+
+    // FormData passa como está, sem JSON.stringify e SEM Content-Type.
+    //
+    // Serializar um FormData como JSON produziria a string "[object FormData]"
+    // — um corpo válido que não contém arquivo nenhum, e um erro que só
+    // aparece do outro lado como "campo ausente". E o cabeçalho precisa
+    // carregar a fronteira que separa as partes, que só o fetch sabe montar:
+    // declarar "multipart/form-data" à mão é o erro clássico aqui.
+    const ehFormulario = options.body instanceof FormData
+
     const response = await fetch(path, {
         method: options.method ?? "GET",
         credentials: "include",
         cache: "no-store",
-        headers: options.body !== undefined ? { "Content-Type": "application/json" } : undefined,
-        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+        headers: options.body !== undefined && !ehFormulario
+            ? { "Content-Type": "application/json" }
+            : undefined,
+        body: options.body === undefined
+            ? undefined
+            : ehFormulario
+                ? (options.body as FormData)
+                : JSON.stringify(options.body),
     })
 
     const texto = await response.text()

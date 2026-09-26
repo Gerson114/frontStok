@@ -39,6 +39,7 @@ import {
 import { escutarLoja } from "@/middleware/whatsapp"
 import { useVarredura } from "@/middleware/aoVivo"
 import { Bolinha, usePresenca } from "@/app/components/presenca/presenca"
+import { TrocarFoto } from "@/app/components/presenca/foto"
 import CodigoDaEquipe from "@/app/components/equipe/codigo"
 import AcessosDaConversa from "@/app/components/equipe/acessos"
 import TarefasDaEquipe from "@/app/components/equipe/tarefas"
@@ -269,6 +270,14 @@ export default function ConversaDaEquipe() {
     // pedida de novo (ver usePresenca).
     const online = usePresenca()
 
+    const [mexendoNaFoto, setMexendoNaFoto] = useState(false)
+
+    // A minha foto sai da minha linha no elenco, e não de uma consulta à
+    // parte: o servidor já manda a foto de cada membro, e eu sou um deles.
+    // Uma segunda fonte para o mesmo dado seria uma a mais para ficar
+    // desatualizada.
+    const minhaFoto = (estado?.membros ?? []).find((m) => m.cracha === estado?.eu.cracha)?.foto ?? ""
+
     // A conversa nasce no fim, como toda conversa.
     useEffect(() => {
         fim.current?.scrollIntoView({ block: "end" })
@@ -415,6 +424,9 @@ export default function ConversaDaEquipe() {
                 aoSair={() => setSaindo(true)}
                 eu={estado.eu}
                 online={online}
+                minhaFoto={minhaFoto}
+                aoTrocarFoto={() => setMexendoNaFoto(true)}
+                membros={membros}
             />
 
             <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
@@ -689,6 +701,28 @@ export default function ConversaDaEquipe() {
                     aoFechar={() => setCriandoGrupo(false)}
                 />
             )}
+
+            {mexendoNaFoto && (
+                <Painel titulo="Minha foto" aoFechar={() => setMexendoNaFoto(false)}>
+                    <TrocarFoto
+                        foto={minhaFoto}
+                        nome={estado.eu.nome}
+
+                        // Recarrega o estado inteiro em vez de encaixar a foto
+                        // nova na minha linha aqui: o servidor também avisa as
+                        // outras telas da loja, e reler é o que mantém uma
+                        // fonte só para o mesmo dado.
+                        aoTrocar={() => {
+                            void recarregarEstado()
+                        }}
+                    />
+
+                    <p className="mt-3 text-xs text-[var(--ink-3)]">
+                        A foto aparece para quem trabalha com você, na conversa da
+                        equipe e na tela de Funcionários.
+                    </p>
+                </Painel>
+            )}
         </>
     )
 }
@@ -706,7 +740,7 @@ export default function ConversaDaEquipe() {
  * colega existe sempre, e existir sempre é o que a faz ser a parte de baixo.
  */
 function MenuDoChat({
-    salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu, online,
+    salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu, online, minhaFoto, aoTrocarFoto, membros,
 }: {
     salas: SalaDaEquipe[]
     sala: string
@@ -717,6 +751,15 @@ function MenuDoChat({
 
     /** Os crachás de quem está com o painel aberto agora (ver usePresenca). */
     online: Set<string>
+
+    /** O endereço da minha foto, ou vazio para a inicial do nome. */
+    minhaFoto: string
+
+    /** Abre o painel de trocar a própria foto. */
+    aoTrocarFoto: () => void
+
+    /** O elenco da loja, de onde sai o rosto de cada linha de pessoa. */
+    membros: MembroDaEquipe[]
 }) {
 
     const geral = salas.filter((s) => s.tipo === "geral")
@@ -811,6 +854,11 @@ function MenuDoChat({
                             // direta, sem precisar procurar a pessoa na lista
                             // de membros.
                             online={online.has(linha.chave)}
+
+                            // A foto mora no elenco, não na sala: a lista da
+                            // esquerda é de SALAS, e uma sala não tem rosto —
+                            // quem tem é a pessoa do outro lado dela.
+                            foto={membros.find((m) => m.cracha === linha.chave)?.foto ?? ""}
                         />
                     ))}
                 </div>
@@ -818,9 +866,28 @@ function MenuDoChat({
 
             <div className="border-t border-[var(--linha)] px-3 py-2.5">
 
-                <p className="truncate px-2 pb-1.5 text-xs text-[var(--ink-3)]">
-                    {eu.nome}
-                </p>
+                {/* O próprio rosto é o botão de trocá-lo — é onde a pessoa
+                    procura, porque é onde ela se vê. Um item "Minha foto"
+                    numa tela de configurações estaria certo e ninguém acharia. */}
+                <button
+                    type="button"
+                    onClick={aoTrocarFoto}
+                    title="Trocar a minha foto"
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-[var(--superficie)]"
+                >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--azul)] text-[0.625rem] font-bold text-white">
+                        {minhaFoto ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={minhaFoto} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                            (eu.nome.trim()[0] ?? "?").toUpperCase()
+                        )}
+                    </span>
+
+                    <span className="min-w-0 flex-1 truncate text-xs text-[var(--ink-3)]">
+                        {eu.nome}
+                    </span>
+                </button>
 
                 {/* O dono não sai: ele é a única conta capaz de readmitir
                     quem saiu, e uma porta que fecha por dentro sem maçaneta é
@@ -869,7 +936,7 @@ function IconeDaSala({ tipo }: { tipo?: string }) {
 }
 
 /** Uma linha do menu do chat. */
-function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0, online = false }: {
+function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0, online = false, foto = "" }: {
     linha: SalaDaEquipe
     ativa: boolean
     aoAbrir: (chave: string) => void
@@ -883,6 +950,14 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0, online = false }: {
      * precisar de condicional em cada ponto de uso.
      */
     online?: boolean
+
+    /**
+     * O rosto da pessoa desta linha, quando ela tem um.
+     *
+     * Como `online`, só faz sentido nas salas de tipo "pessoa" — grupo e canal
+     * geral continuam com o ícone deles.
+     */
+    foto?: string
 
     /**
      * A posição na lista, que vira o atraso da entrada.
@@ -905,11 +980,26 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0, online = false }: {
                     : "text-[var(--ink-2)] hover:bg-[var(--superficie)]/70 hover:text-[var(--ink)]"
             }`}
         >
-            {/* O ícone vira a âncora da bolinha: ela é posicionada em relação
-                a este span, e não ao botão inteiro, senão cairia no canto da
-                linha em vez de no canto do ícone. */}
+            {/* A âncora da bolinha: ela é posicionada em relação a este span,
+                e não ao botão inteiro, senão cairia no canto da linha em vez
+                de no canto do rosto.
+
+                Com foto, o rosto substitui o ícone — numa conversa, saber com
+                quem se fala é o próprio ícone. Sem foto, fica o ícone de
+                sempre, e não uma inicial: aqui a linha já mostra o nome
+                inteiro ao lado, então uma letra repetiria o que está escrito. */}
             <span className="relative flex shrink-0 items-center">
-                <IconeDaSala tipo={linha.tipo} />
+                {foto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={foto}
+                        alt=""
+                        className="h-5 w-5 rounded-full object-cover"
+                    />
+                ) : (
+                    <IconeDaSala tipo={linha.tipo} />
+                )}
+
                 <Bolinha online={online} titulo={`${linha.nome} está no painel agora`} />
             </span>
 

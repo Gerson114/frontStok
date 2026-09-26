@@ -586,6 +586,17 @@ export interface Funcionario {
     ativo: boolean
 
     /**
+     * O endereço da foto de perfil, pronto para um <img>, ou vazio.
+     *
+     * Quem a troca é a própria pessoa, na conversa da equipe — não há rota
+     * para o dono mexer na foto de alguém, porque o rosto é a única coisa na
+     * ficha que não é decisão de quem contrata. Aqui ela é só desenhada.
+     *
+     * Vazio é o caso comum: a tela desenha a inicial do nome.
+     */
+    foto?: string
+
+    /**
      * Gerente da filial: a conta que administra ESTA loja, um degrau abaixo
      * do dono. Ela cadastra e afasta gente e ajusta o que cada um abre, mas
      * não alcança as lojas da rede, a assinatura, a conta que recebe o
@@ -856,6 +867,19 @@ export interface MembroDaEquipe {
     dono: boolean
     nome: string
     cracha: string
+
+    /**
+     * O endereço da foto de perfil, pronto para um <img>, ou ausente.
+     *
+     * Vem montado do servidor, e não como caminho no bucket: é lá que se sabe
+     * se a foto é servida pela Cloudflare ou pelo próprio servidor, e essa
+     * decisão é uma variável de ambiente que não pode exigir reconstruir o
+     * painel para mudar.
+     *
+     * Ausente é o caso comum — a maior parte da equipe nunca põe foto, e a
+     * tela desenha a inicial do nome.
+     */
+    foto?: string
 
     /**
      * Se o dono já confirmou a entrada desta pessoa na conversa.

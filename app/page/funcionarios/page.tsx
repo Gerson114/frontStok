@@ -675,13 +675,31 @@ export default function Funcionarios() {
                                     }`}
                                 >
                                     {/* relative: é a âncora da bolinha, que
-                                        fica presa ao canto do círculo. */}
-                                    <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                        fica presa ao canto do círculo.
+                                        overflow-hidden: recorta a foto no
+                                        círculo em vez de deixá-la quadrada
+                                        por cima dele. */}
+                                    <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold ${
                                         funcionario.ativo
                                             ? "bg-[var(--azul)] text-white"
                                             : "bg-[var(--linha)] text-[var(--ink-3)]"
                                     }`}>
-                                        {inicial(funcionario.nome)}
+                                        {funcionario.foto ? (
+                                            // <img> e não next/image: o endereço
+                                            // vem do servidor e pode apontar para
+                                            // o domínio do bucket, que muda de
+                                            // instalação para instalação — o
+                                            // next/image exigiria declará-lo no
+                                            // build.
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                                src={funcionario.foto}
+                                                alt=""
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            inicial(funcionario.nome)
+                                        )}
 
                                         {/* "f" + id é o crachá do funcionário
                                             (ver auth.Cracha, no backend). O
