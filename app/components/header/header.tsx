@@ -56,6 +56,7 @@ import {
     FiSun,
     FiMoon,
 } from "react-icons/fi"
+import { registrarPassada } from "@/app/components/pagina/voltar"
 import { MARCA } from "@/app/marca"
 import { tocarSom } from "@/app/somNotificacao"
 import type { IconType } from "react-icons"
@@ -172,6 +173,19 @@ const MENU_MINIMO: ItemMenu[] = [
 
 /** Altura da barra superior. Em rem para casar com o `top-14` das telas. */
 const ALTURA_TOPO = "3.5rem"
+
+/* Quanto da barra superior ainda está à vista, em pixels — 56 no alto da
+   página, 0 depois de rolar a barra inteira.
+ *
+ * O menu lateral é a única coisa presa à tela: a barra rola junto com o
+ * conteúdo. Sem esta medida, a coluna do menu ficaria ancorada em 3,5rem
+ * para sempre e, assim que a barra saísse, sobraria uma faixa vazia acima
+ * dela. Com ela, o menu sobe na mesma medida em que a barra sai e termina
+ * ocupando a altura inteira da tela. */
+const ALTURA_TOPO_PX = 56
+
+/** O nome da variável que as colunas do menu leem para saber onde começar. */
+const VAR_TOPO_VISIVEL = "--topo-visivel"
 
 /** Uma tela do menu com o que abre debaixo dela. */
 interface No {
@@ -320,6 +334,22 @@ export default function Sidebar() {
     const campoBusca = useRef<HTMLInputElement>(null)
 
     const noPainel = pathname.startsWith("/page/")
+
+    /* Conta as trocas de tela desta aba, para o botão de voltar saber se há
+     * para onde voltar dentro do sistema (ver components/pagina/voltar.tsx).
+     * Mora aqui porque este componente é o único que o layout monta em toda
+     * página — e porque ele já acompanha a rota por outros motivos. */
+    const rotaAnterior = useRef(pathname)
+
+    useEffect(() => {
+
+        if (rotaAnterior.current === pathname) return
+
+        rotaAnterior.current = pathname
+
+        registrarPassada()
+
+    }, [pathname])
 
     // Dentro da conversa da equipe o menu do painel sai de cena e a própria
     // tela desenha o menu dela — grupos, pessoas, chamadas. O motivo é que
@@ -511,6 +541,40 @@ export default function Sidebar() {
 
         setAberto(!aberto)
     }
+
+    /* Onde o menu começa, anunciado às colunas dele.
+     *
+     * A escrita é direta no evento, sem requestAnimationFrame no meio: o
+     * navegador já entrega no máximo um evento de rolagem por quadro, e o
+     * trabalho aqui é uma propriedade só. Com rAF havia um efeito colateral
+     * de verdade — em aba escondida ele não roda, então a medida ficava
+     * parada no último valor e a coluna voltava fora do lugar ao reaparecer.
+     *
+     * Fora do painel a variável não existe — quem a lê são as colunas, e
+     * elas só existem dentro de /page/. */
+    useEffect(() => {
+
+        if (!noPainel) return
+
+        function medir() {
+            const sobrando = Math.max(0, ALTURA_TOPO_PX - window.scrollY)
+
+            document.documentElement.style.setProperty(VAR_TOPO_VISIVEL, `${sobrando}px`)
+        }
+
+        medir()
+
+        window.addEventListener("scroll", medir, { passive: true })
+        window.addEventListener("resize", medir)
+
+        return () => {
+            window.removeEventListener("scroll", medir)
+            window.removeEventListener("resize", medir)
+
+            document.documentElement.style.removeProperty(VAR_TOPO_VISIVEL)
+        }
+
+    }, [noPainel])
 
     /* A largura que o menu ocupa, anunciada às telas.
      *
@@ -772,7 +836,9 @@ export default function Sidebar() {
 
         try {
             await logout()
-            router.push("/login")
+            // replace: depois de sair, o "voltar" do navegador não pode
+            // devolver a tela do painel de quem acabou de sair dela.
+            router.replace("/login")
 
         } catch (e) {
             // Não navega: o cookie desta aba já foi apagado, mas o servidor
@@ -1225,7 +1291,7 @@ export default function Sidebar() {
                 os lados, os sete controles dela (gaveta, marca, seletor de
                 loja, tema, sino, conta) somavam mais de 360px e o último era
                 empurrado para fora da tela. */}
-            <header className="z-50 flex h-14 shrink-0 items-center gap-1 border-b border-[var(--linha)] bg-[var(--superficie)] px-2 print:hidden sm:gap-2 sm:px-3 md:sticky md:top-0">
+            <header className="z-50 flex h-14 shrink-0 items-center gap-1 border-b border-[var(--linha)] bg-[var(--superficie)] px-2 print:hidden sm:gap-2 sm:px-3">
 
                 {/* Marca. No desktop ela ocupa a largura da barra lateral, de
                     modo que o começo da busca cai exatamente onde começa o
@@ -1585,8 +1651,8 @@ export default function Sidebar() {
                 dá lugar à lista dela ali (ver `noChat`). */}
             <aside
                 style={{
-                    top: ALTURA_TOPO,
-                    height: `calc(100dvh - ${ALTURA_TOPO})`,
+                    top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
+                    height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
                     // Um degradê quase imperceptível, de cima para baixo —
                     // não é enfeite, é o que faz o fundo chapado parecer
                     // material e não papel de parede. Sutil de propósito.
@@ -1599,7 +1665,10 @@ export default function Sidebar() {
 
             {!noChat && !painelRecolhido && (
                 <aside
-                    style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
+                    style={{
+                        top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
+                        height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
+                    }}
                     className="anim-surgir fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
                 >
                     {menuLateral}
@@ -1615,7 +1684,10 @@ export default function Sidebar() {
                     onClick={() => setPainelRecolhido(false)}
                     aria-label="Abrir o menu"
                     title="Abrir o menu"
-                    style={{ top: ALTURA_TOPO, height: `calc(100dvh - ${ALTURA_TOPO})` }}
+                    style={{
+                        top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
+                        height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
+                    }}
                     className="anim-surgir fixed left-[4.5rem] z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
                 >
                     <FiChevronsRight className="w-3.5 shrink-0" aria-hidden />

@@ -159,7 +159,7 @@ export default function Cadastro() {
             // foi criada e não há o que pagar.
             if (inicio.proximo_passo === "login") {
                 setSucesso(true)
-                setTimeout(() => router.push("/login"), 1500)
+                setTimeout(() => router.replace("/login"), 1500)
                 return
             }
 

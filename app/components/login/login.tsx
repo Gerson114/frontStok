@@ -132,6 +132,7 @@ export default function Login() {
             // continua sendo o palpite — para o dono ele está sempre certo.
             let destino = "/page/produtos"
 
+
             try {
                 const menu = await consultarMenu()
                 const primeiro = menu.find((item) => item.liberado) ?? menu[0]
@@ -142,7 +143,11 @@ export default function Login() {
                 // que falhou seria pior do que abrir na tela errada.
             }
 
-            router.push(destino)
+            /* replace, e não push: o login não é uma tela para a qual se
+               volta. Com push, o "voltar" do navegador devolvia o formulário
+               de entrada a quem já estava dentro — e a tela seguinte a ele,
+               no histórico, era a que a pessoa acabou de abrir. */
+            router.replace(rotaDePainelSegura(destino))
 
         } catch (error) {
             console.error("Erro:", error)
@@ -434,4 +439,27 @@ export default function Login() {
 
         </MolduraAuth>
     )
+}
+
+/**
+ * O destino depois de entrar, conferido.
+ *
+ * O endereço vem do menu, que vem do servidor — e ainda assim é conferido
+ * aqui. Não por desconfiança do backend: é que este valor vai direto para uma
+ * navegação, e um campo de resposta que vira navegação sem conferência é como
+ * um redirecionamento aberto nasce. Só caminho interno do painel passa;
+ * qualquer outra coisa (endereço absoluto, "//outro-site", protocolo) cai no
+ * destino padrão.
+ */
+function rotaDePainelSegura(destino: string): string {
+
+    const padrao = "/page/produtos"
+
+    if (!destino.startsWith("/page/")) return padrao
+
+    // "//host" é caminho para o navegador e endereço externo para o
+    // roteador — a forma clássica de escapar de uma checagem de prefixo.
+    if (destino.startsWith("//")) return padrao
+
+    return destino
 }

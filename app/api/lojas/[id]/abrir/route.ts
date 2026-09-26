@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { COOKIE_DA_LOJA, repassarAoBackend } from "@/app/api/backend"
+import { COOKIE_DA_LOJA, idValido, repassarAoBackend } from "@/app/api/backend"
 import { lojas } from "@/app/api/rotas"
 
 /**
@@ -16,6 +16,10 @@ import { lojas } from "@/app/api/rotas"
 export async function POST(_request: Request, contexto: { params: Promise<{ id: string }> }) {
 
     const { id } = await contexto.params
+
+    if (!idValido(id)) {
+        return Response.json({ erro: "Endereço inválido" }, { status: 400 })
+    }
 
     const resposta = await repassarAoBackend("POST", lojas.trocar(id))
 

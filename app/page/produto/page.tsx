@@ -214,7 +214,10 @@ export default function Produto() {
       setVariacoes(VARIACOES_INICIAIS)
       setFicha([])
 
-      setTimeout(() => router.push("/page/produtos"), 1200)
+      // replace: o formulário já foi gravado e esvaziado. Com push, o
+      // "voltar" do navegador devolvia a tela de cadastro zerada, que parece
+      // que o trabalho se perdeu.
+      setTimeout(() => router.replace("/page/produtos"), 1200)
 
     } catch (error) {
       console.error("Erro ao cadastrar produto:", error)
@@ -235,7 +238,10 @@ export default function Produto() {
     setVariacoes(VARIACOES_INICIAIS)
     setFicha([])
     setErros([])
-    router.push("/page/produtos")
+
+    // Cancelar é desistir desta tela: ela não fica no histórico para o
+    // "voltar" trazer o formulário zerado de volta.
+    router.replace("/page/produtos")
   }
 
   // A cor deixou de ser campo fixo: se o lojista puser "Cor" na ficha

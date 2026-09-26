@@ -66,8 +66,10 @@ export default function PrivacidadeDoCliente({ id, nome }: { id: number; nome: s
             await anonimizarCliente(id)
 
             // A ficha que estava aberta não existe mais como pessoa; ficar
-            // nela mostrando "Cliente removido" só confunde.
-            router.push("/page/clientes")
+            // nela mostrando "Cliente removido" só confunde. `replace`
+            // porque voltar para uma ficha que foi anonimizada levaria a uma
+            // tela de erro — o registro não existe mais.
+            router.replace("/page/clientes")
 
         } catch (e) {
             setErro(e instanceof Error ? e.message : "Não foi possível anonimizar este cliente.")

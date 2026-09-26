@@ -1,12 +1,22 @@
-import { corpoDaRequisicao, repassarAoBackend } from "@/app/api/backend"
+import { corpoDaRequisicao, idValido, repassarAoBackend } from "@/app/api/backend"
 import { adicionais } from "@/app/api/rotas"
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+
+    if (!idValido(id)) {
+        return Response.json({ erro: "Endereço inválido" }, { status: 400 })
+    }
+
     return repassarAoBackend("PUT", adicionais.umGrupo(id), await corpoDaRequisicao(request))
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
+
+    if (!idValido(id)) {
+        return Response.json({ erro: "Endereço inválido" }, { status: 400 })
+    }
+
     return repassarAoBackend("DELETE", adicionais.umGrupo(id))
 }

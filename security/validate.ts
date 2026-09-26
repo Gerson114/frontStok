@@ -15,6 +15,23 @@ export function isValidPassword(password: string): boolean {
     return password.length >= 8 && password.length <= 72
 }
 
+/**
+ * Um caminho da própria vitrine — "/promocoes", "/produto/12".
+ *
+ * A conferência não é só "começa com barra": "//loja-falsa.com" também
+ * começa com barra e o navegador a lê como endereço ABSOLUTO de outro site,
+ * herdando o protocolo da página. Um banner com esse link mandaria o cliente
+ * da loja para fora sem que nada na tela do lojista denunciasse — é a forma
+ * clássica de redirecionamento aberto. A barra invertida entra na mesma
+ * recusa porque alguns navegadores a tratam como barra.
+ */
+function ehCaminhoInterno(link: string): boolean {
+
+    if (!link.startsWith("/")) return false
+
+    return !link.startsWith("//") && !link.startsWith("/\\")
+}
+
 /** Aceita apenas URLs absolutas http/https (evita esquemas como "javascript:"). */
 export function isValidUrl(raw: string): boolean {
     try {
@@ -405,7 +422,7 @@ export function validarBanner(banner: NovoBanner): string[] {
 
     const link = banner.link.trim()
 
-    if (link && !link.startsWith("/") && !isValidUrl(link)) {
+    if (link && !ehCaminhoInterno(link) && !isValidUrl(link)) {
         erros.push("Informe um link válido (URL completa ou caminho começando com /).")
     }
 

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { permanentRedirect } from "next/navigation"
 
 /**
  * Cancelados virou uma aba de Pedidos.
@@ -12,5 +12,8 @@ import { redirect } from "next/navigation"
  * inclusive o item de menu, enquanto o servidor ainda o mandar.
  */
 export default function Cancelados() {
-    redirect("/page/pedidos?status=cancelados")
+    // `permanentRedirect` (308), e não o 307 do `redirect`: a mudança é
+    // definitiva, e o permanente é o que faz o navegador guardar o novo
+    // endereço em vez de bater aqui toda vez que alguém abrir o favorito.
+    permanentRedirect("/page/pedidos?status=cancelados")
 }

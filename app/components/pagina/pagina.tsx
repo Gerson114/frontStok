@@ -70,16 +70,16 @@ export function Pagina({
             }`}
         >
 
-            {/* Cabeçalho da tela. Do md para cima ele gruda logo abaixo da
-                barra superior (3.5rem), para o título e as ações continuarem à
-                mão enquanto se rola uma lista longa.
+            {/* Cabeçalho da tela: rola junto com o conteúdo, em toda largura.
+                A única coisa presa à tela neste painel é o menu lateral.
 
-                No celular ele rola junto com o resto. Preso, somava-se à barra
-                de cima: duas faixas fixas tomavam quase um terço da altura de
-                um telefone, e o que sobrava para a lista era uma janelinha.
-                Numa tela pequena o lugar do título é no começo da página, não
-                colado ao vidro. */}
-            <header className="z-30 border-b border-[var(--linha)] bg-[var(--fundo)]/95 backdrop-blur print:hidden md:sticky md:top-14">
+                Já foi grudado logo abaixo da barra superior. Duas faixas
+                paradas — a barra e este cabeçalho — tomavam quase um terço da
+                altura de um telefone, e o que sobrava para a lista era uma
+                janelinha; no monitor o mesmo par comia a área de trabalho de
+                quem confere uma tabela longa. O título é o começo da página,
+                não uma moldura permanente. */}
+            <header className="z-30 border-b border-[var(--linha)] bg-[var(--fundo)]/95 backdrop-blur print:hidden">
 
                 {/* O mesmo respiro do conteúdo abaixo: é o que faz o título
                     nascer exatamente na mesma vertical da borda esquerda do

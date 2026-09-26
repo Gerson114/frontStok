@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
     FiAlertCircle,
@@ -39,6 +38,7 @@ import {
 } from "@/middleware/equipe"
 import { escutarLoja } from "@/middleware/whatsapp"
 import { useVarredura } from "@/middleware/aoVivo"
+import { useVoltar } from "@/app/components/pagina/voltar"
 import { Bolinha, usePresenca } from "@/app/components/presenca/presenca"
 import { TrocarFoto } from "@/app/components/presenca/foto"
 import CodigoDaEquipe from "@/app/components/equipe/codigo"
@@ -87,6 +87,10 @@ import type {
 export default function ConversaDaEquipe() {
 
     const parametros = useSearchParams()
+
+    /* Para onde a seta de voltar leva: a tela anterior, e Início só como
+       reserva de quem abriu o endereço direto. */
+    const voltar = useVoltar("/page/inicio")
 
     const [estado, setEstado] = useState<EstadoDaEquipe | null>(null)
     const [carregando, setCarregando] = useState(true)
@@ -456,19 +460,26 @@ export default function ConversaDaEquipe() {
                 para cima as duas convivem: a lista é a coluna da esquerda. */}
             <main className={`h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:flex md:px-6 ${salaMenuAberta ? "hidden" : "flex"}`}>
 
+
                 {/* A faixa do celular: sem a coluna de salas ao lado (ela só
                     aparece a partir de md), esta é a única maneira de voltar
                     ao painel ou trocar de conversa — sem ela, a tela do
                     celular ficaria presa na sala em que abriu. */}
                 <div className="mb-3 flex items-center gap-2 md:hidden">
 
-                    <Link
-                        href="/page/inicio"
-                        aria-label="Voltar ao painel"
+                    {/* Volta para a tela ANTERIOR, não para uma tela fixa:
+                        quem entrou na conversa vindo de Pedidos espera
+                        Pedidos de volta (ver components/pagina/voltar.tsx).
+                        Início é só a reserva de quem abriu o endereço
+                        direto e não tem para onde voltar. */}
+                    <button
+                        type="button"
+                        onClick={voltar}
+                        aria-label="Voltar"
                         className="btn btn-neutro shrink-0 p-2.5"
                     >
                         <FiArrowLeft className="w-4" aria-hidden />
-                    </Link>
+                    </button>
 
                     <button
                         type="button"
@@ -828,6 +839,8 @@ function MenuDoChat({
     aoFecharMenu: () => void
 }) {
 
+    const voltar = useVoltar("/page/inicio")
+
     const geral = salas.filter((s) => s.tipo === "geral")
     const grupos = salas.filter((s) => s.tipo === "grupo")
     const pessoas = salas.filter((s) => s.tipo === "pessoa")
@@ -839,13 +852,14 @@ function MenuDoChat({
     const conteudo = (
         <>
             <div className="border-b border-[var(--linha)] px-3 py-2.5">
-                <Link
-                    href="/page/inicio"
-                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[0.8125rem] font-semibold text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)] hover:text-[var(--ink)]"
+                <button
+                    type="button"
+                    onClick={voltar}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.8125rem] font-semibold text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)] hover:text-[var(--ink)]"
                 >
                     <FiArrowLeft className="w-4 shrink-0" aria-hidden />
-                    Voltar ao painel
-                </Link>
+                    Voltar
+                </button>
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 py-3">
@@ -977,7 +991,14 @@ function MenuDoChat({
     return (
         <>
             <aside
-                style={{ top: "3.5rem", height: "calc(100dvh - 3.5rem)" }}
+                // --topo-visivel: quanto da barra superior ainda está à vista
+                // (ver header.tsx). A barra rola junto com a página, e esta
+                // coluna sobe na mesma medida em que ela sai — sem isso,
+                // sobraria uma faixa vazia acima do menu depois de rolar.
+                style={{
+                    top: "var(--topo-visivel, 3.5rem)",
+                    height: "calc(100dvh - var(--topo-visivel, 3.5rem))",
+                }}
                 // left-[4.5rem]: encosta no trilho de atalhos do painel (ver
                 // header.tsx), que continua de pé mesmo dentro da conversa —
                 // esta coluna toma só o lugar do acordeão, não o trilho
@@ -1125,18 +1146,22 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0, online = false, foto = "
 
 /** A moldura de quem ainda não entrou — sem menu de chat, que ainda não há. */
 function Vestibulo({ children }: { children: React.ReactNode }) {
+
+    const voltar = useVoltar("/page/inicio")
+
     return (
         <main className="flex min-h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-6 md:px-6">
 
             <div className="mx-auto w-full max-w-md">
 
-                <Link
-                    href="/page/inicio"
+                <button
+                    type="button"
+                    onClick={voltar}
                     className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--ink)]"
                 >
                     <FiArrowLeft className="w-4" aria-hidden />
-                    Voltar ao painel
-                </Link>
+                    Voltar
+                </button>
 
                 {children}
             </div>

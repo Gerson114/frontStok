@@ -193,7 +193,10 @@ export default function EditarProduto() {
 
       setSucesso(true)
 
-      setTimeout(() => router.push("/page/produtos"), 1200)
+      // replace: o formulário já foi gravado e esvaziado. Com push, o
+      // "voltar" do navegador devolvia a tela de cadastro zerada, que parece
+      // que o trabalho se perdeu.
+      setTimeout(() => router.replace("/page/produtos"), 1200)
 
     } catch (error) {
       console.error("Erro ao editar produto:", error)
@@ -209,7 +212,9 @@ export default function EditarProduto() {
   }
 
   const handleCancelar = () => {
-    router.push("/page/produtos")
+    // Cancelar é desistir desta tela: ela não fica no histórico para o
+    // "voltar" trazer o formulário de volta.
+    router.replace("/page/produtos")
   }
 
   // A cor deixou de ser campo fixo: vem da ficha técnica, quando houver.

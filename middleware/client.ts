@@ -59,6 +59,10 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
             redirecionarParaAssinatura()
         }
 
+        if (response.status === STATUS_SEM_SESSAO) {
+            levarAoLogin()
+        }
+
         throw new ApiError(extrairMensagemErro(dados), response.status, dados)
     }
 
@@ -91,6 +95,35 @@ function redirecionarParaAssinatura(): void {
     // deixou de valer.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = ROTA_ASSINATURA
+}
+
+// 401: a sessão acabou (o cookie expira — ver VALIDADE_SESSAO_S no
+// app/api/backend.ts) ou nunca existiu.
+const STATUS_SEM_SESSAO = 401
+
+const ROTA_LOGIN = "/login"
+
+/**
+ * Sessão vencida leva ao login, em vez de deixar a tela repetindo erro.
+ *
+ * O Proxy confere a sessão na NAVEGAÇÃO (ver proxy.ts), e isso não alcança a
+ * aba que já está aberta: o cookie vence com o painel na tela, e daí em
+ * diante toda consulta responde 401 — o lojista ficava olhando "Erro
+ * inesperado ao comunicar com o servidor" em tela após tela, sem nada
+ * dizendo que bastava entrar de novo.
+ *
+ * Só dentro do painel. Fora dele, 401 é resposta de formulário e não de
+ * sessão vencida: o login responde 401 para senha errada, e mandar ao login
+ * quem já está no login apagaria a mensagem que explica o que houve.
+ */
+function levarAoLogin(): void {
+
+    if (typeof window === "undefined") return
+
+    if (!window.location.pathname.startsWith("/page/")) return
+
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = ROTA_LOGIN
 }
 
 // Exportada porque o envio de arquivo (ver produtos.ts) não passa por

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { permanentRedirect } from "next/navigation"
 
 /**
  * A configuração do estoque virou parte de "Endereços".
@@ -14,5 +14,8 @@ import { redirect } from "next/navigation"
  * (internal/services/assinatura/recursos.go), esta pasta pode ser apagada.
  */
 export default function ConfiguracaoDoEstoque() {
-    redirect("/page/estoque/enderecos")
+    // `permanentRedirect` (308), e não o 307 do `redirect`: a mudança é
+    // definitiva, e o permanente é o que faz o navegador guardar o novo
+    // endereço em vez de bater aqui toda vez que alguém abrir o favorito.
+    permanentRedirect("/page/estoque/enderecos")
 }
