@@ -55,6 +55,20 @@ ENV NEXT_PUBLIC_VITRINE_URL=$NEXT_PUBLIC_VITRINE_URL
 ENV NEXT_PUBLIC_API_PUBLICA=$NEXT_PUBLIC_API_PUBLICA
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Teto do heap do Node durante o build.
+#
+# O servidor tem 4 GB e ~2,4 GB já ocupados em repouso (Postgres e a réplica
+# de leitura, PgBouncer, Redis, os dois workers de WhatsApp, as réplicas da
+# API, a vitrine, o próprio painel e o Dokploy). Sem teto, o V8 cresce até o
+# que o sistema aparenta ter livre e é MORTO pelo kernel no meio de "Creating
+# an optimized production build" — o deploy aparece como cancelado, sem erro
+# nenhum no log, e foi o que derrubou três publicações seguidas do painel.
+#
+# Com o teto, o coletor de lixo trabalha dentro do que existe de verdade. O
+# build fica um pouco mais lento e termina; se um dia não couber mesmo, o
+# erro vem escrito ("heap out of memory") em vez de um processo sumindo.
+ENV NODE_OPTIONS=--max-old-space-size=1536
+
 RUN npm run build
 
 # ---------------------------------------------------------------------------
