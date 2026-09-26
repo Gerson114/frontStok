@@ -986,6 +986,35 @@
   }
 }
 
+/* Com a coluna do celular aberta, a página atrás para de rolar.
+ *
+ * Só abaixo de 768px, que é onde essa coluna existe (ver `menuDoCelular` em
+ * components/header/header.tsx). Ver também useTravarRolagem, que é quem
+ * põe e tira a classe. */
+@media (max-width: 767px) {
+  html.coluna-aberta,
+  html.coluna-aberta body {
+    overflow: hidden;
+  }
+}
+
+/* A coluna de menu do celular: desliza da borda esquerda, de onde ela nasce
+   — diferente do `entrar-da-esquerda` de cima, que é só um leve empurrão de
+   detalhe num item de lista; aqui é a COLUNA inteira que vem de fora da
+   tela. */
+@keyframes deslizar-gaveta {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.anim-gaveta {
+  animation: deslizar-gaveta 220ms ease-out both;
+}
+
 /* A bolinha do "está digitando". A escala não vai a zero: a bolinha que
    desaparece pisca, e três piscando viram um alarme. Ela encolhe e clareia,
    que é como se lê "alguém está no meio de uma frase". */
@@ -1132,7 +1161,8 @@
   .anim-mensagem,
   .anim-tela,
   .anim-surgir,
-  .anim-item {
+  .anim-item,
+  .anim-gaveta {
     animation: surgir 1ms linear both;
   }
 

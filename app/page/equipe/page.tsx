@@ -38,6 +38,7 @@ import {
 } from "@/middleware/equipe"
 import { escutarLoja } from "@/middleware/whatsapp"
 import { useVarredura } from "@/middleware/aoVivo"
+import { useTravarRolagem } from "@/app/components/pagina/travarRolagem"
 import { useVoltar } from "@/app/components/pagina/voltar"
 import { Bolinha, usePresenca } from "@/app/components/presenca/presenca"
 import { TrocarFoto } from "@/app/components/presenca/foto"
@@ -455,10 +456,7 @@ export default function ConversaDaEquipe() {
                 aoFecharMenu={() => setSalaMenuAberta(false)}
             />
 
-            {/* No celular a conversa dá lugar à lista de salas enquanto ela
-                está aberta — uma tela de cada vez, sem gaveta por cima. De md
-                para cima as duas convivem: a lista é a coluna da esquerda. */}
-            <main className={`h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:flex md:px-6 ${salaMenuAberta ? "hidden" : "flex"}`}>
+            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
 
 
                 {/* A faixa do celular: sem a coluna de salas ao lado (ela só
@@ -841,6 +839,9 @@ function MenuDoChat({
 
     const voltar = useVoltar("/page/inicio")
 
+    // Lista de salas aberta segura a rolagem do fio atrás dela.
+    useTravarRolagem(menuAberto)
+
     const geral = salas.filter((s) => s.tipo === "geral")
     const grupos = salas.filter((s) => s.tipo === "grupo")
     const pessoas = salas.filter((s) => s.tipo === "pessoa")
@@ -1008,31 +1009,37 @@ function MenuDoChat({
                 {conteudo}
             </aside>
 
-            {/* A lista de salas no celular: um bloco no FLUXO da página, não
-                uma gaveta por cima. Era uma gaveta `fixed` com fundo
-                escurecido, do mesmo molde do header.tsx — e no celular ela
-                cobria a tela enquanto estivesse aberta. Aqui ela toma o lugar
-                da conversa (ver o `main` da tela, que some enquanto esta
-                lista está aberta): uma coisa de cada vez, e nada preso ao
-                vidro. */}
+            {/* A lista de salas no celular: coluna PRESA À TELA, do mesmo
+                molde do menu do painel (ver header.tsx). Ela fica parada
+                enquanto se procura a sala, e o fio da conversa continua
+                atrás — fechar devolve exatamente onde se estava. Começa
+                onde a barra superior termina, e a barra rola: daí a
+                variável `--topo-visivel`, que o header mantém. */}
             {menuAberto && (
-                <nav className="anim-surgir flex flex-col border-b border-[var(--linha)] bg-[var(--fundo)] md:hidden print:hidden">
+                <div
+                    style={{ top: "var(--topo-visivel, 3.5rem)" }}
+                    className="fixed inset-x-0 bottom-0 z-40 md:hidden print:hidden"
+                >
+                    <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFecharMenu} />
 
-                    <div className="flex items-center justify-between border-b border-[var(--linha)] px-3 py-2.5">
-                        <span className="text-sm font-semibold text-[var(--ink)]">Conversas</span>
+                    <nav className="anim-gaveta absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
 
-                        <button
-                            type="button"
-                            onClick={aoFecharMenu}
-                            aria-label="Fechar"
-                            className="rounded-lg p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)]"
-                        >
-                            <FiX className="w-4" aria-hidden />
-                        </button>
-                    </div>
+                        <div className="flex items-center justify-between border-b border-[var(--linha)] px-3 py-2.5">
+                            <span className="text-sm font-semibold text-[var(--ink)]">Conversas</span>
 
-                    {conteudo}
-                </nav>
+                            <button
+                                type="button"
+                                onClick={aoFecharMenu}
+                                aria-label="Fechar"
+                                className="rounded-lg p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)]"
+                            >
+                                <FiX className="w-4" aria-hidden />
+                            </button>
+                        </div>
+
+                        {conteudo}
+                    </nav>
+                </div>
             )}
         </>
     )

@@ -56,6 +56,7 @@ import {
     FiSun,
     FiMoon,
 } from "react-icons/fi"
+import { useTravarRolagem } from "@/app/components/pagina/travarRolagem"
 import { registrarPassada } from "@/app/components/pagina/voltar"
 import { MARCA } from "@/app/marca"
 import { tocarSom } from "@/app/somNotificacao"
@@ -334,6 +335,9 @@ export default function Sidebar() {
     const campoBusca = useRef<HTMLInputElement>(null)
 
     const noPainel = pathname.startsWith("/page/")
+
+    // Menu do celular aberto segura a rolagem da página atrás dele.
+    useTravarRolagem(aberto)
 
     /* Conta as trocas de tela desta aba, para o botão de voltar saber se há
      * para onde voltar dentro do sistema (ver components/pagina/voltar.tsx).
@@ -1048,7 +1052,7 @@ export default function Sidebar() {
        desktop a coluna é alta e mostra UMA área, então não há nada a
        dobrar; no celular são as cinco áreas na mesma gaveta, quase trinta
        linhas numa tela que mostra dez — a pessoa rolava a gaveta inteira
-       para achar uma tela. Fechadas, as cinco áreas caibem na primeira
+       para achar uma tela. Fechadas, as cinco áreas cabem na primeira
        tela, e a da rota atual já vem aberta.
 
        Só uma aberta por vez (ver `areaTocada`): abrir a segunda fecha a
@@ -1267,15 +1271,41 @@ export default function Sidebar() {
        que é o que o celular pede — a tela é pequena demais para ceder uma
        faixa permanente a navegação. */
     const menuDoCelular = (
-        /* `[&_a]:min-h-11`: no dedo cada link precisa dos 44px de alvo que o
-           mouse não exige. Vale só aqui, e não no `linkDoItem` em si, porque
-           no desktop a mesma altura esticaria a coluna inteira sem motivo. */
-        <nav
-            id="menu-do-celular"
-            className="anim-surgir border-b border-[var(--linha)] bg-[var(--superficie)] px-3 py-3 print:hidden md:hidden [&_a]:min-h-11"
+        /* Coluna PRESA À TELA, não um bloco no meio da página.
+         *
+         * Ela já foi as duas coisas. No fluxo, abrir o menu empurrava o
+         * conteúdo para baixo e a lista de telas rolava junto com a página:
+         * escolher uma tela da última área exigia rolar o menu inteiro e
+         * perder de vista de onde se tinha saído. Presa, ela fica parada
+         * enquanto o dedo percorre as áreas, e some inteira ao escolher.
+         *
+         * Começa onde a barra superior termina — e a barra ROLA (é a única
+         * coisa que não fica presa neste painel, por pedido do dono), então
+         * a medida é a variável `--topo-visivel`: 3,5rem no alto da página,
+         * 0 depois que a barra sai. A mesma que as colunas do desktop leem.
+         *
+         * `[&_a]:min-h-11`: no dedo cada link precisa dos 44px de alvo que o
+         * mouse não exige. Vale só aqui, e não no `linkDoItem` em si, porque
+         * no desktop a mesma altura esticaria a coluna inteira sem motivo. */
+        <div
+            style={{ top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})` }}
+            className="fixed inset-x-0 bottom-0 z-40 md:hidden print:hidden"
         >
-            {carregando ? esqueletoDeTelas() : conteudoCompletoDoCelular()}
-        </nav>
+            {/* O fundo escurecido é o que diz que o resto da tela está
+                esperando — e fechá-lo é tocar nele, que é o gesto que a
+                pessoa já tenta antes de procurar o X. */}
+            <div
+                className="anim-surgir absolute inset-0 bg-black/40"
+                onClick={() => setAberto(false)}
+            />
+
+            <nav
+                id="menu-do-celular"
+                className="anim-gaveta menu-rolagem absolute left-0 top-0 flex h-full w-72 max-w-[85%] flex-col overflow-y-auto border-r border-[var(--linha)] bg-[var(--superficie)] px-3 py-3 shadow-[0_4px_12px_rgba(0,0,0,0.12)] [&_a]:min-h-11"
+            >
+                {carregando ? esqueletoDeTelas() : conteudoCompletoDoCelular()}
+            </nav>
+        </div>
     )
 
     return (
