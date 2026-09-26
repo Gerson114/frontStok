@@ -222,6 +222,14 @@ export const equipe = {
     digitando: () => "/private/equipe/digitando",
 
     /**
+     * Quem está com o painel aberto agora — a bolinha verde.
+     *
+     * Devolve só os crachás ("d3", "f12"), que é o que cada linha da equipe já
+     * traz. Quem cruza com os nomes é a tela.
+     */
+    presenca: () => "/private/equipe/presenca",
+
+    /**
      * O código que destrava a conversa — a única rota que o devolve aberto.
      *
      * Não é do dono por natureza: ele pode delegá-la a uma pessoa da equipe.

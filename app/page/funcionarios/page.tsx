@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi"
 import { Pagina } from "@/app/components/pagina/pagina"
 import { useAoVivo } from "@/middleware/aoVivo"
+import { Bolinha, usePresenca } from "@/app/components/presenca/presenca"
 import FluxoDoAtendimento from "@/app/components/painel/fluxo"
 import type { Funcionario, PermissaoConcedivel } from "@/app/type/type"
 import {
@@ -241,6 +242,10 @@ export default function Funcionarios() {
     // dono promove alguém de um computador enquanto o gerente olha a lista de
     // outro. Sem isto, o segundo continua vendo a permissão antiga.
     useAoVivo(["funcionario"], carregar)
+
+    // Quem está com o painel aberto agora, para a bolinha verde ao lado de
+    // cada nome. Chega por aviso, não por relógio (ver usePresenca).
+    const online = usePresenca()
 
     const pessoa = useMemo(
         () => (typeof escolhido === "number" ? equipe.find((f) => f.id === escolhido) ?? null : null),
@@ -669,12 +674,24 @@ export default function Funcionarios() {
                                         ativo ? "bg-[var(--fundo)]" : "hover:bg-[var(--superficie-2)]"
                                     }`}
                                 >
-                                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                    {/* relative: é a âncora da bolinha, que
+                                        fica presa ao canto do círculo. */}
+                                    <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                                         funcionario.ativo
                                             ? "bg-[var(--azul)] text-white"
                                             : "bg-[var(--linha)] text-[var(--ink-3)]"
                                     }`}>
                                         {inicial(funcionario.nome)}
+
+                                        {/* "f" + id é o crachá do funcionário
+                                            (ver auth.Cracha, no backend). O
+                                            dono tem "d" e não aparece nesta
+                                            lista, que é só de contas de
+                                            equipe. */}
+                                        <Bolinha
+                                            online={online.has(`f${funcionario.id}`)}
+                                            titulo={`${funcionario.nome} está no painel agora`}
+                                        />
                                     </span>
 
                                     <span className="min-w-0 flex-1">

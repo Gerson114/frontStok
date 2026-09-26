@@ -39,6 +39,28 @@ export async function consultarEquipeChat(): Promise<EstadoDaEquipe> {
 }
 
 /**
+ * Quem da loja está com o painel aberto agora — a bolinha verde.
+ *
+ * Devolve os crachás ("d3", "f12"), que é o mesmo campo que cada `Membro` já
+ * traz: a tela cruza um com o outro. Pedir os nomes aqui seria repetir o que a
+ * listagem já entregou, e com o risco de os dois discordarem.
+ *
+ * Quem responde não é o banco, e sim o socket que cada painel aberto mantém —
+ * a pessoa está online exatamente enquanto a conexão dela existe. Por isso a
+ * lista pode ser pedida de novo à vontade, e é o que a tela faz a cada aviso
+ * de presença que chega pelo canal ao vivo.
+ *
+ * Um conjunto, e não uma lista: quem chama vai perguntar "fulano está aqui?"
+ * uma vez por linha desenhada.
+ */
+export async function consultarPresenca(): Promise<Set<string>> {
+
+    const dados = await apiFetch<{ online?: string[] }>("/api/equipe/presenca")
+
+    return new Set(dados.online ?? [])
+}
+
+/**
  * Pede a entrada na conversa com o código da loja.
  *
  * Acertar o código NÃO abre a conversa: abre um pedido, e quem decide é o

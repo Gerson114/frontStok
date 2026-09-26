@@ -38,6 +38,7 @@ import {
 } from "@/middleware/equipe"
 import { escutarLoja } from "@/middleware/whatsapp"
 import { useVarredura } from "@/middleware/aoVivo"
+import { Bolinha, usePresenca } from "@/app/components/presenca/presenca"
 import CodigoDaEquipe from "@/app/components/equipe/codigo"
 import AcessosDaConversa from "@/app/components/equipe/acessos"
 import TarefasDaEquipe from "@/app/components/equipe/tarefas"
@@ -263,6 +264,11 @@ export default function ConversaDaEquipe() {
         if (estado?.destravado) recarregarSala(sala)
     }, !carregando)
 
+    // Quem está com o painel aberto agora. Vem por aviso, não por relógio: o
+    // servidor publica quando alguém entra ou sai, e é só aí que a lista é
+    // pedida de novo (ver usePresenca).
+    const online = usePresenca()
+
     // A conversa nasce no fim, como toda conversa.
     useEffect(() => {
         fim.current?.scrollIntoView({ block: "end" })
@@ -408,6 +414,7 @@ export default function ConversaDaEquipe() {
                 aoCriarGrupo={() => setCriandoGrupo(true)}
                 aoSair={() => setSaindo(true)}
                 eu={estado.eu}
+                online={online}
             />
 
             <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
@@ -699,7 +706,7 @@ export default function ConversaDaEquipe() {
  * colega existe sempre, e existir sempre é o que a faz ser a parte de baixo.
  */
 function MenuDoChat({
-    salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu,
+    salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu, online,
 }: {
     salas: SalaDaEquipe[]
     sala: string
@@ -707,6 +714,9 @@ function MenuDoChat({
     aoCriarGrupo: () => void
     aoSair: () => void
     eu: MembroDaEquipe
+
+    /** Os crachás de quem está com o painel aberto agora (ver usePresenca). */
+    online: Set<string>
 }) {
 
     const geral = salas.filter((s) => s.tipo === "geral")
@@ -795,6 +805,12 @@ function MenuDoChat({
                             ativa={linha.chave === sala}
                             aoAbrir={aoAbrir}
                             ordem={indice}
+
+                            // Numa sala de pessoa a chave É o crachá do colega
+                            // (ver SalaDaEquipe.chave), então a comparação é
+                            // direta, sem precisar procurar a pessoa na lista
+                            // de membros.
+                            online={online.has(linha.chave)}
                         />
                     ))}
                 </div>
@@ -853,10 +869,20 @@ function IconeDaSala({ tipo }: { tipo?: string }) {
 }
 
 /** Uma linha do menu do chat. */
-function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0 }: {
+function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0, online = false }: {
     linha: SalaDaEquipe
     ativa: boolean
     aoAbrir: (chave: string) => void
+
+    /**
+     * A pessoa desta linha está com o painel aberto agora.
+     *
+     * Só faz sentido nas salas de tipo "pessoa", onde a chave da sala É o
+     * crachá do colega. Num grupo ou no canal geral não há uma pessoa de quem
+     * falar, e quem chama já não passa nada — o padrão false cobre isso sem
+     * precisar de condicional em cada ponto de uso.
+     */
+    online?: boolean
 
     /**
      * A posição na lista, que vira o atraso da entrada.
@@ -879,7 +905,13 @@ function ItemDoMenu({ linha, ativa, aoAbrir, ordem = 0 }: {
                     : "text-[var(--ink-2)] hover:bg-[var(--superficie)]/70 hover:text-[var(--ink)]"
             }`}
         >
-            <IconeDaSala tipo={linha.tipo} />
+            {/* O ícone vira a âncora da bolinha: ela é posicionada em relação
+                a este span, e não ao botão inteiro, senão cairia no canto da
+                linha em vez de no canto do ícone. */}
+            <span className="relative flex shrink-0 items-center">
+                <IconeDaSala tipo={linha.tipo} />
+                <Bolinha online={online} titulo={`${linha.nome} está no painel agora`} />
+            </span>
 
             <span className="min-w-0 flex-1 truncate">{linha.nome}</span>
 

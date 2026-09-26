@@ -161,6 +161,12 @@
   --topo-texto: #C6C6C6;
 
   --verde: #0C5132;
+  /* O verde vivo, para quando o verde É a informação e não o fundo dela: a
+     bolinha de quem está com o painel aberto agora. O --verde é escuro de
+     propósito, porque nasceu para texto sobre --verde-suave, e um ponto de
+     doze pixels naquele tom some no meio da lista. Mesmo papel que
+     --vermelho-forte cumpre no vermelho. */
+  --verde-forte: #18A957;
   --verde-fundo: #CDFEE1;
   --verde-suave: #EAFBF1;
   --vermelho: #8E1F0B;
@@ -267,6 +273,10 @@
   --fio-ponto: rgba(255, 255, 255, 0.06);
 
   --verde: #6FE3A5;
+  /* No escuro o papel se inverte: aqui o --verde já é claro, e o "forte" é um
+     tom um pouco mais saturado, que continua vivo contra os avatares e contra
+     o fundo escuro da lista sem estourar. */
+  --verde-forte: #34D17E;
   --verde-fundo: #12301F;
   --verde-suave: #16261E;
   --vermelho: #FF8A75;
