@@ -95,6 +95,7 @@ const ICONES: Record<string, IconType> = {
     loja: FiGlobe,
     vitrine: FiEye,
     assinatura: FiCreditCard,
+    lojas: FiMapPin,
     funcionarios: FiUsers,
     comissoes: FiPercent,
     frete: FiTruck,
@@ -135,17 +136,26 @@ const ICONE_DA_AREA: Record<string, IconType> = {
    ==========================================================================
 
    Ao lado do acordeão (ver `menuLateral`), sempre à vista — um clique, sem
-   precisar abrir seção nenhuma. É deliberadamente curto: cinco telas, não
-   as dezenas do catálogo inteiro. Início e Pedidos são a rotina do dia;
-   Conversas e Equipe são onde se responde alguém; Configurações é a cabeça
-   da seção "Conta" (assinatura, funcionários, regras da loja), então um
-   atalho para ela já cobre "cadê a Conta" sem precisar listar a seção
-   inteira aqui.
+   precisar abrir seção nenhuma. Não é o catálogo inteiro: Início e Pedidos
+   são a rotina do dia; Conversas é onde se responde o cliente; Equipe e
+   Funcionários são onde se fala com quem trabalha na loja e quem ela tem
+   cadastrado; Lojas é para quem administra mais de um ponto de venda;
+   Configurações é a cabeça da seção "Conta" para o resto (assinatura,
+   comissões, regras da loja) — um atalho para ela ainda cobre "cadê a
+   Conta" sem precisar listar a seção inteira aqui.
+
+   Lojas e Funcionários entraram aqui por pedido direto do dono: as duas
+   telas moravam só dentro de "Conta", atrás do clique em Configurações, e
+   ele não as achava sem abrir a seção primeiro. Cadastro de gente e de
+   ponto de venda é trabalho de todo dia para quem administra mais de uma
+   loja — não é ajuste raro para deixar escondido.
 
    Uma tela só entra na faixa se o MENU desta loja a trouxer — sem isso um
    atalho fixo ofereceria uma tela que a API recusaria abrir para quem não a
-   tem (ver como `trilhoParaMostrar` filtra, mais abaixo). */
-const CHAVES_DO_TRILHO = ["inicio", "pedidos", "conversas", "equipe-chat", "config"]
+   tem (ver como `trilhoParaMostrar` filtra, mais abaixo). Quem não é dono
+   (ou a loja não tem plano Pro) continua vendo o ícone em cinza com
+   cadeado, e não uma faixa manca com menos posições. */
+const CHAVES_DO_TRILHO = ["inicio", "pedidos", "conversas", "equipe-chat", "funcionarios", "lojas", "config"]
 
 // "Conversa da equipe" não cabe em duas linhas de 64px sem cortar de um
 // jeito estranho — as outras telas do trilho têm nome curto o bastante
