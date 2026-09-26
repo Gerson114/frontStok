@@ -109,16 +109,23 @@
      Business Suite entre eles — e pediu de volta o trilho fixo: duas
      colunas coladas na borda esquerda é "assinatura visual genérica" quando
      ninguém pediu por ela, mas aqui foi escolha dele, feita duas vezes. O
-     trilho nasceu com 4rem e cresceu para 4.5rem no mesmo dia — a primeira
-     medida deixava ícone e legenda pequenos demais para o resto do painel.
+     trilho nasceu com 4rem, cresceu para 4.5rem no mesmo dia — a primeira
+     medida deixava ícone e legenda pequenos demais para o resto do painel —
+     e foi para 6rem quando o dono apontou o óbvio: em 4.5rem sobravam pouco
+     mais de 50px de texto depois do padding, e "Funcionários" e
+     "Configurações" quebravam em duas linhas cada um. Nome de atalho que
+     quebra no meio deixa de ser lido de relance, que é a única razão de o
+     trilho existir. A medida agora tem nome próprio (--trilho) porque
+     estava copiada em quatro lugares, e a cópia em page/equipe já tinha
+     ficado para trás uma vez.
 
      A conta vive no header, e não repetida em cada tela, porque o PAINEL
      recolhe (o trilho não): quando ele recolhe, seis telas precisariam ser
      reescritas para o conteúdo ocupar o espaço vago. O header muda esta
      variável e todas acompanham.
 
-        --menu = 7rem     painel recolhido (trilho + tira de reabrir)
-        --menu = 19.5rem  painel aberto    (trilho + painel de 15rem)
+        --menu = 8.5rem   painel recolhido (trilho + tira de reabrir)
+        --menu = 21rem    painel aberto    (trilho + painel de 15rem)
 
      15rem porque "Endereços do estoque" precisa caber inteiro: nome de tela
      cortado no meio obriga a passar o mouse para saber o que é, e o menu
@@ -129,8 +136,9 @@
      precisa da largura do painel, não da soma inteira.
 
      Quem usa --menu é a classe .com-menu, lá embaixo. */
+  --trilho: 6rem;
   --painel-menu: 15rem;
-  --menu: 19.5rem;
+  --menu: 21rem;
 
   --linha: #DDDDD8;
   --linha-suave: #E8E8E3;

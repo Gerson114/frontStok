@@ -456,7 +456,7 @@ export default function ConversaDaEquipe() {
                 aoFecharMenu={() => setSalaMenuAberta(false)}
             />
 
-            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
+            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[21rem] md:px-6">
 
 
                 {/* A faixa do celular: sem a coluna de salas ao lado (ela só
@@ -1000,11 +1000,11 @@ function MenuDoChat({
                     top: "var(--topo-visivel, 3.5rem)",
                     height: "calc(100dvh - var(--topo-visivel, 3.5rem))",
                 }}
-                // left-[4.5rem]: encosta no trilho de atalhos do painel (ver
+                // left-[var(--trilho)]: encosta no trilho de atalhos do painel (ver
                 // header.tsx), que continua de pé mesmo dentro da conversa —
                 // esta coluna toma só o lugar do acordeão, não o trilho
                 // inteiro.
-                className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
+                className="fixed left-[var(--trilho)] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
             >
                 {conteudo}
             </aside>

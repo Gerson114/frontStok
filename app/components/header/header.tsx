@@ -49,6 +49,7 @@ import {
     FiPrinter,
     FiDollarSign,
     FiUsers,
+    FiUserCheck,
     FiCalendar,
     FiBell,
     FiSmartphone,
@@ -91,14 +92,21 @@ const ICONES: Record<string, IconType> = {
     venda: FiShoppingBag,
     pedidos: FiShoppingCart,
     "pedidos-novo": FiFilePlus,
-    "equipe-chat": FiMessageSquare,
+    // Dois balões de fala seguidos no trilho — um para Conversas (o
+    // cliente) e outro para Equipe (quem trabalha na loja) — liam como a
+    // mesma coisa duas vezes. O balão fica com Conversas, que é a tela de
+    // atender; Equipe passa a ser gente, que é o nome dela.
+    "equipe-chat": FiUsers,
     etiquetas: FiTag,
     vendidos: FiCheck,
     loja: FiGlobe,
     vitrine: FiEye,
     assinatura: FiCreditCard,
     lojas: FiMapPin,
-    funcionarios: FiUsers,
+    // Funcionários é o CADASTRO de quem trabalha na loja, e não a conversa
+    // com eles: a pessoa conferida, não o grupo. É o que separa este ícone
+    // do de Equipe, que ficou com o grupo.
+    funcionarios: FiUserCheck,
     comissoes: FiPercent,
     frete: FiTruck,
     entregas: FiCalendar,
@@ -162,16 +170,20 @@ const ICONE_DA_AREA: Record<string, IconType> = {
    sozinha para a área dele, com as telas de dentro (inserir, consultar,
    endereços, inventário) à vista.
 
+   Meu site (chave "loja") entra pelo mesmo motivo que Estoque: é a cabeça
+   da área "Meu site" e a porta para o endereço, as cores, os banners e o
+   editor da home. Fica logo depois de Estoque — mercadoria primeiro, a
+   loja que o cliente vê logo em seguida.
+
    Uma tela só entra na faixa se o MENU desta loja a trouxer — sem isso um
    atalho fixo ofereceria uma tela que a API recusaria abrir para quem não a
    tem (ver como `trilhoParaMostrar` filtra, mais abaixo). Quem não é dono
    (ou a loja não tem plano Pro) continua vendo o ícone em cinza com
    cadeado, e não uma faixa manca com menos posições. */
-const CHAVES_DO_TRILHO = ["inicio", "pedidos", "estoque", "conversas", "equipe-chat", "funcionarios", "lojas", "config"]
+const CHAVES_DO_TRILHO = ["inicio", "pedidos", "estoque", "loja", "conversas", "equipe-chat", "funcionarios", "lojas", "config"]
 
-// "Conversa da equipe" não cabe em duas linhas de 64px sem cortar de um
-// jeito estranho — as outras telas do trilho têm nome curto o bastante
-// para não precisar disto.
+// "Conversa da equipe" não cabe numa linha nem com o trilho em 6rem — as
+// outras telas do trilho têm nome curto o bastante para não precisar disto.
 const ROTULO_CURTO_DO_TRILHO: Record<string, string> = {
     "equipe-chat": "Equipe",
 }
@@ -597,16 +609,16 @@ export default function Sidebar() {
      * único lugar que sabe se o menu está aberto: sem isso, recolhê-lo
      * deixaria 15rem de papel vazio em toda tela do painel.
      *
-     * O trilho (4.5rem) fica sempre, dentro e fora da conversa da equipe —
-     * só o acordeão ao lado dele recolhe, e vira uma tira de 2.5rem para
-     * reabrir. 19.5rem = trilho + acordeão; 7rem = trilho + tira. A
-     * conversa não lê esta variável (o `ml-[19.5rem]` dela é escrito à
-     * mão, ver page/equipe/page.tsx), então noChat não entra aqui. */
+     * O trilho (--trilho, 6rem) fica sempre, dentro e fora da conversa da
+     * equipe — só o acordeão ao lado dele recolhe, e vira uma tira de
+     * 2.5rem para reabrir. 21rem = trilho + acordeão; 8.5rem = trilho +
+     * tira. A conversa não lê esta variável (o `ml-[21rem]` dela é escrito
+     * à mão, ver page/equipe/page.tsx), então noChat não entra aqui. */
     useEffect(() => {
 
         if (!noPainel) return
 
-        document.documentElement.style.setProperty("--menu", painelRecolhido ? "7rem" : "19.5rem")
+        document.documentElement.style.setProperty("--menu", painelRecolhido ? "8.5rem" : "21rem")
 
         return () => {
             document.documentElement.style.removeProperty("--menu")
@@ -1162,7 +1174,15 @@ export default function Sidebar() {
                                     : item.nome
                         }
                         aria-current={aqui ? "page" : undefined}
-                        className="group relative flex flex-col items-center gap-2 py-3.5 transition-colors hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--topo-ativo)]"
+                        /* O item em que se está ganha fundo além da tinta: sobre
+                           branco, só a cor do texto é pouco para achar a posição
+                           de relance, e a barrinha na borda esquerda é fina
+                           demais para ser o único sinal. */
+                        className={`group relative flex flex-col items-center gap-2 rounded-md px-1 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--topo-ativo)] ${
+                            aqui
+                                ? "bg-[var(--azul-suave)]"
+                                : "hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)]"
+                        }`}
                     >
                         {aqui && (
                             <span
@@ -1699,7 +1719,7 @@ export default function Sidebar() {
                     top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
                     height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
                 }}
-                className="fixed left-0 z-30 hidden w-[4.5rem] flex-col border-r border-[var(--topo-linha)] bg-[var(--topo)] md:flex print:hidden"
+                className="fixed left-0 z-30 hidden w-[var(--trilho)] flex-col border-r border-[var(--topo-linha)] bg-[var(--topo)] md:flex print:hidden"
             >
                 {trilho}
             </aside>
@@ -1710,7 +1730,7 @@ export default function Sidebar() {
                         top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
                         height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
                     }}
-                    className="anim-surgir fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
+                    className="anim-surgir fixed left-[var(--trilho)] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--superficie)] md:flex print:hidden"
                 >
                     {menuLateral}
                 </aside>
@@ -1729,7 +1749,7 @@ export default function Sidebar() {
                         top: `var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO})`,
                         height: `calc(100dvh - var(${VAR_TOPO_VISIVEL}, ${ALTURA_TOPO}))`,
                     }}
-                    className="anim-surgir fixed left-[4.5rem] z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
+                    className="anim-surgir fixed left-[var(--trilho)] z-30 hidden w-10 flex-col items-center justify-center border-r border-[var(--linha)] bg-[var(--superficie)] text-[var(--ink-3)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)] focus-visible:bg-[var(--fundo)] focus-visible:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--azul)] md:flex print:hidden"
                 >
                     <FiChevronsRight className="w-3.5 shrink-0" aria-hidden />
                 </button>
