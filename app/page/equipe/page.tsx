@@ -7,6 +7,7 @@ import {
     FiAlertCircle,
     FiArrowLeft,
     FiCheck,
+    FiChevronDown,
     FiClock,
     FiHash,
     FiLock,
@@ -272,6 +273,13 @@ export default function ConversaDaEquipe() {
 
     const [mexendoNaFoto, setMexendoNaFoto] = useState(false)
 
+    // A lista de salas (MenuDoChat) é uma coluna fixa no desktop; no celular
+    // ela some de vista para dar a tela inteira à conversa. Sem uma gaveta
+    // que a traga de volta, quem está no celular nunca escolhe outra sala,
+    // nunca cria um grupo, nunca vê quem está online — a tela inteira do
+    // painel do celular ficaria presa na primeira conversa que abriu.
+    const [salaMenuAberta, setSalaMenuAberta] = useState(false)
+
     // A minha foto sai da minha linha no elenco, e não de uma consulta à
     // parte: o servidor já manda a foto de cada membro, e eu sou um deles.
     // Uma segunda fonte para o mesmo dado seria uma a mais para ficar
@@ -419,17 +427,62 @@ export default function ConversaDaEquipe() {
             <MenuDoChat
                 salas={salas}
                 sala={sala}
-                aoAbrir={abrirSala}
-                aoCriarGrupo={() => setCriandoGrupo(true)}
-                aoSair={() => setSaindo(true)}
+                aoAbrir={(chave) => {
+                    abrirSala(chave)
+                    setSalaMenuAberta(false)
+                }}
+                aoCriarGrupo={() => {
+                    setCriandoGrupo(true)
+                    setSalaMenuAberta(false)
+                }}
+                aoSair={() => {
+                    setSaindo(true)
+                    setSalaMenuAberta(false)
+                }}
                 eu={estado.eu}
                 online={online}
                 minhaFoto={minhaFoto}
-                aoTrocarFoto={() => setMexendoNaFoto(true)}
+                aoTrocarFoto={() => {
+                    setMexendoNaFoto(true)
+                    setSalaMenuAberta(false)
+                }}
                 membros={membros}
+                menuAberto={salaMenuAberta}
+                aoFecharMenu={() => setSalaMenuAberta(false)}
             />
 
             <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[19.5rem] md:px-6">
+
+                {/* A faixa do celular: sem a coluna de salas ao lado (ela só
+                    aparece a partir de md), esta é a única maneira de voltar
+                    ao painel ou trocar de conversa — sem ela, a tela do
+                    celular ficaria presa na sala em que abriu. */}
+                <div className="mb-3 flex items-center gap-2 md:hidden">
+
+                    <Link
+                        href="/page/inicio"
+                        aria-label="Voltar ao painel"
+                        className="btn btn-neutro shrink-0 p-2.5"
+                    >
+                        <FiArrowLeft className="w-4" aria-hidden />
+                    </Link>
+
+                    <button
+                        type="button"
+                        onClick={() => setSalaMenuAberta(true)}
+                        aria-haspopup="menu"
+                        aria-expanded={salaMenuAberta}
+                        className="field flex min-w-0 flex-1 items-center gap-2 text-left"
+                    >
+                        <IconeDaSala tipo={aberta?.tipo} />
+
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--ink)]">
+                            {aberta?.nome ?? "Escolher conversa"}
+                        </span>
+
+                        <FiChevronDown className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                    </button>
+                </div>
 
                 {erro && (
                     <div role="alert" className="mb-3 flex items-start gap-2.5 rounded-lg bg-[var(--vermelho-fundo)] px-4 py-3 text-sm font-semibold text-[var(--vermelho)]">
@@ -454,7 +507,11 @@ export default function ConversaDaEquipe() {
                 ========================================================== */}
                 <div className="mb-3 flex flex-wrap items-center gap-x-1 border-b border-[var(--linha)]">
 
-                    <span className="mr-3 flex items-center gap-2 py-2 font-display text-base text-[var(--ink)]">
+                    {/* No celular o nome da sala já está na faixa acima
+                        (o botão que abre a gaveta de salas) — repeti-lo
+                        aqui era gastar a mesma linha estreita duas vezes
+                        para dizer a mesma coisa. */}
+                    <span className="mr-3 hidden items-center gap-2 py-2 font-display text-base text-[var(--ink)] md:flex">
                         <IconeDaSala tipo={aberta?.tipo} />
                         {aberta?.nome ?? "Conversa"}
                     </span>
@@ -476,7 +533,7 @@ export default function ConversaDaEquipe() {
                                 type="button"
                                 onClick={() => setVendo(chave)}
                                 aria-current={ativa ? "page" : undefined}
-                                className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                className={`-mb-px flex items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-2.5 text-sm font-semibold transition-colors sm:gap-2 sm:px-3 ${
                                     ativa
                                         ? "border-[var(--azul)] text-[var(--azul)]"
                                         : "border-transparent text-[var(--ink-2)] hover:text-[var(--ink)]"
@@ -740,7 +797,7 @@ export default function ConversaDaEquipe() {
  * colega existe sempre, e existir sempre é o que a faz ser a parte de baixo.
  */
 function MenuDoChat({
-    salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu, online, minhaFoto, aoTrocarFoto, membros,
+    salas, sala, aoAbrir, aoCriarGrupo, aoSair, eu, online, minhaFoto, aoTrocarFoto, membros, menuAberto, aoFecharMenu,
 }: {
     salas: SalaDaEquipe[]
     sala: string
@@ -760,21 +817,24 @@ function MenuDoChat({
 
     /** O elenco da loja, de onde sai o rosto de cada linha de pessoa. */
     membros: MembroDaEquipe[]
+
+    /** A gaveta de salas do celular está aberta (ver o botão na faixa da tela). */
+    menuAberto: boolean
+
+    /** Fecha a gaveta — no X, no clique fora, ou ao escolher uma sala. */
+    aoFecharMenu: () => void
 }) {
 
     const geral = salas.filter((s) => s.tipo === "geral")
     const grupos = salas.filter((s) => s.tipo === "grupo")
     const pessoas = salas.filter((s) => s.tipo === "pessoa")
 
-    return (
-        <aside
-            style={{ top: "3.5rem", height: "calc(100dvh - 3.5rem)" }}
-            // left-[4.5rem]: encosta no trilho de atalhos do painel (ver
-            // header.tsx), que continua de pé mesmo dentro da conversa —
-            // esta coluna toma só o lugar do acordeão, não o trilho
-            // inteiro.
-            className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
-        >
+    // O mesmo conteúdo serve a coluna fixa do desktop e a gaveta do celular
+    // — as duas sempre mostram a mesma lista de salas, com o mesmo rodapé de
+    // conta. Uma segunda cópia deste JSX era o par se desencontrando: uma
+    // sala nova aparecendo numa lista e não na outra.
+    const conteudo = (
+        <>
             <div className="border-b border-[var(--linha)] px-3 py-2.5">
                 <Link
                     href="/page/inicio"
@@ -908,7 +968,50 @@ function MenuDoChat({
                     </button>
                 )}
             </div>
-        </aside>
+        </>
+    )
+
+    return (
+        <>
+            <aside
+                style={{ top: "3.5rem", height: "calc(100dvh - 3.5rem)" }}
+                // left-[4.5rem]: encosta no trilho de atalhos do painel (ver
+                // header.tsx), que continua de pé mesmo dentro da conversa —
+                // esta coluna toma só o lugar do acordeão, não o trilho
+                // inteiro.
+                className="fixed left-[4.5rem] z-30 hidden w-[var(--painel-menu)] flex-col border-r border-[var(--linha)] bg-[var(--fundo)] md:flex print:hidden"
+            >
+                {conteudo}
+            </aside>
+
+            {/* A gaveta do celular: mesmo molde do header.tsx (fundo que
+                fecha ao tocar fora, coluna que desliza da esquerda) — a
+                lista de salas é navegação de verdade aqui dentro, e merece
+                a mesma gaveta que o resto do painel já usa. */}
+            {menuAberto && (
+                <div style={{ top: "3.5rem" }} className="fixed inset-x-0 bottom-0 z-40 md:hidden">
+                    <div className="anim-surgir absolute inset-0 bg-black/40" onClick={aoFecharMenu} />
+
+                    <aside className="anim-gaveta absolute left-0 top-0 flex h-full w-72 flex-col border-r border-[var(--linha)] bg-[var(--fundo)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+
+                        <div className="flex items-center justify-between border-b border-[var(--linha)] px-3 py-2.5">
+                            <span className="text-sm font-semibold text-[var(--ink)]">Conversas</span>
+
+                            <button
+                                type="button"
+                                onClick={aoFecharMenu}
+                                aria-label="Fechar"
+                                className="rounded-lg p-1.5 text-[var(--ink-2)] transition-colors hover:bg-[var(--superficie)]"
+                            >
+                                <FiX className="w-4" aria-hidden />
+                            </button>
+                        </div>
+
+                        {conteudo}
+                    </aside>
+                </div>
+            )}
+        </>
     )
 }
 

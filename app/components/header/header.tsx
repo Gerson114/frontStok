@@ -1087,15 +1087,22 @@ export default function Sidebar() {
                     modo que o começo da busca cai exatamente onde começa o
                     conteúdo da tela. */}
                 <div className="flex items-center gap-2 md:w-[var(--menu)] md:shrink-0 md:pl-2">
-                    <button
-                        type="button"
-                        onClick={() => setAberto((v) => !v)}
-                        aria-label={aberto ? "Fechar menu" : "Abrir menu"}
-                        aria-expanded={aberto}
-                        className="-ml-1 p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] md:hidden"
-                    >
-                        {aberto ? <FiX className="w-5" aria-hidden /> : <FiMenu className="w-5" aria-hidden />}
-                    </button>
+                    {/* Some dentro da conversa da equipe: a gaveta que este
+                        botão abriria é justamente a que `noChat` desliga (a
+                        tela tem a própria, com as salas — ver equipe/page.tsx),
+                        e um botão que troca de ícone sem abrir nada é pior do
+                        que nenhum botão. */}
+                    {!noChat && (
+                        <button
+                            type="button"
+                            onClick={() => setAberto((v) => !v)}
+                            aria-label={aberto ? "Fechar menu" : "Abrir menu"}
+                            aria-expanded={aberto}
+                            className="-ml-1 p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] md:hidden"
+                        >
+                            {aberto ? <FiX className="w-5" aria-hidden /> : <FiMenu className="w-5" aria-hidden />}
+                        </button>
+                    )}
 
                     <Link href="/page/produtos" className="flex items-center gap-2 text-[var(--ink)]">
                         <Simbolo className="w-5 shrink-0" />
