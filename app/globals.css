@@ -1408,6 +1408,132 @@
 }
 
 
+/* --------------------------------------------------------------------------
+   A FITA DOS RAMOS
+
+   Desfila sozinha, devagar, e diz "serve para o que você vende" sem gastar
+   uma frase com isso.
+
+   O laço só fecha sem salto porque a lista está DUPLICADA no HTML e o
+   espaçamento é uniforme: cada cópia leva o próprio vão à direita (`pr-3`),
+   então deslocar metade da largura cai exatamente sobre o começo da segunda
+   cópia. Com `gap` no contêiner, sobrava um vão a mais e a fita pulava uma
+   vez a cada volta.
+
+   Quarenta e cinco segundos por volta é lento de propósito: fita rápida é
+   anúncio, e o que ela precisa é ser lida de canto de olho enquanto a pessoa
+   lê outra coisa. Ela para quando o cursor entra, para quem quiser ler a
+   lista inteira.
+   -------------------------------------------------------------------------- */
+@keyframes lp-desfilar {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-fita {
+    animation: lp-desfilar 45s linear infinite;
+  }
+
+  .lp-fita:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   O FLUTUAR DA TELA DO HERÓI
+
+   A tela do painel sobe uns poucos pixels conforme a página rola. É o único
+   paralaxe da página e é pequeno de propósito — quatorze pixels em cada
+   sentido, que o olho percebe como profundidade e não como movimento.
+
+   Vive num elemento PRÓPRIO, dentro do `.lp-entrada-lado`: as duas animações
+   mexem em `transform`, e no mesmo elemento a de rolagem apagaria a de
+   entrada.
+   -------------------------------------------------------------------------- */
+@keyframes lp-flutuar-com-a-rolagem {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: translateY(-14px);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .lp-flutuar {
+      animation: lp-flutuar-com-a-rolagem linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   O CARTÃO QUE RESPONDE AO CURSOR
+
+   Mesma regra do `.lp-plano`: a borda esfria e a sombra aparece, e o cartão
+   NÃO levanta. Levantar cartão no hover é o tique de template que o painel já
+   recusa em `.card-hover` — aqui vale o mesmo, porque esta página e o painel
+   são o mesmo produto.
+   -------------------------------------------------------------------------- */
+.lp-grupo {
+  transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.lp-grupo:hover {
+  border-color: #C9DDF7;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   A BARRA DE DECISÃO
+
+   Preço e botão colados na base, a partir do momento em que o herói sai da
+   tela (ver components/apresentacao/barra-de-decisao). A página é longa, e
+   quem chegou às perguntas está a cinco rolagens do botão de assinar.
+
+   Nasce fora da tela e entra deslizando. Não esconde conteúdo nenhum: tudo o
+   que ela mostra está escrito na página, quatro vezes. O rodapé reserva a
+   altura dela no celular (`pb-24`), para a última linha não ficar embaixo da
+   barra.
+   -------------------------------------------------------------------------- */
+.lp-barra {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+
+  border-top: 1px solid #EBEBEB;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.07);
+
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out;
+}
+
+.lp-barra-visivel {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-barra {
+    transition: none;
+  }
+}
+
+
 /* A margem que deixa a tela ao lado do menu, e não embaixo dele.
  *
  * Substitui o `md:ml-64` que cada tela escrevia à mão — e que seis delas

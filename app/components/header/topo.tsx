@@ -8,8 +8,10 @@ import { MARCA } from "@/app/marca"
 // Âncoras das seções da landing. Fora de "/" elas viram links para a página
 // inicial com o hash, para o topo funcionar igual em login e cadastro.
 const SECOES: { nome: string; hash: string }[] = [
-    // O fundamento vem primeiro no menu como vem na página: é a ideia que
-    // explica por que as telas são as que são.
+    // A ordem é a da página, e ela mudou: o que MUDA na loja vem antes do
+    // fundamento. Quem chega ainda não tem motivo para se interessar pela
+    // ideia que organiza o sistema — tem motivo para reconhecer o problema.
+    { nome: "O que muda", hash: "#o-que-muda" },
     { nome: "O fundamento", hash: "#fundamento" },
     { nome: "Como funciona", hash: "#como-funciona" },
     { nome: "Recursos", hash: "#recursos" },

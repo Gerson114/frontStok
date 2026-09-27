@@ -5,6 +5,7 @@ import { publico } from "@/app/api/rotas"
 import { Marca } from "./components/marca/marca"
 import Preco, { formatarMoeda } from "./components/preco/preco"
 import Topo from "./components/header/topo"
+import BarraDeDecisao from "./components/apresentacao/barra-de-decisao"
 import {
   MockupAgenda,
   MockupAtendimento,
@@ -25,13 +26,11 @@ import {
   FiLock,
   FiMapPin,
   FiMessageSquare,
-  FiPackage,
   FiPlus,
   FiPrinter,
   FiRefreshCw,
   FiShoppingCart,
   FiStar,
-  FiTag,
   FiUsers,
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
@@ -46,9 +45,22 @@ export const metadata: Metadata = {
 /**
  * A porta de entrada: a página que quem ainda não é cliente encontra.
  *
- * Ela responde, nesta ordem, porque é nesta ordem que quem está decidindo
- * pergunta: **o que este sistema faz**, **como ele funciona na minha loja**,
- * **quanto custa** e **o que acontece depois que eu clicar**.
+ * A ordem das seções é a ordem em que quem está decidindo pergunta, e ela
+ * mudou nesta reescrita. Antes a página começava a explicar o sistema pelo
+ * fundamento — que é a parte mais bem pensada do projeto e a mais inútil para
+ * quem acabou de chegar, porque ainda não doía nada. Agora vem primeiro O QUE
+ * MUDA na loja (as quatro dores que o lojista reconhece antes de ler a
+ * segunda linha), e só depois o porquê:
+ *
+ *   1. herói — a promessa, três provas curtas e o preço
+ *   2. ramos — o sistema não supõe o que você vende
+ *   3. o que muda — quatro dores e a resposta de cada uma
+ *   4. o fundamento — as três ideias que explicam todo o resto
+ *   5. como funciona — os quatro passos da unidade
+ *   6. o painel por dentro — tudo agrupado em quatro blocos
+ *   7. as três telas que convencem — agenda, atendimento, vitrine
+ *   8. o Pro — equipe e rede, quando existirem
+ *   9. a escada de cobrança, os planos, as perguntas e o convite
  *
  * O que ela NÃO faz: número inventado, depoimento de cliente que não existe e
  * selo que não corresponde a nada. Numa página de vendas, isso é a coisa mais
@@ -72,6 +84,65 @@ export const metadata: Metadata = {
 /* ==========================================================================
    O conteúdo
    ========================================================================== */
+
+/**
+ * Os ramos, para a fita que desfila sob o herói.
+ *
+ * Existem para responder, sem gastar uma frase, a primeira objeção de quem
+ * chega: "isto serve para o que EU vendo?". A lista é longa e misturada de
+ * propósito — ferramenta ao lado de cosmético ao lado de bebida — porque é a
+ * mistura que diz "o sistema não supõe o que você vende" melhor do que a
+ * afirmação diria.
+ */
+const ramos: string[] = [
+  "Eletro",
+  "Casa e decoração",
+  "Ferramentas",
+  "Mercearia",
+  "Vestuário",
+  "Pet",
+  "Papelaria",
+  "Autopeças",
+  "Cosméticos",
+  "Brinquedos",
+  "Material de construção",
+  "Bebidas",
+]
+
+/**
+ * As quatro dores, com a resposta de cada uma.
+ *
+ * É a seção que faz a página ser entendida, e por isso é a primeira depois do
+ * herói. O lojista não procura "gestão unificada": ele procura parar de
+ * descobrir na hora da entrega que a unidade já foi vendida. Cada cartão diz
+ * o que dói HOJE, na língua dele, e a resposta do sistema em uma frase.
+ */
+const dores: { hoje: string; resposta: string; Icone: IconType }[] = [
+  {
+    hoje: "A planilha do estoque nunca bate com a prateleira.",
+    resposta:
+      "Cada unidade física tem código próprio e um endereço na prateleira. A baixa acontece na unidade certa, e o que saiu continua escrito.",
+    Icone: FiBox,
+  },
+  {
+    hoje: "O site vende o que o balcão já vendeu.",
+    resposta:
+      "Vitrine e balcão bebem do mesmo estoque. A unidade vendida na loja deixa de aparecer no site no mesmo instante.",
+    Icone: FiShoppingCart,
+  },
+  {
+    hoje: "O que tem de sair hoje está num caderno.",
+    resposta:
+      "Uma agenda por dia de entrega: o que sai hoje, o que já passou da data e o que ainda espera você marcar o dia.",
+    Icone: FiCalendar,
+  },
+  {
+    hoje: "No fim do mês, ninguém sabe a margem de verdade.",
+    resposta:
+      "A entrada registra custo e fornecedor; a saída, o preço e quem vendeu. A margem sai da conta real, e não de uma estimativa.",
+    Icone: FiBarChart2,
+  },
+]
 
 /** Os três pilares. É o "por que este sistema é diferente" em três frases. */
 const fundamentos: { titulo: string; texto: string; Icone: IconType }[] = [
@@ -99,7 +170,7 @@ const passos: { titulo: string; texto: string }[] = [
   {
     titulo: "Cadastre a unidade",
     texto:
-      "Nome, categoria, preço e as variações que a SUA loja usa: voltagem, tamanho, peso, sabor, cor. Nada é fixo — o sistema não decide por você o que descreve o seu produto. Cada unidade física que entrou vira um registro.",
+      "Nome, categoria, preço e as variações que a SUA loja usa: voltagem, tamanho, peso, sabor, cor. Nada é fixo — o sistema não decide por você o que descreve o seu produto.",
   },
   {
     titulo: "Imprima a etiqueta",
@@ -118,80 +189,73 @@ const passos: { titulo: string; texto: string }[] = [
   },
 ]
 
-const recursos: { titulo: string; texto: string; Icone: IconType }[] = [
-  {
-    titulo: "Controle unidade a unidade",
-    texto:
-      "Cada unidade física com registro próprio: código, endereço na prateleira, custo de entrada, preço de saída e situação atual.",
-    Icone: FiBox,
-  },
-  {
-    titulo: "Etiqueta com código de barras",
-    texto:
-      "Pronta para imprimir, com o código que o leitor do balcão reconhece. A venda vira um bipe, e a baixa acontece na unidade certa.",
-    Icone: FiPrinter,
-  },
-  {
-    titulo: "Entrada de mercadoria",
-    texto:
-      "O que chegou do fornecedor entra com custo e origem. É isso que faz a margem do fim do mês ser a de verdade, e não a estimada.",
-    Icone: FiPackage,
-  },
-  {
-    titulo: "Endereços e separação",
-    texto:
-      "Diga onde cada unidade está guardada, com capacidade e bloqueio, um endereço a um. As placas das prateleiras saem prontas para imprimir.",
-    Icone: FiMapPin,
-  },
-  {
-    titulo: "Reposição e contagem",
-    texto:
-      "Aviso de prateleira vazia antes de o cliente reclamar, contagem rotativa pelo giro de cada produto e uma fila de tarefas do estoque na ordem certa.",
-    Icone: FiRefreshCw,
-  },
-  {
-    titulo: "Venda no balcão",
-    texto:
-      "Bipe a etiqueta e pronto: a unidade sai do estoque, some da vitrine e entra no fechamento do dia com o nome de quem vendeu.",
-    Icone: FiShoppingCart,
-  },
-  {
-    titulo: "Agenda de entregas",
-    texto:
-      "Um calendário do que tem de sair em cada dia. Pedido em preparo fica de fora até você marcar o dia — e o que passou da data aparece em vermelho.",
-    Icone: FiCalendar,
-  },
-  {
-    titulo: "Frete que você define",
-    texto:
-      "Tabela por estado, com prazo e frete grátis acima de um valor. Quem vem buscar na loja não paga nada, e o pedido já nasce sabendo disso.",
-    Icone: FiTag,
-  },
-  {
-    titulo: "Promoções, devoluções e avarias",
-    texto:
-      "Preço promocional com começo e fim, o que voltou isolado até a tratativa e a unidade quebrada fora do estoque vendável — sem sumir do histórico.",
-    Icone: FiRefreshCw,
-  },
-  {
-    titulo: "Atendimento no painel",
-    texto:
-      "O chat da sua vitrine e o WhatsApp da loja na mesma tela, conversa por conversa, sem abrir o celular no meio do expediente.",
-    Icone: FiMessageSquare,
-  },
-  {
-    titulo: "Clientes com histórico",
-    texto:
-      "Quem compra na sua loja, quanto já gastou, o que comprou, para onde mandar e o que achou do que recebeu — numa tela só.",
-    Icone: FiUsers,
-  },
-  {
-    titulo: "O fechamento do dia",
-    texto:
-      "Quanto saiu no balcão, quanto saiu por pedido, quanto entrou de verdade e o que está parado. É a primeira tela ao entrar, e não um relatório a pedir.",
-    Icone: FiBarChart2,
-  },
-]
+/**
+ * O painel, em quatro blocos.
+ *
+ * Aqui havia doze cartões iguais numa grade — e doze cartões iguais não são
+ * uma lista, são uma parede: quem chega lê os dois primeiros e rola até o
+ * preço. Agrupados por assunto, os mesmos recursos passam a responder à
+ * pergunta que o visitante de fato faz, que é "isto cobre a parte da minha
+ * loja que está doendo?".
+ *
+ * O `resumo` é o que ele lê se ler uma linha só de cada bloco.
+ */
+const grupos: {
+  titulo: string
+  resumo: string
+  itens: string[]
+  Icone: IconType
+}[] = [
+    {
+      titulo: "Estoque e prateleira",
+      resumo: "Cada unidade com código, endereço e custo de entrada.",
+      itens: [
+        "Registro por unidade: código, endereço, custo, preço e situação",
+        "Etiqueta com código de barras pronta para o leitor do balcão",
+        "Entrada de mercadoria com custo e fornecedor",
+        "Endereços com capacidade e bloqueio, e placas para imprimir",
+        "Aviso de prateleira vazia antes de o cliente reclamar",
+        "Contagem rotativa pelo giro de cada produto",
+      ],
+      Icone: FiBox,
+    },
+    {
+      titulo: "Balcão e caixa",
+      resumo: "O bipe, a baixa na unidade certa e o fechamento do dia.",
+      itens: [
+        "Venda por leitura de etiqueta, com o nome de quem vendeu",
+        "Fechamento do dia: balcão, pedidos, o que entrou e o que está parado",
+        "Promoções com começo e fim",
+        "Devolução isolada até a tratativa, e avaria fora do estoque vendável",
+        "Histórico de vendas que não se perde",
+      ],
+      Icone: FiShoppingCart,
+    },
+    {
+      titulo: "Vitrine e entregas",
+      resumo: "A loja na internet, o frete e o que sai em cada dia.",
+      itens: [
+        "Catálogo alimentado pelo próprio estoque do painel",
+        "Pagamento por Pix ou cartão numa página segura",
+        "Editor da home: banners, prateleiras, textos e colunas",
+        "Tabela de frete por estado, com prazo e frete grátis",
+        "Agenda de entregas, com o atrasado em vermelho",
+        "Etiquetas de pedido e tela de acompanhamento para o cliente",
+      ],
+      Icone: FiCreditCard,
+    },
+    {
+      titulo: "Atendimento e clientes",
+      resumo: "WhatsApp e chat do site numa tela, com histórico.",
+      itens: [
+        "O WhatsApp da loja e o chat da vitrine na mesma fila",
+        "Uma conversa por responsável, sem dois atendentes na mesma",
+        "Histórico do cliente: o que comprou, quanto gastou, o que achou",
+        "Catálogo à mão para mandar a unidade dentro da conversa",
+      ],
+      Icone: FiMessageSquare,
+    },
+  ]
 
 /** O que o plano Pro acrescenta — as telas de equipe e de rede. */
 const recursosPro: { titulo: string; texto: string; Icone: IconType }[] = [
@@ -412,6 +476,27 @@ async function ofertaDaPagina(): Promise<OfertaDaPagina> {
 }
 
 /* ==========================================================================
+   Peças da página
+   ========================================================================== */
+
+/** O rótulo de seção: a palavra que diz de que assunto se trata. */
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return <span className="tag tag-info">{children}</span>
+}
+
+/** Item de lista com a marca de conferido. */
+function Confere({ children, claro = false }: { children: React.ReactNode; claro?: boolean }) {
+  return (
+    <li
+      className={`flex items-start gap-2.5 text-sm ${claro ? "font-semibold text-white" : "text-[#303030]"}`}
+    >
+      <FiCheck className={`mt-0.5 w-4 shrink-0 ${claro ? "" : "text-[#0C5132]"}`} aria-hidden />
+      {children}
+    </li>
+  )
+}
+
+/* ==========================================================================
    A página
    ========================================================================== */
 
@@ -424,6 +509,11 @@ export default async function Home() {
   const temTeste = testeDias > 0
 
   const chamada = temTeste ? `Testar ${testeDias} dias grátis` : "Criar conta"
+
+  /** O preço em uma linha, para a barra de decisão que segue a rolagem. */
+  const precoEmUmaLinha = temTeste
+    ? `${testeDias} dias grátis · depois ${formatarMoeda(mensalidade)}/mês · cancela no painel`
+    : `${formatarMoeda(mensalidade)}/mês · sem fidelidade · cancela no painel`
 
   /**
    * A escada de entrada, escrita como três degraus.
@@ -460,32 +550,58 @@ export default async function Home() {
       <Topo />
 
       {/* ==================================================================
-          HERO
+          HERÓI
+
+          Três coisas e nada mais: a promessa, três provas curtas do que ela
+          significa e o preço. A lista de provas substituiu o parágrafo
+          comprido que estava aqui — parágrafo na primeira tela é lido por
+          quem já decidiu, e quem já decidiu não precisa dele.
           ================================================================== */}
-      <section className="border-b border-[#EBEBEB] bg-[#F1F1F1]">
+      <section id="heroi" className="border-b border-[#EBEBEB] bg-[#F1F1F1]">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
 
           <div>
-            <span className="tag tag-info lp-entrada">
+            <span className="lp-entrada tag tag-info">
               Para lojas de qualquer ramo, no balcão e na internet
             </span>
 
-            <h1 className="font-display lp-entrada lp-atraso-1 mt-4 text-3xl leading-tight text-[#303030] sm:text-[2.6rem]">
+            <h1 className="font-display lp-entrada lp-atraso-1 mt-4 text-[2rem] leading-[1.1] text-[#303030] sm:text-[2.8rem]">
               A sua loja inteira, da prateleira ao caixa.
             </h1>
 
             <p className="lp-entrada lp-atraso-2 mt-4 max-w-xl text-base leading-relaxed text-[#616161]">
-              Cada item com código próprio, a vitrine na internet vivendo do
-              mesmo estoque, os pedidos organizados por dia de entrega, o
-              atendimento no painel e o fechamento do caixa no fim do dia — sem
-              planilha paralela e sem dois sistemas para conciliar.
-              <span className="mt-2 block text-sm text-[#8A8A8A]">
-                Eletro, casa, ferramentas, mercearia, vestuário: o sistema não
-                supõe o que você vende.
-              </span>
+              Um sistema só para o estoque, o balcão, a sua loja na internet, as
+              entregas e o atendimento. Sem planilha paralela e sem dois
+              sistemas para conciliar no fim do dia.
             </p>
 
-            <div className="lp-entrada lp-atraso-3 mt-7 flex flex-wrap items-center gap-3">
+            <ul className="lp-entrada lp-atraso-3 mt-6 space-y-2.5">
+              <li className="flex items-start gap-2.5 text-[0.95rem] text-[#616161]">
+                <FiCheck className="mt-1 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                <span>
+                  <strong className="font-semibold text-[#303030]">Cada item com código próprio</strong>
+                  {" "}— e não um número no estoque
+                </span>
+              </li>
+
+              <li className="flex items-start gap-2.5 text-[0.95rem] text-[#616161]">
+                <FiCheck className="mt-1 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                <span>
+                  <strong className="font-semibold text-[#303030]">Balcão e site no mesmo estoque</strong>
+                  {" "}— o que vendeu aqui some de lá
+                </span>
+              </li>
+
+              <li className="flex items-start gap-2.5 text-[0.95rem] text-[#616161]">
+                <FiCheck className="mt-1 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                <span>
+                  <strong className="font-semibold text-[#303030]">O caixa fechado no fim do dia</strong>
+                  {" "}— e não um relatório a pedir
+                </span>
+              </li>
+            </ul>
+
+            <div className="lp-entrada lp-atraso-4 mt-7 flex flex-wrap items-center gap-3">
               <Link href="/cadastro" className="btn btn-primario px-6 py-3 text-base">
                 {chamada}
                 <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
@@ -502,7 +618,7 @@ export default async function Home() {
             <p className="lp-entrada lp-atraso-4 mt-5 text-sm text-[#8A8A8A]">
               {temTeste ? (
                 <>
-                  {testeDias} dias para usar o sistema inteiro.
+                  {testeDias} dias com o sistema inteiro aberto.
                   {pedeCartao ? " O cartão é cadastrado na entrada e nada é cobrado hoje." : ""}{" "}
                   Depois, {entrada ? "meio mês por meio preço e então " : ""}
                   {formatarMoeda(mensalidade)} por mês.
@@ -514,102 +630,183 @@ export default async function Home() {
             </p>
           </div>
 
+          {/* Duas camadas, e não uma: `lp-entrada-lado` anima a entrada por
+              tempo e `lp-flutuar` acompanha a rolagem. As duas mexem em
+              `transform`, e no mesmo elemento a segunda apagaria a primeira. */}
           <div className="lp-entrada-lado">
-            <MockupPainel />
+            <div className="lp-flutuar">
+              <MockupPainel />
+            </div>
           </div>
 
         </div>
       </section>
 
-      {/* Faixa de capacidades — sem números inventados, só o que o sistema faz. */}
-      <div className="border-b border-[#EBEBEB] bg-white">
-        <ul className="lp-cascata mx-auto grid max-w-6xl gap-x-8 gap-y-3 px-4 py-5 text-sm font-semibold text-[#616161] sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { texto: "Código de barras por unidade", Icone: FiPrinter },
-            { texto: "Vitrine com pagamento online", Icone: FiCreditCard },
-            { texto: "Agenda de entregas e frete", Icone: FiCalendar },
-            { texto: "Atendimento, equipe e rede de lojas", Icone: FiUsers },
-          ].map(({ texto, Icone }) => (
-            <li key={texto} className="flex items-center gap-2.5">
-              <Icone className="w-[1.05rem] shrink-0 text-[#005BD3]" aria-hidden />
-              {texto}
-            </li>
+      {/* ==================================================================
+          A FITA DOS RAMOS
+
+          Desfila sozinha, devagar, e responde a primeira objeção de quem
+          chega — "serve para o que eu vendo?" — sem gastar uma frase com
+          isso. Duas cópias da lista, para o laço não deixar buraco; a
+          segunda fica escondida do leitor de tela.
+          ================================================================== */}
+      <div className="overflow-hidden border-b border-[#EBEBEB] bg-white py-5">
+        <div className="lp-fita flex w-max items-center text-sm font-semibold text-[#616161]">
+          {[0, 1].map((copia) => (
+            <ul
+              key={copia}
+              className="flex shrink-0 items-center gap-3 pr-3"
+              aria-hidden={copia === 1 ? true : undefined}
+            >
+              {ramos.map((ramo) => (
+                <li
+                  key={ramo}
+                  className="flex items-center gap-2.5 rounded-full border border-[#EBEBEB] bg-[#F7F7F7] px-4 py-1.5"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#005BD3]" aria-hidden />
+                  {ramo}
+                </li>
+              ))}
+            </ul>
           ))}
-        </ul>
+        </div>
+
+        <p className="mx-auto mt-5 max-w-6xl px-4 text-center text-sm text-[#8A8A8A]">
+          O sistema não supõe o que você vende: as variações são as suas —
+          voltagem, tamanho, peso, sabor, cor.
+        </p>
       </div>
 
       {/* ==================================================================
-          O FUNDAMENTO
-          Antes das funções, a ideia que as organiza. Quem entende isto
-          entende por que as telas são as que são.
+          O QUE MUDA
+
+          A primeira seção depois do herói, e a que faz a página ser
+          entendida. Cada cartão tem duas partes: o que dói hoje, na língua
+          de quem toca a loja, e a resposta do sistema.
           ================================================================== */}
-      <section id="fundamento" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
+      <section id="o-que-muda" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
 
         <div className="lp-revelar max-w-2xl">
-          <span className="tag tag-info">O fundamento</span>
+          <Rotulo>O que muda na sua loja</Rotulo>
 
           <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
-            Três ideias sustentam o sistema inteiro
+            Quatro coisas que deixam de acontecer
           </h2>
 
           <p className="mt-3 text-base leading-relaxed text-[#616161]">
-            Não é uma coleção de telas soltas. Tudo aqui sai destas três
-            decisões — e é por elas que vale a pena começar a entender.
+            Não é uma lista de funções: é o que muda na segunda-feira. Se você
+            reconhece o lado de cima de algum cartão, o lado de baixo é o que
+            este sistema faz a respeito.
           </p>
         </div>
 
-        <div className="mt-10 grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
+        <div className="lp-cascata mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {dores.map(({ hoje, resposta, Icone }) => (
+            <article key={hoje} className="lp-grupo card flex flex-col p-6">
 
-          <ol className="lp-cascata space-y-5">
-            {fundamentos.map(({ titulo, texto, Icone }, i) => (
-              <li key={titulo} className="card p-6">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF]">
-                    <Icone className="w-[1.05rem] text-[#00369B]" aria-hidden />
-                  </span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E3]">
+                <Icone className="w-5 text-[#8A6116]" aria-hidden />
+              </span>
 
-                  <h3 className="font-display text-lg text-[#303030]">
-                    <span className="num mr-2 text-[#B5B5B5]">{i + 1}.</span>
-                    {titulo}
-                  </h3>
-                </div>
+              <p className="font-display mt-4 text-[1.05rem] leading-snug text-[#303030]">
+                {hoje}
+              </p>
 
-                <p className="mt-3 text-sm leading-relaxed text-[#616161]">{texto}</p>
-              </li>
-            ))}
-          </ol>
+              <p className="mt-4 border-t border-[#EBEBEB] pt-4 text-sm leading-relaxed text-[#616161]">
+                {resposta}
+              </p>
 
-          <div className="lg:sticky lg:top-8">
-            <MockupEtiqueta />
+            </article>
+          ))}
+        </div>
+      </section>
 
-            <p className="mt-4 text-sm leading-relaxed text-[#8A8A8A]">
-              É esta etiqueta que muda o resto: com ela, a unidade tem nome
-              próprio no sistema — e passa a ser possível dizer onde ela está,
-              por quanto saiu e quem a vendeu.
+      {/* ==================================================================
+          O FUNDAMENTO
+
+          Depois das dores, a ideia que organiza as respostas. Quem entende
+          isto entende por que as telas são as que são.
+          ================================================================== */}
+      <section id="fundamento" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+
+          <div className="lp-revelar max-w-2xl">
+            <Rotulo>O fundamento</Rotulo>
+
+            <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
+              Três ideias sustentam o sistema inteiro
+            </h2>
+
+            <p className="mt-3 text-base leading-relaxed text-[#616161]">
+              Não é uma coleção de telas soltas. Tudo aqui sai destas três
+              decisões — e é por elas que vale a pena começar a entender.
             </p>
           </div>
 
+          <div className="mt-10 grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
+
+            <ol className="lp-cascata space-y-5">
+              {fundamentos.map(({ titulo, texto, Icone }, i) => (
+                <li key={titulo} className="lp-grupo card p-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF]">
+                      <Icone className="w-[1.05rem] text-[#00369B]" aria-hidden />
+                    </span>
+
+                    <h3 className="font-display text-lg text-[#303030]">
+                      <span className="num mr-2 text-[#B5B5B5]">{i + 1}.</span>
+                      {titulo}
+                    </h3>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-relaxed text-[#616161]">{texto}</p>
+                </li>
+              ))}
+            </ol>
+
+            <div className="lg:sticky lg:top-24">
+              <MockupEtiqueta />
+
+              <p className="mt-4 text-sm leading-relaxed text-[#8A8A8A]">
+                É esta etiqueta que muda o resto: com ela, a unidade tem nome
+                próprio no sistema — e passa a ser possível dizer onde ela
+                está, por quanto saiu e quem a vendeu.
+              </p>
+            </div>
+
+          </div>
         </div>
       </section>
 
       {/* ==================================================================
           COMO FUNCIONA
           ================================================================== */}
-      <section id="como-funciona" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+      <section id="como-funciona" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
 
-          <h2 className="font-display lp-revelar text-2xl text-[#303030] sm:text-3xl">
-            Do cabide ao caixa, em quatro passos
+        <div className="lp-revelar max-w-2xl">
+          <Rotulo>Como funciona</Rotulo>
+
+          <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
+            Da prateleira ao caixa, em quatro passos
           </h2>
 
-          <p className="lp-revelar mt-3 max-w-2xl text-base text-[#616161]">
+          <p className="mt-3 text-base text-[#616161]">
             O caminho é o mesmo que a unidade já faz na sua loja hoje — a
             diferença é que agora cada etapa fica registrada.
           </p>
+        </div>
 
-          <ol className="lp-cascata mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        {/* A linha atravessa os quatro passos e se desenha conforme eles
+            entram na tela: é o caminho da unidade, dito em desenho. */}
+        <div className="relative mt-10">
+          <span
+            className="lp-linha absolute left-0 right-0 top-[3.1rem] hidden h-px bg-[#D1D1D1] lg:block"
+            aria-hidden
+          />
+
+          <ol className="lp-cascata relative grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {passos.map((passo, i) => (
-              <li key={passo.titulo} className="card card-hover p-6">
+              <li key={passo.titulo} className="lp-grupo card p-6">
                 <span className="num flex h-9 w-9 items-center justify-center rounded-lg bg-[#EAF4FF] text-sm font-extrabold text-[#00369B]">
                   {i + 1}
                 </span>
@@ -628,13 +825,87 @@ export default async function Home() {
       </section>
 
       {/* ==================================================================
-          O DIA DA LOJA — a agenda
+          O PAINEL POR DENTRO
+
+          Quatro blocos em vez de doze cartões iguais. Quem lê só os títulos
+          e os resumos já sabe se o sistema cobre a parte da loja que está
+          doendo; quem quer a lista inteira a tem logo abaixo de cada resumo.
+          ================================================================== */}
+      <section id="recursos" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+
+          <div className="lp-revelar max-w-2xl">
+            <Rotulo>O que vem no painel</Rotulo>
+
+            <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
+              Quatro blocos, e a loja inteira dentro deles
+            </h2>
+
+            <p className="mt-3 text-base leading-relaxed text-[#616161]">
+              Tudo o que está aqui embaixo vem no plano de entrada — nada nesta
+              lista é vendido à parte.
+            </p>
+          </div>
+
+          <div className="lp-cascata mt-10 grid gap-5 md:grid-cols-2">
+            {grupos.map(({ titulo, resumo, itens, Icone }) => (
+              <article key={titulo} className="lp-grupo card flex flex-col p-6 sm:p-7">
+
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF]">
+                    <Icone className="w-5 text-[#00369B]" aria-hidden />
+                  </span>
+
+                  <h3 className="font-display text-xl text-[#303030]">{titulo}</h3>
+                </div>
+
+                <p className="mt-3 text-[0.95rem] font-semibold leading-relaxed text-[#303030]">
+                  {resumo}
+                </p>
+
+                <ul className="mt-4 space-y-2 border-t border-[#EBEBEB] pt-4">
+                  {itens.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-2.5 text-sm leading-relaxed text-[#616161]"
+                    >
+                      <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+              </article>
+            ))}
+          </div>
+
+          <ul className="lp-cascata mt-5 grid gap-3 text-sm font-semibold text-[#616161] sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { texto: "Código de barras por unidade", Icone: FiPrinter },
+              { texto: "Pagamento online na vitrine", Icone: FiCreditCard },
+              { texto: "Reposição e contagem do estoque", Icone: FiRefreshCw },
+              { texto: "Equipe e rede de lojas no Pro", Icone: FiUsers },
+            ].map(({ texto, Icone }) => (
+              <li
+                key={texto}
+                className="flex items-center gap-2.5 rounded-lg border border-[#EBEBEB] bg-white px-4 py-3"
+              >
+                <Icone className="w-[1.05rem] shrink-0 text-[#005BD3]" aria-hidden />
+                {texto}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ==================================================================
+          A AGENDA — a primeira das três telas que convencem
           ================================================================== */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
 
           <div className="lp-revelar">
-            <span className="tag tag-info">O trabalho do dia</span>
+            <Rotulo>O trabalho do dia</Rotulo>
 
             <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
               O que tem de sair hoje, num calendário
@@ -643,7 +914,7 @@ export default async function Home() {
             <p className="mt-4 text-base leading-relaxed text-[#616161]">
               A lista de pedidos responde “em que pé está cada um”. A agenda
               responde outra pergunta, que a lista não responde: <strong>o que
-              eu tenho de mandar hoje</strong>. Pedido em preparo fica fora do
+                eu tenho de mandar hoje</strong>. Pedido em preparo fica fora do
               calendário até você dizer o dia em que ele sai — e o que passou
               da data aparece separado, em vermelho, mesmo quando você está
               olhando outro mês.
@@ -655,10 +926,7 @@ export default async function Home() {
                 "O que passou do dia de sair não some quando você vira a página",
                 "Cada pedido leva ao lugar onde se grava o rastreio",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-[#303030]">
-                  <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
-                  {item}
-                </li>
+                <Confere key={item}>{item}</Confere>
               ))}
             </ul>
           </div>
@@ -671,82 +939,45 @@ export default async function Home() {
       </section>
 
       {/* ==================================================================
-          RECURSOS
-          ================================================================== */}
-      <section id="recursos" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-
-          <h2 className="font-display lp-revelar text-2xl text-[#303030] sm:text-3xl">
-            O que vem no painel
-          </h2>
-
-          <p className="lp-revelar mt-3 max-w-2xl text-base text-[#616161]">
-            Tudo dividido por tela, do jeito que a loja funciona: catálogo,
-            estoque, vendas, atendimento e conta. Tudo o que está aqui embaixo
-            vem no plano de entrada — nada nesta lista é vendido à parte.
-          </p>
-
-          <div className="lp-cascata mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {recursos.map(({ titulo, texto, Icone }) => (
-              <article key={titulo} className="card card-hover p-6">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EAF4FF]">
-                  <Icone className="w-5 text-[#00369B]" aria-hidden />
-                </span>
-
-                <h3 className="font-display mt-4 text-lg text-[#303030]">
-                  {titulo}
-                </h3>
-
-                <p className="mt-2 text-sm leading-relaxed text-[#616161]">
-                  {texto}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================
           ATENDIMENTO
           ================================================================== */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+      <section className="border-y border-[#EBEBEB] bg-[#F1F1F1]">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
 
-          <div className="lp-revelar">
-            <MockupAtendimento />
+            <div className="lp-revelar">
+              <MockupAtendimento />
+            </div>
+
+            <div className="lp-revelar">
+              <Rotulo>Atendimento</Rotulo>
+
+              <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
+                O WhatsApp da loja e o chat do site na mesma tela
+              </h2>
+
+              <p className="mt-4 text-base leading-relaxed text-[#616161]">
+                O cliente escreve pelo chat da sua vitrine ou pelo WhatsApp da
+                loja, e a conversa entra numa fila dentro do painel. Quem pega,
+                atende — e a conversa sai da tela dos outros, para dois
+                atendentes não responderem coisas diferentes ao mesmo cliente.
+                Terminou, encerra. Se o cliente voltar a escrever, ela volta
+                para a fila.
+              </p>
+
+              <ul className="mt-6 space-y-2.5">
+                {[
+                  "Cada conversa com um responsável, e o histórico junto do cliente",
+                  "Quem respondeu fica gravado na mensagem, e quem vendeu, na unidade",
+                  "O catálogo do seu estoque à mão, para mandar a unidade dentro da conversa",
+                  "Sem abrir o celular no meio do expediente",
+                ].map((item) => (
+                  <Confere key={item}>{item}</Confere>
+                ))}
+              </ul>
+            </div>
+
           </div>
-
-          <div className="lp-revelar">
-            <span className="tag tag-info">Atendimento</span>
-
-            <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
-              O WhatsApp da loja e o chat do site na mesma tela
-            </h2>
-
-            <p className="mt-4 text-base leading-relaxed text-[#616161]">
-              O cliente escreve pelo chat da sua vitrine ou pelo WhatsApp da
-              loja, e a conversa entra numa fila dentro do painel. Quem pega,
-              atende — e a conversa sai da tela dos outros, para dois
-              atendentes não responderem coisas diferentes ao mesmo cliente.
-              Terminou, encerra. Se o cliente voltar a escrever, ela volta para
-              a fila.
-            </p>
-
-            <ul className="mt-6 space-y-2.5">
-              {[
-                "Cada conversa com um responsável, e o histórico junto do cliente",
-                "Quem respondeu fica gravado na mensagem, e quem vendeu, na unidade",
-                "O catálogo do seu estoque à mão, para mandar a unidade dentro da conversa",
-                "Sem abrir o celular no meio do expediente",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-[#303030]">
-                  <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
         </div>
       </section>
 
@@ -782,10 +1013,7 @@ export default async function Home() {
                   "Pagamento numa página segura — nenhum dado de cartão passa por aqui",
                   "Tela de acompanhamento, comprovante e avaliação do produto",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-white">
-                    <FiCheck className="mt-0.5 w-4 shrink-0" aria-hidden />
-                    {item}
-                  </li>
+                  <Confere key={item} claro>{item}</Confere>
                 ))}
               </ul>
             </div>
@@ -837,7 +1065,7 @@ export default async function Home() {
 
             <div className="lp-cascata space-y-5">
               {recursosPro.map(({ titulo, texto, Icone }) => (
-                <article key={titulo} className="card p-6">
+                <article key={titulo} className="lp-grupo card p-6">
                   <div className="flex items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EAF4FF]">
                       <Icone className="w-[1.05rem] text-[#00369B]" aria-hidden />
@@ -870,11 +1098,11 @@ export default async function Home() {
           "quanto custa", mas "quando começa a custar".
           ================================================================== */}
       {degraus.length > 0 && (
-        <section className="border-y border-[#EBEBEB] bg-[#F1F1F1]">
+        <section className="border-y border-[#EBEBEB] bg-white">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
 
             <div className="lp-revelar max-w-2xl">
-              <span className="tag tag-info">Como começa a cobrança</span>
+              <Rotulo>Como começa a cobrança</Rotulo>
 
               <h2 className="font-display mt-4 text-2xl text-[#303030] sm:text-3xl">
                 Do primeiro dia até a primeira mensalidade
@@ -932,178 +1160,180 @@ export default async function Home() {
       {/* ==================================================================
           PLANOS
           ================================================================== */}
-      <section id="planos" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
+      <section id="planos" className="bg-[#F1F1F1]">
+        <div className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:py-20">
 
-        <div className="lp-revelar mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-2xl text-[#303030] sm:text-3xl">
-            {pro ? "Dois planos, e a diferença é uma linha só" : "Um preço, sem pegadinha"}
-          </h2>
+          <div className="lp-revelar mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-2xl text-[#303030] sm:text-3xl">
+              {pro ? "Dois planos, e a diferença é uma linha só" : "Um preço, sem pegadinha"}
+            </h2>
 
-          <p className="mt-3 text-base text-[#616161]">
-            {pro ? (
-              <>
-                O de entrada é o sistema inteiro para quem toca uma loja:
-                estoque, balcão, vitrine, pedidos e clientes. O Pro acrescenta
-                o que só existe quando há equipe ou mais de um endereço. Sem
-                fidelidade nos dois, e a troca é feita por você mesmo, no
-                painel.
-              </>
-            ) : (
-              <>
-                Quem assina recebe o sistema inteiro, do cadastro da primeira
-                unidade à loja no ar com pagamento. Sem fidelidade, e o
-                cancelamento é feito por você mesmo.
-              </>
-            )}
-          </p>
-        </div>
+            <p className="mt-3 text-base text-[#616161]">
+              {pro ? (
+                <>
+                  O de entrada é o sistema inteiro para quem toca uma loja:
+                  estoque, balcão, vitrine, pedidos e clientes. O Pro acrescenta
+                  o que só existe quando há equipe ou mais de um endereço. Sem
+                  fidelidade nos dois, e a troca é feita por você mesmo, no
+                  painel.
+                </>
+              ) : (
+                <>
+                  Quem assina recebe o sistema inteiro, do cadastro da primeira
+                  unidade à loja no ar com pagamento. Sem fidelidade, e o
+                  cancelamento é feito por você mesmo.
+                </>
+              )}
+            </p>
+          </div>
 
-        {/* Sem `items-start`: os dois cartões têm a MESMA altura. O Pro tem
-            quatro linhas e o de entrada tem vinte e quatro, e deixar cada um
-            com a sua altura fazia o Pro parecer um cartão que faltou
-            terminar — que é o contrário do que ele é. O botão de cada um
-            desce para o rodapé do cartão pelo `mt-auto`. */}
-        <div className={`mx-auto mt-10 grid gap-5 ${pro ? "max-w-5xl lg:grid-cols-2" : "max-w-3xl"}`}>
+          {/* Sem `items-start`: os dois cartões têm a MESMA altura. O Pro tem
+              quatro linhas e o de entrada tem vinte e quatro, e deixar cada um
+              com a sua altura fazia o Pro parecer um cartão que faltou
+              terminar — que é o contrário do que ele é. O botão de cada um
+              desce para o rodapé do cartão pelo `mt-auto`. */}
+          <div className={`mx-auto mt-10 grid gap-5 ${pro ? "max-w-5xl lg:grid-cols-2" : "max-w-3xl"}`}>
 
-          {/* ---------------- O plano de entrada ---------------- */}
-          <article className="card lp-plano lp-revelar flex flex-col border-[#005BD3] p-7 sm:p-8">
-
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-display text-lg text-[#303030]">{MARCA}</p>
-                <p className="mt-1 text-sm text-[#616161]">
-                  Para quem toca a loja — no balcão, na internet, ou nos dois.
-                </p>
-              </div>
-
-              <span className="tag tag-info shrink-0">
-                {temTeste ? `${testeDias} dias grátis` : "Tudo incluído"}
-              </span>
-            </div>
-
-            <div className="mt-6 border-b border-[#EBEBEB] pb-6">
-              <div className="flex items-baseline gap-1.5">
-                <Preco valor={mensalidade} className="text-4xl" />
-                <span className="text-sm font-bold text-[#616161]">/mês</span>
-              </div>
-
-              {entrada ? (
-                <p className="mt-2 text-sm text-[#616161]">
-                  Nada hoje. No dia {testeDias}, {formatarMoeda(entrada.valor)} pelo
-                  meio mês seguinte; a mensalidade cheia começa no dia{" "}
-                  {testeDias + entrada.dias}.
-                </p>
-              ) : temTeste ? (
-                <p className="mt-2 text-sm text-[#616161]">
-                  A cobrar só depois dos {testeDias} dias de teste.
-                </p>
-              ) : null}
-            </div>
-
-            <ul className="mt-6 mb-8 grid gap-2.5 sm:grid-cols-2">
-              {inclui.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#303030]">
-                  <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <Link href="/cadastro" className="btn btn-primario mt-auto w-full py-3 text-base">
-              {temTeste ? chamada : "Criar a minha conta"}
-              <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
-            </Link>
-          </article>
-
-          {/* ---------------- O Pro ---------------- */}
-          {pro && (
-            <article className="card lp-plano lp-revelar flex flex-col p-7 sm:p-8">
+            {/* ---------------- O plano de entrada ---------------- */}
+            <article className="card lp-plano lp-revelar flex flex-col border-[#005BD3] p-7 sm:p-8">
 
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-display text-lg text-[#303030]">{MARCA_PRO}</p>
+                  <p className="font-display text-lg text-[#303030]">{MARCA}</p>
                   <p className="mt-1 text-sm text-[#616161]">
-                    Para quem tem equipe, ou mais de uma loja.
+                    Para quem toca a loja — no balcão, na internet, ou nos dois.
                   </p>
                 </div>
 
-                <span className="tag tag-neutral shrink-0">até {pro.lojas} lojas</span>
+                <span className="tag tag-info shrink-0">
+                  {temTeste ? `${testeDias} dias grátis` : "Tudo incluído"}
+                </span>
               </div>
 
               <div className="mt-6 border-b border-[#EBEBEB] pb-6">
                 <div className="flex items-baseline gap-1.5">
-                  <Preco valor={pro.mensalidade} className="text-4xl" />
+                  <Preco valor={mensalidade} className="text-4xl" />
                   <span className="text-sm font-bold text-[#616161]">/mês</span>
                 </div>
 
-                <p className="mt-2 text-sm text-[#616161]">
-                  {temTeste ? `O mesmo teste de ${testeDias} dias. ` : ""}
-                  O Pro se liga na tela de assinatura do painel, quando você
-                  quiser — e se desliga do mesmo jeito.
-                </p>
+                {entrada ? (
+                  <p className="mt-2 text-sm text-[#616161]">
+                    Nada hoje. No dia {testeDias}, {formatarMoeda(entrada.valor)} pelo
+                    meio mês seguinte; a mensalidade cheia começa no dia{" "}
+                    {testeDias + entrada.dias}.
+                  </p>
+                ) : temTeste ? (
+                  <p className="mt-2 text-sm text-[#616161]">
+                    A cobrar só depois dos {testeDias} dias de teste.
+                  </p>
+                ) : null}
               </div>
 
-              <p className="mt-6 text-sm font-semibold text-[#303030]">
-                Tudo do plano de entrada, mais:
-              </p>
-
-              <ul className="mt-3 mb-8 grid gap-2.5">
-                {pro.recursos.map((item) => (
+              <ul className="mt-6 mb-8 grid gap-2.5 sm:grid-cols-2">
+                {inclui.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#303030]">
-                    <FiPlus className="mt-0.5 w-4 shrink-0 text-[#005BD3]" aria-hidden />
+                    <FiCheck className="mt-0.5 w-4 shrink-0 text-[#0C5132]" aria-hidden />
                     {item}
                   </li>
                 ))}
               </ul>
 
-              <p className="mt-auto border-t border-[#EBEBEB] pt-6 text-sm leading-relaxed text-[#616161]">
-                Inclui tudo o que está ao lado: estoque unidade a unidade, etiquetas,
-                balcão, vitrine com pagamento, pedidos, entregas, clientes e
-                atendimento. O Pro não troca o sistema por outro — ele abre as
-                telas que só fazem sentido com mais gente, ou mais de um
-                endereço.
-              </p>
-
-              <Link href="/cadastro" className="btn btn-secundario mt-8 w-full py-3 text-base">
+              <Link href="/cadastro" className="btn btn-primario mt-auto w-full py-3 text-base">
                 {temTeste ? chamada : "Criar a minha conta"}
                 <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
               </Link>
             </article>
-          )}
-        </div>
 
-        <div className="lp-cascata mx-auto mt-8 grid max-w-5xl gap-3 sm:grid-cols-3">
-          {[
-            { titulo: "Sem fidelidade", texto: "Cancela no painel, quando quiser.", Icone: FiCheck },
-            {
-              titulo: "Cartão fora daqui",
-              texto: "Nenhum dígito do seu cartão passa por este sistema.",
-              Icone: FiCreditCard,
-            },
-            {
-              titulo: "Suporte a quem usa",
-              texto: "As dúvidas chegam pelo mesmo canal do sistema.",
-              Icone: FiStar,
-            },
-          ].map(({ titulo, texto, Icone }) => (
-            <div key={titulo} className="flex items-start gap-2.5 rounded-lg bg-[#F7F7F7] p-4">
-              <Icone className="mt-0.5 w-4 shrink-0 text-[#005BD3]" aria-hidden />
-              <div>
-                <p className="text-sm font-semibold text-[#303030]">{titulo}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-[#616161]">{texto}</p>
+            {/* ---------------- O Pro ---------------- */}
+            {pro && (
+              <article className="card lp-plano lp-revelar flex flex-col p-7 sm:p-8">
+
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-display text-lg text-[#303030]">{MARCA_PRO}</p>
+                    <p className="mt-1 text-sm text-[#616161]">
+                      Para quem tem equipe, ou mais de uma loja.
+                    </p>
+                  </div>
+
+                  <span className="tag tag-neutral shrink-0">até {pro.lojas} lojas</span>
+                </div>
+
+                <div className="mt-6 border-b border-[#EBEBEB] pb-6">
+                  <div className="flex items-baseline gap-1.5">
+                    <Preco valor={pro.mensalidade} className="text-4xl" />
+                    <span className="text-sm font-bold text-[#616161]">/mês</span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-[#616161]">
+                    {temTeste ? `O mesmo teste de ${testeDias} dias. ` : ""}
+                    O Pro se liga na tela de assinatura do painel, quando você
+                    quiser — e se desliga do mesmo jeito.
+                  </p>
+                </div>
+
+                <p className="mt-6 text-sm font-semibold text-[#303030]">
+                  Tudo do plano de entrada, mais:
+                </p>
+
+                <ul className="mt-3 mb-8 grid gap-2.5">
+                  {pro.recursos.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm font-semibold text-[#303030]">
+                      <FiPlus className="mt-0.5 w-4 shrink-0 text-[#005BD3]" aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-auto border-t border-[#EBEBEB] pt-6 text-sm leading-relaxed text-[#616161]">
+                  Inclui tudo o que está ao lado: estoque unidade a unidade, etiquetas,
+                  balcão, vitrine com pagamento, pedidos, entregas, clientes e
+                  atendimento. O Pro não troca o sistema por outro — ele abre as
+                  telas que só fazem sentido com mais gente, ou mais de um
+                  endereço.
+                </p>
+
+                <Link href="/cadastro" className="btn btn-secundario mt-8 w-full py-3 text-base">
+                  {temTeste ? chamada : "Criar a minha conta"}
+                  <FiArrowRight className="lp-seta w-[1.05rem]" aria-hidden />
+                </Link>
+              </article>
+            )}
+          </div>
+
+          <div className="lp-cascata mx-auto mt-8 grid max-w-5xl gap-3 sm:grid-cols-3">
+            {[
+              { titulo: "Sem fidelidade", texto: "Cancela no painel, quando quiser.", Icone: FiCheck },
+              {
+                titulo: "Cartão fora daqui",
+                texto: "Nenhum dígito do seu cartão passa por este sistema.",
+                Icone: FiCreditCard,
+              },
+              {
+                titulo: "Suporte a quem usa",
+                texto: "As dúvidas chegam pelo mesmo canal do sistema.",
+                Icone: FiStar,
+              },
+            ].map(({ titulo, texto, Icone }) => (
+              <div key={titulo} className="flex items-start gap-2.5 rounded-lg border border-[#EBEBEB] bg-white p-4">
+                <Icone className="mt-0.5 w-4 shrink-0 text-[#005BD3]" aria-hidden />
+                <div>
+                  <p className="text-sm font-semibold text-[#303030]">{titulo}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-[#616161]">{texto}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-[#8A8A8A]">
-          A assinatura é cobrada todo mês no cartão. O pagamento acontece numa
-          página segura do processador de cobrança, e o cancelamento fica na
-          tela de assinatura do seu painel.
-          {pro
-            ? " Trocar de plano não recomeça nada: a assinatura é a mesma, e a diferença é acertada na fatura seguinte."
-            : ""}
-        </p>
+          <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-[#8A8A8A]">
+            A assinatura é cobrada todo mês no cartão. O pagamento acontece numa
+            página segura do processador de cobrança, e o cancelamento fica na
+            tela de assinatura do seu painel.
+            {pro
+              ? " Trocar de plano não recomeça nada: a assinatura é a mesma, e a diferença é acertada na fatura seguinte."
+              : ""}
+          </p>
+        </div>
       </section>
 
       {/* ==================================================================
@@ -1112,7 +1342,7 @@ export default async function Home() {
           `<details>` nativo: abre sem JavaScript, e o buscador lê a resposta
           mesmo com a pergunta fechada.
           ================================================================== */}
-      <section id="perguntas" className="scroll-mt-20 border-y border-[#EBEBEB] bg-[#F1F1F1]">
+      <section id="perguntas" className="scroll-mt-20 border-y border-[#EBEBEB] bg-white">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:py-20">
 
           <h2 className="font-display lp-revelar text-2xl text-[#303030] sm:text-3xl">
@@ -1175,7 +1405,7 @@ export default async function Home() {
           RODAPÉ
           ================================================================== */}
       <footer className="border-t border-[#E1E1E1] bg-[#F1F1F1]">
-        <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="mx-auto max-w-6xl px-4 py-10 pb-24 sm:pb-10">
 
           <div className="flex flex-wrap items-center justify-between gap-6">
 
@@ -1189,6 +1419,7 @@ export default async function Home() {
 
             <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#616161]">
               {[
+                { nome: "O que muda", hash: "#o-que-muda" },
                 { nome: "O fundamento", hash: "#fundamento" },
                 { nome: "Recursos", hash: "#recursos" },
                 { nome: "Vitrine", hash: "#vitrine" },
@@ -1217,6 +1448,10 @@ export default async function Home() {
           </p>
         </div>
       </footer>
+
+      {/* A barra de decisão vem por último no HTML porque é o que ela é na
+          tela: uma camada por cima, e não um trecho do documento. */}
+      <BarraDeDecisao chamada={chamada} detalhe={precoEmUmaLinha} alvo="heroi" />
 
     </div>
   )
