@@ -185,7 +185,7 @@ export default function Banners() {
     return (
         <Pagina
             titulo="Banners"
-            descricao="Os slides do topo da sua vitrine: controle a imagem, o texto e o valor que cada um mostra."
+            descricao="Os slides do topo da sua vitrine. Só a imagem, ou imagem com texto ao lado — o formato sai do que você preencher."
         >
 
             <form
@@ -200,6 +200,20 @@ export default function Banners() {
                         {editandoId ? `Editando banner #${editandoId}` : "Novo banner"}
                     </h3>
                 </div>
+
+                {/* A escolha entre os dois formatos do banner é feita AQUI,
+                    preenchendo ou deixando em branco — e por isso ela precisa
+                    estar escrita. Sem esta linha, o lojista que só quer subir
+                    a arte pronta preenchia o título porque o campo estava lá,
+                    e recebia a vitrine escrevendo por cima do trabalho do
+                    designer dele. */}
+                <p className="rounded-[var(--radius-md)] border border-[var(--linha)] bg-[var(--fundo)] px-4 py-3 text-[0.8125rem] leading-relaxed text-[var(--ink-2)]">
+                    <strong className="font-semibold text-[var(--ink)]">Dois formatos, e quem escolhe é você.</strong>{" "}
+                    Deixe título, descrição e valores <strong className="font-semibold text-[var(--ink)]">em branco</strong> e
+                    a vitrine mostra só a imagem, inteira, de ponta a ponta — é o formato de
+                    quem já tem a arte pronta. Preencha qualquer um deles e a arte passa a
+                    dividir a faixa com o texto, lado a lado.
+                </p>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
