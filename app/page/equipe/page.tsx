@@ -117,7 +117,14 @@ export default function ConversaDaEquipe() {
     // dois motivos: são assunto da conversa, e o dono pode delegar o código a
     // um funcionário, que não abre aquela tela. Dois lugares para a mesma
     // coisa seria a duplicata de sempre.
-    const [vendo, setVendo] = useState<"conversa" | "tarefas" | "mural" | "config">("conversa")
+    //
+    // `?ver=config` abre direto nas configurações: é por onde o menu do
+    // painel leva quem clicou em "Código da conversa" (ver recursos.go). Sem
+    // isso aquele item caía na conversa, e a pessoa tinha de descobrir
+    // sozinha que o código está atrás de uma aba.
+    const [vendo, setVendo] = useState<"conversa" | "tarefas" | "mural" | "config">(
+        parametros.get("ver") === "config" ? "config" : "conversa",
+    )
 
     // Sair pergunta antes porque não se desfaz sozinho: voltar custa o código
     // outra vez E a confirmação do dono. Um aviso depois do clique não teria

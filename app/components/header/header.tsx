@@ -384,6 +384,20 @@ function montarSecoes(itens: ItemMenu[]): { titulo: string; nos: No[] }[] {
 
     const secoes: { titulo: string; nos: No[] }[] = []
 
+    /* Um endereço, uma linha no menu.
+    
+       Guarda contra o defeito que já aconteceu: "Conversa da equipe" e
+       "Código da conversa" apontavam os dois para /page/equipe, e o menu
+       mostrava duas linhas para o mesmo lugar — as duas acendendo como "você
+       está aqui" ao mesmo tempo. Vence a primeira do catálogo, que é a mãe da
+       dupla; a segunda simplesmente não entra.
+    
+       Isto não substitui arrumar o catálogo (o código agora abre a aba dele,
+       ver recursos.go): serve para o dia em que alguém repetir um endereço
+       sem perceber, e para o intervalo entre o deploy de um lado e o do
+       outro. */
+    const rotasJaUsadas = new Set<string>()
+
     function secaoDe(titulo: string) {
         const achada = secoes.find((s) => s.titulo === titulo)
 
@@ -395,6 +409,12 @@ function montarSecoes(itens: ItemMenu[]): { titulo: string; nos: No[] }[] {
     }
 
     for (const item of itens) {
+
+        if (item.rota) {
+            if (rotasJaUsadas.has(item.rota)) continue
+
+            rotasJaUsadas.add(item.rota)
+        }
 
         const pai = item.pai ? nosPorChave.get(item.pai) : undefined
 
@@ -704,7 +724,7 @@ export default function Sidebar() {
         nos: No[]
     }
 
-    function gruposDaColuna(nos: No[]): GrupoDaColuna[] {
+    function gruposDaColuna(nos: No[], tituloDaArea: string): GrupoDaColuna[] {
 
         const grupos: GrupoDaColuna[] = []
 
@@ -719,8 +739,15 @@ export default function Sidebar() {
 
             if (filhasVisiveis.length === 0) continue
 
+            /* Mãe com o mesmo nome da área não vira título: ele já está no
+               cabeçalho da coluna, a uma linha dali. É o caso de "Conversas"
+               e de "Meu site", onde a área e a tela mãe se chamam igual —
+               escrever o nome duas vezes seguidas seria trocar uma repetição
+               por outra. */
+            const repeteOCabecalho = comparavel(no.item.nome) === comparavel(tituloDaArea)
+
             grupos.push({
-                titulo: no.item.nome,
+                titulo: repeteOCabecalho ? null : no.item.nome,
                 nos: filhasVisiveis.map((filho) => ({ item: filho, filhos: [] })),
             })
         }
@@ -1295,7 +1322,7 @@ export default function Sidebar() {
         // no celular não há trilho nenhum (ver conteudoCompletoDoCelular).
         return (
             <div className="space-y-0.5">
-                {gruposDaColuna(secaoAtiva.nos).map((grupo, i) => (
+                {gruposDaColuna(secaoAtiva.nos, secaoAtiva.titulo).map((grupo, i) => (
                     <div key={grupo.titulo ?? `solto-${i}`} className={grupo.titulo ? "pt-2 first:pt-0" : ""}>
 
                         {grupo.titulo && (
