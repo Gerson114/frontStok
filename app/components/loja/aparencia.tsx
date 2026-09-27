@@ -27,7 +27,7 @@ import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiImage, FiRefreshCw, Fi
  * evita é ele descobrir pelo cliente que o preço sumiu no fundo.
  */
 
-const CAMPOS: { chave: keyof Omit<TemaLoja, "logo_url">; rotulo: string; ajuda: string }[] = [
+const CAMPOS: { chave: keyof Omit<TemaLoja, "logo_url" | "favicon_url">; rotulo: string; ajuda: string }[] = [
     { chave: "fundo", rotulo: "Fundo", ajuda: "A cor da página inteira." },
     { chave: "texto", rotulo: "Texto", ajuda: "Títulos, preços e descrições." },
     { chave: "destaque", rotulo: "Destaque", ajuda: "A faixa do topo e os botões." },
@@ -67,6 +67,7 @@ export default function Aparencia() {
                     destaque: dados.destaque || TEMA_DE_FABRICA.destaque,
                     palco: dados.palco || TEMA_DE_FABRICA.palco,
                     logo_url: dados.logo_url,
+                    favicon_url: dados.favicon_url,
                 })
 
             } catch (e) {
@@ -315,6 +316,66 @@ export default function Aparencia() {
                         substitui o que estiver escrito aqui.
                     </p>
                 </details>
+            </div>
+
+            {/* O ÍCONE DA ABA.
+
+                Fica embaixo da logo porque é o irmão menor dela, e é campo à
+                parte pelo motivo que a prévia ao lado mostra: a logo é
+                horizontal e cheia de detalhe, e espremida em 32 pixels vira
+                mancha. Quem tem o quadradinho próprio põe aqui; quem não tem
+                deixa vazio e a vitrine usa a logo, que ainda diz mais do que
+                o ícone em branco do navegador. */}
+            <div className="mt-6 border-t border-[var(--linha)] pt-5">
+
+                <p className="font-display text-sm text-[var(--ink)]">Ícone da aba</p>
+
+                <p className="mt-0.5 text-xs text-[var(--ink-3)]">
+                    O quadradinho que aparece na aba do navegador, nos favoritos e na
+                    tela inicial do celular. Sem ele, a vitrine usa a logo.
+                </p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+
+                    {/* Prévia no tamanho em que ele vai ser visto de verdade:
+                        32 pixels. Mostrá-lo grande esconderia justamente o
+                        problema que faz um favicon ser ruim. */}
+                    <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded border border-[var(--linha)]"
+                        style={{ background: tema.palco || TEMA_DE_FABRICA.palco }}
+                    >
+                        {tema.favicon_url || tema.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- vem da nossa rota ou do bucket
+                            <img
+                                src={tema.favicon_url || tema.logo_url}
+                                alt="Ícone da aba"
+                                className="max-h-full max-w-full object-contain"
+                            />
+                        ) : (
+                            <FiImage className="w-4 text-[var(--ink-3)]" aria-hidden />
+                        )}
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                        <label htmlFor="favicon" className="rotulo block">
+                            Endereço da imagem
+                        </label>
+
+                        <input
+                            id="favicon"
+                            type="url"
+                            maxLength={500}
+                            placeholder="https://... (.png ou .ico, quadrado)"
+                            className="field"
+                            value={tema.favicon_url}
+                            onChange={(e) => mudar("favicon_url", e.target.value)}
+                        />
+
+                        <p className="mt-1.5 text-xs text-[var(--ink-3)]">
+                            Quadrado, de 32 a 512 pixels. Deixe vazio para usar a logo.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <Previa tema={tema} />

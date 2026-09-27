@@ -161,6 +161,17 @@ export interface TemaLoja {
     destaque: string
     palco: string
     logo_url: string
+
+    /**
+     * O ícone da ABA do navegador — o quadradinho ao lado do título, nos
+     * favoritos e na tela inicial do celular.
+     *
+     * Campo próprio, e não a logo reaproveitada: a logo é horizontal e cheia
+     * de detalhe, e reduzida a 32 pixels vira mancha. Vazio faz a vitrine
+     * cair na logo, que ainda é melhor do que o ícone em branco do
+     * navegador.
+     */
+    favicon_url: string
 }
 
 export const TEMA_DE_FABRICA: TemaLoja = {
@@ -169,6 +180,7 @@ export const TEMA_DE_FABRICA: TemaLoja = {
     destaque: "#000000",
     palco: "#efece8",
     logo_url: "",
+    favicon_url: "",
 }
 
 export async function consultarTema(): Promise<TemaLoja> {
@@ -180,6 +192,7 @@ export async function consultarTema(): Promise<TemaLoja> {
         destaque: dados.tema?.destaque || "",
         palco: dados.tema?.palco || "",
         logo_url: dados.tema?.logo_url || "",
+        favicon_url: dados.tema?.favicon_url || "",
     }
 }
 
