@@ -680,35 +680,54 @@ export default function Sidebar() {
         [trilhoParaMostrar],
     )
 
-    /* A mesma lista, sem o que o trilho já mostra.
+    /* A mesma lista, sem o que o trilho já mostra — e sem perder de quem é
+       cada tela.
     
-       Uma mãe repetida não leva as filhas embora: elas sobem para o lugar
-       dela. É o caso de Estoque, que está no trilho e tem "inserir",
-       "consultar" e "endereços" penduradas — sumir com a mãe sumiria com as
-       três, e aí o atalho teria custado três portas.
+       Uma mãe que está no trilho perde o LINK dela (o trilho já leva lá) mas
+       continua escrita, como título do grupo. A primeira versão disto
+       promovia as filhas ao primeiro nível, e o resultado era uma lista solta
+       na área "Conta": Assinatura, Comissões e Código da conversa lado a
+       lado, sem dizer que a primeira é de Configurações e as outras duas são
+       de Funcionários. Como título, cada grupo volta a ter dono.
     
-       Sobrando nada, devolve a lista inteira: coluna vazia é pior do que
-       coluna repetida, e é o que aconteceria na área "Painel", cuja única
-       tela (Início) também é a primeira do trilho. */
-    function semORepetidoDoTrilho(nos: No[]): No[] {
+       Filha que também está no trilho some (é o caso de "Conversa da equipe",
+       pendurada em Funcionários): repetir a mesma tela a um palmo do atalho
+       dela era a queixa que começou tudo isto.
+    
+       Grupo que fica sem nenhuma filha visível não vira um título sozinho —
+       ele sai inteiro. E se NADA sobrar, a lista volta como veio: coluna
+       vazia é pior do que coluna repetida, e é o que aconteceria na área
+       "Painel", cuja única tela também é a primeira do trilho. */
+    interface GrupoDaColuna {
+        /** A mãe, quando ela vira título em vez de link. */
+        titulo: string | null
+        nos: No[]
+    }
 
-        const filtrados: No[] = []
+    function gruposDaColuna(nos: No[]): GrupoDaColuna[] {
+
+        const grupos: GrupoDaColuna[] = []
 
         for (const no of nos) {
 
+            const filhasVisiveis = no.filhos.filter((filho) => !chavesDoTrilho.has(filho.chave))
+
             if (!chavesDoTrilho.has(no.item.chave)) {
-                filtrados.push(no)
+                grupos.push({ titulo: null, nos: [{ item: no.item, filhos: filhasVisiveis }] })
                 continue
             }
 
-            for (const filho of no.filhos) {
-                if (!chavesDoTrilho.has(filho.chave)) {
-                    filtrados.push({ item: filho, filhos: [] })
-                }
-            }
+            if (filhasVisiveis.length === 0) continue
+
+            grupos.push({
+                titulo: no.item.nome,
+                nos: filhasVisiveis.map((filho) => ({ item: filho, filhos: [] })),
+            })
         }
 
-        return filtrados.length > 0 ? filtrados : nos
+        return grupos.length > 0
+            ? grupos
+            : [{ titulo: null, nos }]
     }
     /* A coluna mostra só a ÁREA em que o lojista já está — ela segue a rota,
        nunca pede um clique a mais para escolher. Clicar em Início no
@@ -1272,9 +1291,24 @@ export default function Sidebar() {
 
         if (!secaoAtiva) return null
 
-        // Só no desktop: o filtro existe porque o trilho está ao lado, e no
-        // celular não há trilho nenhum (ver conteudoCompletoDoCelular).
-        return <div className="space-y-0.5">{listaDeNos(semORepetidoDoTrilho(secaoAtiva.nos))}</div>
+        // Só no desktop: o agrupamento existe porque o trilho está ao lado, e
+        // no celular não há trilho nenhum (ver conteudoCompletoDoCelular).
+        return (
+            <div className="space-y-0.5">
+                {gruposDaColuna(secaoAtiva.nos).map((grupo, i) => (
+                    <div key={grupo.titulo ?? `solto-${i}`} className={grupo.titulo ? "pt-2 first:pt-0" : ""}>
+
+                        {grupo.titulo && (
+                            <p className="px-2.5 pb-1 pt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
+                                {grupo.titulo}
+                            </p>
+                        )}
+
+                        {listaDeNos(grupo.nos)}
+                    </div>
+                ))}
+            </div>
+        )
     }
 
     /* O conteúdo da gaveta do CELULAR: todas as áreas, uma debaixo da outra,
@@ -1898,15 +1932,26 @@ export default function Sidebar() {
 
                                 </div>
 
-                                <Link
-                                    href="/page/assinatura"
-                                    role="menuitem"
-                                    onClick={() => setContaAberta(false)}
-                                    className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] font-medium text-[var(--ink)] transition-colors hover:bg-[var(--superficie-2)]"
-                                >
-                                    <FiCreditCard className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
-                                    Assinatura
-                                </Link>
+                                {/* A assinatura é do DONO, e só ele a vê aqui.
+                                    O menu que o servidor manda já não traz a
+                                    tela para funcionário (SoDono, em
+                                    services/assinatura/recursos.go), e esta
+                                    porta seguia aberta para todos — levando
+                                    quem não é dono a uma tela que responde
+                                    "acesso negado". Quem decide continua sendo
+                                    o servidor: aqui só se deixa de oferecer o
+                                    que ele não ofereceu. */}
+                                {menu.some((item) => item.chave === "assinatura") && (
+                                    <Link
+                                        href="/page/assinatura"
+                                        role="menuitem"
+                                        onClick={() => setContaAberta(false)}
+                                        className="flex items-center gap-2.5 px-3 py-2 text-[0.8125rem] font-medium text-[var(--ink)] transition-colors hover:bg-[var(--superficie-2)]"
+                                    >
+                                        <FiCreditCard className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                                        Assinatura
+                                    </Link>
+                                )}
 
                                 <button
                                     type="button"
