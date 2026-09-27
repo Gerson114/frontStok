@@ -95,5 +95,22 @@ COPY --from=build --chown=node:node /app/public ./public
 
 EXPOSE 3000
 
+# A conferência de vida do container.
+#
+# Sem ela o Swarm considera a tarefa pronta no instante em que o processo
+# nasce — e o Next leva alguns segundos até responder a primeira requisição.
+# Numa atualização, isso significa mandar tráfego para um container que ainda
+# não atende: o lojista recebe erro no meio de um deploy que "deu certo".
+#
+# Com ela, o Swarm só tira o container antigo depois que o novo responde, e um
+# deploy que sobe quebrado é revertido em vez de ficar no ar servindo erro
+# (ver a política de atualização, em deploy/PRODUCAO.md).
+#
+# A raiz do painel serve para a conferência porque é a tela de login: é a
+# única que não depende do backend, então o que ela responde diz respeito só a
+# este container. `wget --spider` é o do BusyBox, que a imagem alpine já traz.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:3000/login || exit 1
+
 # server.js e não "next start": o standalone não traz o CLI do Next.
 CMD ["node", "server.js"]
