@@ -719,9 +719,14 @@ export default function Sidebar() {
        vazia é pior do que coluna repetida, e é o que aconteceria na área
        "Painel", cuja única tela também é a primeira do trilho. */
     interface GrupoDaColuna {
+        chave: string
+
         /** A mãe, quando ela vira título em vez de link. */
         titulo: string | null
         nos: No[]
+
+        /** Se a tela aberta agora é desta família. */
+        daRotaAtual: boolean
     }
 
     function gruposDaColuna(nos: No[], tituloDaArea: string): GrupoDaColuna[] {
@@ -732,8 +737,16 @@ export default function Sidebar() {
 
             const filhasVisiveis = no.filhos.filter((filho) => !chavesDoTrilho.has(filho.chave))
 
+            const daRotaAtual =
+                no.item.rota === rotaAtiva || no.filhos.some((filho) => filho.rota === rotaAtiva)
+
             if (!chavesDoTrilho.has(no.item.chave)) {
-                grupos.push({ titulo: null, nos: [{ item: no.item, filhos: filhasVisiveis }] })
+                grupos.push({
+                    chave: no.item.chave,
+                    titulo: null,
+                    nos: [{ item: no.item, filhos: filhasVisiveis }],
+                    daRotaAtual,
+                })
                 continue
             }
 
@@ -747,14 +760,44 @@ export default function Sidebar() {
             const repeteOCabecalho = comparavel(no.item.nome) === comparavel(tituloDaArea)
 
             grupos.push({
+                chave: no.item.chave,
                 titulo: repeteOCabecalho ? null : no.item.nome,
                 nos: filhasVisiveis.map((filho) => ({ item: filho, filhos: [] })),
+                daRotaAtual,
             })
         }
 
-        return grupos.length > 0
-            ? grupos
-            : [{ titulo: null, nos }]
+        if (grupos.length === 0) {
+            return [{ chave: "area", titulo: null, nos, daRotaAtual: true }]
+        }
+
+        /* Cada tela do trilho com a SUA coluna.
+        
+           A área "Conta" tem três mães — Configurações, Funcionários e Minhas
+           lojas —, e as três têm atalho no trilho. Como a coluna segue a
+           ÁREA, clicar em qualquer uma das três mostrava exatamente a mesma
+           lista: Assinatura, Comissões e Código da conversa, sempre. Três
+           botões diferentes, um resultado só.
+        
+           Quando toda mãe da área tem atalho no trilho, a coluna passa a
+           mostrar só a família da tela aberta — Configurações abre
+           Assinatura, Funcionários abre Comissões e o Código. Nada fica
+           inalcançável: o que sai da coluna continua a um clique no trilho.
+        
+           A condição é o que impede isto de virar um estrago noutras áreas.
+           Em "Produtos e estoque", por exemplo, só Estoque tem atalho —
+           estreitar ali esconderia Produtos, Cadastrar produto e Endereços do
+           estoque, que não têm outra porta. */
+        const todaMaeTemAtalho = nos.every((no) => chavesDoTrilho.has(no.item.chave))
+
+        if (todaMaeTemAtalho) {
+
+            const daTelaAberta = grupos.filter((grupo) => grupo.daRotaAtual)
+
+            if (daTelaAberta.length > 0) return daTelaAberta
+        }
+
+        return grupos
     }
     /* A coluna mostra só a ÁREA em que o lojista já está — ela segue a rota,
        nunca pede um clique a mais para escolher. Clicar em Início no
@@ -1322,8 +1365,8 @@ export default function Sidebar() {
         // no celular não há trilho nenhum (ver conteudoCompletoDoCelular).
         return (
             <div className="space-y-0.5">
-                {gruposDaColuna(secaoAtiva.nos, secaoAtiva.titulo).map((grupo, i) => (
-                    <div key={grupo.titulo ?? `solto-${i}`} className={grupo.titulo ? "pt-2 first:pt-0" : ""}>
+                {gruposDaColuna(secaoAtiva.nos, secaoAtiva.titulo).map((grupo) => (
+                    <div key={grupo.chave} className={grupo.titulo ? "pt-2 first:pt-0" : ""}>
 
                         {grupo.titulo && (
                             <p className="px-2.5 pb-1 pt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
