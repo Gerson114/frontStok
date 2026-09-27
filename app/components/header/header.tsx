@@ -3,12 +3,14 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { logout } from "@/middleware/auth"
+import { AVISO_DA_SAIDA, logout } from "@/middleware/auth"
 import { Simbolo } from "@/app/components/marca/marca"
 import { consultarMenu } from "@/middleware/assinatura"
 import { consultarEquipeChat } from "@/middleware/equipe"
 import { consultarNotificacoes } from "@/middleware/notificacoes"
 import { consultarRede, trocarDeLoja } from "@/middleware/lojas"
+import { consultarLoja, consultarTema } from "@/middleware/loja"
+import { urlDaImagem } from "@/security/imagem"
 import { escutarLoja } from "@/middleware/whatsapp"
 import type { ItemMenu, LojaDaRede, Notificacoes } from "@/app/type/type"
 import {
@@ -258,6 +260,56 @@ function estouVendo(assunto: string, rota: string): boolean {
     return aparecendo && comFoco
 }
 
+/**
+ * As iniciais de um nome, para quando não há logo.
+ *
+ * Duas letras no máximo: "Casa & Cia" vira CC, "Mercearia" vira ME. Nome
+ * vazio devolve vazio, e quem chama decide o que pôr no lugar.
+ */
+function iniciaisDe(nome: string): string {
+
+    const palavras = nome
+        .trim()
+        .split(/\s+/)
+        .filter((parte) => /[\p{L}\p{N}]/u.test(parte))
+
+    if (palavras.length === 0) return ""
+
+    if (palavras.length === 1) return palavras[0].slice(0, 2).toUpperCase()
+
+    return (palavras[0][0] + palavras[palavras.length - 1][0]).toUpperCase()
+}
+
+/**
+ * A cara da loja no canto da conta: a logo dela, ou as iniciais do nome.
+ *
+ * A logo é a mesma que a vitrine mostra (o `logo_url` do tema), e passa pelo
+ * proxy de imagens porque a CSP do painel fecha `img-src` em 'self' — endereço
+ * de servidor de fora não carrega direto aqui (ver security/imagem).
+ */
+function Emblema({ nome, logo }: { nome: string; logo: string }) {
+
+    const endereco = urlDaImagem(logo)
+    const iniciais = iniciaisDe(nome)
+
+    if (endereco) {
+        return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                src={endereco}
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-full border border-[var(--linha)] bg-[var(--superficie)] object-cover"
+            />
+        )
+    }
+
+    return (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--azul)] text-[0.6875rem] font-semibold text-white">
+            {iniciais || "AD"}
+        </span>
+    )
+}
+
 /** Uma tela do menu com o que abre debaixo dela. */
 interface No {
     item: ItemMenu
@@ -496,6 +548,44 @@ export default function Sidebar() {
 
     }, [noPainel])
 
+    /* Quem é esta loja: o nome que o lojista deu e a logo que ele enviou.
+     *
+     * O canto da conta dizia "Administrador" e "Loja única" — duas palavras
+     * que não são de ninguém. Quem abre o painel sabe que é o administrador;
+     * o que ele não vê em lugar nenhum da barra é EM QUE LOJA está, e isso
+     * importa de verdade para quem tem mais de uma.
+     *
+     * Vem de duas rotas porque mora em dois lugares no servidor: o nome é a
+     * identidade da loja e a logo é do tema da vitrine. As duas falham em
+     * silêncio — o funcionário sem permissão de "loja" leva 403 nelas, e aí
+     * o canto volta ao que era, sem nome e sem figura. */
+    const [nomeDaLoja, setNomeDaLoja] = useState("")
+    const [logoDaLoja, setLogoDaLoja] = useState("")
+
+    useEffect(() => {
+
+        if (!noPainel) return
+
+        let cancelado = false
+
+        consultarLoja()
+            .then((loja) => {
+                if (!cancelado) setNomeDaLoja((loja.nome_loja ?? "").trim())
+            })
+            .catch(() => { })
+
+        consultarTema()
+            .then((tema) => {
+                if (!cancelado) setLogoDaLoja((tema.logo_url ?? "").trim())
+            })
+            .catch(() => { })
+
+        return () => {
+            cancelado = true
+        }
+
+    }, [noPainel])
+
     // As lojas do dono, para o seletor. Vazio para funcionário — ele não deve
     // nem saber que existem outras lojas além daquela em que trabalha.
     const [minhasLojas, setMinhasLojas] = useState<LojaDaRede[]>([])
@@ -577,12 +667,49 @@ export default function Sidebar() {
 
     }, [menu])
 
-    /* Chaves que já têm um atalho fixo no trilho — a coluna ao lado não
-       repete a linha delas. Repetir "Início" e "Pedidos" nos dois lugares
-       era a queixa: a mesma tela contada duas vezes inflava a lista sem
-       dar nenhuma porta nova. Um item com filhos (como Configurações, que
-       abre Assinatura, Funcionários etc.) mantém os filhos na coluna —
-       só o link repetido do pai é que some, porque o trilho já leva lá. */
+    /* Chaves que já têm um atalho fixo no trilho, para a coluna ao lado não
+       repetir a linha delas.
+    
+       Era a queixa, e ela voltou: com "Configurações" aberta, a coluna
+       listava Funcionários, Minhas lojas e Conversa da equipe — as três já
+       de pé no trilho, a um palmo dali. A mesma tela contada duas vezes na
+       mesma tela infla a lista sem dar porta nova, e faz o lojista
+       procurar diferença onde não há. */
+    const chavesDoTrilho = useMemo(
+        () => new Set(trilhoParaMostrar.map((item) => item.chave)),
+        [trilhoParaMostrar],
+    )
+
+    /* A mesma lista, sem o que o trilho já mostra.
+    
+       Uma mãe repetida não leva as filhas embora: elas sobem para o lugar
+       dela. É o caso de Estoque, que está no trilho e tem "inserir",
+       "consultar" e "endereços" penduradas — sumir com a mãe sumiria com as
+       três, e aí o atalho teria custado três portas.
+    
+       Sobrando nada, devolve a lista inteira: coluna vazia é pior do que
+       coluna repetida, e é o que aconteceria na área "Painel", cuja única
+       tela (Início) também é a primeira do trilho. */
+    function semORepetidoDoTrilho(nos: No[]): No[] {
+
+        const filtrados: No[] = []
+
+        for (const no of nos) {
+
+            if (!chavesDoTrilho.has(no.item.chave)) {
+                filtrados.push(no)
+                continue
+            }
+
+            for (const filho of no.filhos) {
+                if (!chavesDoTrilho.has(filho.chave)) {
+                    filtrados.push({ item: filho, filhos: [] })
+                }
+            }
+        }
+
+        return filtrados.length > 0 ? filtrados : nos
+    }
     /* A coluna mostra só a ÁREA em que o lojista já está — ela segue a rota,
        nunca pede um clique a mais para escolher. Clicar em Início no
        trilho, ou em qualquer link de Vendas, já é o clique que decide: a
@@ -659,14 +786,15 @@ export default function Sidebar() {
      *
      * O trilho (--trilho, 6rem) fica sempre, dentro e fora da conversa da
      * equipe — só o acordeão ao lado dele recolhe, e vira uma tira de
-     * 2.5rem para reabrir. 21rem = trilho + acordeão; 8.5rem = trilho +
-     * tira. A conversa não lê esta variável (o `ml-[21rem]` dela é escrito
-     * à mão, ver page/equipe/page.tsx), então noChat não entra aqui. */
+     * 2.5rem para reabrir. 23.5rem = trilho + acordeão; 8.5rem = trilho +
+     * tira. A conversa não lê esta variável (o `ml-[23.5rem]` dela é escrito
+     * à mão, ver page/equipe/page.tsx), então noChat não entra aqui — quem
+     * mexer numa medida tem de mexer na outra. */
     useEffect(() => {
 
         if (!noPainel) return
 
-        document.documentElement.style.setProperty("--menu", painelRecolhido ? "8.5rem" : "21rem")
+        document.documentElement.style.setProperty("--menu", painelRecolhido ? "8.5rem" : "23.5rem")
 
         return () => {
             document.documentElement.style.removeProperty("--menu")
@@ -914,21 +1042,48 @@ export default function Sidebar() {
         return null
     }
 
+    /**
+     * Sair da conta.
+     *
+     * Duas falhas diferentes, e o tratamento delas é que estava errado aqui.
+     *
+     * A requisição não chegar é uma coisa: nada aconteceu, o cookie continua
+     * onde estava, e a resposta certa é dizer isso e deixar o lojista tentar
+     * de novo — é o `catch` abaixo.
+     *
+     * O servidor não confirmar a revogação é outra: o cookie JÁ saiu, e o
+     * painel atrás deste menu ficou sem sessão — nenhuma tela dele carrega
+     * mais nada. A versão anterior mostrava um erro vermelho e NÃO navegava,
+     * e o efeito era o pior dos dois mundos: o lojista via "não foi possível
+     * encerrar a sessão" parado num painel que já não funcionava, sem saber
+     * que bastava recarregar para cair no login. Agora ele sai, e o aviso
+     * viaja junto para a tela de entrada — que é onde ele pode fazer algo a
+     * respeito (entrar de novo, e assim invalidar o token antigo).
+     */
     async function handleSair() {
         setSaindo(true)
         setErroSaida("")
 
         try {
-            await logout()
+            const { revogado } = await logout()
+
+            if (!revogado) {
+                try {
+                    sessionStorage.setItem(
+                        AVISO_DA_SAIDA,
+                        "Você saiu deste aparelho, mas o servidor não confirmou o encerramento da sessão. Entre de novo para garantir que o acesso anterior não vale mais.",
+                    )
+                } catch { }
+            }
+
             // replace: depois de sair, o "voltar" do navegador não pode
             // devolver a tela do painel de quem acabou de sair dela.
             router.replace("/login")
 
         } catch (e) {
-            // Não navega: o cookie desta aba já foi apagado, mas o servidor
-            // não conseguiu invalidar o token, que continua valendo em
-            // qualquer cópia que exista. Mostrar a tela de login aqui seria
-            // dizer que saiu — justamente a única coisa que não aconteceu.
+            // A requisição não chegou: o cookie continua aqui e a sessão
+            // continua valendo. Ficar na tela é o certo — sair agora seria
+            // dizer que encerrou justamente o que não encerrou.
             setErroSaida(e instanceof Error ? e.message : "Não foi possível encerrar a sessão.")
             setSaindo(false)
         }
@@ -1117,7 +1272,9 @@ export default function Sidebar() {
 
         if (!secaoAtiva) return null
 
-        return <div className="space-y-0.5">{listaDeNos(secaoAtiva.nos)}</div>
+        // Só no desktop: o filtro existe porque o trilho está ao lado, e no
+        // celular não há trilho nenhum (ver conteudoCompletoDoCelular).
+        return <div className="space-y-0.5">{listaDeNos(semORepetidoDoTrilho(secaoAtiva.nos))}</div>
     }
 
     /* O conteúdo da gaveta do CELULAR: todas as áreas, uma debaixo da outra,
@@ -1698,11 +1855,10 @@ export default function Sidebar() {
                         aria-haspopup="menu"
                         className="flex items-center gap-2 py-1 pl-1 pr-2 text-[var(--ink)] transition-colors hover:bg-[var(--fundo)]"
                     >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--azul)] text-[0.6875rem] font-semibold text-white">
-                            AD
-                        </span>
-                        <span className="hidden text-[0.8125rem] font-medium lg:inline">
-                            Administrador
+                        <Emblema nome={nomeDaLoja} logo={logoDaLoja} />
+
+                        <span className="hidden max-w-[10rem] truncate text-[0.8125rem] font-medium lg:inline">
+                            {nomeDaLoja || "Administrador"}
                         </span>
                         <FiChevronDown className="hidden w-3.5 text-[var(--ink-2)] lg:inline" aria-hidden />
                     </button>
@@ -1719,13 +1875,27 @@ export default function Sidebar() {
                                 role="menu"
                                 className="absolute right-0 top-full z-50 mt-1.5 w-60 overflow-hidden border border-[var(--linha)] bg-[var(--superficie)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
                             >
-                                <div className="border-b border-[var(--linha-suave)] px-3 py-2.5">
-                                    <p className="text-[0.8125rem] font-semibold text-[var(--ink)]">
-                                        Administrador
-                                    </p>
-                                    <p className="text-xs text-[var(--ink-3)]">
-                                        Loja única
-                                    </p>
+                                {/* A loja primeiro, e o papel embaixo: o nome da
+                                    loja é o que muda de uma conta para outra, e
+                                    "Administrador" é só o que a pessoa já sabe
+                                    que é. Com mais de uma unidade, o segundo
+                                    verbete diz qual delas está aberta. */}
+                                <div className="flex items-center gap-2.5 border-b border-[var(--linha-suave)] px-3 py-2.5">
+
+                                    <Emblema nome={nomeDaLoja} logo={logoDaLoja} />
+
+                                    <div className="min-w-0">
+                                        <p className="truncate text-[0.8125rem] font-semibold text-[var(--ink)]">
+                                            {nomeDaLoja || "Administrador"}
+                                        </p>
+
+                                        <p className="truncate text-xs text-[var(--ink-3)]">
+                                            {minhasLojas.length > 1 && lojaAberta
+                                                ? `Administrador · ${lojaAberta.nome}`
+                                                : "Administrador"}
+                                        </p>
+                                    </div>
+
                                 </div>
 
                                 <Link

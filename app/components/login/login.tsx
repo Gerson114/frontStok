@@ -1,6 +1,6 @@
 "use client"
 
-import { login, pedirCodigoDeSenha, redefinirSenha } from "@/middleware/auth"
+import { AVISO_DA_SAIDA, login, pedirCodigoDeSenha, redefinirSenha } from "@/middleware/auth"
 import { consultarMenu, consultarOfertaPublica, formatarPreco } from "@/middleware/assinatura"
 import type { Oferta } from "@/app/type/type"
 import { isValidEmail } from "@/security/validate"
@@ -54,6 +54,31 @@ export default function Login() {
 
     const emailRef = useRef<HTMLInputElement>(null)
     const senhaRef = useRef<HTMLInputElement>(null)
+
+    /* O recado que o menu deixou ao sair.
+     *
+     * Só existe num caso: o lojista clicou em "Sair", o cookie saiu, e o
+     * servidor não confirmou a revogação do token. Ele precisa saber disso
+     * aqui, que é onde dá para resolver — entrando de novo, o token antigo
+     * perde a validade (ver TokenVersao, no backend).
+     *
+     * Lido uma vez e apagado: recado que sobrevive a um F5 vira um aviso que
+     * ninguém sabe mais de quando é. */
+    useEffect(() => {
+        try {
+            const guardado = sessionStorage.getItem(AVISO_DA_SAIDA)
+
+            if (guardado) {
+                // O estado tem de ser escrito aqui, e não no valor inicial do
+                // useState: `sessionStorage` não existe no servidor, e ler o
+                // recado durante a renderização faria o HTML do servidor e o
+                // do navegador nascerem diferentes.
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setRecado(guardado)
+                sessionStorage.removeItem(AVISO_DA_SAIDA)
+            }
+        } catch { }
+    }, [])
 
     // O preço da linha do rodapé vem do provedor de cobrança, como em todo
     // resto do sistema. Escrever o valor aqui foi o que deixou "a partir de

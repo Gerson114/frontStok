@@ -125,9 +125,10 @@
      variável e todas acompanham.
 
         --menu = 8.5rem   painel recolhido (trilho + tira de reabrir)
-        --menu = 21rem    painel aberto    (trilho + painel de 15rem)
+        --menu = 23.5rem  painel aberto    (trilho + painel de 17.5rem)
 
-     15rem porque "Endereços do estoque" precisa caber inteiro: nome de tela
+     17.5rem porque os nomes compridos estavam apertados em 15rem — "Conversa
+     da equipe" e "Endereços do estoque" chegavam à borda, e nome de tela
      cortado no meio obriga a passar o mouse para saber o que é, e o menu
      deixa de ser lido de relance. --painel-menu é este mesmo valor (sem o
      trilho), com nome próprio para a coluna da conversa da equipe, que
@@ -137,8 +138,8 @@
 
      Quem usa --menu é a classe .com-menu, lá embaixo. */
   --trilho: 6rem;
-  --painel-menu: 15rem;
-  --menu: 21rem;
+  --painel-menu: 17.5rem;
+  --menu: 23.5rem;
 
   --linha: #DDDDD8;
   --linha-suave: #E8E8E3;

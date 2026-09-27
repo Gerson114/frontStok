@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
+import { COOKIE_DA_LOJA, cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 
@@ -14,6 +14,14 @@ import { conta } from "@/app/api/rotas"
 // loja e derruba toda cópia que exista (ver internal/services/login/logout.go).
 // O cookie some depois, dos dois jeitos — mas o resultado da revogação é
 // reportado como veio, porque "saiu" e "achou que saiu" não são a mesma coisa.
+//
+// Reportado, e não transformado em erro: esta rota responde 200 com
+// `revogado: false` quando o backend não confirmou. O 502 de antes prendia o
+// lojista numa tela morta — o cookie já tinha sido apagado aqui, então o
+// painel atrás do menu não conseguia mais carregar nada, e o botão "Sair"
+// respondia com uma mensagem vermelha em vez de sair. Quem decide o que fazer
+// com a informação é a tela (ver handleSair, no menu): ela sai do painel de
+// qualquer jeito e avisa na tela de entrada que a revogação falhou.
 export async function POST() {
 
     const cookieStore = await cookies()
@@ -49,15 +57,22 @@ export async function POST() {
     // esta aba usando um token que o lojista pediu para matar.
     cookieStore.delete("token")
 
-    if (!revogado) {
-        return Response.json(
-            { erro: "Não foi possível encerrar a sessão no servidor. Tente de novo." },
-            { status: 502, headers: { "Cache-Control": "no-store" } }
-        )
-    }
+    // A loja aberta sai junto. Ela é a escolha DAQUELA sessão, e sobrando no
+    // navegador ela acompanhava a próxima: quem entrasse em seguida com outra
+    // conta mandava um X-Loja que não é dela. O backend recusa esse número
+    // (ver lojaAberta, em lib/midlleware/auth) e abre a principal, então não
+    // era brecha — mas era um cabeçalho mentiroso viajando em toda requisição.
+    cookieStore.delete(COOKIE_DA_LOJA)
 
     return Response.json(
-        { mensagem: "logout realizado com sucesso" },
+        {
+            mensagem: "logout realizado com sucesso",
+
+            // Falso quer dizer: a sessão acabou NESTE navegador, mas o
+            // servidor não confirmou a revogação, e uma cópia do token pode
+            // continuar valendo em outro lugar.
+            revogado,
+        },
         { headers: { "Cache-Control": "no-store" } }
     )
 }

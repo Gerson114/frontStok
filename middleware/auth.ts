@@ -224,14 +224,49 @@ function safeParse(texto: string): unknown {
  * cópia que existisse. Quem clica em "sair" costuma estar fazendo isso porque
  * desconfia que alguém pegou a sessão.
  */
-export async function logout(): Promise<void> {
+/**
+ * Encerra a sessão deste navegador.
+ *
+ * Devolve `revogado: false` quando o cookie saiu mas o servidor não confirmou
+ * a revogação do token — a sessão acabou aqui, e uma cópia do token pode
+ * continuar valendo em outro lugar. Não lança nesse caso: quem chama precisa
+ * SAIR do painel de qualquer forma (o cookie já se foi, e sem ele nenhuma
+ * tela carrega), e só então dizer o que não deu certo.
+ *
+ * Lança, sim, quando a requisição nem chegou — aí nada aconteceu, nem o
+ * cookie saiu, e tentar de novo é o certo.
+ */
+/**
+ * Onde o menu deixa um recado para a tela de entrada.
+ *
+ * `sessionStorage` e não a URL: o recado é de uma aba só, morre quando ela
+ * fecha e não fica num endereço que alguém copia e manda para outra pessoa.
+ * Quem escreve é o botão "Sair" (components/header/header); quem lê e apaga é
+ * components/login/login.
+ *
+ * Mora aqui, e não no menu, porque as duas telas já importam este arquivo —
+ * pegá-la no header faria o pacote da tela de entrada carregar o menu inteiro
+ * do painel para ler uma string.
+ */
+export const AVISO_DA_SAIDA = "aviso-da-saida"
+
+export async function logout(): Promise<{ revogado: boolean }> {
     const response = await fetch("/api/logout", {
         method: "POST",
         credentials: "include",
     })
 
+    const texto = await response.text().catch(() => "")
+    const dados = texto ? safeParse(texto) : null
+
     if (!response.ok) {
-        const texto = await response.text().catch(() => "")
-        throw new Error(extrairMensagemErro(texto ? safeParse(texto) : null))
+        throw new Error(extrairMensagemErro(dados))
     }
+
+    const revogado =
+        dados && typeof dados === "object" && "revogado" in dados
+            ? (dados as { revogado: unknown }).revogado !== false
+            : true
+
+    return { revogado }
 }
