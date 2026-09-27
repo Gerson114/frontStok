@@ -1,20 +1,22 @@
 // Gancho de subida do Next: roda uma vez, antes de o servidor atender a
 // primeira requisição.
 //
-// Serve para uma coisa só: conferir a configuração antes de o painel existir
-// para alguém. É o par do que o backend Go faz no main (ver
+// Serve para uma coisa só: conferir a configuração e RECLAMAR alto quando ela
+// está insegura. É o par do que o backend Go faz no main (ver
 // lib/security/ambiente) e do que a vitrine faz no gancho dela.
 //
-// Em produção derruba a subida, e isso é deliberado — antes daqui os
-// problemas viravam só um console.warn que ninguém lê num log de container.
-// O caso que decidiu a mudança é o TRUSTED_PROXY_COUNT: sem ele o limite por
-// IP não distingue visitante de proxy, e o painel fica de pé devolvendo
-// "muitas tentativas" a lojista que não errou nada. Um painel fora do ar é um
-// problema visível, que alguém conserta em minutos; um painel no ar com o
-// limite medindo a coisa errada é um problema invisível.
+// NÃO derruba a subida, e isto é decisão tomada com o painel no chão: a versão
+// que encerrava o processo em produção (process.exit(1)) foi ao ar sem
+// TRUSTED_PROXY_COUNT declarado no Dokploy e o container morreu no boot — o
+// domínio do painel respondeu 502 até a reversão. A vitrine pode se permitir
+// falhar fechado porque o compose dela declara as variáveis; o painel é
+// publicado por outro caminho, cujo ambiente este repositório não controla.
 //
-// O que produção precisa ter definido: API_URL, NEXT_PUBLIC_WS_URL e
-// TRUSTED_PROXY_COUNT (ver deploy/docker-compose.prod.yml, que já os define).
+// O que produção deve ter definido, e o log grita quando não tem: API_URL,
+// NEXT_PUBLIC_WS_URL e TRUSTED_PROXY_COUNT. Sem o último, o limite por IP não
+// distingue visitante de proxy e conta a loja inteira como um cliente só (ver
+// obterIp em proxy.ts) — é degradação, não brecha: o pior caso é 429 cedo
+// demais, e não limite nenhum.
 
 import { conferir, ehProducao } from "@/security/ambiente"
 
@@ -24,39 +26,16 @@ export function register() {
 
     if (problemas.length === 0) return
 
-    const marca = ehProducao() ? "ERRO DE SEGURANÇA" : "AVISO DE SEGURANÇA"
+    const marca = ehProducao() ? "ERRO DE CONFIGURAÇÃO EM PRODUÇÃO" : "AVISO DE CONFIGURAÇÃO"
 
     for (const problema of problemas) {
         console.error(`${marca}: ${problema.variavel}: ${problema.mensagem} (correção: ${problema.correcao})`)
     }
 
     if (ehProducao()) {
-
-        // Encerrar o processo, e não só lançar: o Next CAPTURA o que este
-        // gancho lança, escreve "An error occurred while loading instrumentation
-        // hook" e continua escutando a porta, respondendo 500 a tudo. Um
-        // container assim passa por healthcheck de TCP e fica de pé
-        // indefinidamente servindo erro.
-        const mensagem =
-            `servidor não subiu: ${problemas.length} problema(s) de configuração (NODE_ENV=production)`
-
-        console.error(mensagem)
-
-        // Este arquivo é empacotado para os DOIS runtimes, porque existe um
-        // proxy (ver proxy.ts) e ele roda no Edge, onde não há `process.exit`.
-        // A leitura por Reflect.get evita que o empacotador encontre a API do
-        // Node na análise estática do bundle do Edge.
-        if (process.env.NEXT_RUNTIME === "nodejs") {
-
-            const encerrar = Reflect.get(process, "exit") as ((codigo: number) => never) | undefined
-
-            encerrar?.(1)
-        }
-
-        throw new Error(mensagem)
+        console.error(
+            `${problemas.length} problema(s) de configuração em produção: o painel SOBE assim mesmo, ` +
+            "mas corrija as variáveis acima no ambiente do deploy."
+        )
     }
-
-    console.warn(
-        "Rodando em desenvolvimento: os avisos acima não impedem a subida, mas em produção impediriam."
-    )
 }
