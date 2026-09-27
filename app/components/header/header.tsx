@@ -733,6 +733,13 @@ export default function Sidebar() {
 
         const grupos: GrupoDaColuna[] = []
 
+        /* A tela aberta é do trilho e não tem nenhuma tela dentro dela — é o
+           caso de "Minhas lojas". Ela fica guardada aqui para a coluna poder
+           mostrar SÓ ela quando for o caso: sem filhas não há família a
+           listar, e despejar o resto da área ali era o que fazia Minhas lojas
+           abrir a mesma coluna de Configurações. */
+        let maeSozinha: GrupoDaColuna | null = null
+
         for (const no of nos) {
 
             const filhasVisiveis = no.filhos.filter((filho) => !chavesDoTrilho.has(filho.chave))
@@ -750,7 +757,22 @@ export default function Sidebar() {
                 continue
             }
 
-            if (filhasVisiveis.length === 0) continue
+            if (filhasVisiveis.length === 0) {
+
+                // A linha dela, e não um título solto: título sem nada
+                // embaixo é uma coluna que parece ter falhado ao carregar.
+                // Como link, ela ainda diz "é aqui que você está".
+                if (daRotaAtual) {
+                    maeSozinha = {
+                        chave: no.item.chave,
+                        titulo: null,
+                        nos: [{ item: no.item, filhos: [] }],
+                        daRotaAtual: true,
+                    }
+                }
+
+                continue
+            }
 
             /* Mãe com o mesmo nome da área não vira título: ele já está no
                cabeçalho da coluna, a uma linha dali. É o caso de "Conversas"
@@ -768,7 +790,7 @@ export default function Sidebar() {
         }
 
         if (grupos.length === 0) {
-            return [{ chave: "area", titulo: null, nos, daRotaAtual: true }]
+            return maeSozinha ? [maeSozinha] : [{ chave: "area", titulo: null, nos, daRotaAtual: true }]
         }
 
         /* Cada tela do trilho com a SUA coluna.
@@ -795,6 +817,12 @@ export default function Sidebar() {
             const daTelaAberta = grupos.filter((grupo) => grupo.daRotaAtual)
 
             if (daTelaAberta.length > 0) return daTelaAberta
+
+            // Tela do trilho sem nenhuma tela dentro: a coluna mostra só ela.
+            // "Minhas lojas" é a tela inteira — as unidades, quem trabalha em
+            // cada uma e o que fechar uma delas faz estão todos lá dentro, e
+            // não há sub-tela a oferecer aqui.
+            if (maeSozinha) return [maeSozinha]
         }
 
         return grupos
