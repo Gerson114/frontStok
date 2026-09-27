@@ -116,26 +116,6 @@ export function tocarSom(tipo: TipoDeAviso) {
 
     if (!somLigado(tipo)) return
 
-    /* Som é para quem NÃO está olhando.
-
-       O aviso chega pelo canal ao vivo aconteça o que acontecer, e antes
-       disto ele tocava sempre: o lojista digitando uma resposta ouvia o
-       apito da própria mensagem voltando, e quem abria o painel recebia uma
-       rajada de notas enquanto a tela carregava o movimento do dia. Som que
-       toca o tempo todo é som que se aprende a ignorar — e aí ele não serve
-       para a única coisa que deveria: chamar quem saiu de perto.
-
-       A aba escondida e a janela sem foco são casos diferentes e contam os
-       dois: uma é o painel em segundo plano, a outra é a pessoa em outra
-       janela na frente dele.  */
-    if (typeof document !== "undefined") {
-
-        const aparecendo = document.visibilityState === "visible"
-        const comFoco = typeof document.hasFocus === "function" ? document.hasFocus() : true
-
-        if (aparecendo && comFoco) return
-    }
-
     /* Uma rajada vira UM apito.
 
        Dez mensagens chegando juntas num atendimento movimentado são dez

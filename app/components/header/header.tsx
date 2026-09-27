@@ -677,6 +677,42 @@ export default function Sidebar() {
 
     }, [busca, menu])
 
+    /* A tela de cada assunto, para o som saber quando calar.
+
+       O apito existe para avisar quem NÃO está vendo aquilo acontecer. Quem
+       está com as conversas de WhatsApp abertas na frente vê a mensagem
+       entrar na lista; apitar ali é avisar sobre o que já está à vista. Mas
+       quem está em Pedidos, no estoque ou em qualquer outra tela precisa
+       ouvir — a mensagem chegou e ninguém está olhando para ela. */
+    const TELA_DO_ASSUNTO: Record<string, string> = {
+        mensagem: "/page/conversas",
+        conversa: "/page/conversas",
+        atendimento: "/page/atendimento",
+        equipe: "/page/equipe",
+    }
+
+    /*
+     * Se a pessoa está vendo, AGORA, a tela onde este aviso aconteceria.
+     *
+     * Duas condições, e as duas precisam valer. A rota diz qual tela está
+     * aberta; a visibilidade diz se a aba está à frente. Painel aberto na
+     * tela de conversas, mas em segundo plano atrás do navegador de outra
+     * coisa, não é alguém vendo — e é exatamente quem mais precisa do som.
+     */
+    function estouVendo(assunto: string): boolean {
+
+        const tela = TELA_DO_ASSUNTO[assunto]
+
+        if (!tela || pathname !== tela) return false
+
+        if (typeof document === "undefined") return true
+
+        const aparecendo = document.visibilityState === "visible"
+        const comFoco = typeof document.hasFocus === "function" ? document.hasFocus() : true
+
+        return aparecendo && comFoco
+    }
+
     // A bolinha das novidades.
     //
     // Recarrega ao trocar de tela e a cada aviso do canal ao vivo — o mesmo
@@ -716,12 +752,22 @@ export default function Sidebar() {
         }
 
         const fechar = escutarLoja((aviso) => {
+
+            /* O que a própria loja provocou não apita.
+
+               A contagem continua: a bolinha precisa acompanhar a resposta
+               que saiu, a conversa que alguém pegou da fila, o atendimento
+               encerrado no balcão ao lado. O que não faz sentido é o som —
+               ele serve para chamar quem não está vendo, e quem acabou de
+               mandar a mensagem está vendo. */
+            const daLoja = aviso.origem === "loja"
+
             if (aviso.tipo === "pedido") {
                 contarDepois()
-                tocarSom("pedido")
+                if (!daLoja) tocarSom("pedido")
             } else if (["mensagem", "conversa", "atendimento", "equipe"].includes(aviso.tipo)) {
                 contarDepois()
-                tocarSom("mensagem")
+                if (!daLoja && !estouVendo(aviso.tipo)) tocarSom("mensagem")
             }
         })
 

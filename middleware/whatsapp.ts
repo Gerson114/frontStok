@@ -460,6 +460,21 @@ export interface AvisoAoVivo {
     /** Só nos avisos de conversa (WhatsApp e chat do site). */
     conversa_id?: number
 
+    /**
+     * Quem provocou o aviso: "cliente" ou "loja".
+     *
+     * Existe para o SOM. O canal avisa as abas abertas aconteça o que
+     * acontecer — inclusive quando quem mexeu foi a própria loja, mandando
+     * uma resposta ou mudando a situação de um atendimento. Sem este campo,
+     * quem respondia um cliente ouvia o apito da própria mensagem voltando,
+     * e avisar alguém sobre o que ela acabou de fazer é ruído pelo qual ela
+     * não pode fazer nada.
+     *
+     * Ausente nos avisos antigos e nos que não têm origem definida; a tela
+     * trata a ausência como "cliente", que é o caso de quem merece apito.
+     */
+    origem?: "cliente" | "loja"
+
     /** Só nos avisos de pedido. */
     pedido_id?: number
 
