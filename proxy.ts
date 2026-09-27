@@ -163,6 +163,18 @@ const ROTAS_DE_CONTA = [
 
 const contadores = new Map<string, { total: number; expiraEm: number }>()
 
+/**
+ * Teto de chaves guardadas ao mesmo tempo.
+ *
+ * A varredura abaixo só apaga o que já venceu, e a janela dura um minuto —
+ * dentro dela o Map crescia sem teto. Com um endereço novo por requisição
+ * (ver obterIp), isso fazia do próprio limitador o alvo: o processo morria de
+ * memória antes de qualquer limite disparar, trocando uma negação de serviço
+ * por outra. Ao encher, a chave nova não ganha registro e a requisição passa:
+ * derrubar o painel inteiro seria pior do que deixar passar um pico raro.
+ */
+const TETO_DE_CHAVES = 20_000
+
 // Evita que o Map cresça indefinidamente em processos de longa duração.
 setInterval(() => {
     const agora = Date.now()
@@ -236,7 +248,21 @@ function obterIp(request: NextRequest): string {
         }
     }
 
-    return request.headers.get("x-real-ip") ?? "desconhecido"
+    // X-Real-Ip é cabeçalho como qualquer outro: sem um proxy confiável
+    // declarado, quem chama o escreve à vontade. Lido nesse estado, ele dava
+    // um balde novo por tentativa — bastava mandar "X-Real-Ip: 1.2.3.4"
+    // diferente a cada requisição para o limite de login deixar de existir.
+    // Com PROXIES_CONFIAVEIS em zero, ninguém tem endereço: todo mundo cai no
+    // mesmo balde, que é o lado seguro do erro (ver o espelho deste arquivo em
+    // vendas/frontp/security/limite.ts). Produção sem a variável declarada é
+    // recusada na subida, em security/ambiente.ts.
+    if (PROXIES_CONFIAVEIS > 0) {
+        const real = request.headers.get("x-real-ip")?.trim()
+
+        if (real) return real.slice(0, 45)
+    }
+
+    return "desconhecido"
 }
 
 /** Retorna false quando o limite da janela atual já foi atingido. */
@@ -245,6 +271,17 @@ function podeConsumir(chave: string, limite: number): boolean {
     const registro = contadores.get(chave)
 
     if (!registro || registro.expiraEm <= agora) {
+
+        // Cheio: apaga o que já venceu antes de desistir, porque a varredura
+        // periódica pode estar a quase um minuto de distância.
+        if (!registro && contadores.size >= TETO_DE_CHAVES) {
+            for (const [outra, guardado] of contadores) {
+                if (guardado.expiraEm <= agora) contadores.delete(outra)
+            }
+
+            if (contadores.size >= TETO_DE_CHAVES) return true
+        }
+
         contadores.set(chave, { total: 1, expiraEm: agora + JANELA_MS })
         return true
     }
