@@ -106,9 +106,47 @@ function nota(audio: AudioContext, frequencia: number, comecaEm: number, duracao
  * frequente, e um som que chama tanto quanto o do pedido treinaria o ouvido
  * a ignorar os dois.
  */
+/** Quando o último apito saiu, para a rajada não virar metralhadora. */
+let ultimoApito = 0
+
+/** O silêncio mínimo entre dois apitos. */
+const INTERVALO_MINIMO = 3000
+
 export function tocarSom(tipo: TipoDeAviso) {
 
     if (!somLigado(tipo)) return
+
+    /* Som é para quem NÃO está olhando.
+
+       O aviso chega pelo canal ao vivo aconteça o que acontecer, e antes
+       disto ele tocava sempre: o lojista digitando uma resposta ouvia o
+       apito da própria mensagem voltando, e quem abria o painel recebia uma
+       rajada de notas enquanto a tela carregava o movimento do dia. Som que
+       toca o tempo todo é som que se aprende a ignorar — e aí ele não serve
+       para a única coisa que deveria: chamar quem saiu de perto.
+
+       A aba escondida e a janela sem foco são casos diferentes e contam os
+       dois: uma é o painel em segundo plano, a outra é a pessoa em outra
+       janela na frente dele.  */
+    if (typeof document !== "undefined") {
+
+        const aparecendo = document.visibilityState === "visible"
+        const comFoco = typeof document.hasFocus === "function" ? document.hasFocus() : true
+
+        if (aparecendo && comFoco) return
+    }
+
+    /* Uma rajada vira UM apito.
+
+       Dez mensagens chegando juntas num atendimento movimentado são dez
+       avisos no canal, e dez notas em sequência não informam mais do que
+       uma: viram barulho, e barulho é o que faz alguém desligar o som e
+       perder todos os avisos seguintes. */
+    const agora = Date.now()
+
+    if (agora - ultimoApito < INTERVALO_MINIMO) return
+
+    ultimoApito = agora
 
     const audio = contextoDeAudio()
 

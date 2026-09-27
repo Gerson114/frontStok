@@ -85,6 +85,35 @@ import {
  */
 const ALTURA_MAXIMA_DA_CAIXA = 260
 
+/* Onde fica a conversa aberta entre uma visita e outra.
+
+   sessionStorage, e não localStorage: é memória DESTA aba e desta sessão de
+   trabalho. Guardar para sempre faria a pessoa voltar amanhã de manhã na
+   conversa de ontem à tarde, que é justamente o assunto que já acabou. */
+const CHAVE_DA_CONVERSA = "conversas:aberta"
+
+function conversaGuardada(): number | null {
+
+    if (typeof window === "undefined") return null
+
+    const bruto = window.sessionStorage.getItem(CHAVE_DA_CONVERSA)
+    const id = Number(bruto)
+
+    return Number.isInteger(id) && id > 0 ? id : null
+}
+
+function guardarConversa(id: number | null) {
+
+    if (typeof window === "undefined") return
+
+    if (id === null) {
+        window.sessionStorage.removeItem(CHAVE_DA_CONVERSA)
+        return
+    }
+
+    window.sessionStorage.setItem(CHAVE_DA_CONVERSA, String(id))
+}
+
 export default function Conversas() {
 
     // Dois caminhos para a mesma caixa de entrada: o aparelho vinculado
@@ -96,6 +125,13 @@ export default function Conversas() {
     const [erro, setErro] = useState("")
 
     const [conversas, setConversas] = useState<Conversa[]>([])
+    /* Qual conversa está aberta.
+
+       Guardada também fora do React (ver CHAVE_DA_CONVERSA), porque este
+       estado morre quando a pessoa troca de tela — e trocar de tela é o que
+       ela faz o tempo todo: vai ver o pedido do cliente em Pedidos e volta
+       para responder. Voltava para a lista, com a conversa fechada e o
+       assunto perdido do meio. Agora volta para onde estava. */
     const [abertaId, setAbertaId] = useState<number | null>(null)
     const [aberta, setAberta] = useState<Conversa | null>(null)
     const [mensagens, setMensagens] = useState<MensagemWhatsApp[]>([])
@@ -258,6 +294,13 @@ export default function Conversas() {
      */
     const fiosGuardados = useRef(new Map<number, MensagemWhatsApp[]>())
 
+    /* Se a conversa guardada já foi reaberta nesta visita à tela.
+
+       A lista se atualiza a cada cinco segundos; sem esta trava, fechar a
+       conversa faria a varredura seguinte reabri-la, e não haveria como sair
+       dela. */
+    const restaurado = useRef(false)
+
     /* ==========================
        DADOS
     ========================== */
@@ -351,7 +394,26 @@ export default function Conversas() {
 
     const atualizarConversas = useCallback(async () => {
         try {
-            setConversas(await listarConversas(verEncerradas))
+            const lista = await listarConversas(verEncerradas)
+
+            setConversas(lista)
+
+            /* A conversa de onde a pessoa saiu volta a abrir sozinha.
+
+               Só na primeira lista depois de entrar na tela (por isso o
+               `restaurado`), e só se ela ainda existir na lista de agora:
+               conversa encerrada enquanto a pessoa estava fora não pode
+               reaparecer aberta como se nada tivesse acontecido. */
+            if (!restaurado.current) {
+
+                restaurado.current = true
+
+                const guardada = conversaGuardada()
+                const achada = guardada ? lista.find((conversa) => conversa.id === guardada) : undefined
+
+                if (achada) void abrirConversa(achada)
+            }
+
         } catch {
             // Silêncio de propósito: isto roda a cada cinco segundos, e um
             // aviso vermelho piscando por uma falha de rede momentânea seria
@@ -467,6 +529,7 @@ export default function Conversas() {
 
         setAbertaId(conversa.id)
         setAberta(conversa)
+        guardarConversa(conversa.id)
         setPainelContatoAberto(false)
 
         // O fio de antes entra na hora, e a busca o corrige logo atrás.
@@ -1045,6 +1108,7 @@ export default function Conversas() {
                                         setAba(uma.id)
                                         setAbertaId(null)
                                         setAberta(null)
+                                        guardarConversa(null)
                                         setPainelContatoAberto(false)
                                     }}
                                     className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 px-1 py-2.5 text-xs transition-colors ${
@@ -1290,6 +1354,7 @@ export default function Conversas() {
                                     onClick={() => {
                                         setAbertaId(null)
                                         setAberta(null)
+                                        guardarConversa(null)
                                         setPainelContatoAberto(false)
                                     }}
                                     aria-label="Voltar às conversas"
