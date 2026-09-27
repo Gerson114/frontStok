@@ -157,6 +157,15 @@ function Configuracoes() {
     const aberto = GRUPOS.find((grupo) => grupo.id === pedido) ?? null
 
     const [config, setConfig] = useState<ConfiguracaoDaLoja | null>(null)
+
+    /* O que o servidor mandou, guardado ao lado do que está na tela.
+
+       Serve a uma pergunta que a tela não respondia: "eu já salvei isto?".
+       O formulário é um só para os seis grupos, o botão fica no fim e o
+       lojista mexia numa chave, trocava de grupo e perdia a mudança sem
+       nenhum aviso. Comparar os dois é o que permite dizer, em letra
+       pequena, que há coisa por salvar. */
+    const [original, setOriginal] = useState<ConfiguracaoDaLoja | null>(null)
     const [limites, setLimites] = useState<Record<string, LimiteDeCampo>>({})
     const [ramos, setRamos] = useState<OpcaoDoRamo[]>([])
     const [atendimentos, setAtendimentos] = useState<OpcaoDoRamo[]>([])
@@ -191,6 +200,7 @@ function Configuracoes() {
                 if (!valeu) return
 
                 setConfig(resposta.configuracao)
+                setOriginal(resposta.configuracao)
                 setLimites(resposta.limites ?? {})
                 setFusos(resposta.fusos ?? [])
                 setRamos(resposta.ramos ?? [])
@@ -225,6 +235,7 @@ function Configuracoes() {
 
         try {
             const { mensagem } = await salvarConfiguracao(config)
+            setOriginal(config)
             setAviso(mensagem ?? "Configuração salva.")
         } catch (e) {
             // A recusa do servidor vem como frase pronta ("o prazo para pagar
@@ -303,6 +314,15 @@ function Configuracoes() {
                 descricao="As regras que valem nesta loja. Cada cartão mostra como está agora — abra para mudar."
             >
                 {erro && <Alerta tipo="erro">{erro}</Alerta>}
+
+                {/* Os dois blocos precisam do mesmo peso de título. O de baixo
+                    tinha um e o de cima não, e a lista de cima parecia o
+                    conteúdo da página enquanto a de baixo parecia um anexo —
+                    quando as duas são a mesma coisa: lugares onde se ajusta a
+                    loja. */}
+                <h2 className="font-display mb-3 text-sm text-[var(--ink)]">
+                    Ajustes desta loja
+                </h2>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {GRUPOS.map((grupo) => (
@@ -424,6 +444,15 @@ function Configuracoes() {
             </Pagina>
         )
     }
+
+    /* Há diferença entre o que está na tela e o que o servidor tem.
+
+       Comparação por texto, e não campo a campo: o objeto é plano, vem do
+       mesmo lugar nos dois lados e ganha campos com o tempo — uma lista de
+       comparações escrita à mão ficaria desatualizada na primeira
+       configuração nova, e o defeito seria silencioso (o botão diria "tudo
+       salvo" com mudança pendente). */
+    const mudou = Boolean(config && original) && JSON.stringify(config) !== JSON.stringify(original)
 
     /* ================================================================
        UM GRUPO
@@ -687,13 +716,24 @@ function Configuracoes() {
 
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <button type="submit" disabled={salvando} className="btn btn-primario">
+                    {/* A barra de salvar fica GRUDADA no rodapé da tela.
+
+                        O formulário é um só para os grupos todos e o botão
+                        morava no fim da página: em "O que você vende", com a
+                        loja de comida aberta, era preciso rolar oito campos
+                        para alcançá-lo — e quem não rolava saía sem salvar.
+                        Grudada, ela está sempre à mão e diz o que está
+                        pendente. */}
+                    <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center gap-3 border-t border-[var(--linha)] bg-[var(--superficie)] px-1 py-3">
+
+                        <button type="submit" disabled={salvando || !mudou} className="btn btn-primario disabled:opacity-50">
                             {salvando ? "Salvando..." : "Salvar"}
                         </button>
 
                         <span className="text-xs text-[var(--ink-3)]">
-                            Vale para esta loja. Cada loja da rede tem a sua.
+                            {mudou
+                                ? "Há mudanças não salvas nesta tela."
+                                : "Tudo salvo. Vale para esta loja; cada loja da rede tem a sua."}
                         </span>
                     </div>
 

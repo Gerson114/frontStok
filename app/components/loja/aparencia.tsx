@@ -5,11 +5,13 @@ import {
     TEMA_DE_FABRICA,
     consultarTema,
     contraste,
+    enviarLogo,
+    removerLogo,
     salvarTema,
     sobre,
     type TemaLoja,
 } from "@/middleware/loja"
-import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiRefreshCw } from "react-icons/fi"
+import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiImage, FiRefreshCw, FiTrash2, FiUpload } from "react-icons/fi"
 
 /**
  * As cores da vitrine, escolhidas pelo lojista.
@@ -43,6 +45,7 @@ export default function Aparencia() {
     const [tema, setTema] = useState<TemaLoja>(TEMA_DE_FABRICA)
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
+    const [enviando, setEnviando] = useState(false)
     const [erro, setErro] = useState("")
     const [salvo, setSalvo] = useState(false)
 
@@ -79,6 +82,48 @@ export default function Aparencia() {
             cancelado = true
         }
     }, [])
+
+    /**
+     * Manda a imagem e aponta a loja para ela.
+     *
+     * O endereço volta pronto do servidor e entra no estado como qualquer
+     * outro campo — daí em diante a logo enviada e a colada são a mesma
+     * coisa para o resto da tela, inclusive para a prévia.
+     *
+     * Não salva o tema junto: o envio já gravou a logo do lado de lá, e
+     * disparar o PUT aqui gravaria por cima cores que o lojista talvez
+     * estivesse no meio de escolher.
+     */
+    async function mandarLogo(imagem: File) {
+
+        setEnviando(true)
+        setErro("")
+
+        try {
+            const endereco = await enviarLogo(imagem)
+            setTema((atual) => ({ ...atual, logo_url: endereco }))
+        } catch (e) {
+            setErro(e instanceof Error ? e.message : "Não foi possível enviar a imagem.")
+        } finally {
+            setEnviando(false)
+        }
+    }
+
+    /** Tira a logo e devolve o nome escrito ao topo da vitrine. */
+    async function tirarLogo() {
+
+        setEnviando(true)
+        setErro("")
+
+        try {
+            await removerLogo()
+            setTema((atual) => ({ ...atual, logo_url: "" }))
+        } catch (e) {
+            setErro(e instanceof Error ? e.message : "Não foi possível tirar a logo.")
+        } finally {
+            setEnviando(false)
+        }
+    }
 
     function mudar(chave: keyof TemaLoja, valor: string) {
         setTema((atual) => ({ ...atual, [chave]: valor }))
@@ -173,26 +218,103 @@ export default function Aparencia() {
                 ))}
             </div>
 
-            <div className="mt-5">
-                <label htmlFor="logo" className="rotulo">
-                    Logo (endereço da imagem)
-                </label>
+            {/* A LOGO
 
-                <input
-                    id="logo"
-                    type="url"
-                    maxLength={500}
-                    placeholder="https://..."
-                    className="field"
-                    value={tema.logo_url}
-                    onChange={(e) => mudar("logo_url", e.target.value)}
-                />
+                Duas portas para o mesmo campo, e não uma escolha a fazer: quem
+                tem a imagem no computador escolhe o arquivo; quem já a tem
+                publicada cola o endereço. A segunda porta fica embaixo, em
+                letra menor, porque é a minoria dos casos — e existia sozinha
+                até agora, que é o que deixava sem logo justamente o lojista
+                que não tem onde hospedar imagem. */}
+            <div className="mt-6 border-t border-[var(--linha)] pt-5">
 
-                <p className="mt-1.5 text-xs text-[var(--ink-3)]">
-                    Com logo, ele substitui o nome escrito no topo da vitrine. Deixe
-                    vazio para manter o nome. Use um endereço de imagem que já esteja
-                    na internet — o sistema ainda não guarda arquivos.
+                <p className="font-display text-sm text-[var(--ink)]">Logo da loja</p>
+
+                <p className="mt-0.5 text-xs text-[var(--ink-3)]">
+                    Substitui o nome escrito no topo da vitrine. Sem logo, o nome continua.
                 </p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+
+                    {/* A prévia sobre o fundo escolhido, e não sobre o branco
+                        do painel: logo de fundo transparente ou claro some na
+                        vitrine escura, e é aqui que isso tem de aparecer. */}
+                    <span
+                        className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--linha)]"
+                        style={{ background: tema.palco || TEMA_DE_FABRICA.palco }}
+                    >
+                        {tema.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- vem da nossa rota ou do bucket, não de um CDN de imagem
+                            <img src={tema.logo_url} alt="Logo da loja" className="max-h-full max-w-full object-contain" />
+                        ) : (
+                            <FiImage className="w-6 text-[var(--ink-3)]" aria-hidden />
+                        )}
+                    </span>
+
+                    <div className="flex flex-wrap items-center gap-2">
+
+                        <label className="btn btn-neutro cursor-pointer px-3 py-1.5 text-sm">
+                            <FiUpload className="w-4" aria-hidden />
+                            {enviando ? "Enviando..." : tema.logo_url ? "Trocar imagem" : "Escolher imagem"}
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="sr-only"
+                                disabled={enviando}
+                                onChange={(evento) => {
+                                    const escolhida = evento.target.files?.[0]
+
+                                    // O valor do campo é limpo para a mesma
+                                    // imagem poder ser escolhida de novo depois
+                                    // de um erro — sem isso o onChange não
+                                    // dispara na segunda vez.
+                                    evento.target.value = ""
+
+                                    if (escolhida) void mandarLogo(escolhida)
+                                }}
+                            />
+                        </label>
+
+                        {tema.logo_url && (
+                            <button
+                                type="button"
+                                onClick={() => void tirarLogo()}
+                                disabled={enviando}
+                                className="rounded-lg px-3 py-1.5 text-sm font-bold text-[var(--vermelho)] transition-colors hover:bg-[var(--vermelho-fundo)] disabled:opacity-50"
+                            >
+                                <FiTrash2 className="w-4" aria-hidden />
+                                Tirar
+                            </button>
+                        )}
+
+                    </div>
+                </div>
+
+                <details className="mt-4">
+                    <summary className="cursor-pointer text-xs text-[var(--ink-2)]">
+                        Já tenho a imagem publicada na internet
+                    </summary>
+
+                    <label htmlFor="logo" className="rotulo mt-2 block">
+                        Endereço da imagem
+                    </label>
+
+                    <input
+                        id="logo"
+                        type="url"
+                        maxLength={500}
+                        placeholder="https://..."
+                        className="field"
+                        value={tema.logo_url}
+                        onChange={(e) => mudar("logo_url", e.target.value)}
+                    />
+
+                    <p className="mt-1.5 text-xs text-[var(--ink-3)]">
+                        Vale um endereço que já esteja no ar. Enviar um arquivo acima
+                        substitui o que estiver escrito aqui.
+                    </p>
+                </details>
             </div>
 
             <Previa tema={tema} />

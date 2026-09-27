@@ -190,6 +190,42 @@ export async function salvarTema(tema: TemaLoja): Promise<void> {
     })
 }
 
+/**
+ * Envia a logo como ARQUIVO e devolve o endereço dela.
+ *
+ * Existe ao lado do campo de endereço porque os dois públicos são
+ * diferentes: quem já tem a imagem publicada cola a URL; quem não tem onde
+ * hospedar — que é a maior parte do comércio pequeno — escolhe o arquivo do
+ * computador e pronto.
+ *
+ * O endereço vem montado pelo servidor, que é o único que sabe se a imagem
+ * será servida pela Cloudflare ou por ele mesmo. Esta função não precisa
+ * saber a diferença, e é isso que faz ligar o domínio público ser uma
+ * variável de ambiente em vez de uma reconstrução do painel.
+ *
+ * Vai como multipart, e não como base64 dentro de JSON: base64 cresce o
+ * corpo em um terço e obrigaria a aba a ler a imagem inteira na memória
+ * antes de começar a enviar.
+ */
+export async function enviarLogo(imagem: File): Promise<string> {
+
+    const envio = new FormData()
+
+    envio.append("logo", imagem, imagem.name || "logo")
+
+    const dados = await apiFetch<{ logo_url?: string }>("/api/loja/logo", {
+        method: "POST",
+        body: envio,
+    })
+
+    return dados.logo_url ?? ""
+}
+
+/** Tira a logo guardada e devolve o nome escrito ao topo da vitrine. */
+export async function removerLogo(): Promise<void> {
+    await apiFetch("/api/loja/logo", { method: "DELETE" })
+}
+
 /* ==========================================================================
    O CABEÇALHO E O RODAPÉ
 

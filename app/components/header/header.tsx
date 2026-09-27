@@ -137,6 +137,12 @@ const ICONE_DA_AREA: Record<string, IconType> = {
     // não achar o cardápio dele.
     cardapio: FiPackage,
 
+    // Atender ganhou área própria no servidor (ver recursos.go): antes as
+    // duas portas por onde o cliente chega moravam dentro de "Vendas", e
+    // quem entrava para responder recebia balcão, pedidos, etiquetas e
+    // devoluções na coluna ao lado.
+    conversas: FiMessageCircle,
+
     "meu site": FiGlobe,
     conta: FiUsers,
 }

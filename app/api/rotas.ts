@@ -106,6 +106,9 @@ export const conta = {
     loja: () => "/private/loja",
     tema: () => "/private/loja/tema",
 
+    /** A logo como arquivo, para quem não tem onde hospedar imagem. */
+    logo: () => "/private/loja/logo",
+
     /** Quanto a loja cobra para entregar, e para onde. */
     frete: () => "/private/frete",
 }
