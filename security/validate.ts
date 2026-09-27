@@ -389,6 +389,9 @@ export function validarPromocao(promocao: NovaPromocao): string[] {
  * Slide do banner do topo da loja. `link` aceita URL completa ou caminho
  * relativo (ex: "/produto/108"); vazio significa slide não clicável.
  */
+/** Os dois formatos do banner na vitrine. */
+export type FormatoBanner = "imagem" | "texto"
+
 export interface NovoBanner {
     titulo: string
     descricao: string
@@ -396,6 +399,12 @@ export interface NovoBanner {
     valor: number
     valor_antigo: number
     link: string
+
+    /**
+     * "imagem" mostra a arte ocupando a faixa inteira; "texto" divide a faixa
+     * entre a arte e o texto. Quem escolhe é o lojista, na tela de banners.
+     */
+    formato: FormatoBanner
     ativo: boolean
     ordem: number
 }
@@ -404,7 +413,10 @@ export interface NovoBanner {
 export function validarBanner(banner: NovoBanner): string[] {
     const erros: string[] = []
 
-    if (!banner.titulo.trim()) {
+    /* Título só é exigido no banner COM texto. No de só imagem ele não é
+       apenas dispensável: é o que não se quer — a arte já vem pronta, e
+       escrever por cima dela é estragar o trabalho de quem a desenhou. */
+    if (banner.formato !== "imagem" && !banner.titulo.trim()) {
         erros.push("Informe o título do banner.")
     }
 

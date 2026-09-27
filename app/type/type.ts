@@ -270,6 +270,16 @@ export interface Banner {
     valor: number
     valor_antigo: number
     link: string
+
+    /**
+     * Como a vitrine desenha este slide: "imagem" dá a faixa inteira à arte,
+     * "texto" divide a faixa entre a arte e o texto ao lado.
+     *
+     * Opcional no tipo porque banner gravado antes da coluna existir pode
+     * chegar sem ele — o servidor devolve "texto" nesse caso (ver
+     * formatoDoBanner, no backend).
+     */
+    formato?: "imagem" | "texto"
     ativo: boolean
     ordem: number
     created_at: string

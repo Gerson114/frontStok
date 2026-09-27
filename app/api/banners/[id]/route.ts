@@ -39,6 +39,11 @@ export async function PUT(
             valor: Number(entrada.valor ?? 0),
             valor_antigo: Number(entrada.valor_antigo ?? 0),
             link: sanitizeUrl(String(entrada.link ?? "")),
+
+            // Qualquer coisa que não seja "imagem" vira "texto", que é o
+            // formato antigo: o valor vem do navegador e não decide nada
+            // perigoso, mas também não deve virar uma string livre no banco.
+            formato: entrada.formato === "imagem" ? "imagem" : "texto",
             ativo: Boolean(entrada.ativo),
             ordem: Number.isFinite(Number(entrada.ordem)) ? Number(entrada.ordem) : 0,
         }

@@ -13,6 +13,7 @@ import { urlDaImagem } from "@/security/imagem"
 import { Pagina } from "@/app/components/pagina/pagina"
 
 interface FormState {
+    formato: "imagem" | "texto"
     titulo: string
     descricao: string
     imagem_url: string
@@ -24,6 +25,9 @@ interface FormState {
 }
 
 const FORM_VAZIO: FormState = {
+    // Nasce em "imagem": é o formato de quem sobe a arte pronta, que é o caso
+    // mais comum — e é o que não escreve nada por cima do banner do lojista.
+    formato: "imagem",
     titulo: "",
     descricao: "",
     imagem_url: "",
@@ -98,6 +102,7 @@ export default function Banners() {
     function iniciarEdicao(banner: Banner) {
         setEditandoId(banner.id)
         setFormData({
+            formato: banner.formato === "imagem" ? "imagem" : "texto",
             titulo: banner.titulo,
             descricao: banner.descricao,
             imagem_url: banner.imagem_url,
@@ -124,10 +129,14 @@ export default function Banners() {
         setErrosForm([])
     }
 
+    /** Se o formato escolhido usa os campos de texto e preço. */
+    const comTexto = formData.formato === "texto"
+
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
 
         const banner: NovoBanner = {
+            formato: formData.formato,
             titulo: sanitizeText(formData.titulo),
             descricao: sanitizeDescricao(formData.descricao),
             imagem_url: sanitizeUrl(formData.imagem_url),
@@ -201,21 +210,82 @@ export default function Banners() {
                     </h3>
                 </div>
 
-                {/* A escolha entre os dois formatos do banner é feita AQUI,
-                    preenchendo ou deixando em branco — e por isso ela precisa
-                    estar escrita. Sem esta linha, o lojista que só quer subir
-                    a arte pronta preenchia o título porque o campo estava lá,
-                    e recebia a vitrine escrevendo por cima do trabalho do
-                    designer dele. */}
-                <p className="rounded-[var(--radius-md)] border border-[var(--linha)] bg-[var(--fundo)] px-4 py-3 text-[0.8125rem] leading-relaxed text-[var(--ink-2)]">
-                    <strong className="font-semibold text-[var(--ink)]">Dois formatos, e quem escolhe é você.</strong>{" "}
-                    Deixe título, descrição e valores <strong className="font-semibold text-[var(--ink)]">em branco</strong> e
-                    a vitrine mostra só a imagem, inteira, de ponta a ponta — é o formato de
-                    quem já tem a arte pronta. Preencha qualquer um deles e a arte passa a
-                    dividir a faixa com o texto, lado a lado.
-                </p>
+                {/* O SELETOR DE FORMATO.
+
+                    Era uma frase explicando que deixar os campos em branco
+                    mudava o desenho do banner — e regra que só existe em
+                    prosa é regra que ninguém segue: o lojista preenchia o
+                    título porque o campo estava ali e recebia a vitrine
+                    escrevendo por cima da arte dele.
+
+                    Agora é escolha declarada, e os campos de texto somem
+                    quando ela é "só a imagem". O que não está na tela não é
+                    preenchido por engano. */}
+                <fieldset className="grid gap-2 sm:grid-cols-2">
+
+                    <legend className="rotulo mb-2">Formato do banner</legend>
+
+                    {([
+                        {
+                            valor: "imagem" as const,
+                            nome: "Só a imagem",
+                            texto: "A arte ocupa a faixa inteira, de ponta a ponta. Para quem já tem o banner pronto.",
+                        },
+                        {
+                            valor: "texto" as const,
+                            nome: "Imagem com texto",
+                            texto: "A arte fica com metade da faixa e o texto com a outra: título, descrição, preço e botão.",
+                        },
+                    ]).map((opcao) => {
+
+                        const escolhida = formData.formato === opcao.valor
+
+                        return (
+                            <button
+                                key={opcao.valor}
+                                type="button"
+                                onClick={() => setFormData((atual) => ({ ...atual, formato: opcao.valor }))}
+                                aria-pressed={escolhida}
+                                className={`rounded-[var(--radius-md)] border p-4 text-left transition-colors ${
+                                    escolhida
+                                        ? "border-[var(--azul)] bg-[var(--azul-suave)]"
+                                        : "border-[var(--linha)] bg-[var(--superficie)] hover:border-[var(--ink-3)]"
+                                }`}
+                            >
+                                <span className="flex items-center gap-2">
+                                    <span
+                                        aria-hidden
+                                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                            escolhida ? "border-[var(--azul)]" : "border-[var(--linha)]"
+                                        }`}
+                                    >
+                                        {escolhida ? (
+                                            <span className="h-2 w-2 rounded-full bg-[var(--azul)]" />
+                                        ) : null}
+                                    </span>
+
+                                    <span className="text-[0.875rem] font-semibold text-[var(--ink)]">
+                                        {opcao.nome}
+                                    </span>
+                                </span>
+
+                                <span className="mt-1.5 block text-[0.8125rem] leading-relaxed text-[var(--ink-2)]">
+                                    {opcao.texto}
+                                </span>
+                            </button>
+                        )
+                    })}
+                </fieldset>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                    {/* Os campos de texto e de preço só aparecem no formato
+                        que os usa. Escondê-los não é economia de tela: é o que
+                        impede o lojista de escrever um título que o banner
+                        dele nunca vai mostrar e ficar procurando o defeito
+                        depois. */}
+                    {comTexto ? (
+                    <>
                     <div className="sm:col-span-2">
                         <label className="rotulo">Título</label>
                         <input
@@ -239,6 +309,8 @@ export default function Banners() {
                             className="field resize-y"
                         />
                     </div>
+                    </>
+                    ) : null}
 
                     <div className="sm:col-span-2">
                         <label className="rotulo">URL da imagem</label>
@@ -252,6 +324,8 @@ export default function Banners() {
                         />
                     </div>
 
+                    {comTexto ? (
+                    <>
                     <div>
                         <label className="rotulo">Valor (R$)</label>
                         <input
@@ -279,6 +353,8 @@ export default function Banners() {
                             className="field"
                         />
                     </div>
+                    </>
+                    ) : null}
 
                     <div className="sm:col-span-2">
                         <label className="rotulo">
