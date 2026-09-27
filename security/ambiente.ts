@@ -25,7 +25,54 @@ export function ehProducao(): boolean {
 
 /** Tudo o que está inseguro na configuração atual. Lista vazia é tudo certo. */
 export function conferir(): Problema[] {
-    return [...conferirSocket(), ...conferirVitrine(), ...conferirBackend()]
+    return [...conferirSocket(), ...conferirVitrine(), ...conferirBackend(), ...conferirProxy()]
+}
+
+/**
+ * Quantos proxies existem entre o navegador e este processo.
+ *
+ * O limite por IP do proxy.ts depende disto para saber de onde veio a
+ * requisição. Sem a variável, nenhum cabeçalho de encaminhamento é aceito — e
+ * atrás do Caddy, que é como o painel roda em produção, isso põe todo mundo
+ * num balde só: o nono login do dia recebe "muitas tentativas" sem ninguém
+ * ter errado senha nenhuma.
+ *
+ * Zero não serve em produção justamente por isso, e o valor não pode ser
+ * chutado para cima: declarar mais saltos do que existem faz a leitura do
+ * X-Forwarded-For cair na posição que quem chama escreve, e aí o limite volta
+ * a não limitar nada.
+ *
+ * Um é só o Caddy. Dois é Cloudflare + Caddy — e aí o firewall da VPS tem de
+ * aceitar apenas as faixas da Cloudflare, senão qualquer um bate direto na
+ * origem com o cabeçalho que quiser (ver deploy/PRODUCAO.md no backend).
+ *
+ * É o espelho de conferirProxy na vitrine (vendas/frontp/security/ambiente.ts).
+ */
+function conferirProxy(): Problema[] {
+
+    if (!ehProducao()) return []
+
+    const bruto = (process.env.TRUSTED_PROXY_COUNT ?? "").trim()
+
+    if (!bruto) {
+        return [{
+            variavel: "TRUSTED_PROXY_COUNT",
+            mensagem: "não definida: o limite por IP cai num balde único e a loja inteira leva \"muitas tentativas\" no primeiro pico",
+            correcao: "declare quantos proxies existem na frente do painel — 1 com Caddy, 2 com Cloudflare + Caddy",
+        }]
+    }
+
+    const saltos = Number(bruto)
+
+    if (!Number.isInteger(saltos) || saltos < 1 || saltos > 4) {
+        return [{
+            variavel: "TRUSTED_PROXY_COUNT",
+            mensagem: `${JSON.stringify(bruto)} não é um número de saltos utilizável`,
+            correcao: "use um inteiro de 1 a 4 — 1 com Caddy, 2 com Cloudflare + Caddy",
+        }]
+    }
+
+    return []
 }
 
 function conferirSocket(): Problema[] {
