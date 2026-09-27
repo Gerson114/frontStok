@@ -301,6 +301,10 @@ export default function Conversas() {
        dela. */
     const restaurado = useRef(false)
 
+    /* A última versão de abrirConversa, para a varredura alcançá-la sem
+       depender dela. Ver o uso em atualizarConversas. */
+    const abrirRef = useRef<((conversa: Conversa) => Promise<void>) | null>(null)
+
     /* ==========================
        DADOS
     ========================== */
@@ -411,7 +415,11 @@ export default function Conversas() {
                 const guardada = conversaGuardada()
                 const achada = guardada ? lista.find((conversa) => conversa.id === guardada) : undefined
 
-                if (achada) void abrirConversa(achada)
+                // Pela referência, e não pela função direta: abrirConversa
+                // nasce de novo a cada render, e prendê-la nas dependências
+                // deste useCallback recriaria a varredura a cada digitação na
+                // caixa de mensagem — que é estado desta mesma tela.
+                if (achada) void abrirRef.current?.(achada)
             }
 
         } catch {
@@ -574,6 +582,16 @@ export default function Conversas() {
             }
         }
     }
+
+    /* A referência acompanha a versão de agora de abrirConversa.
+
+       Escrita dentro de um efeito, e não no corpo do componente: escrever em
+       ref durante o render é justamente o que o React proíbe, porque o render
+       pode ser descartado antes de virar tela — e a referência ficaria
+       apontando para uma função de uma passada que nunca aconteceu. */
+    useEffect(() => {
+        abrirRef.current = abrirConversa
+    })
 
     /**
      * Assume, larga ou passa o cliente.

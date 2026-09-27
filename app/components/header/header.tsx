@@ -216,6 +216,48 @@ const ALTURA_TOPO_PX = 56
 /** O nome da variável que as colunas do menu leem para saber onde começar. */
 const VAR_TOPO_VISIVEL = "--topo-visivel"
 
+/* A tela de cada assunto, para o som saber quando calar.
+
+   O apito existe para avisar quem NÃO está vendo aquilo acontecer. Quem está
+   com as conversas de WhatsApp abertas na frente vê a mensagem entrar na
+   lista; apitar ali é avisar sobre o que já está à vista. Mas quem está em
+   Pedidos, no estoque ou em qualquer outra tela precisa ouvir — a mensagem
+   chegou e ninguém está olhando para ela. */
+const TELA_DO_ASSUNTO: Record<string, string> = {
+    mensagem: "/page/conversas",
+    conversa: "/page/conversas",
+    atendimento: "/page/atendimento",
+    equipe: "/page/equipe",
+}
+
+/*
+Se a pessoa está vendo, AGORA, a tela onde este aviso aconteceria.
+
+Duas condições, e as duas precisam valer. A rota diz qual tela está aberta; a
+visibilidade diz se a aba está à frente. Painel aberto na tela de conversas,
+mas em segundo plano atrás do navegador de outra coisa, não é alguém vendo — e
+é exatamente quem mais precisa do som.
+
+Fora do componente, e recebendo a rota como argumento, de propósito: escrita
+dentro dele, era uma função nova a cada render que o efeito do socket
+capturava na closure — e a regra de dependências do React tinha razão em
+reclamar, porque no dia em que a rota saísse das dependências do efeito o som
+passaria a decidir pela tela de quando ele montou.
+*/
+function estouVendo(assunto: string, rota: string): boolean {
+
+    const tela = TELA_DO_ASSUNTO[assunto]
+
+    if (!tela || rota !== tela) return false
+
+    if (typeof document === "undefined") return true
+
+    const aparecendo = document.visibilityState === "visible"
+    const comFoco = typeof document.hasFocus === "function" ? document.hasFocus() : true
+
+    return aparecendo && comFoco
+}
+
 /** Uma tela do menu com o que abre debaixo dela. */
 interface No {
     item: ItemMenu
@@ -677,42 +719,6 @@ export default function Sidebar() {
 
     }, [busca, menu])
 
-    /* A tela de cada assunto, para o som saber quando calar.
-
-       O apito existe para avisar quem NÃO está vendo aquilo acontecer. Quem
-       está com as conversas de WhatsApp abertas na frente vê a mensagem
-       entrar na lista; apitar ali é avisar sobre o que já está à vista. Mas
-       quem está em Pedidos, no estoque ou em qualquer outra tela precisa
-       ouvir — a mensagem chegou e ninguém está olhando para ela. */
-    const TELA_DO_ASSUNTO: Record<string, string> = {
-        mensagem: "/page/conversas",
-        conversa: "/page/conversas",
-        atendimento: "/page/atendimento",
-        equipe: "/page/equipe",
-    }
-
-    /*
-     * Se a pessoa está vendo, AGORA, a tela onde este aviso aconteceria.
-     *
-     * Duas condições, e as duas precisam valer. A rota diz qual tela está
-     * aberta; a visibilidade diz se a aba está à frente. Painel aberto na
-     * tela de conversas, mas em segundo plano atrás do navegador de outra
-     * coisa, não é alguém vendo — e é exatamente quem mais precisa do som.
-     */
-    function estouVendo(assunto: string): boolean {
-
-        const tela = TELA_DO_ASSUNTO[assunto]
-
-        if (!tela || pathname !== tela) return false
-
-        if (typeof document === "undefined") return true
-
-        const aparecendo = document.visibilityState === "visible"
-        const comFoco = typeof document.hasFocus === "function" ? document.hasFocus() : true
-
-        return aparecendo && comFoco
-    }
-
     // A bolinha das novidades.
     //
     // Recarrega ao trocar de tela e a cada aviso do canal ao vivo — o mesmo
@@ -767,7 +773,7 @@ export default function Sidebar() {
                 if (!daLoja) tocarSom("pedido")
             } else if (["mensagem", "conversa", "atendimento", "equipe"].includes(aviso.tipo)) {
                 contarDepois()
-                if (!daLoja && !estouVendo(aviso.tipo)) tocarSom("mensagem")
+                if (!daLoja && !estouVendo(aviso.tipo, pathname)) tocarSom("mensagem")
             }
         })
 
