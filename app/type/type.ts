@@ -204,6 +204,20 @@ export interface Pedido {
     /** "entrega" ou "retirada". Vazio nos pedidos anteriores à entrega. */
     entrega_tipo?: string
 
+    /**
+     * Este pedido só sai do balcão com o código que o comprador recebeu na
+     * vitrine.
+     *
+     * O CÓDIGO em si não vem, e não é esquecimento do servidor: ele prova que
+     * quem está no balcão é quem comprou, e um código visível na tela de quem
+     * confere não prova nada — bastaria lê-lo e digitá-lo. O painel sabe que
+     * tem de pedir; quem compara é o servidor (ver AtualizarStatus no backend).
+     */
+    exige_codigo_retirada?: boolean
+
+    /** Quando o pedido saiu do balcão com o código conferido. */
+    retirado_em?: string
+
     cep?: string
     logradouro?: string
     numero?: string
@@ -1244,6 +1258,15 @@ export interface ConfigFrete {
     ativo: boolean
 
     retirada_na_loja: boolean
+
+    /**
+     * Exigir um código do comprador para liberar a retirada no balcão.
+     *
+     * Desligado de fábrica: a loja pequena entrega para quem conhece de vista,
+     * e ali o código só trava o balcão. Quem liga é a loja com movimento, que
+     * não tem como saber de quem é cada sacola separada.
+     */
+    codigo_retirada: boolean
 
     /** Zero desliga a isenção; não quer dizer "tudo grátis". */
     frete_gratis_acima: number

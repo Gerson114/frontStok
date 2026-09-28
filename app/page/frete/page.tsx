@@ -33,6 +33,7 @@ export default function Frete() {
     const [config, setConfig] = useState<ConfigFrete>({
         ativo: false,
         retirada_na_loja: true,
+        codigo_retirada: false,
         frete_gratis_acima: 0,
     })
 
@@ -188,6 +189,36 @@ export default function Frete() {
                                 </span>
                             </span>
                         </label>
+
+                        {/* A senha do balcão, recuada e só quando há balcão:
+                            ela é uma decisão SOBRE a retirada, e oferecê-la a
+                            quem desligou a retirada seria uma chave que não
+                            liga nada. O servidor também a zera nesse caso. */}
+                        {config.retirada_na_loja ? (
+                            <label className="ml-7 flex cursor-pointer items-start gap-3 border-l-2 border-[var(--linha-suave)] pl-4">
+                                <input
+                                    type="checkbox"
+                                    checked={config.codigo_retirada}
+                                    onChange={(e) => setConfig({ ...config, codigo_retirada: e.target.checked })}
+                                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--azul)]"
+                                />
+                                <span>
+                                    <span className="block text-sm font-medium text-[var(--ink)]">
+                                        Pedir um código para liberar a retirada
+                                    </span>
+                                    <span className="block text-sm text-[var(--ink-2)]">
+                                        Cada pedido de retirada ganha um código de 6 dígitos, que só
+                                        aparece na tela de quem comprou. Ao marcar o pedido como
+                                        entregue, o balcão digita esse código — é o que garante que a
+                                        sacola sai com o dono dela.
+                                    </span>
+                                    <span className="mt-1 block text-sm text-[var(--ink-3)]">
+                                        Vale para os pedidos feitos a partir de agora: quem já
+                                        comprou não tem código, e continua retirando sem ele.
+                                    </span>
+                                </span>
+                            </label>
+                        ) : null}
 
                         <div className="border-t border-[var(--linha-suave)] pt-4">
                             <label className="rotulo" htmlFor="gratis">

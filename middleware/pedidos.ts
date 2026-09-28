@@ -112,10 +112,22 @@ export async function confirmarPagamentoManual(
 export async function atualizarStatusPedido(
     id: number,
     status: StatusPedido,
+
+    /**
+     * O código que o comprador diz no balcão, nos pedidos marcados com
+     * `exige_codigo_retirada`.
+     *
+     * Vazio nos outros — e mandá-lo vazio num pedido que exige código é o
+     * caminho normal do primeiro clique: o servidor recusa dizendo que o código
+     * é necessário, e é essa recusa que faz a tela abrir o campo. Assim o
+     * atendente não digita código em pedido que não pede, e a regra mora num
+     * lugar só.
+     */
+    codigoRetirada = "",
 ): Promise<Pedido> {
     const resposta = await apiFetch<{ pedido: Pedido }>(`/api/pedidos/${id}/status`, {
         method: "PUT",
-        body: { status },
+        body: { status, ...(codigoRetirada ? { codigo_retirada: codigoRetirada } : {}) },
     })
 
     return resposta.pedido

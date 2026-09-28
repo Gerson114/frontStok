@@ -169,6 +169,19 @@ function PedidosInterno() {
     const [meioManual, setMeioManual] = useState<MeioManual>("pix")
     const [salvandoManual, setSalvandoManual] = useState(false)
 
+    /* A CONFERÊNCIA DO CÓDIGO DE RETIRADA
+
+       Qual pedido está esperando o código, o que o atendente digitou e o que o
+       servidor respondeu da última tentativa. Um pedido por vez: dois campos de
+       código abertos na mesma tela é como se libera a sacola errada.
+
+       O código NÃO está em nenhum lugar desta tela antes de ser digitado — o
+       servidor nunca o manda para o painel (ver Pedido.exige_codigo_retirada).
+       Quem o tem é quem comprou. */
+    const [pedindoCodigo, setPedindoCodigo] = useState<number | null>(null)
+    const [codigoDigitado, setCodigoDigitado] = useState("")
+    const [erroCodigo, setErroCodigo] = useState("")
+
     /**
      * Pergunta ao provedor se aquele pedido foi pago.
      *
@@ -348,28 +361,65 @@ function PedidosInterno() {
      * agenda de entregas — quando souber. Três pedidos que chegaram juntos
      * podem sair hoje, na semana que vem e quando a mercadoria chegar.
      */
-    async function mudarStatus(pedido: Pedido, novoStatus: StatusPedido) {
+    async function mudarStatus(pedido: Pedido, novoStatus: StatusPedido, codigoRetirada = "") {
 
         if (novoStatus === pedido.status) return
+
+        /* Pedido que só sai com o código do comprador: o campo abre ANTES de
+           chamar o servidor, em vez de mandar sem código e esperar a recusa.
+
+           A recusa funcionaria — o servidor cobra o código de qualquer forma —,
+           mas ela custa um erro vermelho na tela a cada retirada legítima, e
+           erro que aparece no caminho certo é erro que se aprende a ignorar.
+
+           O `codigoRetirada` já preenchido é a segunda passada, vinda do
+           formulário: aí a chamada segue. */
+        if (novoStatus === "entregue" && pedido.exige_codigo_retirada && !codigoRetirada) {
+            setPedindoCodigo(pedido.id)
+            setCodigoDigitado("")
+            setErroCodigo("")
+            return
+        }
 
         try {
 
             setAtualizandoId(pedido.id)
             setErroAtualizacao("")
+            setErroCodigo("")
 
-            const pedidoAtualizado = await atualizarStatusPedido(pedido.id, novoStatus)
+            const pedidoAtualizado = await atualizarStatusPedido(pedido.id, novoStatus, codigoRetirada)
 
             setPedidos((atual) =>
                 atual.map((item) => (item.id === pedido.id ? pedidoAtualizado : item))
             )
 
+            // Deu certo: o campo fecha. Fechá-lo só aqui (e não junto do
+            // envio) é o que mantém o código digitado na tela quando ele está
+            // errado — o atendente corrige um dígito em vez de redigitar os
+            // seis com o cliente esperando.
+            setPedindoCodigo(null)
+            setCodigoDigitado("")
+
         } catch (error) {
 
             console.error("Erro ao atualizar status do pedido:", error)
 
-            setErroAtualizacao(
+            const mensagem =
                 error instanceof ApiError ? error.message : "Não foi possível atualizar o status."
-            )
+
+            /* Código errado é erro DAQUELE campo, e não da tela.
+
+               Enquanto ele caía no aviso geral do topo, o atendente recebia a
+               resposta longe de onde estava olhando: o campo continuava aberto
+               e aparentemente intacto, e a mensagem ficava acima da lista
+               inteira, fora da vista num balcão com quinze pedidos. */
+            if (novoStatus === "entregue" && pedido.exige_codigo_retirada) {
+                setPedindoCodigo(pedido.id)
+                setErroCodigo(mensagem)
+                return
+            }
+
+            setErroAtualizacao(mensagem)
 
         } finally {
 
@@ -860,6 +910,11 @@ function PedidosInterno() {
                                 handleRastreio={handleRastreio}
                                 salvandoRastreio={salvandoRastreio}
                                 limparAvisos={() => { setAvisoVerificacao(""); setErroAtualizacao("") }}
+                                pedindoCodigo={pedindoCodigo}
+                                codigoDigitado={codigoDigitado}
+                                setCodigoDigitado={setCodigoDigitado}
+                                erroCodigo={erroCodigo}
+                                cancelarCodigo={() => { setPedindoCodigo(null); setCodigoDigitado(""); setErroCodigo("") }}
                             />
                         )}
                     </section>
@@ -1024,6 +1079,11 @@ function FichaDoPedido({
     handleRastreio,
     salvandoRastreio,
     limparAvisos,
+    pedindoCodigo,
+    codigoDigitado,
+    setCodigoDigitado,
+    erroCodigo,
+    cancelarCodigo,
 }: {
     pedido: Pedido
     filtro: Filtro
@@ -1031,7 +1091,7 @@ function FichaDoPedido({
     somaDosItens: (pedido: Pedido) => number
     descontoDoPedido: (pedido: Pedido) => number
     totalDoPedido: (pedido: Pedido) => number
-    mudarStatus: (pedido: Pedido, status: StatusPedido) => void
+    mudarStatus: (pedido: Pedido, status: StatusPedido, codigoRetirada?: string) => void
     atualizandoId: number | null
     verificar: (pedido: Pedido) => void
     verificandoCodigo: string
@@ -1044,6 +1104,13 @@ function FichaDoPedido({
     handleRastreio: (evento: React.FormEvent<HTMLFormElement>, pedido: Pedido) => void
     salvandoRastreio: number | null
     limparAvisos: () => void
+
+    /** O pedido que está esperando o código de retirada, se houver. */
+    pedindoCodigo: number | null
+    codigoDigitado: string
+    setCodigoDigitado: (codigo: string) => void
+    erroCodigo: string
+    cancelarCodigo: () => void
 }) {
 
     const desconto = descontoDoPedido(pedido)
@@ -1088,6 +1155,92 @@ function FichaDoPedido({
                     </select>
                 </div>
             </div>
+
+            {/* ==========================================================
+                O CÓDIGO DE RETIRADA
+
+                Abre quando alguém marca como entregue um pedido que só sai do
+                balcão com o código do comprador. Fica logo abaixo do seletor
+                que o abriu, e não num diálogo por cima da tela: o atendente
+                está com o cliente na frente e precisa ver o pedido enquanto
+                digita — qual sacola é, o que tem dentro, para quem.
+
+                O código não aparece em lugar nenhum desta tela: o servidor não
+                o manda ao painel. Quem confere é ele, contra o que está
+                gravado no pedido.
+               ========================================================== */}
+            {pedindoCodigo === pedido.id ? (
+                <form
+                    onSubmit={(evento) => {
+                        evento.preventDefault()
+                        mudarStatus(pedido, "entregue", codigoDigitado)
+                    }}
+                    className="border-2 border-[var(--azul)] bg-[var(--placa)] p-4"
+                >
+                    <label
+                        className="block text-sm font-semibold text-[var(--ink)]"
+                        htmlFor={`codigo-retirada-${pedido.id}`}
+                    >
+                        Código de retirada
+                    </label>
+
+                    <p className="mt-1 text-sm text-[var(--ink-2)]">
+                        Peça ao cliente o código de 6 dígitos que ele recebeu na loja online.
+                        Ele está na tela do pedido, no celular dele.
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <input
+                            id={`codigo-retirada-${pedido.id}`}
+                            /* inputMode numérico e maxLength de 6: no balcão
+                               isto é digitado no celular ou no tablet, e teclado
+                               de letras para seis dígitos é um erro de digitação
+                               a cada retirada. */
+                            inputMode="numeric"
+                            autoComplete="off"
+                            maxLength={6}
+                            autoFocus
+                            value={codigoDigitado}
+                            onChange={(e) => setCodigoDigitado(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            placeholder="000000"
+                            className="field w-32 text-center text-lg font-bold tracking-[0.3em]"
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={codigoDigitado.length < 6 || atualizandoId === pedido.id}
+                            className="btn"
+                        >
+                            {atualizandoId === pedido.id ? "conferindo..." : "liberar pedido"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={cancelarCodigo}
+                            className="text-sm text-[var(--ink-3)] underline underline-offset-2"
+                        >
+                            cancelar
+                        </button>
+                    </div>
+
+                    {erroCodigo ? (
+                        <p className="mt-3 border-l-2 border-[var(--vermelho)] px-3 py-2 text-sm text-[var(--vermelho)]">
+                            {erroCodigo}
+                        </p>
+                    ) : null}
+
+                    {/* A saída para o caso real: o cliente perdeu o acesso ao
+                        telefone, ou mandou outra pessoa buscar sem passar o
+                        código. Não há botão de "liberar sem código" — ele
+                        apagaria a razão de a senha existir. O caminho é o
+                        cliente abrir a loja online e ler o código, que é
+                        exatamente o que a senha pede que ele faça. */}
+                    <p className="mt-3 text-xs text-[var(--ink-3)]">
+                        Sem o código o pedido não é liberado. O cliente encontra o dele
+                        entrando na conta da loja online, na tela deste pedido.
+                    </p>
+                </form>
+            ) : null}
 
             {/* QUEM COMPROU */}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -1403,11 +1556,27 @@ function FichaDoPedido({
                     </form>
                 </div>
             ) : (
-                <p className="text-sm text-[var(--ink-2)]">
-                    {pedido.entrega_tipo === "retirada"
-                        ? "O cliente vem buscar na loja."
-                        : "Sem entrega registrada — pedido lançado no painel."}
-                </p>
+                <div className="space-y-1.5 text-sm text-[var(--ink-2)]">
+                    <p>
+                        {pedido.entrega_tipo === "retirada"
+                            ? "O cliente vem buscar na loja."
+                            : "Sem entrega registrada — pedido lançado no painel."}
+                    </p>
+
+                    {/* Dito ANTES de o atendente ir marcar como entregue: sem
+                        isto ele descobre a exigência no meio da ação, com o
+                        cliente na frente, e o campo do código aparece parecendo
+                        travamento em vez de regra da loja. */}
+                    {pedido.exige_codigo_retirada && !pedido.retirado_em ? (
+                        <p className="font-semibold text-[var(--ink)]">
+                            Este pedido só é liberado com o código de retirada do cliente.
+                        </p>
+                    ) : null}
+
+                    {pedido.retirado_em ? (
+                        <p>Retirado em {formatarData(pedido.retirado_em)}, com o código conferido.</p>
+                    ) : null}
+                </div>
             )}
 
             {/* A CONTA, ABERTA.

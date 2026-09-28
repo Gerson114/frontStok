@@ -36,9 +36,25 @@ export async function PUT(
             return Response.json({ erro: "status inválido" }, { status: 400 })
         }
 
-        // Só o status vai. O dia da saída tem rota própria (ver
-        // /api/pedidos/:id/envio): confirmar é dizer "estou preparando", e
-        // misturar as duas gravações faria a loja assumir um dia sem querer.
+        /* O código que o comprador diz no balcão, nas lojas que exigem um.
+
+           Passa como veio, sem conferência aqui: quem compara é o backend,
+           contra o código gravado no pedido. Conferir nesta camada exigiria
+           que este servidor conhecesse o código — e o dia em que ele o
+           conhecesse seria o dia em que o código deixaria de ser segredo entre
+           quem comprou e o banco.
+
+           Só dígitos, no máximo seis: é o formato que o backend aceita, e
+           cortar aqui evita mandar adiante uma linha de texto colada por
+           engano no campo. */
+        const codigoRetirada = String((body as Record<string, unknown>).codigo_retirada ?? "")
+            .replace(/\D/g, "")
+            .slice(0, 6)
+
+        // Só o status vai (e o código, quando há um). O dia da saída tem rota
+        // própria (ver /api/pedidos/:id/envio): confirmar é dizer "estou
+        // preparando", e misturar as duas gravações faria a loja assumir um dia
+        // sem querer.
         const response = await fetch(url(pedidos.status(id)), {
             method: "PUT",
             headers: {
@@ -47,7 +63,10 @@ export async function PUT(
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({
+                status,
+                ...(codigoRetirada ? { codigo_retirada: codigoRetirada } : {}),
+            }),
             cache: "no-store",
         })
 
