@@ -1018,9 +1018,17 @@ export default async function Home() {
               </ul>
             </div>
 
+            {/* Dois mockups empilhados cabiam bem ao lado do texto no
+                desktop, mas no celular — onde a coluna vira uma só e eles
+                descem para DEBAIXO do texto e da lista — a soma dos dois
+                empurrava o resto da página para muito longe do primeiro
+                scroll. O comprovante só reaparece a partir do `lg`, onde
+                ele senta ao lado do texto em vez de abaixo dele. */}
             <div className="lp-cascata space-y-4">
               <MockupVitrine />
-              <MockupComprovante />
+              <div className="hidden lg:block">
+                <MockupComprovante />
+              </div>
             </div>
 
           </div>
