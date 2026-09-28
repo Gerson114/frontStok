@@ -8,9 +8,9 @@ import PagamentoPorWhatsApp from "@/app/components/pagamento/whatsapp"
 /**
  * Onde o lojista conecta a conta de pagamento dele.
  *
- * O modelo é "cada loja traz a sua": ela se cadastra no Mercado Pago, gera um
- * access token e cola aqui. O dinheiro das vendas cai direto na conta dela —
- * este sistema não fica no meio do caminho do dinheiro de ninguém.
+ * O modelo é "cada loja traz a sua": ela se cadastra no Stripe, gera uma
+ * chave e cola aqui. O dinheiro das vendas cai direto na conta dela — este
+ * sistema não fica no meio do caminho do dinheiro de ninguém.
  *
  * O token vai de ida e nunca volta: o servidor o guarda cifrado com a chave
  * desta loja e devolve só os últimos caracteres, que é o bastante para
@@ -68,7 +68,7 @@ export default function PagamentoPage() {
 
     const [situacao, setSituacao] = useState<Situacao | null>(null)
     const [carregando, setCarregando] = useState(true)
-    const [provedor, setProvedor] = useState("mercadopago")
+    const [provedor, setProvedor] = useState("stripe")
     const [token, setToken] = useState("")
     const [segredo, setSegredo] = useState("")
     const [salvando, setSalvando] = useState(false)
