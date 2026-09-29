@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Fraunces } from "next/font/google"
 import Link from "next/link"
 import { url } from "@/app/api/backend"
 import { publico } from "@/app/api/rotas"
@@ -35,6 +36,24 @@ import {
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
 import { MARCA, MARCA_PRO } from "@/app/marca"
+
+/**
+ * A serifada dos títulos da porta de entrada — só dela, e não do painel.
+ *
+ * O painel inteiro usa a Inter (ver RootLayout, em app/layout.tsx): olho
+ * neutro, dígito de largura fixa, o que uma tela lida oito horas por dia
+ * pede. A página de vendas não é lida oito horas por dia — é lida uma vez,
+ * por alguém decidindo se confia no sistema —, e o título em serifada é o
+ * primeiro sinal de que esta tela tem outra temperatura, mais perto do
+ * "papel de ficha" da paleta do que da tela de conferência de estoque.
+ * O corpo do texto continua na Inter; só o `.font-display` muda aqui
+ * (ver `.pagina-entrada .font-display`, em globals.css).
+ */
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["500", "600"],
+})
 
 export const metadata: Metadata = {
   title: `${MARCA} | Estoque, vitrine e vendas para lojas de qualquer ramo`,
@@ -342,7 +361,7 @@ const perguntas: { pergunta: string; resposta: string }[] = [
 
 const MENSALIDADE_RESERVA = 99.9
 const MENSALIDADE_PRO_RESERVA = 160
-const TESTE_DIAS_RESERVA = 15
+const TESTE_DIAS_RESERVA = 30
 const LOJAS_NO_PRO_RESERVA = 20
 
 interface PlanoPro {
@@ -520,7 +539,7 @@ export default async function Home() {
    *
    * Ela não é enfeite de página: é o que o servidor de fato monta na
    * assinatura (ver internal/services/assinatura/entrada.go). Dizer só
-   * "quinze dias grátis e depois a mensalidade" esconderia o degrau do meio —
+   * "trinta dias grátis e depois a mensalidade" esconderia o degrau do meio —
    * e degrau escondido, quando aparece na fatura, custa o cliente.
    */
   const degraus = entrada
@@ -545,7 +564,7 @@ export default async function Home() {
     : []
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`${fraunces.variable} pagina-entrada min-h-screen bg-white`}>
 
       <Topo />
 
@@ -1147,7 +1166,7 @@ export default async function Home() {
                       </span>
                     </div>
 
-                    <p className="num font-display mt-4 text-2xl text-[#303030]">{valor}</p>
+                    <p className="num preco mt-4 text-2xl text-[#303030]">{valor}</p>
 
                     <p className="mt-2 text-sm leading-relaxed text-[#616161]">{texto}</p>
                   </li>

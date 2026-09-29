@@ -41,7 +41,7 @@ const CINZA = "#EBEBEB"
 
 export function MockupPainel() {
     return (
-        <div className="card overflow-hidden">
+        <div className="mockup card overflow-hidden">
 
             <div className="flex items-center justify-between border-b border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2.5">
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
@@ -128,7 +128,7 @@ export function MockupAgenda() {
     ]
 
     return (
-        <div className="card overflow-hidden">
+        <div className="mockup card overflow-hidden">
 
             <div className="flex items-center justify-between border-b border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2.5">
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
@@ -194,7 +194,7 @@ export function MockupAgenda() {
 
 export function MockupAtendimento() {
     return (
-        <div className="card grid overflow-hidden sm:grid-cols-[11rem_1fr]">
+        <div className="mockup card grid overflow-hidden sm:grid-cols-[11rem_1fr]">
 
             <div className="border-b border-[#EBEBEB] sm:border-b-0 sm:border-r">
                 <p className="bg-[#FFF1E3] px-3 py-1.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] text-[#5E4200]">
@@ -259,7 +259,7 @@ export function MockupAtendimento() {
 
 export function MockupVitrine() {
     return (
-        <div className="card overflow-hidden">
+        <div className="mockup card overflow-hidden">
 
             <div className="flex items-center justify-between border-b border-[#EBEBEB] px-4 py-2.5">
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[#303030]">
@@ -319,7 +319,7 @@ const BARRAS = [
 
 export function MockupEtiqueta() {
     return (
-        <div className="card p-5 sm:p-6">
+        <div className="mockup card p-5 sm:p-6">
 
             <div className="flex items-center justify-between gap-3 border-b border-[#EBEBEB] pb-4">
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
@@ -388,7 +388,7 @@ export function MockupEtiqueta() {
 
 export function MockupComprovante() {
     return (
-        <div className="card p-5 text-[#303030]">
+        <div className="mockup card p-5 text-[#303030]">
 
             <div className="flex items-start justify-between gap-4 border-b-2 border-[#303030] pb-2">
                 <div>
@@ -447,7 +447,7 @@ export function MockupComprovante() {
 
 export function MockupEquipe() {
     return (
-        <div className="card grid overflow-hidden sm:grid-cols-[1fr_10.5rem]">
+        <div className="mockup card grid overflow-hidden sm:grid-cols-[1fr_10.5rem]">
 
             <div className="flex min-h-[13rem] flex-col border-b border-[#EBEBEB] sm:border-b-0 sm:border-r">
 
@@ -542,7 +542,7 @@ export function MockupEquipe() {
 
 export function MockupRede() {
     return (
-        <div className="card overflow-hidden">
+        <div className="mockup card overflow-hidden">
 
             <div className="flex items-center justify-between border-b border-[#EBEBEB] bg-[#F7F7F7] px-4 py-2.5">
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">

@@ -411,6 +411,25 @@
   letter-spacing: -0.012em;
 }
 
+/* A porta de entrada (`.pagina-entrada`, em page.tsx) troca só os títulos
+   para a Fraunces — o resto do sistema continua na Inter acima. Ganha da
+   regra geral por vir depois na mesma camada e ser mais específica. */
+.pagina-entrada .font-display {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+}
+
+/* As telas desenhadas (`.mockup`, em components/apresentacao/mockups.tsx)
+   retratam o painel de verdade, que continua na Inter — trocar a fonte
+   delas também deixaria o retrato diferente do sistema que ele promete
+   mostrar. Ganha da regra acima por vir depois e ser mais específica. */
+.pagina-entrada .mockup .font-display {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+}
+
 /* ==========================================================================
    PREÇO
    ========================================================================== */
