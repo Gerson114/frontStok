@@ -437,6 +437,16 @@ export interface OfertaPro {
 }
 
 /**
+ * O plano Inicial, o degrau de entrada abaixo do base — sem o balcão, o
+ * estoque unidade a unidade, os clientes e o atendimento.
+ */
+export interface OfertaInicial {
+    preco?: PrecoPlano
+    /** O que o Inicial entrega — não a lista inteira do base. */
+    recursos: string[]
+}
+
+/**
  * O que está à venda, do jeito que o backend descreve: nome, texto, o que
  * inclui e quanto custa vêm todos de lá — o preço, em particular, é lido do
  * provedor de cobrança a cada consulta, para a tela nunca mostrar um valor
@@ -451,6 +461,8 @@ export interface Oferta {
     descricao: string
     recursos: string[]
     preco?: PrecoPlano
+    /** O degrau abaixo do base — ausente quando este servidor não o vende. */
+    inicial?: OfertaInicial
     pro?: OfertaPro
     /**
      * Dias de teste grátis antes da primeira cobrança, decididos pelo

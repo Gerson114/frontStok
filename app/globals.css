@@ -124,8 +124,8 @@
      reescritas para o conteúdo ocupar o espaço vago. O header muda esta
      variável e todas acompanham.
 
-        --menu = 8.5rem   painel recolhido (trilho + tira de reabrir)
-        --menu = 23.5rem  painel aberto    (trilho + painel de 17.5rem)
+        --menu = 9.5rem   painel recolhido (trilho + tira de reabrir)
+        --menu = 24.5rem  painel aberto    (trilho + painel de 17.5rem)
 
      17.5rem porque os nomes compridos estavam apertados em 15rem — "Conversa
      da equipe" e "Endereços do estoque" chegavam à borda, e nome de tela
@@ -137,9 +137,9 @@
      precisa da largura do painel, não da soma inteira.
 
      Quem usa --menu é a classe .com-menu, lá embaixo. */
-  --trilho: 6rem;
+  --trilho: 7rem;
   --painel-menu: 17.5rem;
-  --menu: 23.5rem;
+  --menu: 24.5rem;
 
   --linha: #DDDDD8;
   --linha-suave: #E8E8E3;

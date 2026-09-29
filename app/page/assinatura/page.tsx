@@ -34,8 +34,10 @@ export default function AssinaturaPage() {
     // Esta loja já está no Pro? Quem responde é o backend, a partir do preço
     // gravado na assinatura — a tela não deduz isso de ter mais de uma loja.
     const [noPro, setNoPro] = useState(false)
+    // Esta loja já está no Inicial? Mesma regra do noPro, um degrau abaixo.
+    const [noInicial, setNoInicial] = useState(false)
     const [carregando, setCarregando] = useState(true)
-    const [enviando, setEnviando] = useState<"" | "portal" | "assinar" | "pro">("")
+    const [enviando, setEnviando] = useState<"" | "portal" | "assinar" | "pro" | "inicial">("")
     const [erro, setErro] = useState("")
 
     // Contador de recargas: mexer nele é o que dispara o efeito de novo,
@@ -64,6 +66,7 @@ export default function AssinaturaPage() {
                     if (!cancelado) {
                         setOferta(catalogo.oferta ?? null)
                         setNoPro(catalogo.plano_pro ?? false)
+                        setNoInicial(catalogo.plano_inicial ?? false)
                     }
                 } catch {
                     // segue sem a descrição da oferta
@@ -89,9 +92,9 @@ export default function AssinaturaPage() {
     // O pagamento acontece fora daqui, na página do provedor de cobrança. Por
     // isso a navegação é uma troca de endereço de verdade (location.assign) e
     // não router.push: o destino é outro domínio.
-    async function irParaPagamento(plano: "base" | "pro" = "base") {
+    async function irParaPagamento(plano: "inicial" | "base" | "pro" = "base") {
         setErro("")
-        setEnviando(plano === "pro" ? "pro" : "assinar")
+        setEnviando(plano === "pro" ? "pro" : plano === "inicial" ? "inicial" : "assinar")
 
         try {
             irParaPaginaExterna(await iniciarPagamento(plano))
@@ -109,9 +112,9 @@ export default function AssinaturaPage() {
      * recarregar o lojista pagaria o Pro e continuaria vendo "Minhas lojas"
      * em cinza.
      */
-    async function mudarDePlano(plano: "base" | "pro") {
+    async function mudarDePlano(plano: "inicial" | "base" | "pro") {
         setErro("")
-        setEnviando(plano === "pro" ? "pro" : "assinar")
+        setEnviando(plano === "pro" ? "pro" : plano === "inicial" ? "inicial" : "assinar")
 
         try {
             await trocarDePlano(plano)
@@ -187,7 +190,7 @@ export default function AssinaturaPage() {
 
                         <p className="mt-1 text-sm text-[var(--ink-2)]">
                             {emTeste
-                                ? "Seu teste está valendo: o painel abre inteiro e nada foi cobrado até aqui."
+                                ? "Seus dias grátis estão valendo: o painel abre inteiro e nada foi cobrado até aqui."
                                 : liberada
                                     ? "Seu painel está liberado."
                                     : "Seu painel está bloqueado até o pagamento ser confirmado."}
@@ -212,7 +215,7 @@ export default function AssinaturaPage() {
                             vencida que ele tinha o mês inteiro pago. */}
                         {emCobranca && assinatura?.periodo_fim_em && (
                             <p className="mt-1 text-sm text-[var(--ink-2)]">
-                                {emTeste ? "Teste até" : "Próxima cobrança em"}{" "}
+                                {emTeste ? "Grátis até" : "Próxima cobrança em"}{" "}
                                 <strong className="text-[var(--ink)]">
                                     {formatarData(assinatura.periodo_fim_em)}
                                 </strong>
@@ -294,11 +297,75 @@ export default function AssinaturaPage() {
 
                     <h2 className="font-display text-lg text-[var(--ink)]">
                         {emTeste
-                            ? "Continuar depois do teste"
+                            ? "Continuar depois dos dias grátis"
                             : liberada
                                 ? "A sua assinatura"
                                 : "Assine para liberar o painel"}
                     </h2>
+
+                    {/* O INICIAL
+                        Mesma regra do Pro abaixo: só existe quando este
+                        servidor tem o preço configurado. Vem ANTES do base
+                        na tela porque é o degrau mais barato dos três. */}
+                    {oferta.inicial && (
+                        <article className="card mt-4 flex flex-col p-6">
+
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="font-display text-lg text-[var(--ink)]">
+                                    {oferta.nome} Inicial
+                                </p>
+
+                                {noInicial && (
+                                    <span className="shrink-0 tag tag-success">seu plano</span>
+                                )}
+                            </div>
+
+                            <p className="mt-1 text-sm text-[var(--ink-2)]">
+                                O degrau de entrada: pedidos, início, cadastro de produto,
+                                produtos, seu site e as configurações da loja.
+                            </p>
+
+                            <div className="mt-4 flex items-baseline gap-1.5 border-b border-[var(--linha-suave)] pb-5">
+                                <span className="font-display text-3xl text-[var(--ink)]">
+                                    {formatarPreco(oferta.inicial.preco)}
+                                </span>
+                                <span className="text-sm font-bold text-[var(--ink-2)]">/mês</span>
+                            </div>
+
+                            <ul className="mt-5 mb-6 grid gap-2 sm:grid-cols-2">
+                                {oferta.inicial.recursos.map((item) => (
+                                    <li
+                                        key={item}
+                                        className="flex items-start gap-2 text-sm text-[var(--ink)]"
+                                    >
+                                        <FiCheck className="mt-0.5 w-4 shrink-0 text-[var(--verde)]" aria-hidden />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            {noInicial ? (
+                                <p className="mt-auto rounded-lg bg-[var(--fundo)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-2)]">
+                                    Você já está no Inicial
+                                </p>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => (liberada ? mudarDePlano("inicial") : irParaPagamento("inicial"))}
+                                    disabled={enviando !== ""}
+                                    className="btn btn-neutro mt-auto w-full items-center justify-center gap-2"
+                                >
+                                    <FiCreditCard className="w-4" aria-hidden />
+                                    {enviando !== ""
+                                        ? liberada ? "Trocando de plano..." : "Abrindo pagamento..."
+                                        : liberada
+                                            ? "Mudar para o Inicial"
+                                            : "Assinar o Inicial"}
+                                </button>
+                            )}
+
+                        </article>
+                    )}
 
                     <article className="card mt-4 flex flex-col p-6">
 
@@ -309,7 +376,7 @@ export default function AssinaturaPage() {
 
                             {liberada && (
                                 <span className={`shrink-0 tag ${emTeste ? "tag-info" : "tag-success"}`}>
-                                    {emTeste ? "em teste" : "ativa"}
+                                    {emTeste ? "dias grátis" : "ativa"}
                                 </span>
                             )}
                         </div>
@@ -337,10 +404,23 @@ export default function AssinaturaPage() {
                             ))}
                         </ul>
 
-                        {liberada && !emTeste ? (
+                        {liberada && !emTeste && !noInicial ? (
                             <p className="mt-auto rounded-lg bg-[var(--fundo)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-2)]">
                                 Você já tem tudo isso liberado
                             </p>
+                        ) : noInicial ? (
+                            /* Está no Inicial: este cartão é upgrade, e não
+                               assinatura nova — a mesma troca de item da
+                               assinatura que existe, faturada na hora. */
+                            <button
+                                type="button"
+                                onClick={() => mudarDePlano("base")}
+                                disabled={enviando !== ""}
+                                className="btn btn-primario mt-auto w-full items-center justify-center gap-2"
+                            >
+                                <FiArrowUpRight className="w-4" aria-hidden />
+                                {enviando !== "" ? "Trocando de plano..." : "Mudar para o Base"}
+                            </button>
                         ) : (
                             /* Em teste o caminho é o portal, e não um checkout
                                novo: a assinatura JÁ existe (é ela que está

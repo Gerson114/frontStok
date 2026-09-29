@@ -51,7 +51,7 @@ export function formatarCentavos(centavos: number, moeda?: string): string {
  * backend, para o navegador não ter como assinar por um valor que não é o
  * nosso. Sem argumento é o base.
  */
-export async function iniciarPagamento(plano: "base" | "pro" = "base"): Promise<string> {
+export async function iniciarPagamento(plano: "inicial" | "base" | "pro" = "base"): Promise<string> {
     const dados = await apiFetch<RespostaLink>("/api/assinatura/checkout", {
         method: "POST",
         body: { plano },
@@ -71,7 +71,7 @@ export async function iniciarPagamento(plano: "base" | "pro" = "base"): Promise<
  * painel vem do servidor já resolvido para o plano, e o que está em memória
  * continuaria mostrando as telas do Pro bloqueadas.
  */
-export async function trocarDePlano(plano: "base" | "pro"): Promise<void> {
+export async function trocarDePlano(plano: "inicial" | "base" | "pro"): Promise<void> {
     await apiFetch("/api/assinatura/plano", {
         method: "POST",
         body: { plano },
@@ -98,6 +98,8 @@ export async function consultarOferta(): Promise<{
     tem_assinatura: boolean
     /** Esta loja já está no Pro? Decide se o cartão dele oferece assinar. */
     plano_pro?: boolean
+    /** Esta loja já está no Inicial? Mesma regra do plano_pro, um degrau abaixo. */
+    plano_inicial?: boolean
     oferta: Oferta
 }> {
     return apiFetch("/api/assinatura/oferta")

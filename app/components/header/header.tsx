@@ -901,17 +901,17 @@ export default function Sidebar() {
      * único lugar que sabe se o menu está aberto: sem isso, recolhê-lo
      * deixaria 15rem de papel vazio em toda tela do painel.
      *
-     * O trilho (--trilho, 6rem) fica sempre, dentro e fora da conversa da
+     * O trilho (--trilho, 7rem) fica sempre, dentro e fora da conversa da
      * equipe — só o acordeão ao lado dele recolhe, e vira uma tira de
-     * 2.5rem para reabrir. 23.5rem = trilho + acordeão; 8.5rem = trilho +
-     * tira. A conversa não lê esta variável (o `ml-[23.5rem]` dela é escrito
+     * 2.5rem para reabrir. 24.5rem = trilho + acordeão; 9.5rem = trilho +
+     * tira. A conversa não lê esta variável (o `ml-[24.5rem]` dela é escrito
      * à mão, ver page/equipe/page.tsx), então noChat não entra aqui — quem
      * mexer numa medida tem de mexer na outra. */
     useEffect(() => {
 
         if (!noPainel) return
 
-        document.documentElement.style.setProperty("--menu", painelRecolhido ? "8.5rem" : "23.5rem")
+        document.documentElement.style.setProperty("--menu", painelRecolhido ? "9.5rem" : "24.5rem")
 
         return () => {
             document.documentElement.style.removeProperty("--menu")
@@ -1324,7 +1324,7 @@ export default function Sidebar() {
                     dançar conforme o tamanho de cada palavra. */}
                 {esperando > 0 && (
                     <span
-                        className="num ml-auto shrink-0 rounded-full bg-[var(--vermelho-forte)] px-1.5 text-[0.6875rem] font-bold leading-[1.05rem] text-white"
+                        className="num ml-auto shrink-0 rounded-full bg-[var(--vermelho-forte)] px-1.5 text-[0.75rem] font-bold leading-[1.2rem] text-white"
                         aria-label={`${esperando} esperando`}
                     >
                         {esperando > 99 ? "99+" : esperando}
@@ -1472,7 +1472,7 @@ export default function Sidebar() {
 
                                 {!abertaAqui && esperandoNaArea > 0 && (
                                     <span
-                                        className="num shrink-0 rounded-full bg-[var(--vermelho-forte)] px-1.5 text-[0.6875rem] font-bold leading-[1.05rem] text-white"
+                                        className="num shrink-0 rounded-full bg-[var(--vermelho-forte)] px-1.5 text-[0.75rem] font-bold leading-[1.2rem] text-white"
                                         aria-label={`${esperandoNaArea} esperando nesta área`}
                                     >
                                         {esperandoNaArea > 99 ? "99+" : esperandoNaArea}
@@ -1525,7 +1525,7 @@ export default function Sidebar() {
                            branco, só a cor do texto é pouco para achar a posição
                            de relance, e a barrinha na borda esquerda é fina
                            demais para ser o único sinal. */
-                        className={`group relative flex flex-col items-center gap-2 rounded-md px-1 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--topo-ativo)] ${
+                        className={`group relative flex flex-col items-center gap-2 rounded-lg px-1.5 py-3.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--topo-ativo)] ${
                             aqui
                                 ? "bg-[var(--azul-suave)]"
                                 : "hover:bg-[var(--topo-hover)] focus-visible:bg-[var(--topo-hover)]"
@@ -1538,19 +1538,19 @@ export default function Sidebar() {
                             />
                         )}
 
-                        <span className="relative flex h-6 w-6 items-center justify-center">
-                            <Icone className={`w-[1.3rem] ${aqui ? "text-[var(--topo-ativo)]" : "text-[var(--topo-texto)]"}`} aria-hidden />
+                        <span className="relative flex h-8 w-8 items-center justify-center">
+                            <Icone className={`w-[1.6rem] ${aqui ? "text-[var(--topo-ativo)]" : "text-[var(--topo-texto)]"}`} aria-hidden />
 
                             {!item.liberado ? (
-                                <FiLock className="absolute -right-1.5 -top-1.5 w-3 rounded-full bg-[var(--topo)] p-px text-[var(--topo-texto)]" aria-hidden />
+                                <FiLock className="absolute -right-1.5 -top-1.5 w-3.5 rounded-full bg-[var(--topo)] p-0.5 text-[var(--topo-texto)]" aria-hidden />
                             ) : esperando > 0 ? (
-                                <span className="num absolute -right-1.5 -top-1.5 min-w-[0.9rem] rounded-full border border-[var(--topo)] bg-[var(--vermelho-forte)] px-0.5 text-center text-[0.5rem] font-bold leading-[0.85rem] text-white">
+                                <span className="num absolute -right-2 -top-2 min-w-[1.15rem] rounded-full border-2 border-[var(--topo)] bg-[var(--vermelho-forte)] px-1 text-center text-[0.6875rem] font-bold leading-[1.1rem] text-white shadow-sm">
                                     {esperando > 99 ? "99+" : esperando}
                                 </span>
                             ) : null}
                         </span>
 
-                        <span className={`text-[0.6875rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-[var(--topo-ativo)]" : "font-medium text-[var(--topo-texto)]"}`}>
+                        <span className={`text-[0.75rem] leading-tight tracking-[0.01em] ${aqui ? "font-bold text-[var(--topo-ativo)]" : "font-medium text-[var(--topo-texto)]"}`}>
                             {ROTULO_CURTO_DO_TRILHO[item.chave] ?? item.nome}
                         </span>
 
@@ -1918,10 +1918,10 @@ export default function Sidebar() {
                             }
                             className="relative p-2 text-[var(--ink-2)] transition-colors hover:bg-[var(--fundo)] hover:text-[var(--ink)]"
                         >
-                            <FiBell className="w-5" aria-hidden />
+                            <FiBell className="w-[1.375rem]" aria-hidden />
 
                             {novidades.total > 0 && (
-                                <span className="num absolute -right-0.5 -top-0.5 min-w-[1.05rem] rounded-full bg-[var(--vermelho-forte)] px-1 text-center text-[0.625rem] font-bold leading-[1.05rem] text-white">
+                                <span className="num absolute -right-1 -top-1 min-w-[1.3rem] rounded-full border-2 border-[var(--superficie)] bg-[var(--vermelho-forte)] px-1 text-center text-[0.6875rem] font-bold leading-[1.15rem] text-white shadow-sm">
                                     {novidades.total > 99 ? "99+" : novidades.total}
                                 </span>
                             )}

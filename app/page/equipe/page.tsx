@@ -463,7 +463,7 @@ export default function ConversaDaEquipe() {
                 aoFecharMenu={() => setSalaMenuAberta(false)}
             />
 
-            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[23.5rem] md:px-6">
+            <main className="flex h-[calc(100dvh-3.5rem)] flex-col bg-[var(--fundo)] px-4 pb-4 pt-4 md:ml-[24.5rem] md:px-6">
 
 
                 {/* A faixa do celular: sem a coluna de salas ao lado (ela só
