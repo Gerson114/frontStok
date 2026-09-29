@@ -5,14 +5,12 @@ import {
     FiArrowRight,
     FiClock,
     FiCornerUpLeft,
-    FiInfo,
     FiMapPin,
     FiMessageSquare,
     FiPackage,
     FiShoppingBag,
     FiShoppingCart,
     FiClipboard,
-    FiBarChart2,
     FiDollarSign,
     FiTrendingDown,
     FiTrendingUp,
@@ -47,28 +45,6 @@ import { tituloDaAba } from "@/app/marca"
 export const metadata = {
     title: tituloDaAba("Início"),
 }
-
-/** As três telas que descem do início, com o que cada uma responde. */
-const PAINEIS: { rota: string; titulo: string; descricao: string; Icone: IconType }[] = [
-    {
-        rota: "/page/inicio/produtos",
-        titulo: "Mercadoria",
-        descricao: "O que chegou, o que saiu e o que está parado na prateleira.",
-        Icone: FiBarChart2,
-    },
-    {
-        rota: "/page/inicio/equipe",
-        titulo: "Equipe em números",
-        descricao: "Quem vendeu, quem atendeu e quem fechou tarefa do estoque.",
-        Icone: FiUsers,
-    },
-    {
-        rota: "/page/inicio/entregas",
-        titulo: "Expedição",
-        descricao: "Quantos vieram buscar, quantos foram enviados e o que atrasou.",
-        Icone: FiTruck,
-    },
-]
 
 /** O dinheiro escrito como gente lê. */
 function moeda(valor: number): string {
@@ -314,54 +290,6 @@ export default async function Inicio() {
             <div className="card grid grid-cols-1 divide-[var(--linha-suave)] sm:grid-cols-2 sm:divide-x">
                 <Numero periodo={dia} rotulo="Hoje" />
                 <Numero periodo={mes} rotulo="Este mês" />
-            </div>
-
-            {!mes.custo_conhecido && mes.pecas > 0 && (
-                <p className="flex items-start gap-2.5 rounded-lg border-l-2 border-[var(--amarelo-forte)] bg-[var(--amarelo-fundo)] px-4 py-3 text-sm text-[var(--amarelo)]">
-                    <FiInfo className="mt-0.5 w-4 shrink-0" aria-hidden />
-                    <span>
-                        Parte das unidades vendidas neste mês saiu sem custo gravado, então a
-                        margem acima está maior do que a real. O custo entra em{" "}
-                        <Link href="/page/estoque/inserir" className="font-semibold text-[var(--azul)] hover:underline">
-                            Entrada de mercadoria
-                        </Link>
-                        , e vale para as unidades que entrarem daqui em diante.
-                    </span>
-                </p>
-            )}
-
-            {/* ==========================
-                OS PAINÉIS POR ASSUNTO
-
-                Três portas, logo abaixo do dinheiro: esta tela responde "como
-                foi", e cada uma delas responde um "por quê" que não cabe aqui
-                sem virar rolagem infinita. Ficam à vista porque menu lateral
-                não é lugar de descobrir tela nova — é lugar de voltar a ela.
-            ========================== */}
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {PAINEIS.map((painel) => (
-                    <Link
-                        key={painel.rota}
-                        href={painel.rota}
-                        className="card flex items-start gap-3 p-4 transition-colors hover:border-[var(--ink-4)]"
-                    >
-                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--azul-suave)] text-[var(--azul-escuro)]">
-                            <painel.Icone className="w-4" aria-hidden />
-                        </span>
-
-                        <span className="min-w-0">
-                            <span className="block text-sm font-semibold text-[var(--ink)]">
-                                {painel.titulo}
-                            </span>
-                            <span className="mt-0.5 block text-xs leading-relaxed text-[var(--ink-2)]">
-                                {painel.descricao}
-                            </span>
-                        </span>
-
-                        <FiArrowRight className="ml-auto mt-1 w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
-                    </Link>
-                ))}
             </div>
 
             {/* ==========================

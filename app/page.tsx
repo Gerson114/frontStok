@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Fraunces } from "next/font/google"
 import Link from "next/link"
 import { url } from "@/app/api/backend"
 import { publico } from "@/app/api/rotas"
@@ -36,24 +35,6 @@ import {
 } from "react-icons/fi"
 import type { IconType } from "react-icons"
 import { MARCA, MARCA_PRO } from "@/app/marca"
-
-/**
- * A serifada dos títulos da porta de entrada — só dela, e não do painel.
- *
- * O painel inteiro usa a Inter (ver RootLayout, em app/layout.tsx): olho
- * neutro, dígito de largura fixa, o que uma tela lida oito horas por dia
- * pede. A página de vendas não é lida oito horas por dia — é lida uma vez,
- * por alguém decidindo se confia no sistema —, e o título em serifada é o
- * primeiro sinal de que esta tela tem outra temperatura, mais perto do
- * "papel de ficha" da paleta do que da tela de conferência de estoque.
- * O corpo do texto continua na Inter; só o `.font-display` muda aqui
- * (ver `.pagina-entrada .font-display`, em globals.css).
- */
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  weight: ["500", "600"],
-})
 
 export const metadata: Metadata = {
   title: `${MARCA} | Estoque, vitrine e vendas para lojas de qualquer ramo`,
@@ -564,7 +545,7 @@ export default async function Home() {
     : []
 
   return (
-    <div className={`${fraunces.variable} pagina-entrada min-h-screen bg-white`}>
+    <div className="pagina-entrada min-h-screen bg-white">
 
       <Topo />
 

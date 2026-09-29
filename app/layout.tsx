@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Fraunces } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import Sidebar from "./components/header/header";
@@ -22,6 +22,16 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+});
+
+// A Fraunces (a serifada usada nos títulos da porta de entrada) carregada
+// aqui também, para que `.font-display` valha em qualquer tela do painel —
+// e não só dentro de `.pagina-entrada` (ver `.font-display`, em
+// globals.css). O corpo do texto continua na Inter acima.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -67,7 +77,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />

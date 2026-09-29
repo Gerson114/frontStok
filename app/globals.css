@@ -400,21 +400,11 @@
    silenciosamente não valeria. */
 @layer components {
 
-/* Títulos. Peso 600 e tracking levemente negativo, como o Polaris — o
-   painel do Shopify não passa de semibold em lugar nenhum, porque texto
-   preto e pesado numa tela cheia de dados vira ruído.
-   Mantém o nome `.font-display` para não precisar reescrever as centenas
-   de chamadas espalhadas pelas páginas. */
+/* Títulos, em toda tela do sistema — painel e porta de entrada. Fraunces
+   serifada no lugar da Inter: o corpo do texto continua na Inter (ver
+   `body`, acima); só o título muda. Mantém o nome `.font-display` para não
+   precisar reescrever as centenas de chamadas espalhadas pelas páginas. */
 .font-display {
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 650;
-  letter-spacing: -0.012em;
-}
-
-/* A porta de entrada (`.pagina-entrada`, em page.tsx) troca só os títulos
-   para a Fraunces — o resto do sistema continua na Inter acima. Ganha da
-   regra geral por vir depois na mesma camada e ser mais específica. */
-.pagina-entrada .font-display {
   font-family: var(--font-fraunces), ui-serif, Georgia, serif;
   font-weight: 600;
   letter-spacing: -0.006em;
@@ -424,7 +414,7 @@
    retratam o painel de verdade, que continua na Inter — trocar a fonte
    delas também deixaria o retrato diferente do sistema que ele promete
    mostrar. Ganha da regra acima por vir depois e ser mais específica. */
-.pagina-entrada .mockup .font-display {
+.mockup .font-display {
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   font-weight: 650;
   letter-spacing: -0.012em;

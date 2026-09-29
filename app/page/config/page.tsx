@@ -13,6 +13,7 @@ import {
     FiDollarSign,
     FiGlobe,
     FiPackage,
+    FiSearch,
     FiShoppingBag,
     FiTruck,
     FiUsers,
@@ -182,6 +183,10 @@ function Configuracoes() {
     const [erro, setErro] = useState("")
     const [aviso, setAviso] = useState("")
 
+    // A busca do índice, contra o título e a linha de cada cartão — é o que
+    // resolve "sei o que quero mudar, não sei em qual dos doze cartões está".
+    const [busca, setBusca] = useState("")
+
     // O som fica fora de `config` de propósito — é preferência deste
     // navegador, não da loja (ver app/somNotificacao.ts). `useSyncExternalStore`
     // é o que resolve os dois problemas do `localStorage` de uma vez: ele não
@@ -308,6 +313,25 @@ function Configuracoes() {
        O ÍNDICE
        ================================================================ */
     if (!aberto) {
+
+        // Sem acento, sem caixa: quem procura "prazo" acha "Prazo padrão de
+        // entrega" mesmo digitando "prazo" ou "PRAZO", e sem precisar acertar
+        // o "ã".
+        const normalizar = (texto: string) =>
+            texto
+                .normalize("NFD")
+                .replace(/[̀-ͯ]/g, "")
+                .toLowerCase()
+
+        const termo = normalizar(busca.trim())
+
+        const bate = (titulo: string, linha: string) =>
+            termo === "" || normalizar(`${titulo} ${linha}`).includes(termo)
+
+        const gruposEncontrados = GRUPOS.filter((grupo) => bate(grupo.titulo, grupo.linha))
+        const atalhosEncontrados = ATALHOS.filter((atalho) => bate(atalho.titulo, atalho.linha))
+        const semResultado = termo !== "" && gruposEncontrados.length === 0 && atalhosEncontrados.length === 0
+
         return (
             <Pagina
                 titulo="Configurações"
@@ -315,17 +339,44 @@ function Configuracoes() {
             >
                 {erro && <Alerta tipo="erro">{erro}</Alerta>}
 
+                {/* A busca existe para uma pergunta só: "sei o que eu quero
+                    mudar, não sei em qual destes doze cartões está". Filtra
+                    os dois blocos de uma vez, pelo título e pela linha de
+                    cada cartão. */}
+                <label className="relative block max-w-sm">
+                    <FiSearch
+                        className="pointer-events-none absolute left-3 top-1/2 w-4 -translate-y-1/2 text-[var(--ink-3)]"
+                        aria-hidden
+                    />
+                    <input
+                        type="search"
+                        value={busca}
+                        onChange={(e) => setBusca(e.target.value)}
+                        placeholder="Buscar um ajuste — ex: prazo, entrada, som"
+                        aria-label="Buscar um ajuste"
+                        className="field w-full pl-9"
+                    />
+                </label>
+
+                {semResultado ? (
+                    <p className="text-sm text-[var(--ink-2)]">
+                        Nenhum ajuste bate com “{busca}”.
+                    </p>
+                ) : (
+                    <>
                 {/* Os dois blocos precisam do mesmo peso de título. O de baixo
                     tinha um e o de cima não, e a lista de cima parecia o
                     conteúdo da página enquanto a de baixo parecia um anexo —
                     quando as duas são a mesma coisa: lugares onde se ajusta a
                     loja. */}
+                {gruposEncontrados.length > 0 && (
+                <>
                 <h2 className="font-display mb-3 text-sm text-[var(--ink)]">
                     Ajustes desta loja
                 </h2>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {GRUPOS.map((grupo) => (
+                    {gruposEncontrados.map((grupo) => (
                         <button
                             key={grupo.id}
                             type="button"
@@ -363,14 +414,17 @@ function Configuracoes() {
                         </button>
                     ))}
                 </div>
+                </>
+                )}
 
+                {atalhosEncontrados.length > 0 && (
                 <div>
                     <h2 className="font-display mb-3 mt-2 text-sm text-[var(--ink)]">
                         Tem tela própria
                     </h2>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {ATALHOS.map((atalho) => (
+                        {atalhosEncontrados.map((atalho) => (
                             <Link
                                 key={atalho.rota}
                                 href={atalho.rota}
@@ -395,6 +449,9 @@ function Configuracoes() {
                         ))}
                     </div>
                 </div>
+                )}
+                </>
+                )}
             </Pagina>
         )
     }
