@@ -3,23 +3,12 @@ import { extrairMensagemErro } from "@/middleware/client"
 import { cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
-
-// POST /api/assinatura/checkout — abre a sessão de pagamento e devolve a URL
-// hospedada pelo provedor de cobrança para onde o lojista deve ser levado.
+// POST /api/assinatura/plano/previa — o que TrocarPlano cobraria agora, sem
+// cobrar nada.
 //
-// Do corpo passa adiante apenas QUAL PLANO ("inicial", "base" ou "pro"). O
-// preço de cada um vive na configuração do backend, então o navegador escolhe
-// entre nomes e nunca um valor — mandar price_... daqui seria deixar qualquer
-// um assinar pelo que quisesse.
-//
-// Nenhum dado de cartão passa por aqui, nem pelo backend: o lojista digita o
-// cartão numa página do provedor. É isso que mantém este sistema fora do
-// escopo pesado do PCI-DSS — número de cartão e CVV nunca tocam a nossa
-// infraestrutura.
-//
-// Qual loja está sendo cobrada é decidido no backend a partir do token, não
-// do corpo desta requisição, então não há nada aqui que o navegador possa
-// forjar.
+// Existe para a tela avisar antes: subir de plano fatura na hora (ver o
+// comentário sobre prorrateio em services/assinatura/plano.go), e sem este
+// aviso o lojista só descobre isso na fatura.
 
 export async function POST(request: Request) {
     try {
@@ -30,13 +19,10 @@ export async function POST(request: Request) {
             return Response.json({ erro: "Não autenticado" }, { status: 401 })
         }
 
-        // Só o nome do plano atravessa, e nada mais: um corpo repassado
-        // inteiro deixaria o navegador acrescentar campos que o backend um dia
-        // passe a ler.
         const pedido = safeParse(await request.text()) as { plano?: unknown } | null
         const plano = pedido?.plano === "pro" ? "pro" : pedido?.plano === "inicial" ? "inicial" : "base"
 
-        const response = await fetch(url(conta.checkout()), {
+        const response = await fetch(url(conta.planoPrevia()), {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -49,15 +35,16 @@ export async function POST(request: Request) {
         })
 
         const texto = await response.text()
+        const corpo = safeParse(texto)
 
         if (!response.ok) {
             return Response.json(
-                { erro: extrairMensagemErro(safeParse(texto)) },
+                { erro: extrairMensagemErro(corpo) },
                 { status: response.status }
             )
         }
 
-        return Response.json(safeParse(texto) ?? {}, {
+        return Response.json(corpo ?? {}, {
             status: 200,
             headers: { "Cache-Control": "no-store" },
         })

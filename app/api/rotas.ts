@@ -103,6 +103,9 @@ export const conta = {
     /** Trocar o plano de quem já assina — base para Pro, ou de volta. */
     plano: () => "/private/assinatura/plano",
 
+    /** Prévia da troca acima: o que ela cobraria, sem cobrar nada. */
+    planoPrevia: () => "/private/assinatura/plano/previa",
+
     loja: () => "/private/loja",
     tema: () => "/private/loja/tema",
 

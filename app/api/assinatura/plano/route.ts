@@ -11,9 +11,10 @@ import { conta } from "@/app/api/rotas"
 // assinatura recebe 409 com `usar_checkout`, e é a tela que decide o que
 // dizer.
 //
-// Do corpo só atravessa o nome do plano ("base" ou "pro"). O preço de cada um
-// vive na configuração do backend — o navegador nunca manda valor nem
-// price_..., senão bastaria editá-lo aqui para assinar o Pro pagando o base.
+// Do corpo só atravessa o nome do plano ("inicial", "base" ou "pro"). O preço
+// de cada um vive na configuração do backend — o navegador nunca manda valor
+// nem price_..., senão bastaria editá-lo aqui para assinar o Pro pagando o
+// base.
 //
 // Qual loja está sendo cobrada sai do token no backend, não daqui.
 
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
         }
 
         const pedido = safeParse(await request.text()) as { plano?: unknown } | null
-        const plano = pedido?.plano === "pro" ? "pro" : "base"
+        const plano = pedido?.plano === "pro" ? "pro" : pedido?.plano === "inicial" ? "inicial" : "base"
 
         const response = await fetch(url(conta.plano()), {
             method: "POST",

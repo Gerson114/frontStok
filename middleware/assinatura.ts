@@ -78,6 +78,31 @@ export async function trocarDePlano(plano: "inicial" | "base" | "pro"): Promise<
     })
 }
 
+/** O que `trocarDePlano` cobraria agora, sem cobrar nada. */
+export interface PreviaTrocaDePlano {
+    plano: string
+    /** Falso quando é descida: nada é cobrado agora, só no próximo ciclo. */
+    subida: boolean
+    /** Em reais, já dividido — 0 quando `subida` é falso. */
+    cobra_agora: number
+    moeda?: string
+    /** Frase pronta para mostrar ao lojista antes de ele confirmar. */
+    mensagem: string
+}
+
+/**
+ * Pergunta o que trocar de plano custaria AGORA, antes de cobrar de verdade.
+ *
+ * Existe para a tela avisar antes da subida faturar na hora — sem isso o
+ * lojista só descobre o valor quando a fatura já chegou.
+ */
+export async function previewTrocarPlano(plano: "inicial" | "base" | "pro"): Promise<PreviaTrocaDePlano> {
+    return apiFetch<PreviaTrocaDePlano>("/api/assinatura/plano/previa", {
+        method: "POST",
+        body: { plano },
+    })
+}
+
 /**
  * Devolve a URL do portal de cobrança, onde o lojista troca o cartão, vê as
  * faturas e cancela a assinatura sozinho.

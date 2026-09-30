@@ -9,6 +9,7 @@ import {
     formatarData,
     formatarPreco,
     iniciarPagamento,
+    previewTrocarPlano,
     trocarDePlano,
 } from "@/middleware/assinatura"
 import type { Assinatura, Oferta } from "@/app/type/type"
@@ -39,6 +40,14 @@ export default function AssinaturaPage() {
     const [carregando, setCarregando] = useState(true)
     const [enviando, setEnviando] = useState<"" | "portal" | "assinar" | "pro" | "inicial">("")
     const [erro, setErro] = useState("")
+
+    // Prévia de uma troca de plano em andamento: fica aberta até o lojista
+    // confirmar ou desistir. Subir de plano cobra na hora (ver
+    // PreviewTrocarPlano no backend), e é isto que avisa antes de cobrar.
+    const [previa, setPrevia] = useState<{
+        plano: "inicial" | "base" | "pro"
+        mensagem: string
+    } | null>(null)
 
     // Contador de recargas: mexer nele é o que dispara o efeito de novo,
     // no lugar de chamar a busca direto do botão. Assim toda a escrita de
@@ -105,6 +114,32 @@ export default function AssinaturaPage() {
     }
 
     /**
+     * Primeiro passo de trocar de plano: pergunta ao backend o que a troca
+     * cobraria agora. Descida não cobra nada — troca direto, sem perguntar.
+     * Subida abre a prévia, e só troca de verdade quando o lojista confirmar
+     * em `confirmarTrocaDePlano`.
+     */
+    async function pedirTrocaDePlano(plano: "inicial" | "base" | "pro") {
+        setErro("")
+        setEnviando(plano === "pro" ? "pro" : plano === "inicial" ? "inicial" : "assinar")
+
+        try {
+            const resultado = await previewTrocarPlano(plano)
+
+            if (!resultado.subida) {
+                await confirmarTrocaDePlano(plano)
+                return
+            }
+
+            setPrevia({ plano, mensagem: resultado.mensagem })
+            setEnviando("")
+        } catch (e) {
+            setErro(e instanceof Error ? e.message : "Não foi possível calcular a troca de plano")
+            setEnviando("")
+        }
+    }
+
+    /**
      * Troca o plano de quem já assina, e recarrega a página inteira.
      *
      * O reload é de verdade (location.reload) e não um re-render: o menu do
@@ -112,8 +147,9 @@ export default function AssinaturaPage() {
      * recarregar o lojista pagaria o Pro e continuaria vendo "Minhas lojas"
      * em cinza.
      */
-    async function mudarDePlano(plano: "inicial" | "base" | "pro") {
+    async function confirmarTrocaDePlano(plano: "inicial" | "base" | "pro") {
         setErro("")
+        setPrevia(null)
         setEnviando(plano === "pro" ? "pro" : plano === "inicial" ? "inicial" : "assinar")
 
         try {
@@ -303,12 +339,23 @@ export default function AssinaturaPage() {
                                 : "Assine para liberar o painel"}
                     </h2>
 
+                    {/* Grade dos planos: lado a lado a partir da tela média,
+                        empilhados no celular. O plano atual ganha um contorno
+                        verde, para o lojista achar de relance onde está — em
+                        vez de ler os três cartões procurando a etiqueta "seu
+                        plano". */}
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:items-start">
+
                     {/* O INICIAL
                         Mesma regra do Pro abaixo: só existe quando este
                         servidor tem o preço configurado. Vem ANTES do base
                         na tela porque é o degrau mais barato dos três. */}
                     {oferta.inicial && (
-                        <article className="card mt-4 flex flex-col p-6">
+                        <article
+                            className={`card flex h-full flex-col p-6 ${
+                                noInicial ? "ring-2 ring-[var(--verde)]" : ""
+                            }`}
+                        >
 
                             <div className="flex items-start justify-between gap-2">
                                 <p className="font-display text-lg text-[var(--ink)]">
@@ -351,7 +398,7 @@ export default function AssinaturaPage() {
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => (liberada ? mudarDePlano("inicial") : irParaPagamento("inicial"))}
+                                    onClick={() => (liberada ? pedirTrocaDePlano("inicial") : irParaPagamento("inicial"))}
                                     disabled={enviando !== ""}
                                     className="btn btn-neutro mt-auto w-full items-center justify-center gap-2"
                                 >
@@ -367,14 +414,18 @@ export default function AssinaturaPage() {
                         </article>
                     )}
 
-                    <article className="card mt-4 flex flex-col p-6">
+                    <article
+                        className={`card flex h-full flex-col p-6 ${
+                            liberada && !noInicial && !noPro ? "ring-2 ring-[var(--verde)]" : ""
+                        }`}
+                    >
 
                         <div className="flex items-start justify-between gap-2">
                             <p className="font-display text-lg text-[var(--ink)]">
                                 {oferta.nome}
                             </p>
 
-                            {liberada && (
+                            {liberada && !noInicial && !noPro && (
                                 <span className={`shrink-0 tag ${emTeste ? "tag-info" : "tag-success"}`}>
                                     {emTeste ? "dias grátis" : "ativa"}
                                 </span>
@@ -404,7 +455,24 @@ export default function AssinaturaPage() {
                             ))}
                         </ul>
 
-                        {liberada && !emTeste && !noInicial ? (
+                        {noPro ? (
+                            /* Está no Pro: este cartão é descida — a mesma
+                               troca de item da assinatura que existe, sem
+                               cobrar nada agora (a diferença some no ciclo
+                               seguinte, ver TrocarPlano). Sem este botão o
+                               lojista no Pro não tinha como voltar ao Base
+                               pelo painel: o portal de cobrança tem a troca
+                               de plano desligada de propósito. */
+                            <button
+                                type="button"
+                                onClick={() => pedirTrocaDePlano("base")}
+                                disabled={enviando !== ""}
+                                className="btn btn-secundario mt-auto w-full items-center justify-center gap-2"
+                            >
+                                <FiCreditCard className="w-4" aria-hidden />
+                                {enviando !== "" ? "Trocando de plano..." : "Mudar para o Base"}
+                            </button>
+                        ) : liberada && !emTeste && !noInicial ? (
                             <p className="mt-auto rounded-lg bg-[var(--fundo)] px-4 py-3 text-center text-sm font-semibold text-[var(--ink-2)]">
                                 Você já tem tudo isso liberado
                             </p>
@@ -414,7 +482,7 @@ export default function AssinaturaPage() {
                                assinatura que existe, faturada na hora. */
                             <button
                                 type="button"
-                                onClick={() => mudarDePlano("base")}
+                                onClick={() => pedirTrocaDePlano("base")}
                                 disabled={enviando !== ""}
                                 className="btn btn-primario mt-auto w-full items-center justify-center gap-2"
                             >
@@ -451,7 +519,11 @@ export default function AssinaturaPage() {
                         valor nenhum, e anunciar um plano que o checkout não
                         consegue cobrar é pior do que não anunciar. */}
                     {oferta.pro && (
-                        <article className="card mt-4 flex flex-col p-6">
+                        <article
+                            className={`card flex h-full flex-col p-6 ${
+                                noPro ? "ring-2 ring-[var(--verde)]" : ""
+                            }`}
+                        >
 
                             <div className="flex items-start justify-between gap-2">
                                 <p className="font-display text-lg text-[var(--ink)]">
@@ -508,7 +580,7 @@ export default function AssinaturaPage() {
                                    já no preço do Pro. */
                                 <button
                                     type="button"
-                                    onClick={() => (liberada ? mudarDePlano("pro") : irParaPagamento("pro"))}
+                                    onClick={() => (liberada ? pedirTrocaDePlano("pro") : irParaPagamento("pro"))}
                                     disabled={enviando !== ""}
                                     className="btn btn-neutro mt-auto w-full items-center justify-center gap-2"
                                 >
@@ -524,6 +596,8 @@ export default function AssinaturaPage() {
                         </article>
                     )}
 
+                    </div>
+
                 </section>
             )}
 
@@ -538,6 +612,54 @@ export default function AssinaturaPage() {
                         processador de cobrança e nunca passam por este sistema.
                     </span>
                 </p>
+            )}
+
+            {/* CONFIRMAÇÃO DA TROCA DE PLANO
+                Só aparece numa subida: descida não cobra nada agora e troca
+                direto (ver pedirTrocaDePlano). A mensagem vem pronta do
+                backend, com o valor exato que a fatura vai cobrar. */}
+            {previa && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    onClick={() => (enviando === "" ? setPrevia(null) : undefined)}
+                >
+                    <div className="absolute inset-0 bg-[var(--ink)]/50" />
+
+                    <div
+                        role="alertdialog"
+                        aria-modal="true"
+                        onClick={(e) => e.stopPropagation()}
+                        className="card relative w-full max-w-md p-6"
+                    >
+                        <p className="font-display text-lg text-[var(--ink)]">
+                            Confirmar troca de plano
+                        </p>
+
+                        <p className="mt-3 text-sm text-[var(--ink-2)]">
+                            {previa.mensagem}
+                        </p>
+
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+                            <button
+                                type="button"
+                                onClick={() => confirmarTrocaDePlano(previa.plano)}
+                                disabled={enviando !== ""}
+                                className="btn btn-primario flex-1 items-center justify-center"
+                            >
+                                {enviando !== "" ? "Trocando..." : "Confirmar e trocar"}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setPrevia(null)}
+                                disabled={enviando !== ""}
+                                className="btn btn-secundario flex-1 items-center justify-center"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
         </Pagina>
