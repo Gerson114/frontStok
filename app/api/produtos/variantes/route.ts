@@ -43,6 +43,16 @@ export async function POST(request: Request) {
             // corpo campo a campo: o que não é listado não chega ao servidor,
             // sem erro nenhum. Foi assim que os primeiros itens de cardápio
             // nasceram contados como mercadoria.
+
+            // O código de barras DE FÁBRICA, mandado como foi digitado: quem
+            // normaliza para a forma canônica de 14 dígitos é o backend, e
+            // normalizar aqui também criaria duas réguas para divergir.
+            //
+            // Escrito à mão aqui pelo mesmo motivo do sem_contagem acima: este
+            // handler monta o corpo campo a campo, e o que não é listado não
+            // chega ao servidor — sem erro nenhum.
+            codigo_barras: sanitizeText(String(entrada.codigo_barras ?? "")),
+
             sem_contagem: entrada.sem_contagem === true,
             variacoes: variacoesEntrada.map((item) => {
                 const registro = item as Record<string, unknown>

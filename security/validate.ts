@@ -93,6 +93,21 @@ export interface NovoProduto {
      */
     sem_contagem?: boolean
 
+
+    /**
+     * O código de barras DE FÁBRICA, o que já vem impresso na embalagem.
+     *
+     * Outra coisa que o código interno do produto: aquele é nosso, sorteado
+     * no cadastro e impresso pela própria loja; este é do fabricante e existe
+     * no mundo inteiro antes de a mercadoria chegar. É o que o caixa bipa
+     * quando a garrafa passa na esteira, sem ninguém ter etiquetado nada.
+     *
+     * Vazio é o caso comum e não é defeito: mercadoria a granel, peça de
+     * fabricação própria e confecção pequena não têm código de fábrica
+     * nenhum — essas se vendem pela etiqueta que a loja imprime.
+     */
+    codigo_barras?: string
+
     /** O "tem hoje?" de quem não conta estoque. */
     disponivel?: boolean
 }
@@ -162,6 +177,7 @@ export function validarProduto(produto: NovoProduto): string[] {
 
 
     erros.push(...validarAtributos(produto.atributos))
+    erros.push(...validarCodigoDeBarras(produto.codigo_barras))
     return erros
 }
 
@@ -191,6 +207,20 @@ export interface NovoProdutoVariantes {
     /** Onde guardar o que entrar; em branco, o servidor escolhe. */
     endereco: string
     variacoes: VariacaoProduto[]
+
+    /**
+     * O código de barras DE FÁBRICA, o que já vem impresso na embalagem.
+     *
+     * Outra coisa que o código interno do produto: aquele é nosso, sorteado
+     * no cadastro e impresso pela própria loja; este é do fabricante e existe
+     * no mundo inteiro antes de a mercadoria chegar. É o que o caixa bipa
+     * quando a garrafa passa na esteira, sem ninguém ter etiquetado nada.
+     *
+     * Vazio é o caso comum e não é defeito: mercadoria a granel, peça de
+     * fabricação própria e confecção pequena não têm código de fábrica
+     * nenhum — essas se vendem pela etiqueta que a loja imprime.
+     */
+    codigo_barras?: string
 
     /**
      * Este item NÃO é contado unidade a unidade: ele é feito quando alguém
@@ -268,6 +298,7 @@ export function validarProdutoVariantes(produto: NovoProdutoVariantes): string[]
     }
 
     erros.push(...validarAtributos(produto.atributos))
+    erros.push(...validarCodigoDeBarras(produto.codigo_barras))
 
     return erros
 }
@@ -294,6 +325,21 @@ export interface ProdutoEditavel {
      * pede (ver dto.CadastroProduto.SemContagem no servidor).
      */
     sem_contagem?: boolean
+
+
+    /**
+     * O código de barras DE FÁBRICA, o que já vem impresso na embalagem.
+     *
+     * Outra coisa que o código interno do produto: aquele é nosso, sorteado
+     * no cadastro e impresso pela própria loja; este é do fabricante e existe
+     * no mundo inteiro antes de a mercadoria chegar. É o que o caixa bipa
+     * quando a garrafa passa na esteira, sem ninguém ter etiquetado nada.
+     *
+     * Vazio é o caso comum e não é defeito: mercadoria a granel, peça de
+     * fabricação própria e confecção pequena não têm código de fábrica
+     * nenhum — essas se vendem pela etiqueta que a loja imprime.
+     */
+    codigo_barras?: string
 
     /** O "tem hoje?" de quem não conta estoque. */
     disponivel?: boolean
@@ -332,6 +378,7 @@ export function validarProdutoEditavel(produto: ProdutoEditavel): string[] {
 
 
     erros.push(...validarAtributos(produto.atributos))
+    erros.push(...validarCodigoDeBarras(produto.codigo_barras))
     return erros
 }
 
@@ -439,4 +486,80 @@ export function validarBanner(banner: NovoBanner): string[] {
     }
 
     return erros
+}
+
+/* ==========================================================================
+   O código de barras de fábrica
+   ========================================================================== */
+
+/**
+ * Confere o código de barras que o lojista digitou no cadastro.
+ *
+ * A regra é a MESMA do servidor (ver produtos.normalizarCodigoDeBarras), e
+ * está repetida aqui com um propósito específico: pegar o erro de digitação
+ * antes de a tela ser enviada, enquanto o campo ainda está na frente de quem
+ * digitou. Quem decide continua sendo o backend — ele normaliza, confere a
+ * unicidade na loja e recusa de novo.
+ *
+ * Três resultados, e o do meio é o que importa:
+ *
+ *   - VAZIO passa. A maioria dos produtos não tem código de fábrica;
+ *   - um número do TAMANHO de um código de barras com o dígito verificador
+ *     errado é recusado. Esse caso é quase sempre digitação — treze dígitos
+ *     com um trocado —, e guardá-lo seria gravar um código que nenhuma
+ *     leitura vai achar. O lojista descobriria isso no caixa, com o cliente
+ *     na frente, sem nada ligando o defeito ao que ele digitou semanas antes;
+ *   - qualquer outro texto passa. Há loja que usa o campo para o código do
+ *     fornecedor ("ABC-1234"), e recusá-lo tiraria uma coluna que funciona
+ *     para quem a usa desse jeito.
+ */
+export function validarCodigoDeBarras(bruto?: string): string[] {
+
+    const limpo = (bruto ?? "").replace(/[\s.-]/g, "")
+
+    if (limpo === "") return []
+
+    if (limpo.length > 14) {
+        return ["O código de barras deve ter até 14 caracteres."]
+    }
+
+    // Só os quatro tamanhos de GTIN entram na conta do dígito verificador. Um
+    // código de fornecedor de oito dígitos que por acaso não feche não é
+    // etiqueta errada — é outro tipo de código.
+    if (![8, 12, 13, 14].includes(limpo.length) || !/^\d+$/.test(limpo)) {
+        return []
+    }
+
+    if (!verificadorDoGTINConfere(limpo)) {
+        return [
+            `O código de barras "${bruto?.trim()}" tem ${limpo.length} dígitos mas o dígito`
+            + " verificador não fecha — confira se algum número foi digitado errado.",
+        ]
+    }
+
+    return []
+}
+
+/**
+ * A conta do dígito verificador do GS1, para GTIN de 8, 12, 13 ou 14 dígitos.
+ *
+ * Pesos 3 e 1 alternados, da DIREITA para a esquerda, começando em 3 no dígito
+ * imediatamente anterior ao verificador. Escrita da direita é o que torna o
+ * tamanho irrelevante: a versão que conta da esquerda precisa de um caso para
+ * cada tamanho, e é onde nascem os erros de paridade invertida.
+ */
+function verificadorDoGTINConfere(digitos: string): boolean {
+
+    const corpo = digitos.slice(0, -1)
+    const informado = Number(digitos.slice(-1))
+
+    let soma = 0
+    let peso = 3
+
+    for (let i = corpo.length - 1; i >= 0; i--) {
+        soma += Number(corpo[i]) * peso
+        peso ^= 2
+    }
+
+    return (10 - (soma % 10)) % 10 === informado
 }

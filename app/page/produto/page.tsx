@@ -63,6 +63,16 @@ interface FormState {
   imagem_url: string
 
   /**
+   * O código de barras de fábrica, o que já vem na embalagem.
+   *
+   * É o que o caixa bipa quando a mercadoria passa na esteira. Sem ele, o
+   * produto só é encontrado pela etiqueta que a própria loja imprime — o que
+   * serve para quem etiqueta peça a peça e não serve para quem revende
+   * mercadoria embalada.
+   */
+  codigo_barras: string
+
+  /**
    * Código da prateleira onde guardar as peças. Em branco é o caso normal: o
    * servidor escolhe, pondo o produto junto do que já existe dele ou no
    * trecho mais vazio.
@@ -76,6 +86,7 @@ const FORM_INICIAL: FormState = {
   preco: "",
   categoria: "",
   imagem_url: "",
+  codigo_barras: "",
   endereco: "",
 }
 
@@ -177,6 +188,11 @@ export default function Produto() {
       variacao_rotulo: sanitizeText(variacaoRotulo),
       atributos: fichaParaAtributos(ficha),
       imagem_url: sanitizeUrl(formData.imagem_url),
+
+      // Mandado como foi digitado: quem normaliza para a forma canônica de 14
+      // dígitos é o servidor, e normalizar aqui também criaria duas réguas
+      // para divergir. A tela só recusa o que nem parece um código.
+      codigo_barras: formData.codigo_barras.trim(),
       preco: parseFloat(formData.preco.replace(",", ".")),
       loja_id: LOJA_ID,
       endereco: semContagem ? "" : formData.endereco,
@@ -318,6 +334,42 @@ export default function Produto() {
                     <option key={categoria} value={categoria} />
                   ))}
                 </datalist>
+              </div>
+
+              {/* O CÓDIGO DE BARRAS DE FÁBRICA.
+
+                  Fica aqui, no bloco de identificação, e não junto do estoque:
+                  ele não descreve quantidade nem prateleira — ele é o nome do
+                  produto para o leitor do caixa.
+
+                  Pode ser colado em qualquer formato impresso na embalagem. O
+                  servidor normaliza os cinco padrões para a mesma identidade
+                  (EAN-13, EAN-8, UPC-A, UPC-E e o ITF-14 da caixa), então o
+                  mesmo refrigerante é encontrado tanto pelo código da garrafa
+                  nacional quanto pelo do lote importado. */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="rotulo" htmlFor="codigo_barras">
+                  Código de barras da embalagem <span className="font-normal text-[var(--ink-3)]">(opcional)</span>
+                </label>
+
+                <input
+                  id="codigo_barras"
+                  type="text"
+                  name="codigo_barras"
+                  value={formData.codigo_barras}
+                  onChange={handleChange}
+                  placeholder="Bipe a embalagem ou digite — ex: 7891000053508"
+                  maxLength={20}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="field num"
+                />
+
+                <p className="text-xs text-[var(--ink-2)]">
+                  É o código que já vem impresso na embalagem — o que o caixa bipa. Dá para
+                  bipar aqui mesmo com o leitor. Deixe vazio para mercadoria a granel ou de
+                  fabricação própria: essas se vendem pela etiqueta que o sistema imprime.
+                </p>
               </div>
             </div>
 

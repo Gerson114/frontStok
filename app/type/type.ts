@@ -1,6 +1,29 @@
 export interface Produto {
     id: number
+
+    /**
+     * O código INTERNO: seis dígitos sorteados no cadastro, impressos pela
+     * própria loja como Code128 na etiqueta que ela cola na peça.
+     */
     codigo: string
+
+    /**
+     * O código de barras DE FÁBRICA, quando o produto tem um.
+     *
+     * Outra coisa que o `codigo` acima, e a diferença é de quem o emitiu:
+     * aquele é nosso, este é do fabricante e existe no mundo inteiro antes de
+     * a mercadoria chegar na loja. É o que o caixa bipa quando a garrafa de
+     * refrigerante passa na esteira, sem ninguém ter etiquetado nada.
+     *
+     * Vem na forma canônica de 14 dígitos, com zeros à esquerda: é assim que o
+     * servidor o guarda, porque EAN-13, EAN-8, UPC-A, UPC-E e ITF-14 são a
+     * mesma identidade para o GS1 e só coincidem depois de normalizados.
+     *
+     * Vazio é o caso comum: mercadoria a granel, peça de fabricação própria e
+     * confecção pequena não têm código de fábrica nenhum.
+     */
+    codigo_barras?: string
+
     nome: string
     descricao: string
     preco: number
@@ -1535,6 +1558,46 @@ export interface ConfiguracaoDaLoja {
     /** Sai quando o atendimento é encerrado. */
     texto_ao_encerrar: string
 
+    /* ----------------------------------------------------------------------
+       A BALANÇA
+
+       Quem pesa mercadoria imprime a própria etiqueta, e ela não é um código
+       de produto: é um EAN-13 de uso interno que carrega o código E o valor
+       pesado, assim:
+
+           2 | 01234 | 001550 | 7
+           ^   ^       ^        ^
+           |   |       |        dígito verificador
+           |   |       valor: R$ 15,50
+           |   código do produto na balança
+           prefixo de uso interno
+
+       É configuração da loja porque não existe um formato só: Toledo,
+       Filizola e Urano gravam diferente, e o próprio equipamento deixa
+       escolher quantos dígitos são código e quantos são valor.
+       ---------------------------------------------------------------------- */
+
+    /**
+     * Liga a leitura da etiqueta pesada.
+     *
+     * Desligada por padrão, e o padrão importa: ligada, TODO código que
+     * comece pelo prefixo passa a ser recortado como código + valor. Numa loja
+     * sem balança, um EAN-13 legítimo nessa faixa viraria um produto e um
+     * preço inventados — e inventados em silêncio.
+     */
+    balanca_ativa: boolean
+
+    /** O que marca a etiqueta como interna da loja. "2" é o de fábrica. */
+    balanca_prefixo: string
+
+    /**
+     * O recorte do meio. Os dois, mais o prefixo, mais o dígito verificador
+     * têm de somar 13 — é o tamanho de um EAN-13, e um recorte que não fecha
+     * cairia fora da etiqueta. Quem confere é o servidor.
+     */
+    balanca_digitos_do_codigo: number
+    balanca_digitos_do_valor: number
+
     atualizado_em?: string
 }
 
@@ -1650,6 +1713,21 @@ export interface MeioNoCaixa {
    A venda no balcão
    ========================================================================== */
 
+/**
+ * O tipo de etiqueta que o servidor reconheceu no que foi bipado.
+ *
+ * Não decide nada — quem acha o produto é o servidor. Serve para a tela
+ * EXPLICAR o que aconteceu: um código que vira R$ 15,50 sem ninguém digitar
+ * nada parece defeito até a tela dizer "etiqueta de balança".
+ *
+ *   gtin     código de fábrica (EAN-13, EAN-8, UPC-A, UPC-E)
+ *   caixa    ITF-14: a caixa fechada, não a unidade
+ *   balanca  etiqueta pesada na loja, com o valor dentro do código
+ *   interno  os seis dígitos que o próprio sistema imprime
+ *   livre    não casou com padrão nenhum (código do fornecedor, por exemplo)
+ */
+export type TipoDeEtiqueta = "gtin" | "caixa" | "balanca" | "interno" | "livre"
+
 /** O que o balcão descobre ao bipar um código. */
 export interface ItemDoBalcao {
     produto_id: number
@@ -1657,8 +1735,12 @@ export interface ItemDoBalcao {
     codigo: string
     categoria?: string
 
+    /** O código de barras de fábrica gravado no cadastro, quando há um. */
+    codigo_barras?: string
+
     /**
-     * `preco` é o que o cliente PAGA — já com a promoção aplicada.
+     * `preco` é o que o cliente PAGA — já com a promoção aplicada, ou já com
+     * o valor da etiqueta de balança quando foi ela que chegou.
      * `preco_de_tabela` vem junto só para a tela mostrar o de antes riscado.
      */
     preco: number
@@ -1666,6 +1748,35 @@ export interface ItemDoBalcao {
     em_promocao: boolean
 
     disponiveis: number
+
+    /**
+     * `sem_contagem` é o produto que não se conta unidade a unidade: pão,
+     * frios, açaí, a pizza feita na hora. Nele `disponiveis` não significa
+     * nada — quem responde é `disponivel`, o "tem hoje?".
+     *
+     * A tela NÃO pode mostrar "0 no estoque" nesses: faria o operador achar
+     * que acabou o pão.
+     */
+    sem_contagem: boolean
+    disponivel: boolean
+
+    tipo_da_etiqueta: TipoDeEtiqueta
+
+    /** O preço acima saiu do código de barras, e não do cadastro. */
+    preco_da_etiqueta: boolean
+
+    /**
+     * O código bipado, devolvido para a tela mandá-lo de VOLTA ao fechar a
+     * venda.
+     *
+     * É o que preserva o preço da balança entre a consulta e a cobrança. A
+     * tela não manda o preço — manda o código, e o servidor relê o valor de
+     * dentro dele. É o que mantém o preço fora do alcance do navegador.
+     */
+    etiqueta?: string
+
+    /** Preenchido quando o que foi bipado é o ITF-14 de uma caixa fechada. */
+    aviso_da_caixa?: string
 }
 
 /** Uma linha da venda concluída. */
@@ -1678,10 +1789,43 @@ export interface ItemVendidoNoBalcao {
     preco_unitario: number
     subtotal: number
     em_promocao: boolean
+
+    /** O valor desta linha veio da etiqueta de balança. */
+    preco_da_etiqueta?: boolean
+
+    /** Esta linha não tirou peça da prateleira. */
+    sem_contagem?: boolean
+}
+
+/**
+ * Uma denominação do troco e quantas dela saem da gaveta.
+ *
+ * A contagem vem do servidor porque a pergunta do caixa não é "quanto volta",
+ * é "o que eu entrego" — e essa decomposição feita de cabeça com fila na
+ * frente é onde se erra.
+ */
+export interface PecaDoTroco {
+    valor: number
+    quantidade: number
+
+    /** Nota ou moeda. A tela escreve a palavra ao lado do número. */
+    cedula: boolean
+}
+
+/** O que volta para o cliente, e em quê. */
+export interface TrocoDaVenda {
+    valor: number
+    pecas: PecaDoTroco[]
+
+    /** Pagamento sem sobra. A tela diz "valor exato" em vez de lista vazia. */
+    exato: boolean
 }
 
 /** A venda concluída, do jeito que se confere em voz alta com o cliente. */
 export interface VendaDoBalcao {
+    /** Como esta venda é cancelada depois. */
+    id: number
+
     itens: ItemVendidoNoBalcao[]
     pecas: number
     total: number
@@ -1689,8 +1833,69 @@ export interface VendaDoBalcao {
     meio: MeioDePagamento
     meio_nome: string
 
+    /** Só preenchidos no dinheiro. */
+    recebido: number
+    troco: TrocoDaVenda
+
     vendida_em: string
     vendida_por: string
+}
+
+/**
+ * Uma venda na lista do caixa, sem as linhas dela.
+ *
+ * É de onde se cancela: quem bipou duas vezes acha a venda que acabou de
+ * fazer pela hora e pelo total.
+ */
+export interface VendaResumida {
+    id: number
+    pecas: number
+    total: number
+
+    meio: MeioDePagamento
+    meio_nome: string
+
+    recebido: number
+    troco: number
+
+    vendida_em: string
+    vendida_por?: string
+
+    cancelada: boolean
+    cancelada_em?: string
+    cancelada_por?: string
+    motivo_cancelamento?: string
+
+    /**
+     * A resposta do SERVIDOR a "esta venda ainda pode ser estornada?".
+     *
+     * A tela desenha o botão quando isto é verdadeiro e NÃO reimplementa a
+     * regra do prazo — que é o jeito garantido de os dois lados discordarem
+     * no dia em que o prazo mudar. Quem decide de verdade continua sendo a
+     * rota de cancelamento.
+     */
+    pode_cancelar: boolean
+}
+
+/** O que a tela diz ao operador depois de estornar. */
+export interface ResultadoDoCancelamento {
+    venda_id: number
+    total: number
+
+    pecas_devolvidas: number
+
+    /**
+     * Peças que NÃO voltaram porque já tinham outro destino depois da venda
+     * (devolvidas, avariadas, reservadas num pedido). Nunca escondido: a
+     * venda saiu do faturamento de todo jeito, e o estoque não bate com o que
+     * o operador espera.
+     */
+    pecas_nao_devolvidas: number
+
+    /** Linhas que não tinham peça para devolver (pão, açaí). */
+    itens_sem_contagem: number
+
+    aviso?: string
 }
 
 /* ==========================================================================

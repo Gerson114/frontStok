@@ -60,6 +60,9 @@ interface FormState {
   variacao: string
   variacao_rotulo: string
   imagem_url: string
+
+  /** O código de barras de fábrica, o que o caixa bipa na embalagem. */
+  codigo_barras: string
 }
 
 const FORM_VAZIO: FormState = {
@@ -71,6 +74,7 @@ const FORM_VAZIO: FormState = {
   variacao: "",
   variacao_rotulo: "",
   imagem_url: "",
+  codigo_barras: "",
 }
 
 // Sistema de loja única: não existe seletor de loja na interface, a
@@ -118,6 +122,12 @@ export default function EditarProduto() {
           variacao: produto.variacao,
           variacao_rotulo: produto.variacao_rotulo,
           imagem_url: produto.imagem_url,
+
+          // Vem do banco já na forma canônica de 14 dígitos, com zeros à
+          // esquerda. Mostrado como está de propósito: é o valor que o
+          // servidor compara na hora do bipe, e "embelezá-lo" aqui faria o
+          // lojista achar que o cadastro está diferente do que ele digitou.
+          codigo_barras: produto.codigo_barras ?? "",
         })
 
         setFicha(atributosParaFicha(produto.atributos))
@@ -173,6 +183,7 @@ export default function EditarProduto() {
       variacao_rotulo: sanitizeText(formData.variacao_rotulo),
       atributos: fichaParaAtributos(ficha),
       imagem_url: sanitizeUrl(formData.imagem_url),
+      codigo_barras: formData.codigo_barras.trim(),
       preco: parseFloat(formData.preco.replace(",", ".")),
       estoque: parseInt(formData.estoque, 10),
       loja_id: LOJA_ID,
@@ -423,6 +434,38 @@ export default function EditarProduto() {
                 />
                 <p className="text-xs text-[var(--ink-2)]">
                   Unidades novas (estoque maior) entram sem local — guarde-as na tela de Estoque.
+                </p>
+              </div>
+
+              {/* O CÓDIGO DE BARRAS DE FÁBRICA.
+
+                  É a tela por onde o catálogo que já existe ganha esse código:
+                  quem cadastrou mercadoria antes de o caixa saber ler etiqueta
+                  de fábrica tem centenas de produtos sem ele, e cada um é um
+                  item que não bipa no caixa. Dá para bipar a embalagem direto
+                  neste campo. */}
+              <div className="sm:col-span-2 space-y-1.5">
+                <label className="rotulo" htmlFor="codigo_barras">
+                  Código de barras da embalagem <span className="font-normal text-[var(--ink-3)]">(opcional)</span>
+                </label>
+
+                <input
+                  id="codigo_barras"
+                  type="text"
+                  name="codigo_barras"
+                  value={formData.codigo_barras}
+                  onChange={handleChange}
+                  placeholder="Bipe a embalagem ou digite — ex: 7891000053508"
+                  maxLength={20}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="field num"
+                />
+
+                <p className="text-xs text-[var(--ink-2)]">
+                  É o que o caixa bipa. Serve qualquer formato impresso na embalagem — o
+                  servidor entende EAN, UPC e o código da caixa fechada como a mesma
+                  identidade. Vazio para o que se vende pela etiqueta da loja.
                 </p>
               </div>
 

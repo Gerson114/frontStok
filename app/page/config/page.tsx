@@ -15,6 +15,7 @@ import {
     FiPackage,
     FiSearch,
     FiShoppingBag,
+    FiTag,
     FiTruck,
     FiUsers,
 } from "react-icons/fi"
@@ -58,7 +59,7 @@ import type { AtendimentoDaLoja, ConfiguracaoDaLoja, LimiteDeCampo, OpcaoDoRamo,
  * um sobrescrever o outro.
  */
 
-type IdDoGrupo = "geral" | "venda" | "pagamento" | "entrega" | "estoque" | "atendimento" | "notificacoes"
+type IdDoGrupo = "geral" | "venda" | "pagamento" | "entrega" | "estoque" | "balanca" | "atendimento" | "notificacoes"
 
 /** Os grupos do índice, na ordem em que aparecem. */
 const GRUPOS: { id: IdDoGrupo; titulo: string; linha: string; Icone: IconType }[] = [
@@ -91,6 +92,12 @@ const GRUPOS: { id: IdDoGrupo; titulo: string; linha: string; Icone: IconType }[
         titulo: "Estoque",
         linha: "A partir de quantos dias sem sair uma unidade conta como parada.",
         Icone: FiPackage,
+    },
+    {
+        id: "balanca",
+        titulo: "Balança",
+        linha: "Como a sua balança grava o código e o preço na etiqueta que ela imprime.",
+        Icone: FiTag,
     },
     {
         id: "atendimento",
@@ -306,6 +313,22 @@ function Configuracoes() {
             return `${config.dias_sem_prazo_prometido} dias de prazo · ${config.dias_para_avisar_avaria} para avisar avaria`
         }
 
+        if (id === "balanca") {
+
+            if (!config.balanca_ativa) return "Desligada"
+
+            // O layout escrito como ele é lido, e não um "ativa": quem abre
+            // este cartão vem conferir se o recorte bate com o que está
+            // programado na balança, e é esse número que ele compara.
+            return `${config.balanca_prefixo || "2"} · `
+                + `${config.balanca_digitos_do_codigo} do código · `
+                + `${config.balanca_digitos_do_valor} do valor`
+        }
+
+        // Sobrou "estoque". O fallback é dele desde que este índice existe, e
+        // é por isso que cada grupo novo precisa do seu `if` acima: sem ele, o
+        // cartão novo herda em silêncio o resumo do estoque — "30 dias sem
+        // sair" aparecendo na Balança, sem erro em lugar nenhum.
         return `${config.dias_para_considerar_parado} dias sem sair`
     }
 
@@ -756,6 +779,99 @@ function Configuracoes() {
                                     Valem no chat do site e no WhatsApp. No WhatsApp o cliente recebe a
                                     mensagem no celular, como qualquer resposta da loja.
                                 </p>
+                            </>
+                        )}
+
+                        {aberto.id === "balanca" && (
+                            <>
+                                {/* A chave vem primeiro e o resto só aparece
+                                    depois dela, de propósito: três campos
+                                    numéricos pedindo "dígitos do código" para
+                                    quem não tem balança é um cartão que não
+                                    quer dizer nada. */}
+                                <Linha
+                                    nome="Ler etiqueta de balança"
+                                    dica="Para quem pesa na hora: pão, frios, açaí, hortifrúti. A etiqueta já traz o preço."
+                                >
+                                    <Chave
+                                        ligada={config.balanca_ativa}
+                                        aoMudar={(v) => mudar("balanca_ativa", v)}
+                                        rotulo="O caixa lê o código e o preço da etiqueta que a balança imprime"
+                                    />
+                                </Linha>
+
+                                {config.balanca_ativa && (
+                                    <>
+                                        {/* O desenho da etiqueta, antes dos
+                                            campos. Sem ele, "dígitos do
+                                            código" e "dígitos do valor" são
+                                            duas perguntas sem contexto — e
+                                            errá-las não dá erro: acha o
+                                            produto errado e cobra o valor
+                                            errado, com o cliente na frente. */}
+                                        <div className="rounded-lg bg-[var(--fundo)] p-4">
+                                            <p className="text-xs font-semibold text-[var(--ink-2)]">
+                                                Como a etiqueta é lida
+                                            </p>
+
+                                            <pre className="num mt-2 overflow-x-auto text-xs leading-relaxed text-[var(--ink)]">
+{`  ${config.balanca_prefixo || "2"}${"".padEnd(0)} ${"C".repeat(Math.max(config.balanca_digitos_do_codigo, 0))} ${"V".repeat(Math.max(config.balanca_digitos_do_valor, 0))} D
+  └ prefixo   └ código    └ valor     └ dígito
+                do produto  em centavos  verificador`}
+                                            </pre>
+
+                                            <p className="mt-2 text-xs text-[var(--ink-2)]">
+                                                Prefixo + código + valor + 1 dígito verificador precisam
+                                                somar 13. Agora somam{" "}
+                                                <strong className="num">
+                                                    {(config.balanca_prefixo || "2").length
+                                                        + config.balanca_digitos_do_codigo
+                                                        + config.balanca_digitos_do_valor
+                                                        + 1}
+                                                </strong>
+                                                . O servidor recusa o que não fecha.
+                                            </p>
+                                        </div>
+
+                                        <Linha
+                                            nome="Prefixo da etiqueta"
+                                            dica="O que marca a etiqueta como interna da loja. Quase toda balança vem com 2."
+                                        >
+                                            <input
+                                                id="balanca_prefixo"
+                                                value={config.balanca_prefixo}
+                                                onChange={(e) => mudar("balanca_prefixo", e.target.value.replace(/\D/g, "").slice(0, 2))}
+                                                inputMode="numeric"
+                                                maxLength={2}
+                                                className="field num w-20"
+                                            />
+                                        </Linha>
+
+                                        <Numero
+                                            id="balanca_digitos_do_codigo"
+                                            nome="Dígitos do código do produto"
+                                            dica="É o código que você programou na balança — o mesmo que o sistema mostra no produto."
+                                            valor={config.balanca_digitos_do_codigo}
+                                            sufixo="dígitos"
+                                            aoMudar={(valor) => mudar("balanca_digitos_do_codigo", valor)}
+                                        />
+
+                                        <Numero
+                                            id="balanca_digitos_do_valor"
+                                            nome="Dígitos do valor"
+                                            dica="Em centavos. Seis dígitos chegam a R$ 9.999,99."
+                                            valor={config.balanca_digitos_do_valor}
+                                            sufixo="dígitos"
+                                            aoMudar={(valor) => mudar("balanca_digitos_do_valor", valor)}
+                                        />
+
+                                        <p className="text-xs text-[var(--ink-3)]">
+                                            O código que a balança grava tem de ser o código do produto no
+                                            sistema. Diferença de tamanho não é problema: a balança de 5
+                                            dígitos que grava 01234 acha o produto 001234.
+                                        </p>
+                                    </>
+                                )}
                             </>
                         )}
 

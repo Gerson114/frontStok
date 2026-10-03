@@ -41,6 +41,16 @@ export async function POST(request: Request) {
             // Item que não é contado unidade a unidade (ver o handler de
             // variantes, onde a mesma linha existe pelo mesmo motivo: este
             // corpo é montado campo a campo, e o que não é listado some).
+
+            // O código de barras DE FÁBRICA, mandado como foi digitado: quem
+            // normaliza para a forma canônica de 14 dígitos é o backend, e
+            // normalizar aqui também criaria duas réguas para divergir.
+            //
+            // Escrito à mão aqui pelo mesmo motivo do sem_contagem acima: este
+            // handler monta o corpo campo a campo, e o que não é listado não
+            // chega ao servidor — sem erro nenhum.
+            codigo_barras: sanitizeText(String(entrada.codigo_barras ?? "")),
+
             sem_contagem: entrada.sem_contagem === true,
         }
 

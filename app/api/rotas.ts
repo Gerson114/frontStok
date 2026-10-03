@@ -151,6 +151,28 @@ export const lojas = {
 export const balcao = {
     item: (codigo: string) => `/private/balcao/item?codigo=${encodeURIComponent(codigo)}`,
     vender: () => "/private/balcao/vender",
+
+    /**
+     * As vendas já feitas, da mais recente para a mais antiga.
+     *
+     * É o caminho até o cancelamento: quem bipou duas vezes acha a venda que
+     * acabou de fazer pela hora e pelo total. As canceladas ficam de fora por
+     * padrão — elas são ruído nesse momento —, e `canceladas` as traz de volta
+     * para quem está auditando.
+     */
+    vendas: (canceladas = false) =>
+        `/private/balcao/vendas${canceladas ? "?canceladas=1" : ""}`,
+
+    /** Uma venda com as linhas dela, para conferir antes de cancelar. */
+    umaVenda: (id: string | number) => `/private/balcao/vendas/${id}`,
+
+    /**
+     * Estorna a venda: as peças voltam ao estoque e ela sai do faturamento.
+     *
+     * Quem decide se ainda pode é o servidor, pelo prazo — a lista já vem com
+     * `pode_cancelar` em cada linha para a tela não reimplementar essa regra.
+     */
+    cancelarVenda: (id: string | number) => `/private/balcao/vendas/${id}/cancelar`,
 }
 
 /**
