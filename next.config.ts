@@ -1,16 +1,6 @@
 import type { NextConfig } from "next";
 
 /**
- * O endereço do canal ao vivo, que o navegador abre direto — é o único
- * destino fora deste servidor que a página precisa alcançar.
- *
- * Sai do mesmo lugar que o código do painel usa, para a política não bloquear
- * justamente a conexão que a aplicação depende. Vazio não vira "libere tudo":
- * vira nada na lista, e aí o canal simplesmente não é permitido.
- */
-const canalAoVivo = (process.env.NEXT_PUBLIC_WS_URL ?? "").trim();
-
-/**
  * O que o navegador pode fazer nesta página.
  *
  * A regra de leitura: tudo o que não está aqui é proibido. `default-src
@@ -40,8 +30,13 @@ function politicaDeConteudo(): string {
     // larga mais barata da lista.
     "img-src 'self' data: blob: https:",
 
-    // Para onde a página pode ABRIR conexão: este servidor e o canal ao vivo.
-    ["connect-src 'self'", canalAoVivo].filter(Boolean).join(" "),
+    // Para onde a página pode ABRIR conexão: este servidor, e mais nada.
+    //
+    // O canal ao vivo também entra aqui: ele é uma rota desta mesma origem
+    // (/api/aovivo), e quem mantém o socket com o backend é o servidor do
+    // painel. Antes o navegador abria o socket do backend direto, e esta linha
+    // precisava de uma exceção com o domínio da API escrito dentro.
+    "connect-src 'self'",
 
     // Áudio e vídeo da conversa: o do WhatsApp vem por este servidor, e o da
     // chamada da equipe é montado no navegador como blob.

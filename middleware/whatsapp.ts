@@ -438,7 +438,7 @@ export async function definirResponsavelDaConversa(
    ========================================================================== */
 
 /**
- * Aviso que chega pelo WebSocket. É aviso, não conteúdo: diz que mexeu na
+ * Aviso que chega pelo fio ao vivo. É aviso, não conteúdo: diz que mexeu na
  * conversa, e quem busca a mensagem continua sendo a rota REST de sempre.
  *
  * Assim existe um formato só de resposta para manter, e a tela nunca monta o
@@ -449,7 +449,7 @@ export interface AvisoAoVivo {
      * De que assunto é este aviso: "mensagem" e "conversa" (WhatsApp),
      * "atendimento" (chat do site) ou "pedido".
      *
-     * É POR AQUI que os assuntos não se atrapalham. O socket é um só por
+     * É POR AQUI que os assuntos não se atrapalham. O fio é um só por
      * loja — abrir um por tela dobraria as conexões de cada painel aberto
      * para entregar a mesma coisa por canos diferentes —, então cada tela lê
      * o tipo primeiro e IGNORA o que não for dela. Uma tela que reagisse a
@@ -489,65 +489,25 @@ export interface AvisoAoVivo {
     evento?: string
 }
 
-const ESQUEMA_DE_SOCKET = /^wss?:\/\//i
-
 /**
- * De onde sai o endereço do socket. O backend não é a origem do painel.
+ * O endereço da ponte ao vivo: uma rota DESTE servidor (ver
+ * app/api/aovivo/route.ts), e não o socket do backend.
  *
- * O bilhete viaja na própria URL — o navegador não deixa mandar cabeçalho ao
- * abrir um WebSocket, então não há outro lugar para pô-lo. Isso torna o
- * esquema da conexão parte da segurança e não da configuração: em ws:// o
- * bilhete e todas as conversas dos clientes atravessam a rede em texto puro,
- * legíveis por qualquer um no mesmo Wi-Fi da loja. Por isso, num painel
- * servido por HTTPS a conexão sobe para wss:// mesmo que a variável tenha
- * ficado como ws:// — que é também o que o navegador exige, já que ele
- * recusa socket em texto puro a partir de página segura.
+ * Mesma origem, e isso resolve de uma vez três coisas que o desenho anterior
+ * pagava caro:
  *
- * Devolve null quando NEXT_PUBLIC_WS_URL não é um endereço de socket. É
- * variável de ambiente: pode chegar em branco, com http:// no lugar de ws://
- * ou com um endereço colado errado, e um desses viraria uma conexão para
- * onde ninguém quis.
- *
- * A variável é a RAIZ do servidor, e o caminho do socket é acrescentado aqui.
- * Quem a preenche copiando o endereço completo — "wss://api.exemplo.com.br/ws/whatsapp"
- * — produziria "/ws/whatsapp/ws/whatsapp", que é um 404 do qual o WebSocket
- * não consegue reclamar: a tela apenas nunca recebe aviso nenhum e volta a
- * depender do recarregamento manual. Por isso o caminho que vier na variável
- * é descartado, em vez de concatenado.
+ *   - o endereço do backend não precisa mais ser publicado no JavaScript da
+ *     página, nem alcançável pelo navegador. Quem fala com ele é o servidor do
+ *     painel, pela rede interna;
+ *   - nada é congelado no build. A ponte lê API_URL em tempo de execução, então
+ *     trocar o endereço do backend é reiniciar o container, e não reconstruir e
+ *     republicar o painel — que foi exatamente como o tempo real ficou meses
+ *     apontando para um servidor que já não existia, com o lojista apertando F5
+ *     para ver pedido novo;
+ *   - o bilhete de entrada nunca passa pelo navegador: ele é pedido do lado de
+ *     lá, com o cookie httpOnly da sessão.
  */
-const CAMINHO_DO_FLUXO = "/ws/whatsapp"
-
-function enderecoDoFluxo(bilhete: string): string | null {
-
-    let base = (process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080").trim().replace(/\/+$/, "")
-
-    if (!ESQUEMA_DE_SOCKET.test(base)) return null
-
-    if (typeof window !== "undefined" && window.location.protocol === "https:") {
-        base = base.replace(/^ws:\/\//i, "wss://")
-    }
-
-    let raiz: URL
-
-    try {
-        raiz = new URL(base)
-    } catch {
-        return null
-    }
-
-    if (raiz.pathname !== "/" && raiz.pathname !== "") {
-        console.warn(
-            `NEXT_PUBLIC_WS_URL traz um caminho (${raiz.pathname}) que foi descartado: a variável é a raiz do servidor, e ${CAMINHO_DO_FLUXO} é acrescentado pelo painel.`,
-        )
-    }
-
-    return `${raiz.protocol}//${raiz.host}${CAMINHO_DO_FLUXO}?bilhete=${encodeURIComponent(bilhete)}`
-}
-
-async function pedirBilhete(): Promise<string> {
-    const dados = await apiFetch<{ bilhete: string }>("/api/whatsapp/bilhete", { method: "POST" })
-    return dados.bilhete
-}
+const CAMINHO_DO_FLUXO = "/api/aovivo"
 
 /**
  * Inscreve `aoAviso` no fio ao vivo da loja e devolve a função que o retira.
@@ -567,14 +527,14 @@ export function escutarLoja(aoAviso: (aviso: AvisoAoVivo) => void): () => void {
 
     // A primeira inscrição abre o fio; as seguintes pegam carona. Trocar de
     // tela dentro do painel também passa por aqui, então um fechamento que
-    // acontecesse antes da inscrição seguinte derrubaria e reabriria o socket
+    // acontecesse antes da inscrição seguinte derrubaria e reabriria a ponte
     // a cada navegação — ver o desligamento adiado lá embaixo.
     if (encerrando) {
         clearTimeout(encerrando)
         encerrando = null
     }
 
-    if (!socket && !agendado) conectar()
+    abrir()
 
     return () => {
 
@@ -585,7 +545,7 @@ export function escutarLoja(aoAviso: (aviso: AvisoAoVivo) => void): () => void {
         // Ninguém mais ouvindo — mas talvez a próxima tela se inscreva no
         // próximo instante. Esperar um pouco antes de desligar é o que
         // transforma "sair de Conversas e entrar em Pedidos" numa conexão
-        // contínua em vez de um fecha-e-abre com pedido de bilhete no meio.
+        // contínua em vez de um fecha-e-abre com bilhete novo no meio.
         encerrando = setTimeout(desligar, 5000)
     }
 }
@@ -595,25 +555,23 @@ export function escutarLoja(aoAviso: (aviso: AvisoAoVivo) => void): () => void {
 
    Antes cada tela abria o seu. Com a barra superior contando as mensagens não
    lidas da equipe, a tela de conversas e a de funcionários ouvindo ao mesmo
-   tempo, isso virou três e às vezes quatro sockets por aba entregando
-   exatamente os mesmos avisos — cada um com o seu bilhete, a sua reconexão e
-   o seu peso do lado do servidor.
+   tempo, isso virou três e às vezes quatro conexões por aba entregando
+   exatamente os mesmos avisos.
 
    O canal é da LOJA e sempre foi (ver internal/services/whatsapp/fluxo.go, que
    publica para todos os ouvintes dela). Quem separa os assuntos é o campo
    `tipo` do aviso, lido por cada ouvinte. Então basta um fio, e cada tela se
    inscreve nele.
+
+   O transporte é EventSource, e não WebSocket: a reconexão vem de fábrica (é o
+   navegador que a faz, no intervalo que a ponte manda no `retry:`), e o que
+   este canal carrega só anda num sentido — o painel nunca responde por aqui.
    -------------------------------------------------------------------------- */
 
 const ouvintes = new Set<(aviso: AvisoAoVivo) => void>()
 
-let socket: WebSocket | null = null
-let tentativas = 0
-let agendado: ReturnType<typeof setTimeout> | null = null
+let fio: EventSource | null = null
 let encerrando: ReturnType<typeof setTimeout> | null = null
-
-/** Desiste de vez: endereço mal configurado não melhora tentando de novo. */
-let desistiu = false
 
 /**
  * O fio está aberto E entregando?
@@ -624,122 +582,53 @@ let desistiu = false
  * com o fio caído a varredura é a ÚNICA entrega que sobra, e meio minuto é
  * uma eternidade no meio de um atendimento.
  *
- * `readyState === OPEN` e não `socket !== null`: entre o `new WebSocket` e o
- * `onopen` existe o estado CONNECTING, e uma conexão que nunca completa —
- * endereço errado, servidor fora — fica ali sem nunca abrir. Tratar isso como
- * "de pé" devolveria justamente o caso que este teste existe para pegar.
+ * Testa o estado real da conexão, e não a existência do objeto: entre o `new
+ * EventSource` e o primeiro evento existe CONNECTING, e uma conexão que nunca
+ * completa fica ali parada. Tratar isso como "de pé" devolveria justamente o
+ * caso que esta pergunta existe para pegar.
  */
 export function fioAberto(): boolean {
-    return socket !== null && socket.readyState === WebSocket.OPEN
+    return fio !== null && fio.readyState === EventSource.OPEN
 }
 
-async function conectar() {
+function abrir() {
 
-    if (desistiu || socket || ouvintes.size === 0) return
+    if (fio !== null || ouvintes.size === 0) return
 
-    try {
-        const bilhete = await pedirBilhete()
+    fio = new EventSource(CAMINHO_DO_FLUXO, { withCredentials: true })
 
-        // Todo mundo saiu enquanto o bilhete vinha: não adianta abrir.
-        if (ouvintes.size === 0) return
+    fio.onmessage = (evento) => {
 
-        const endereco = enderecoDoFluxo(bilhete)
+        let aviso: AvisoAoVivo
 
-        // Endereço mal configurado não melhora tentando de novo: em vez de
-        // bater no servidor a cada 30 segundos para sempre, para por aqui e a
-        // varredura de meio minuto de cada tela segura o que falta.
-        if (endereco === null) {
-            desistiu = true
-            console.error(
-                `Tempo real desligado: NEXT_PUBLIC_WS_URL (${process.env.NEXT_PUBLIC_WS_URL ?? "não definida"}) não é um endereço de WebSocket. O painel só vai se atualizar na varredura de 30 segundos.`,
-            )
+        try {
+            aviso = JSON.parse(evento.data) as AvisoAoVivo
+        } catch {
+            // Aviso ilegível não derruba a conexão: a varredura de segurança
+            // de cada tela cobre o que se perdeu.
             return
         }
 
-        const aberto = new WebSocket(endereco)
-        socket = aberto
+        if (typeof aviso?.tipo !== "string" || aviso.tipo === "") return
 
-        aberto.onopen = () => {
-            tentativas = 0
-        }
-
-        aberto.onmessage = (evento) => {
-
-            let aviso: AvisoAoVivo
-
+        // Uma cópia da lista antes de entregar: um ouvinte que se desinscreva
+        // ao receber o aviso — o que acontece quando ele navega para outra
+        // tela — mudaria o conjunto no meio do laço.
+        for (const ouvinte of [...ouvintes]) {
             try {
-                aviso = JSON.parse(evento.data) as AvisoAoVivo
+                ouvinte(aviso)
             } catch {
-                // Aviso ilegível não derruba a conexão: a varredura de
-                // segurança de cada tela cobre o que se perdeu.
-                return
-            }
-
-            // Uma cópia da lista antes de entregar: um ouvinte que se
-            // desinscreva ao receber o aviso — o que acontece quando ele
-            // navega para outra tela — mudaria o conjunto no meio do laço.
-            for (const ouvinte of [...ouvintes]) {
-                try {
-                    ouvinte(aviso)
-                } catch {
-                    // Uma tela que quebre ao tratar o aviso não pode impedir
-                    // as outras de receberem o mesmo aviso.
-                }
+                // Uma tela que quebre ao tratar o aviso não pode impedir as
+                // outras de receberem o mesmo aviso.
             }
         }
-
-        aberto.onclose = () => {
-            if (socket === aberto) socket = null
-            reagendar()
-        }
-
-        // O erro sempre vem seguido de close, que é quem reagenda.
-        aberto.onerror = () => aberto.close()
-
-    } catch {
-        reagendar()
-    }
-}
-
-/**
- * A reconexão é escrita aqui porque o WebSocket não a traz de fábrica (ao
- * contrário do EventSource): rede de loja cai, o servidor reinicia, o notebook
- * dorme. A espera cresce a cada tentativa até 30 segundos, para uma queda
- * longa não virar uma tentativa por segundo contra um servidor que já está em
- * apuros.
- */
-
-/**
- * Depois de quantas quedas seguidas o painel reclama no console.
- *
- * Existe por causa do modo de falha mais caro que este canal tem: uma
- * NEXT_PUBLIC_WS_URL sintaticamente correta e apontando para um servidor que
- * não existe — o endereço de exemplo que ninguém trocou. Não há erro de
- * digitação para o código recusar, então ele reconecta para sempre, em
- * silêncio, e a única pista que sobra é o lojista dizendo que precisa
- * recarregar a tela para ver o pedido. Cinco quedas seguidas nunca acontecem
- * numa queda de rede comum, que volta na primeira ou na segunda.
- */
-const QUEDAS_ATE_RECLAMAR = 5
-
-function reagendar() {
-
-    if (desistiu || agendado || ouvintes.size === 0) return
-
-    tentativas += 1
-
-    if (tentativas === QUEDAS_ATE_RECLAMAR) {
-        console.error(
-            `Tempo real fora do ar: ${QUEDAS_ATE_RECLAMAR} tentativas seguidas de abrir o WebSocket falharam. Confira NEXT_PUBLIC_WS_URL (${process.env.NEXT_PUBLIC_WS_URL ?? "não definida"}) e se a API responde nesse endereço. Enquanto isso o painel depende da varredura de 30 segundos.`,
-        )
     }
 
-    const espera = Math.min(1000 * 2 ** (tentativas - 1), 30000)
-
-    agendado = setTimeout(() => {
-        agendado = null
-        conectar()
-    }, espera)
+    // Queda de rede, servidor reiniciando, sessão expirada: o navegador reabre
+    // sozinho, no intervalo que a ponte mandou. Não há nada a fazer aqui — e
+    // enquanto o fio estiver fora, `fioAberto()` responde false e a varredura
+    // de cada tela volta a ser a entrega principal.
+    fio.onerror = () => {}
 }
 
 function desligar() {
@@ -749,14 +638,8 @@ function desligar() {
     // Alguém se inscreveu enquanto o desligamento estava agendado.
     if (ouvintes.size > 0) return
 
-    if (agendado) {
-        clearTimeout(agendado)
-        agendado = null
-    }
-
-    socket?.close()
-    socket = null
-    tentativas = 0
+    fio?.close()
+    fio = null
 }
 
 /* ==========================================================================

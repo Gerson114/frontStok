@@ -294,51 +294,6 @@ function podeConsumir(chave: string, limite: number): boolean {
     return true
 }
 
-// ==============================
-// CSP: PARA ONDE A ABA PODE FALAR
-// ==============================
-/**
- * As origens de WebSocket que a página pode abrir.
- *
- * As conversas ao vivo saem de NEXT_PUBLIC_WS_URL, que é OUTRO servidor — o
- * backend Go, não a origem do painel. Com `connect-src 'self'` sozinho o
- * navegador cortava esse fio calado, e a tela só se atualizava na varredura
- * de meio em meio minuto; abrir a mão com `connect-src *` consertaria isso
- * devolvendo a um script injetado o direito de mandar as conversas para
- * qualquer lugar. Então declara-se o endereço, e só ele.
- *
- * Vai também a versão wss:// do que estiver configurado como ws://, porque é
- * para ela que o cliente sobe sozinho quando o painel é servido por HTTPS
- * (ver `enderecoDoFluxo` em middleware/whatsapp.ts).
- */
-function origensDoSocket(): string[] {
-    const bruto = process.env.NEXT_PUBLIC_WS_URL
-
-    if (!bruto) return []
-
-    try {
-        const url = new URL(bruto.trim())
-
-        if (url.protocol !== "ws:" && url.protocol !== "wss:") return []
-
-        // Em produção só a forma segura entra na política, mesmo que a
-        // variável ainda diga ws://. Declarar a origem em texto puro seria a
-        // CSP autorizando o navegador a abrir justamente a conexão que o
-        // cliente evita (ver enderecoDoFluxo em middleware/whatsapp.ts) — e
-        // uma permissão que ninguém pretende usar é uma permissão que só
-        // serve a quem não deveria.
-        if (url.protocol === "wss:") return [url.origin]
-
-        return process.env.NODE_ENV === "production"
-            ? [`wss://${url.host}`]
-            : [url.origin, `wss://${url.host}`]
-
-    } catch {
-        return []
-    }
-}
-
-const ORIGENS_SOCKET = origensDoSocket().join(" ")
 
 // ==============================
 // CSRF
@@ -489,7 +444,7 @@ export function proxy(request: NextRequest) {
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src 'self' data:;
         font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self'${ORIGENS_SOCKET ? ` ${ORIGENS_SOCKET}` : ""};
+        connect-src 'self';
         object-src 'none';
         base-uri 'self';
         form-action 'self';

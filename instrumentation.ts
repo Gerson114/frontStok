@@ -12,8 +12,8 @@
 // falhar fechado porque o compose dela declara as variáveis; o painel é
 // publicado por outro caminho, cujo ambiente este repositório não controla.
 //
-// O que produção deve ter definido, e o log grita quando não tem: API_URL,
-// NEXT_PUBLIC_WS_URL e TRUSTED_PROXY_COUNT. Sem o último, o limite por IP não
+// O que produção deve ter definido, e o log grita quando não tem: API_URL e
+// TRUSTED_PROXY_COUNT. Sem o último, o limite por IP não
 // distingue visitante de proxy e conta a loja inteira como um cliente só (ver
 // obterIp em proxy.ts) — é degradação, não brecha: o pior caso é 429 cedo
 // demais, e não limite nenhum.

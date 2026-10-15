@@ -37,7 +37,6 @@ COPY . .
 # Por isso vêm como build-arg e não como environment. Construir sem elas
 # publica um painel apontando para localhost — e o próprio painel recusa
 # atender assim em produção (ver security/ambiente.ts).
-ARG NEXT_PUBLIC_WS_URL
 ARG NEXT_PUBLIC_VITRINE_URL
 
 # O endereço público do BACKEND, como o mundo o alcança.
@@ -50,7 +49,6 @@ ARG NEXT_PUBLIC_VITRINE_URL
 # sem erro em lugar nenhum, porque do lado de cá não chega nada para falhar.
 ARG NEXT_PUBLIC_API_PUBLICA
 
-ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_VITRINE_URL=$NEXT_PUBLIC_VITRINE_URL
 ENV NEXT_PUBLIC_API_PUBLICA=$NEXT_PUBLIC_API_PUBLICA
 ENV NEXT_TELEMETRY_DISABLED=1
