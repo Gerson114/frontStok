@@ -32,6 +32,22 @@ export interface LinhaParaVender {
 }
 
 /**
+ * O desconto como o caixa o pede.
+ *
+ * Duas formas, porque são as duas que a conversa no balcão produz: "faz
+ * cinquenta reais" e "dá dez por cento". Nenhuma é convertida na outra aqui —
+ * as duas vão como foram ditas, e quem calcula, confere contra o teto da loja
+ * e reparte entre as linhas é o servidor.
+ *
+ * O percentual vence o valor quando os dois vêm preenchidos.
+ */
+export interface DescontoPedido {
+    valor?: number
+    percentual?: number
+    motivo?: string
+}
+
+/**
  * Resolve o código lido ou digitado.
  *
  * É a mesma rota para o leitor USB (que digita o código e dá Enter) e para o
@@ -55,11 +71,37 @@ export async function venderNoBalcao(
     itens: LinhaParaVender[],
     meio: MeioDePagamento,
     recebido = 0,
+    desconto: DescontoPedido = {},
 ): Promise<VendaDoBalcao> {
     return apiFetch<VendaDoBalcao>("/api/balcao/vender", {
         method: "POST",
-        body: { itens, meio, recebido },
+        body: { itens, meio, recebido, desconto },
     })
+}
+
+/**
+ * Acha produtos pelo NOME, para quando não há código para bipar.
+ *
+ * Devolve o MESMO tipo da leitura de código, e isso é o que importa nesta
+ * função: a tela tem um caminho só para pôr item na sacola, venha ele do
+ * leitor ou da busca. Dois formatos seriam dois caminhos, e o segundo
+ * envelheceria.
+ *
+ * Abaixo de dois caracteres devolve lista vazia sem chamar o servidor: com uma
+ * letra, o resultado é quase o catálogo inteiro cortado em vinte linhas
+ * arbitrárias — o que parece um resultado e não é.
+ */
+export async function buscarNoBalcao(nome: string): Promise<ItemDoBalcao[]> {
+
+    const termo = nome.trim()
+
+    if (termo.length < 2) return []
+
+    const resposta = await apiFetch<{ produtos: ItemDoBalcao[] }>(
+        `/api/balcao/buscar?nome=${encodeURIComponent(termo)}`,
+    )
+
+    return resposta.produtos ?? []
 }
 
 /**
@@ -73,13 +115,25 @@ export async function venderNoBalcao(
  */
 export async function listarVendasDoBalcao(
     canceladas = false,
-): Promise<{ vendas: VendaResumida[]; horas_para_cancelar: number }> {
+): Promise<RespostaDasVendas> {
 
     const query = canceladas ? "?canceladas=1" : ""
 
-    return apiFetch<{ vendas: VendaResumida[]; horas_para_cancelar: number }>(
-        `/api/balcao/vendas${query}`,
-    )
+    return apiFetch<RespostaDasVendas>(`/api/balcao/vendas${query}`)
+}
+
+/**
+ * O que a listagem de vendas devolve.
+ *
+ * O teto do desconto vem de carona aqui, e não de uma rota própria: a tela do
+ * caixa já faz esta chamada ao abrir, e quem decide o teto é o dono, na
+ * configuração da loja (ver services/balcao.Listar, no backend). Zero quer
+ * dizer desligado — a tela não mostra campo de desconto nenhum.
+ */
+export interface RespostaDasVendas {
+    vendas: VendaResumida[]
+    horas_para_cancelar: number
+    desconto_maximo: number
 }
 
 /**

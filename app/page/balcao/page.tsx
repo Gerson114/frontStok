@@ -8,6 +8,9 @@ import {
     FiMinus,
     FiPackage,
     FiPlus,
+    FiMaximize,
+    FiMinimize,
+    FiPercent,
     FiRotateCcw,
     FiSearch,
     FiShoppingBag,
@@ -17,12 +20,13 @@ import {
 import { Pagina } from "@/app/components/pagina/pagina"
 import { formatarMoeda } from "@/app/components/preco/preco"
 import {
+    buscarNoBalcao,
     cancelarVendaDoBalcao,
     consultarItemDoBalcao,
     listarVendasDoBalcao,
     venderNoBalcao,
 } from "@/middleware/balcao"
-import type { LinhaParaVender } from "@/middleware/balcao"
+import type { DescontoPedido, LinhaParaVender } from "@/middleware/balcao"
 import { MEIOS_DE_PAGAMENTO } from "@/app/type/type"
 import type {
     ItemDoBalcao,
@@ -120,7 +124,33 @@ export default function Balcao() {
     const [horasParaCancelar, setHorasParaCancelar] = useState(0)
     const [cancelando, setCancelando] = useState<number | null>(null)
 
+    /* A BUSCA PELO NOME.
+
+       Existe porque bipar não cobre a loja inteira: etiqueta rasgada,
+       mercadoria sem embalagem com a etiqueta na caixa que ficou no estoque,
+       e o cliente pedindo algo que está atrás do balcão — onde digitar o nome
+       é mais rápido que ir buscar a peça para bipar. */
+    const [busca, setBusca] = useState("")
+    const [resultados, setResultados] = useState<ItemDoBalcao[]>([])
+    const [procurando, setProcurando] = useState(false)
+
+    /* O DESCONTO.
+
+       `tetoDoDesconto` vem do servidor junto da lista de vendas. Zero
+       significa desligado, e aí a tela não mostra campo nenhum — quem liga e
+       escolhe o teto é o dono, em Configurações. */
+    const [tetoDoDesconto, setTetoDoDesconto] = useState(0)
+    const [modoDoDesconto, setModoDoDesconto] = useState<"valor" | "percentual">("valor")
+    const [descontoDigitado, setDescontoDigitado] = useState("")
+    const [motivoDoDesconto, setMotivoDoDesconto] = useState("")
+
+    // A TELA CHEIA. O caixa de mercado fica aberto o dia inteiro num monitor
+    // que não serve para mais nada, e o menu lateral do painel é área perdida
+    // ali (ver entrarEmTelaCheia).
+    const [telaCheia, setTelaCheia] = useState(false)
+
     const campo = useRef<HTMLInputElement>(null)
+    const area = useRef<HTMLDivElement>(null)
 
     // O cursor volta para o campo do código sempre que a tela para de estar
     // ocupada: é onde a próxima tecla precisa cair, sempre.
@@ -140,6 +170,7 @@ export default function Balcao() {
             .then((resposta) => {
                 setVendas(resposta.vendas)
                 setHorasParaCancelar(resposta.horas_para_cancelar)
+                setTetoDoDesconto(resposta.desconto_maximo ?? 0)
             })
             .catch(() => {})
     }, [])
@@ -157,6 +188,7 @@ export default function Balcao() {
                 if (!valeu) return
                 setVendas(resposta.vendas)
                 setHorasParaCancelar(resposta.horas_para_cancelar)
+                setTetoDoDesconto(resposta.desconto_maximo ?? 0)
             })
             .catch(() => {})
 
@@ -194,6 +226,134 @@ export default function Balcao() {
 
     const trocoPrevisto = recebidoNumero > 0 ? recebidoNumero - total : 0
     const faltaReceber = recebidoNumero > 0 && recebidoNumero < total ? total - recebidoNumero : 0
+
+    /* ------------------------------------------------------------------
+       O DESCONTO
+
+       Tudo aqui é PRÉVIA. Quem calcula o desconto que vale, confere contra o
+       teto da loja e o reparte entre as linhas é o servidor (ver
+       services/balcao/desconto.go) — estes números existem para o operador
+       ver o total antes de confirmar, e nenhum deles é mandado na venda. O
+       que viaja é o que foi digitado.
+       ------------------------------------------------------------------ */
+
+    const descontoNumero = useMemo(() => {
+        const valor = Number.parseFloat(descontoDigitado.replace(",", ".").trim())
+        return Number.isFinite(valor) && valor > 0 ? valor : 0
+    }, [descontoDigitado])
+
+    const descontoPrevisto = useMemo(() => {
+
+        if (descontoNumero <= 0) return 0
+
+        const bruto = modoDoDesconto === "percentual"
+            ? total * descontoNumero / 100
+            : descontoNumero
+
+        // Nunca passa do subtotal: um total negativo não é desconto.
+        return Math.min(bruto, total)
+    }, [descontoNumero, modoDoDesconto, total])
+
+    // O teto, em reais, para a tela poder dizer quanto cabe em vez de só
+    // recusar depois. É a mesma conta do servidor, e é por isso que ela é
+    // prévia: quem recusa continua sendo ele.
+    const tetoEmReais = total * tetoDoDesconto / 100
+
+    const descontoPassaDoTeto = descontoPrevisto > 0 && descontoPrevisto > tetoEmReais + 0.005
+
+    const totalComDesconto = Math.max(total - descontoPrevisto, 0)
+
+    /* ------------------------------------------------------------------
+       A TELA CHEIA
+
+       Pedida ao navegador no ELEMENTO, e não na página: em tela cheia, o
+       navegador mostra só o elemento escolhido, então o menu lateral e a
+       barra superior do painel — que estão fora dele — desaparecem sozinhos.
+       É o que resolve o problema sem uma segunda folha de estilo e sem um
+       layout alternativo para manter.
+
+       O caixa de mercado fica aberto o dia inteiro num monitor que não serve
+       para mais nada; ali o menu é área perdida, e a lista de itens é o que
+       precisa de altura.
+
+       O estado é lido do EVENTO, e não do clique: dá para sair da tela cheia
+       com Esc sem passar por botão nenhum, e um estado atualizado no clique
+       ficaria dizendo "cheia" com a tela já normal.
+       ------------------------------------------------------------------ */
+    useEffect(() => {
+
+        function aoMudar() {
+            setTelaCheia(document.fullscreenElement !== null)
+        }
+
+        document.addEventListener("fullscreenchange", aoMudar)
+
+        return () => document.removeEventListener("fullscreenchange", aoMudar)
+    }, [])
+
+    async function alternarTelaCheia() {
+
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen()
+                return
+            }
+
+            await area.current?.requestFullscreen()
+        } catch {
+            // Negado pelo navegador (política de permissão, iframe sem
+            // allow="fullscreen"). Não é erro de venda e não vira aviso
+            // vermelho: o caixa continua funcionando do mesmo jeito, só sem
+            // ocupar a tela toda.
+        }
+    }
+
+    /* ------------------------------------------------------------------
+       A BUSCA PELO NOME
+       ------------------------------------------------------------------ */
+
+    /**
+     * Procura enquanto o operador digita, com uma pausa.
+     *
+     * A pausa de 250 ms não é economia de rede: sem ela, cada tecla dispara
+     * uma consulta e as respostas chegam fora de ordem — "cam", "camis",
+     * "cami" — e a lista fica mostrando o resultado de um termo que não é
+     * mais o que está no campo.
+     */
+    useEffect(() => {
+
+        const termo = busca.trim()
+
+        if (termo.length < 2) {
+            setResultados([])
+            setProcurando(false)
+            return
+        }
+
+        let valeu = true
+
+        setProcurando(true)
+
+        const relogio = setTimeout(() => {
+
+            buscarNoBalcao(termo)
+                .then((achados) => {
+                    if (valeu) setResultados(achados)
+                })
+                .catch(() => {
+                    if (valeu) setResultados([])
+                })
+                .finally(() => {
+                    if (valeu) setProcurando(false)
+                })
+
+        }, 250)
+
+        return () => {
+            valeu = false
+            clearTimeout(relogio)
+        }
+    }, [busca])
 
     /**
      * Acrescenta o que foi bipado.

@@ -150,6 +150,17 @@ export const lojas = {
  */
 export const balcao = {
     item: (codigo: string) => `/private/balcao/item?codigo=${encodeURIComponent(codigo)}`,
+
+    /**
+     * Acha produtos pelo NOME, para quando não há código para bipar:
+     * etiqueta rasgada, mercadoria sem embalagem, ou o cliente pedindo algo
+     * que está atrás do balcão.
+     *
+     * Devolve o mesmo formato do `item` acima — é o que permite à tela ter um
+     * caminho só para pôr item na sacola.
+     */
+    buscar: (nome: string) => `/private/balcao/buscar?nome=${encodeURIComponent(nome)}`,
+
     vender: () => "/private/balcao/vender",
 
     /**

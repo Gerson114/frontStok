@@ -1598,6 +1598,20 @@ export interface ConfiguracaoDaLoja {
     balanca_digitos_do_codigo: number
     balanca_digitos_do_valor: number
 
+    /**
+     * O teto do desconto que o caixa pode dar, em por cento do subtotal.
+     *
+     * ZERO DESLIGA O DESCONTO, e é o padrão. O desconto é a única coisa na
+     * tela de venda que tira dinheiro da loja por decisão de quem está
+     * atendendo, e ele sai do lucro — não da margem do fornecedor.
+     *
+     * O teto é um só, igual para dono e funcionário: dois limites pareceriam
+     * mais seguros e seriam menos, porque ninguém diz de cabeça qual dos dois
+     * valeu numa venda. O controle que funciona é o teto baixo mais o
+     * registro de quem deu.
+     */
+    balcao_desconto_maximo: number
+
     atualizado_em?: string
 }
 
@@ -1795,6 +1809,15 @@ export interface ItemVendidoNoBalcao {
 
     /** Esta linha não tirou peça da prateleira. */
     sem_contagem?: boolean
+
+    /**
+     * A parte do desconto da venda que caiu nesta linha, já rateada.
+     *
+     * `preco_unitario` e `subtotal` acima JÁ estão com ele aplicado — este
+     * campo existe para a linha poder explicar por que o preço dela não bate
+     * com o cadastro.
+     */
+    desconto?: number
 }
 
 /**
@@ -1828,6 +1851,16 @@ export interface VendaDoBalcao {
 
     itens: ItemVendidoNoBalcao[]
     pecas: number
+
+    /**
+     * `subtotal` é antes do desconto; `total` é o que o cliente pagou.
+     *
+     * Os dois vão para a tela porque é assim que o comprovante se lê em voz
+     * alta: "deu cento e seis, com dez de desconto, noventa e seis".
+     */
+    subtotal: number
+    desconto: number
+    desconto_motivo?: string
     total: number
 
     meio: MeioDePagamento
