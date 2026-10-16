@@ -10,7 +10,9 @@ import { ApiError } from "@/middleware/client"
 import Pagination from "@/app/components/pagination/pagination"
 import Preco, { formatarMoeda } from "@/app/components/preco/preco"
 import {
-    FiCalendar, FiFileText, FiSearch, FiAlertTriangle, FiFilePlus, FiArrowLeft } from "react-icons/fi"
+    FiCalendar, FiFileText, FiSearch, FiAlertTriangle, FiFilePlus, FiArrowLeft,
+    FiClock, FiTruck, FiShoppingBag } from "react-icons/fi"
+import type { IconType } from "react-icons"
 import { urlDaImagem } from "@/security/imagem"
 import { telefoneLegivel } from "@/app/components/contato/telefone"
 import { Pagina, Estado } from "@/app/components/pagina/pagina"
@@ -51,6 +53,119 @@ const STATUS_TAG: Record<StatusPedido, string> = {
     enviado: "tag-info",
     entregue: "tag-success",
     cancelado: "tag-danger",
+}
+
+
+// ==============================
+// QUANDO E PARA ONDE
+// ==============================
+
+/* As duas perguntas que esta tela responde pior do que devia.
+
+   Os dados sempre estiveram no pedido, mas a hora marcada aparecia perdida
+   dentro do bloco do cliente e o endereço ficava no fim da ficha, depois da
+   lista de itens — então "é agendado?" e "vai para onde?" só se respondiam
+   rolando a tela até achar. Na lista não se respondiam de jeito nenhum.
+
+   O que mora aqui são as duas respostas prontas, de uma forma que serve aos
+   dois lugares: a linha curta do cartão da lista e o bloco em destaque no
+   topo da ficha. Uma função só para as duas, porque a lista dizendo uma coisa
+   e a ficha dizendo outra sobre o mesmo pedido é o defeito que isto conserta. */
+
+/** "hoje", "amanhã", "ontem" ou "17/10" — o que a pessoa diria falando. */
+function diaRelativo(data: Date): string {
+
+    const soOdia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+
+    const diferenca = Math.round((soOdia(data) - soOdia(new Date())) / 86400000)
+
+    if (diferenca === 0) return "hoje"
+    if (diferenca === 1) return "amanhã"
+    if (diferenca === -1) return "ontem"
+
+    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+}
+
+/** Dia relativo com hora: "hoje às 12:30". Sem hora: "amanhã". */
+function quandoLegivel(iso: string, comHora = true): string {
+
+    const data = new Date(iso)
+
+    if (Number.isNaN(data.getTime())) return iso
+
+    const dia = diaRelativo(data)
+
+    if (!comHora) return dia
+
+    return `${dia} às ${data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+}
+
+type Agendamento = {
+    /** Falso é "para agora" — e não "sem prazo" (ver Pedido.agendado_para). */
+    marcado: boolean
+    texto: string
+}
+
+function agendamentoDoPedido(pedido: Pedido): Agendamento {
+
+    if (!pedido.agendado_para) return { marcado: false, texto: "Para agora" }
+
+    return { marcado: true, texto: quandoLegivel(pedido.agendado_para) }
+}
+
+type Destino = {
+    tipo: "entrega" | "retirada" | "balcao"
+    rotulo: string
+
+    /** Uma linha, para caber no cartão da lista. */
+    resumo: string
+
+    Icone: IconType
+}
+
+function destinoDoPedido(pedido: Pedido): Destino {
+
+    if (pedido.entrega_tipo === "entrega") {
+
+        // Bairro e cidade, nesta ordem: quem separa a sacola decide a rota
+        // pelo bairro, e a cidade é o que diz se o pedido sai da região.
+        const partes = [
+            pedido.bairro,
+            pedido.cidade ? `${pedido.cidade}${pedido.uf ? `/${pedido.uf}` : ""}` : "",
+        ].filter(Boolean)
+
+        return {
+            tipo: "entrega",
+            rotulo: "Entrega",
+            resumo: partes.length > 0 ? partes.join(" · ") : "Endereço incompleto",
+            Icone: FiTruck,
+        }
+    }
+
+    if (pedido.entrega_tipo === "retirada") {
+        return {
+            tipo: "retirada",
+            rotulo: "Retirada na loja",
+            resumo: "O cliente vem buscar",
+            Icone: FiShoppingBag,
+        }
+    }
+
+    return {
+        tipo: "balcao",
+        rotulo: "Balcão",
+        resumo: "Lançado no painel, sem entrega",
+        Icone: FiFileText,
+    }
+}
+
+/** O rótulo pequeno que nomeia cada bloco da ficha. */
+function Rotulo({ children }: { children: React.ReactNode }) {
+    return (
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-[var(--ink-3)]">
+            {children}
+        </p>
+    )
 }
 
 
@@ -811,26 +926,41 @@ function PedidosInterno() {
 
                                 const escolhido = pedido.id === pedidoAberto?.id
 
+                                const agenda = agendamentoDoPedido(pedido)
+                                const destino = destinoDoPedido(pedido)
+                                const IconeDoDestino = destino.Icone
+
                                 return (
                                     <button
                                         key={pedido.id}
                                         type="button"
                                         onClick={() => setSelecionado(pedido.id)}
                                         aria-current={escolhido ? "true" : undefined}
-                                        className={`flex w-full flex-col gap-1 border-b border-[var(--fundo)] px-3 py-2.5 text-left transition-colors last:border-b-0 ${
+                                        className={`flex w-full flex-col gap-1.5 border-b border-[var(--fundo)] px-3 py-3 text-left transition-colors last:border-b-0 ${
                                             escolhido ? "bg-[var(--fundo)]" : "hover:bg-[var(--superficie-2)]"
                                         }`}
                                     >
-                                        <span className="flex items-center justify-between gap-2">
-                                            <span className="num truncate text-xs font-semibold text-[var(--ink-2)]">
-                                                {pedido.codigo || `#${pedido.id}`}
+                                        <span className="flex items-baseline justify-between gap-2">
+                                            <span className="truncate text-sm font-semibold text-[var(--ink)]">
+                                                {pedido.cliente_nome || `Cliente #${pedido.cliente_id}`}
                                             </span>
 
-                                            <Preco valor={totalDoPedido(pedido)} className="text-sm" />
+                                            <Preco valor={totalDoPedido(pedido)} className="shrink-0 text-sm" />
                                         </span>
 
-                                        <span className="truncate text-sm font-semibold text-[var(--ink)]">
-                                            {pedido.cliente_nome || `Cliente #${pedido.cliente_id}`}
+                                        {/* PARA ONDE VAI, na própria linha.
+
+                                            Era o que não dava para saber sem
+                                            abrir o pedido: três sacolas na
+                                            bancada e nenhuma pista de qual sai
+                                            para a rua e qual espera no balcão. */}
+                                        <span className="flex items-center gap-1.5 text-xs text-[var(--ink-2)]">
+                                            <IconeDoDestino className="w-3.5 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                                            <span className="truncate">{destino.resumo}</span>
+
+                                            <span className="num ml-auto shrink-0 text-[var(--ink-3)]">
+                                                {pedido.codigo || `#${pedido.id}`}
+                                            </span>
                                         </span>
 
                                         <span className="flex flex-wrap items-center gap-1.5">
@@ -838,10 +968,26 @@ function PedidosInterno() {
                                                 {STATUS_LABEL[pedido.status]}
                                             </span>
 
+                                            {/* A HORA MARCADA, quando existe.
+
+                                                Só aparece em pedido agendado, e
+                                                é essa a informação: cartão com
+                                                relógio tem hora combinada, cartão
+                                                sem relógio é para agora. Escrever
+                                                "para agora" em toda linha gastaria
+                                                a atenção que o agendado precisa
+                                                roubar. */}
+                                            {agenda.marcado && (
+                                                <span className="tag tag-info">
+                                                    <FiClock className="w-3 shrink-0" aria-hidden />
+                                                    {agenda.texto}
+                                                </span>
+                                            )}
+
                                             <SeloPagamento pedido={pedido} />
 
-                                            <span className="text-xs text-[var(--ink-3)]">
-                                                {formatarData(pedido.created_at)}
+                                            <span className="ml-auto shrink-0 text-xs text-[var(--ink-3)]">
+                                                {quandoLegivel(pedido.created_at)}
                                             </span>
                                         </span>
                                     </button>
@@ -1242,13 +1388,21 @@ function FichaDoPedido({
                 </form>
             ) : null}
 
+            {/* ==========================================================
+                QUANDO, E PARA ONDE
+
+                Primeiro bloco da ficha de propósito: são as duas perguntas
+                que se faz de pé, com a sacola na mão, e as duas que a ficha
+                antiga respondia por último — a hora marcada escondida no
+                bloco do cliente, o endereço depois da lista de itens.
+               ========================================================== */}
+            <QuandoEParaOnde pedido={pedido} formatarData={formatarData} />
+
             {/* QUEM COMPROU */}
             <div className="grid gap-4 sm:grid-cols-2">
 
                 <div>
-                    <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                        Cliente
-                    </p>
+                    <Rotulo>Cliente</Rotulo>
 
                     <p className="mt-1 text-sm font-semibold text-[var(--ink)]">
                         {pedido.cliente_nome || `Cliente #${pedido.cliente_id}`}
@@ -1261,25 +1415,10 @@ function FichaDoPedido({
                     {pedido.telefone && (
                         <p className="num text-sm text-[var(--ink-2)]">{telefoneLegivel(pedido.telefone)}</p>
                     )}
-
-                    {/* A hora marcada, quando existe.
-                    
-                        Em destaque, e não em cinza ao lado do resto: numa
-                        cozinha ela é a informação que decide a ordem da fila
-                        do dia, e um pedido marcado para as 12h lido como
-                        "para agora" é comida pronta três horas cedo. */}
-                    {pedido.agendado_para && (
-                        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-[var(--azul-suave)] px-2 py-1 text-[0.8125rem] font-semibold text-[var(--azul)]">
-                            <FiCalendar className="w-3.5 shrink-0" aria-hidden />
-                            {horaMarcada(pedido.agendado_para)}
-                        </p>
-                    )}
                 </div>
 
                 <div>
-                    <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                        Pagamento
-                    </p>
+                    <Rotulo>Pagamento</Rotulo>
 
                     <p className="mt-1 text-sm text-[var(--ink)]">
                         {pedido.pagamento_status === "aprovado"
@@ -1406,9 +1545,7 @@ function FichaDoPedido({
 
             {/* O QUE ELE COMPROU */}
             <div>
-                <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                    {pedido.itens.length} item(ns)
-                </p>
+                <Rotulo>{pedido.itens.length} item(ns)</Rotulo>
 
                 <ul className="mt-2 divide-y divide-[var(--linha-suave)] border-y border-[var(--linha-suave)]">
                     {pedido.itens.map((item) => {
@@ -1479,49 +1616,23 @@ function FichaDoPedido({
                 </ul>
             </div>
 
-            {/* PARA ONDE VAI, E COM QUE CÓDIGO */}
+            {/* ==========================================================
+                O ENVIO
+
+                Só o que se FAZ com a mercadoria: o rastreio de quem manda
+                pelo correio, a regra do código de quem vem buscar. Para onde
+                vai e em que dia estão no bloco do topo — repetir o endereço
+                aqui era o que fazia a mesma ficha dizer duas vezes a mesma
+                coisa em lugares distantes.
+               ========================================================== */}
             {pedido.entrega_tipo === "entrega" ? (
                 <div>
-                    <p className="text-[0.6875rem] font-semibold text-[var(--ink-3)]">
-                        Entregar em
-                    </p>
-
-                    <address className="mt-1 not-italic text-sm leading-relaxed text-[var(--ink)]">
-                        {pedido.logradouro}, {pedido.numero}
-                        {pedido.complemento ? ` — ${pedido.complemento}` : ""}
-                        <br />
-                        {pedido.bairro} · {pedido.cidade}{pedido.uf ? `/${pedido.uf}` : ""}
-                        {pedido.cep ? <span className="num text-[var(--ink-2)]"> · CEP {pedido.cep}</span> : null}
-                    </address>
-
-                    {pedido.previsao_entrega && (
-                        <p className="mt-1 text-sm text-[var(--ink-2)]">
-                            Previsão de chegada: {new Date(pedido.previsao_entrega).toLocaleDateString("pt-BR")}
-                        </p>
-                    )}
-
-                    {/* O dia da saída não se escolhe aqui: quem o marca é a
-                        agenda de entregas, que é a tela em que se enxerga a
-                        terça cheia e a quinta vazia. */}
-                    {pedido.status === "confirmado" && !pedido.envio_previsto_em && (
-                        <Link
-                            href="/page/entregas"
-                            className="mt-2 inline-block rounded-lg border border-[#FFD59E] bg-[var(--amarelo-fundo)] px-3 py-2 text-xs font-semibold text-[var(--amarelo)] transition-colors hover:bg-[#FFE4C4]"
-                        >
-                            Em preparo, sem dia de saída — marque na agenda de entregas
-                        </Link>
-                    )}
-
-                    {pedido.envio_previsto_em && (
-                        <p className="mt-1 text-sm text-[var(--ink-2)]">
-                            Sai em {new Date(pedido.envio_previsto_em).toLocaleDateString("pt-BR")}.
-                        </p>
-                    )}
+                    <Rotulo>Envio e rastreio</Rotulo>
 
                     {/* O formulário fica sempre à mão, inclusive depois de
                         preenchido: código digitado errado é o caso mais comum
                         de precisar mexer nisto de novo. */}
-                    <form onSubmit={(e) => handleRastreio(e, pedido)} className="mt-3 flex flex-wrap items-end gap-2">
+                    <form onSubmit={(e) => handleRastreio(e, pedido)} className="mt-2 flex flex-wrap items-end gap-2">
 
                         <div className="min-w-[9rem] flex-1">
                             <label className="rotulo" htmlFor={`transp-${pedido.id}`}>Transportadora</label>
@@ -1556,26 +1667,31 @@ function FichaDoPedido({
                     </form>
                 </div>
             ) : (
-                <div className="space-y-1.5 text-sm text-[var(--ink-2)]">
-                    <p>
-                        {pedido.entrega_tipo === "retirada"
-                            ? "O cliente vem buscar na loja."
-                            : "Sem entrega registrada — pedido lançado no painel."}
-                    </p>
+                <div>
+                    <Rotulo>Entrega</Rotulo>
 
-                    {/* Dito ANTES de o atendente ir marcar como entregue: sem
-                        isto ele descobre a exigência no meio da ação, com o
-                        cliente na frente, e o campo do código aparece parecendo
-                        travamento em vez de regra da loja. */}
-                    {pedido.exige_codigo_retirada && !pedido.retirado_em ? (
-                        <p className="font-semibold text-[var(--ink)]">
-                            Este pedido só é liberado com o código de retirada do cliente.
-                        </p>
-                    ) : null}
+                    <div className="mt-1 space-y-1.5 text-sm text-[var(--ink-2)]">
 
-                    {pedido.retirado_em ? (
-                        <p>Retirado em {formatarData(pedido.retirado_em)}, com o código conferido.</p>
-                    ) : null}
+                        {/* Dito ANTES de o atendente ir marcar como entregue: sem
+                            isto ele descobre a exigência no meio da ação, com o
+                            cliente na frente, e o campo do código aparece parecendo
+                            travamento em vez de regra da loja. */}
+                        {pedido.exige_codigo_retirada && !pedido.retirado_em ? (
+                            <p className="font-semibold text-[var(--ink)]">
+                                Este pedido só é liberado com o código de retirada do cliente.
+                            </p>
+                        ) : null}
+
+                        {pedido.retirado_em ? (
+                            <p>Retirado em {formatarData(pedido.retirado_em)}, com o código conferido.</p>
+                        ) : (
+                            <p>
+                                {pedido.entrega_tipo === "retirada"
+                                    ? "Nada a despachar: o cliente busca na loja."
+                                    : "Pedido lançado no painel, sem entrega registrada."}
+                            </p>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -1614,22 +1730,143 @@ function FichaDoPedido({
 }
 
 /**
- * A hora marcada, escrita como a cozinha lê.
+ * O bloco de cima da ficha: quando este pedido tem de estar pronto e para
+ * onde ele vai.
  *
- * Dia e hora juntos, e sempre: "12:30" sozinho obriga quem lê a descobrir se
- * é hoje ou amanhã, e essa é justamente a pergunta que a linha existe para
- * responder.
+ * Duas caixas lado a lado, e cada uma responde uma pergunta só. A da
+ * esquerda muda de cor quando há hora marcada — azul é "tem compromisso de
+ * horário", cinza é "para agora". Um pedido agendado lido como "para agora" é
+ * comida pronta três horas cedo, e era o que o desenho antigo permitia: a
+ * hora aparecia como uma linha a mais no meio dos dados do cliente.
+ *
+ * A da direita traz o endereço INTEIRO, que antes vivia depois da lista de
+ * itens. Quem confere a sacola e quem a despacha olham para o mesmo lugar.
  */
-function horaMarcada(quando: string): string {
+function QuandoEParaOnde({
+    pedido,
+    formatarData,
+}: {
+    pedido: Pedido
+    formatarData: (iso: string) => string
+}) {
 
-    const data = new Date(quando)
+    const agenda = agendamentoDoPedido(pedido)
+    const destino = destinoDoPedido(pedido)
+    const IconeDoDestino = destino.Icone
 
-    if (Number.isNaN(data.getTime())) return quando
+    // As datas da logística, na ordem em que acontecem. Montadas numa lista
+    // em vez de quatro parágrafos condicionais: o que existe aparece, o que
+    // não existe não deixa buraco no bloco.
+    const etapas: string[] = []
 
-    return data.toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-    })
+    if (pedido.envio_previsto_em && !pedido.enviado_em) {
+        etapas.push(`Sai ${quandoLegivel(pedido.envio_previsto_em, false)}`)
+    }
+
+    if (pedido.enviado_em) {
+        etapas.push(`Despachado ${quandoLegivel(pedido.enviado_em, false)}`)
+    }
+
+    if (pedido.previsao_entrega && !pedido.retirado_em) {
+        etapas.push(`Chega por volta de ${quandoLegivel(pedido.previsao_entrega, false)}`)
+    }
+
+    if (pedido.retirado_em) {
+        etapas.push(`Retirado em ${formatarData(pedido.retirado_em)}`)
+    }
+
+    return (
+        <div className="grid gap-3 sm:grid-cols-2">
+
+            {/* QUANDO */}
+            <div
+                className={`border p-3 ${
+                    agenda.marcado
+                        ? "border-[var(--azul)] bg-[var(--azul-suave)]"
+                        : "border-[var(--linha)] bg-[var(--superficie-2)]"
+                }`}
+            >
+                <Rotulo>Quando</Rotulo>
+
+                <p
+                    className={`mt-1 flex items-center gap-2 font-display text-base font-semibold ${
+                        agenda.marcado ? "text-[var(--azul-escuro)]" : "text-[var(--ink)]"
+                    }`}
+                >
+                    {agenda.marcado
+                        ? <FiClock className="w-4 shrink-0" aria-hidden />
+                        : <FiCalendar className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />}
+
+                    {agenda.marcado ? `Agendado · ${agenda.texto}` : "Para agora"}
+                </p>
+
+                {!agenda.marcado && (
+                    <p className="mt-0.5 text-xs text-[var(--ink-3)]">
+                        O cliente não marcou hora.
+                    </p>
+                )}
+
+                {etapas.length > 0 && (
+                    <ul className="mt-2 space-y-0.5 text-xs text-[var(--ink-2)]">
+                        {etapas.map((etapa) => (
+                            <li key={etapa}>{etapa}</li>
+                        ))}
+                    </ul>
+                )}
+
+                {/* O dia da saída não se escolhe aqui: quem o marca é a
+                    agenda de entregas, que é a tela em que se enxerga a terça
+                    cheia e a quinta vazia. */}
+                {pedido.entrega_tipo === "entrega" && pedido.status === "confirmado" && !pedido.envio_previsto_em && (
+                    <Link
+                        href="/page/entregas"
+                        className="mt-2 inline-block border border-[#FFD59E] bg-[var(--amarelo-fundo)] px-2.5 py-1.5 text-xs font-semibold text-[var(--amarelo)] transition-colors hover:bg-[#FFE4C4]"
+                    >
+                        Sem dia de saída — marque na agenda
+                    </Link>
+                )}
+            </div>
+
+            {/* PARA ONDE */}
+            <div className="border border-[var(--linha)] bg-[var(--superficie-2)] p-3">
+
+                <Rotulo>Para onde</Rotulo>
+
+                <p className="mt-1 flex items-center gap-2 font-display text-base font-semibold text-[var(--ink)]">
+                    <IconeDoDestino className="w-4 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                    {destino.rotulo}
+                </p>
+
+                {destino.tipo === "entrega" ? (
+                    <address className="mt-1.5 not-italic text-sm leading-relaxed text-[var(--ink)]">
+                        {pedido.logradouro}, {pedido.numero}
+                        {pedido.complemento ? ` — ${pedido.complemento}` : ""}
+                        <br />
+                        {pedido.bairro} · {pedido.cidade}{pedido.uf ? `/${pedido.uf}` : ""}
+                        {pedido.cep ? (
+                            <>
+                                <br />
+                                <span className="num text-[var(--ink-2)]">CEP {pedido.cep}</span>
+                            </>
+                        ) : null}
+                    </address>
+                ) : (
+                    <p className="mt-1.5 text-sm text-[var(--ink-2)]">
+                        {destino.tipo === "retirada"
+                            ? "O cliente vem buscar no balcão da loja."
+                            : "Pedido lançado no painel, sem entrega registrada."}
+                    </p>
+                )}
+
+                {/* O telefone mora aqui, e não só no bloco do cliente: quem
+                    está com o endereço na mão é quem liga quando não acha a
+                    casa. */}
+                {destino.tipo === "entrega" && pedido.telefone && (
+                    <p className="num mt-1.5 text-sm text-[var(--ink-2)]">
+                        {telefoneLegivel(pedido.telefone)}
+                    </p>
+                )}
+            </div>
+        </div>
+    )
 }
