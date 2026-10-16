@@ -8,7 +8,14 @@ import { sanitizeEmail } from "@/security/sanitize"
 import { ApiError, extrairMensagemErro } from "@/middleware/client"
 import type { CadastroConcluido, InicioCadastro } from "@/app/type/type"
 
-export async function login(email: string, password: string): Promise<void> {
+/**
+ * Entra no painel.
+ *
+ * `lembrar` é a caixa "continuar conectado" da tela de entrada, e vai como
+ * booleano: o que ela significa — se abre lembrança, por quanto tempo, com
+ * que segredo — é decidido pelo backend, não aqui.
+ */
+export async function login(email: string, password: string, lembrar = false): Promise<void> {
     const response = await fetch("/api/login", {
         method: "POST",
         headers: {
@@ -18,6 +25,7 @@ export async function login(email: string, password: string): Promise<void> {
         body: JSON.stringify({
             email: sanitizeEmail(email),
             password,
+            lembrar,
         }),
     })
 

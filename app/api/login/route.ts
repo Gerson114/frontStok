@@ -1,6 +1,6 @@
 import { sanitizeEmail } from "@/security/sanitize"
 import { extrairMensagemErro } from "@/middleware/client"
-import { url, cookieDeSessao } from "@/app/api/backend"
+import { url, cookieDeSessao, cookieDaLembranca } from "@/app/api/backend"
 import { publico } from "@/app/api/rotas"
 
 
@@ -16,6 +16,11 @@ export async function POST(request: Request) {
         const email = sanitizeEmail(String(entrada.email ?? ""))
         const password = String(entrada.password ?? "")
 
+        // "Continuar conectado" chega como booleano e segue como booleano:
+        // quem decide o que ele vale — se abre lembrança, por quanto tempo,
+        // com que segredo — é o backend (ver services/login/lembranca.go).
+        const lembrar = entrada.lembrar === true
+
         // A validade de fato (formato, força, existência da conta) é
         // decidida pelo backend — aqui só evitamos mandar campos vazios.
         if (!email || !password) {
@@ -28,7 +33,7 @@ export async function POST(request: Request) {
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },
-            body: JSON.stringify({ email, Password: password }),
+            body: JSON.stringify({ email, Password: password, lembrar }),
             cache: "no-store",
         })
 
@@ -56,6 +61,12 @@ export async function POST(request: Request) {
         }
 
         saida.headers.append("Set-Cookie", cookie)
+
+        // O cookie da lembrança só existe quando a caixa foi marcada, então
+        // ausência aqui é o caso normal, não falha.
+        const lembranca = cookieDaLembranca(response.headers.getSetCookie())
+
+        if (lembranca) saida.headers.append("Set-Cookie", lembranca)
 
         return saida
 

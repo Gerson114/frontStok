@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { COOKIE_DA_LOJA, cabecalhoDaLojaAberta, url } from "@/app/api/backend"
+import { COOKIE_DA_LEMBRANCA, COOKIE_DA_LOJA, cabecalhoDaLojaAberta, url } from "@/app/api/backend"
 import { conta } from "@/app/api/rotas"
 
 
@@ -63,6 +63,14 @@ export async function POST() {
     // (ver lojaAberta, em lib/midlleware/auth) e abre a principal, então não
     // era brecha — mas era um cabeçalho mentiroso viajando em toda requisição.
     cookieStore.delete(COOKIE_DA_LOJA)
+
+    // A lembrança do aparelho também. O backend apaga a linha dela ao
+    // revogar (ver services/login/logout.go), e o cookie que ficasse aqui
+    // seria um segredo morto tentando renovar sessão a cada página aberta.
+    // Quando a revogação falhou, apagá-lo é ainda mais necessário: é o que
+    // impede este navegador de voltar sozinho para dentro da conta que a
+    // pessoa pediu para fechar.
+    cookieStore.delete(COOKIE_DA_LEMBRANCA)
 
     return Response.json(
         {

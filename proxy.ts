@@ -46,6 +46,104 @@ const ROTAS_ABERTAS = [
     "/page/assinatura/cancelado",
 ]
 
+
+// ==============================
+// CONTINUAR CONECTADO
+// ==============================
+//
+// Sessão vencida com aparelho lembrado não vai para o login: o proxy troca a
+// lembrança por uma sessão nova antes de deixar a navegação seguir.
+//
+// O que torna isso seguro não está aqui — está no backend, que guarda só o
+// hash do segredo, troca o segredo a cada uso, detecta cópia reaproveitada e
+// derruba tudo quando a conta muda de senha ou sai (ver dto.SessaoLembrada e
+// services/login/lembranca.go). Deste lado são três coisas: o cookie nunca
+// chega ao JavaScript da página (HttpOnly), ele não acompanha requisição
+// vinda de outro site (SameSite=Lax) e, quando a renovação é recusada, ele é
+// APAGADO — senão toda página aberta tentaria de novo com um segredo morto.
+//
+// Nada é importado de app/api/backend.ts de propósito: aquele módulo lê
+// `cookies()` de next/headers, que não existe no proxy. As poucas constantes
+// repetidas aqui custam menos que arrastar aquele mundo para dentro deste.
+
+const COOKIE_DA_LEMBRANCA = "lembranca"
+const VALIDADE_SESSAO_S = 60 * 60 * 24
+const VALIDADE_LEMBRANCA_S = 60 * 60 * 24 * 30
+
+const API_BASE = (process.env.API_URL ?? "http://localhost:8080").trim().replace(/\/+$/, "")
+
+/** Monta o Set-Cookie desta origem. Validade 0 é ordem de apagar. */
+function cookieDaOrigem(nome: string, valor: string, validadeS: number): string {
+    return [
+        `${nome}=${valor}`,
+        "Path=/",
+        "HttpOnly",
+        "SameSite=Lax",
+        `Max-Age=${validadeS}`,
+        process.env.NODE_ENV === "production" ? "Secure" : "",
+    ]
+        .filter(Boolean)
+        .join("; ")
+}
+
+/** O valor cru de um cookie que o backend mandou. */
+function valorRecebido(recebidos: string[], nome: string): string | null {
+
+    const bruto = recebidos.find((cookie) => cookie.startsWith(`${nome}=`))
+
+    if (!bruto) return null
+
+    return bruto.slice(`${nome}=`.length).split(";")[0] || null
+}
+
+type SessaoRenovada = { token: string; cookies: string[] }
+
+async function renovarSessao(lembranca: string): Promise<SessaoRenovada | null> {
+
+    try {
+
+        const resposta = await fetch(`${API_BASE}/public/sessao/renovar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ lembranca }),
+            cache: "no-store",
+        })
+
+        const recebidos = resposta.headers.getSetCookie()
+        const token = valorRecebido(recebidos, "token")
+
+        // Recusa é o caminho normal de uma lembrança vencida ou revogada: a
+        // pessoa digita a senha de novo, como digitaria sem este recurso.
+        if (!resposta.ok || !token) return null
+
+        const cookies = [cookieDaOrigem("token", token, VALIDADE_SESSAO_S)]
+
+        // O segredo roda a cada uso: o que o backend acabou de mandar é o
+        // único que vale daqui em diante.
+        const nova = valorRecebido(recebidos, COOKIE_DA_LEMBRANCA)
+
+        if (nova) cookies.push(cookieDaOrigem(COOKIE_DA_LEMBRANCA, nova, VALIDADE_LEMBRANCA_S))
+
+        return { token, cookies }
+
+    } catch {
+        // Backend fora do ar não é sessão inválida, mas o resultado prático
+        // para esta navegação é o mesmo: não há como provar quem é.
+        return null
+    }
+}
+
+/** O cabeçalho Cookie da requisição, com a sessão recém-criada dentro dele. */
+function cookieComToken(original: string | null, token: string): string {
+
+    const resto = (original ?? "")
+        .split(";")
+        .map((parte) => parte.trim())
+        .filter((parte) => parte && !parte.startsWith("token="))
+
+    return [...resto, `token=${token}`].join("; ")
+}
+
 // ==============================
 // RATE LIMIT
 // ==============================
@@ -380,7 +478,7 @@ function corpoGrandeDemais(request: NextRequest): boolean {
     return Number.isFinite(declarado) && declarado > LIMITE_CORPO_BYTES
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl
 
     if (pathname.startsWith("/api/")) {
@@ -461,13 +559,77 @@ export function proxy(request: NextRequest) {
         !ROTAS_ABERTAS.some((rota) => request.nextUrl.pathname.startsWith(rota)) &&
         ROTAS_PROTEGIDAS.some((rota) => request.nextUrl.pathname.startsWith(rota))
 
+    // Os Set-Cookie da renovação, se ela aconteceu nesta navegação.
+    let cookiesDaRenovacao: string[] = []
+
+    /* A TELA DE ENTRADA TAMBÉM RENOVA.
+    
+       Sem isto havia um buraco no "continuar conectado": a aba que fica
+       aberta mais de um dia recebe 401 na primeira chamada de API depois do
+       vencimento e é mandada para /login — que não é rota protegida, e
+       portanto não passava pela renovação. O lojista com o aparelho lembrado
+       acabava digitando a senha do mesmo jeito.
+    
+       Quem acabou de sair não cai aqui: o logout apaga os dois cookies. */
+    if (request.nextUrl.pathname === "/login" && !request.cookies.get("token")) {
+
+        const lembranca = request.cookies.get(COOKIE_DA_LEMBRANCA)?.value
+
+        const renovada = lembranca ? await renovarSessao(lembranca) : null
+
+        if (renovada) {
+
+            const paraODentro = NextResponse.redirect(new URL("/page/produtos", request.url))
+
+            for (const cookie of renovada.cookies) {
+                paraODentro.headers.append("Set-Cookie", cookie)
+            }
+
+            return paraODentro
+        }
+
+        if (lembranca) {
+            // Lembrança morta sai do navegador antes de a tela aparecer, para
+            // a próxima visita não gastar outra ida ao backend.
+            cookiesDaRenovacao = [cookieDaOrigem(COOKIE_DA_LEMBRANCA, "", 0)]
+        }
+    }
+
     if (precisaAutenticar && !request.cookies.get("token")) {
-        return NextResponse.redirect(new URL("/login", request.url))
+
+        const lembranca = request.cookies.get(COOKIE_DA_LEMBRANCA)?.value
+
+        const renovada = lembranca ? await renovarSessao(lembranca) : null
+
+        if (!renovada) {
+
+            const paraOLogin = NextResponse.redirect(new URL("/login", request.url))
+
+            // Lembrança que não serve mais sai do navegador aqui. Sem isto,
+            // cada página aberta gastaria uma ida ao backend para ouvir o
+            // mesmo não.
+            if (lembranca) {
+                paraOLogin.headers.append("Set-Cookie", cookieDaOrigem(COOKIE_DA_LEMBRANCA, "", 0))
+            }
+
+            return paraOLogin
+        }
+
+        cookiesDaRenovacao = renovada.cookies
+
+        // A sessão nova vale já NESTA navegação, e não só na próxima: sem
+        // reescrever o cabeçalho, a página renderizaria sem sessão e o
+        // lojista veria uma tela vazia antes de tudo voltar ao normal.
+        requestHeaders.set("cookie", cookieComToken(request.headers.get("cookie"), renovada.token))
     }
 
     const response = NextResponse.next({
         request: { headers: requestHeaders },
     })
+
+    for (const cookie of cookiesDaRenovacao) {
+        response.headers.append("Set-Cookie", cookie)
+    }
 
     response.headers.set("Content-Security-Policy", contentSecurityPolicyHeaderValue)
     response.headers.set("X-Frame-Options", "DENY")

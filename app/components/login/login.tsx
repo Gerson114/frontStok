@@ -48,6 +48,13 @@ export default function Login() {
     const [email, setEmail] = useState("")
     const [pass, setPass] = useState("")
     const [mostrarSenha, setMostrarSenha] = useState(false)
+
+    /* "Continuar conectado".
+     *
+     * Nasce DESMARCADO, e isso não é detalhe: o computador do balcão é
+     * compartilhado, e deixar a caixa marcada por padrão lembraria o aparelho
+     * de quem nunca pediu isso. Comodidade se escolhe; ela não se herda. */
+    const [lembrar, setLembrar] = useState(false)
     const [error, setError] = useState("")
     const [campoErro, setCampoErro] = useState<Campo>("")
     const [loading, setLoading] = useState(false)
@@ -142,7 +149,7 @@ export default function Login() {
         try {
             setLoading(true)
 
-            await login(email, pass)
+            await login(email, pass, lembrar)
 
             // Para onde ir depois de entrar não é mais uma resposta fixa.
             //
@@ -396,6 +403,43 @@ export default function Login() {
                     )}
 
                 </div>
+
+                {/* ==========================================================
+                    CONTINUAR CONECTADO
+
+                    Só no modo de entrar: nas telas de recuperação não há
+                    sessão para lembrar.
+
+                    O que ela liga, do lado de lá, é uma lembrança de aparelho
+                    de 30 dias — não uma sessão de 30 dias. A sessão continua
+                    durando um dia; o que a lembrança faz é pedir uma nova sem
+                    senha, e ela morre quando a conta sai, troca a senha ou o
+                    servidor desconfia de cópia (ver services/login/
+                    lembranca.go). O aviso embaixo diz isso em duas linhas,
+                    porque quem está num computador emprestado precisa saber
+                    antes de marcar, não depois.
+                   ========================================================== */}
+                {modo === "entrar" && (
+                    <div className="mt-5">
+                        <label htmlFor="lembrar" className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-[var(--ink)]">
+                            <input
+                                id="lembrar"
+                                type="checkbox"
+                                checked={lembrar}
+                                disabled={loading}
+                                onChange={(e) => setLembrar(e.target.checked)}
+                                className="h-4 w-4 shrink-0 accent-[var(--azul)]"
+                            />
+
+                            Continuar conectado neste aparelho
+                        </label>
+
+                        <p className="mt-1.5 pl-[1.625rem] text-xs leading-relaxed text-[var(--ink-2)]">
+                            Até 30 dias sem digitar a senha. Não marque em computador
+                            compartilhado — sair da conta encerra isto em todos os aparelhos.
+                        </p>
+                    </div>
+                )}
 
                 {/* ERRO */}
                 {error && (

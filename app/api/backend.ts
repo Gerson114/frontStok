@@ -173,6 +173,17 @@ export async function corpoDaRequisicao(request: Request): Promise<Record<string
 export const VALIDADE_SESSAO_S = 60 * 60 * 24
 
 /**
+ * O cookie de "continuar conectado", e quanto ele dura.
+ *
+ * Ele NÃO é uma sessão de 30 dias: é o direito de pedir uma sessão nova sem
+ * digitar a senha, e quem decide se esse direito ainda vale é o banco, a cada
+ * uso (ver dto.SessaoLembrada e services/login/lembranca.go no backend). A
+ * sessão em si continua durando as mesmas 24 horas de sempre.
+ */
+export const COOKIE_DA_LEMBRANCA = "lembranca"
+export const VALIDADE_LEMBRANCA_S = 60 * 60 * 24 * 30
+
+/**
  * Reemite o cookie de sessão devolvido pelo backend, com os atributos certos
  * para ESTA origem.
  *
@@ -193,17 +204,40 @@ export const VALIDADE_SESSAO_S = 60 * 60 * 24
  * devolve e que `cookies().get("token")` lê de volta.
  */
 export function cookieDeSessao(recebidos: string[]): string | null {
+    return reemitir(recebidos, "token", VALIDADE_SESSAO_S)
+}
 
-    const bruto = recebidos.find((cookie) => cookie.startsWith("token="))
+/**
+ * O mesmo para o cookie de "continuar conectado", quando o backend o manda —
+ * no login com a caixa marcada, e a cada renovação, que troca o segredo.
+ *
+ * Devolve `null` quando o backend não mandou nada, e um cookie de APAGAR
+ * quando mandou o valor vazio: é assim que a renovação recusada tira do
+ * navegador um segredo que não vale mais, em vez de deixá-lo tentando de
+ * novo a cada página aberta.
+ */
+export function cookieDaLembranca(recebidos: string[]): string | null {
+    return reemitir(recebidos, COOKIE_DA_LEMBRANCA, VALIDADE_LEMBRANCA_S)
+}
+
+/** O valor cru de um cookie que o backend mandou, sem os atributos dele. */
+export function valorDoCookie(recebidos: string[], nome: string): string | null {
+
+    const bruto = recebidos.find((cookie) => cookie.startsWith(`${nome}=`))
 
     if (!bruto) return null
 
-    const valor = bruto.slice("token=".length).split(";")[0]
+    return bruto.slice(`${nome}=`.length).split(";")[0] ?? null
+}
 
-    if (!valor) return null
+function reemitir(recebidos: string[], nome: string, validadeS: number): string | null {
+
+    const valor = valorDoCookie(recebidos, nome)
+
+    if (valor === null) return null
 
     return [
-        `token=${valor}`,
+        `${nome}=${valor}`,
         "Path=/",
         // Fora do alcance de qualquer script da página: é o que faz um XSS
         // não virar sessão roubada.
@@ -211,7 +245,9 @@ export function cookieDeSessao(recebidos: string[]): string | null {
         // Não acompanha requisição disparada por outro site — a trava de CSRF
         // do lado do navegador, além da que o proxy já faz por Origin.
         "SameSite=Lax",
-        `Max-Age=${VALIDADE_SESSAO_S}`,
+        // Valor vazio é ordem de apagar, e um Max-Age longo aqui manteria no
+        // navegador um cookie que o servidor acabou de invalidar.
+        `Max-Age=${valor === "" ? 0 : validadeS}`,
         process.env.NODE_ENV === "production" ? "Secure" : "",
     ]
         .filter(Boolean)

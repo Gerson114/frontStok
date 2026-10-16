@@ -21,6 +21,14 @@
 
 export const publico = {
     login: () => "/public/login",
+
+    /**
+     * Troca a lembrança de um aparelho por uma sessão nova, sem senha.
+     *
+     * Chamada só pelo servidor (ver proxy.ts): é o "continuar conectado"
+     * entrando em ação quando a sessão de 24 horas venceu.
+     */
+    sessaoRenovar: () => "/public/sessao/renovar",
     cadastro: () => "/public/cadastro",
 
     /** Os seis dígitos que provam que o e-mail do cadastro é de quem o digitou. */
