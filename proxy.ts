@@ -98,13 +98,20 @@ function valorRecebido(recebidos: string[], nome: string): string | null {
 
 type SessaoRenovada = { token: string; cookies: string[] }
 
-async function renovarSessao(lembranca: string): Promise<SessaoRenovada | null> {
+async function renovarSessao(lembranca: string, navegador: string): Promise<SessaoRenovada | null> {
 
     try {
 
         const resposta = await fetch(`${API_BASE}/public/sessao/renovar`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+
+                // Repassado para a lembrança continuar sabendo de que
+                // aparelho ela é — o backend só enxerga este servidor.
+                "User-Agent": navegador,
+            },
             body: JSON.stringify({ lembranca }),
             cache: "no-store",
         })
@@ -575,7 +582,9 @@ export async function proxy(request: NextRequest) {
 
         const lembranca = request.cookies.get(COOKIE_DA_LEMBRANCA)?.value
 
-        const renovada = lembranca ? await renovarSessao(lembranca) : null
+        const renovada = lembranca
+            ? await renovarSessao(lembranca, request.headers.get("user-agent") ?? "")
+            : null
 
         if (renovada) {
 
@@ -599,7 +608,9 @@ export async function proxy(request: NextRequest) {
 
         const lembranca = request.cookies.get(COOKIE_DA_LEMBRANCA)?.value
 
-        const renovada = lembranca ? await renovarSessao(lembranca) : null
+        const renovada = lembranca
+            ? await renovarSessao(lembranca, request.headers.get("user-agent") ?? "")
+            : null
 
         if (!renovada) {
 

@@ -32,6 +32,14 @@ export async function POST(request: Request) {
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
+
+                // O navegador de quem está entrando, repassado.
+                //
+                // O backend só enxerga ESTE servidor, então sem repassar ele
+                // gravava "node" como aparelho de toda lembrança — um campo
+                // que existe justamente para o lojista reconhecer "este é o
+                // computador da loja" na lista.
+                "User-Agent": request.headers.get("user-agent") ?? "",
             },
             body: JSON.stringify({ email, Password: password, lembrar }),
             cache: "no-store",
