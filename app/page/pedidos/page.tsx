@@ -127,17 +127,24 @@ function destinoDoPedido(pedido: Pedido): Destino {
 
     if (pedido.entrega_tipo === "entrega") {
 
-        // Bairro e cidade, nesta ordem: quem separa a sacola decide a rota
-        // pelo bairro, e a cidade é o que diz se o pedido sai da região.
-        const partes = [
+        // Rua e número primeiro, bairro e cidade depois: é a ordem em que o
+        // endereço se lê em voz alta para quem vai levar, e a rua é o que
+        // responde "é perto?" sem abrir o pedido.
+        const rua = [pedido.logradouro, pedido.numero].filter(Boolean).join(", ")
+
+        const regiao = [
             pedido.bairro,
             pedido.cidade ? `${pedido.cidade}${pedido.uf ? `/${pedido.uf}` : ""}` : "",
-        ].filter(Boolean)
+        ]
+            .filter(Boolean)
+            .join(" · ")
+
+        const partes = [rua, regiao].filter(Boolean)
 
         return {
             tipo: "entrega",
             rotulo: "Entrega",
-            resumo: partes.length > 0 ? partes.join(" · ") : "Endereço incompleto",
+            resumo: partes.length > 0 ? partes.join(" — ") : "Endereço incompleto",
             Icone: FiTruck,
         }
     }
@@ -948,19 +955,37 @@ function PedidosInterno() {
                                             <Preco valor={totalDoPedido(pedido)} className="shrink-0 text-sm" />
                                         </span>
 
-                                        {/* PARA ONDE VAI, na própria linha.
+                                        {/* A HORA MARCADA, em faixa.
+
+                                            Pedido agendado tem compromisso de
+                                            horário, e o horário é a primeira
+                                            coisa que decide a ordem do dia —
+                                            não uma etiqueta no meio das
+                                            outras. Faixa azul na largura do
+                                            cartão: quem corre o olho pela
+                                            lista separa os marcados dos "para
+                                            agora" sem ler uma palavra.
+
+                                            Cartão sem faixa é para agora.
+                                            Escrever isso em toda linha
+                                            gastaria a atenção que o agendado
+                                            precisa roubar. */}
+                                        {agenda.marcado && (
+                                            <span className="flex items-center gap-1.5 bg-[var(--azul-suave)] px-2 py-1 text-xs font-semibold text-[var(--azul-escuro)]">
+                                                <FiClock className="w-3.5 shrink-0" aria-hidden />
+                                                <span className="truncate">Agendado · {agenda.texto}</span>
+                                            </span>
+                                        )}
+
+                                        {/* PARA ONDE VAI.
 
                                             Era o que não dava para saber sem
                                             abrir o pedido: três sacolas na
                                             bancada e nenhuma pista de qual sai
                                             para a rua e qual espera no balcão. */}
-                                        <span className="flex items-center gap-1.5 text-xs text-[var(--ink-2)]">
-                                            <IconeDoDestino className="w-3.5 shrink-0 text-[var(--ink-3)]" aria-hidden />
-                                            <span className="truncate">{destino.resumo}</span>
-
-                                            <span className="num ml-auto shrink-0 text-[var(--ink-3)]">
-                                                {pedido.codigo || `#${pedido.id}`}
-                                            </span>
+                                        <span className="flex items-start gap-1.5 text-xs text-[var(--ink-2)]">
+                                            <IconeDoDestino className="mt-0.5 w-3.5 shrink-0 text-[var(--ink-3)]" aria-hidden />
+                                            <span className="line-clamp-2">{destino.resumo}</span>
                                         </span>
 
                                         <span className="flex flex-wrap items-center gap-1.5">
@@ -968,26 +993,10 @@ function PedidosInterno() {
                                                 {STATUS_LABEL[pedido.status]}
                                             </span>
 
-                                            {/* A HORA MARCADA, quando existe.
-
-                                                Só aparece em pedido agendado, e
-                                                é essa a informação: cartão com
-                                                relógio tem hora combinada, cartão
-                                                sem relógio é para agora. Escrever
-                                                "para agora" em toda linha gastaria
-                                                a atenção que o agendado precisa
-                                                roubar. */}
-                                            {agenda.marcado && (
-                                                <span className="tag tag-info">
-                                                    <FiClock className="w-3 shrink-0" aria-hidden />
-                                                    {agenda.texto}
-                                                </span>
-                                            )}
-
                                             <SeloPagamento pedido={pedido} />
 
-                                            <span className="ml-auto shrink-0 text-xs text-[var(--ink-3)]">
-                                                {quandoLegivel(pedido.created_at)}
+                                            <span className="num ml-auto shrink-0 text-xs text-[var(--ink-3)]">
+                                                {pedido.codigo || `#${pedido.id}`}
                                             </span>
                                         </span>
                                     </button>
